@@ -29,3 +29,7 @@ _rff_terms.csv
 _rff_terms2.csv
 _rff_terms_raw.json
 _rff_terms_raw2.json
+
+# biligame wiki 抓取的原始 wikitext 快照
+_rf1mon_raw.txt
+_rfomon_raw.txt

@@ -1164,7 +1164,7 @@ const PAGES = [
                 ['rf1', '符文工房 新牧场物语', m1.length],
                 ['rf2', '符文工房2', m2.length],
                 ['rf3', '符文工房3', m3.length],
-                ['rfo', '符文工房 海洋', mro.length],
+                ['rfo', '符文工房 海洋', (typeof RFO_MON !== 'undefined' ? RFO_MON.length : mro.length)],
                 ['rff', '符文工房 边境', rfm.length || mf.length],
                 ['rf4', '符文工房4', m4.length],
                 ['rf5', '符文工房5', mon5.length],
@@ -1318,7 +1318,34 @@ const PAGES = [
 
             /* ---------- RFO ---------- */
             const blockR = () => {
-                const row = x => `<tr data-s="${x[0]} ${x[1]} ${x[3].join(' ')} ${x[4].join(' ')} ${x[5].join(' ')}">
+                const rm = (typeof RFO_MON !== 'undefined') ? RFO_MON : [];
+                const rr = (typeof RFO_RES !== 'undefined') ? RFO_RES : [];
+                const rd = (typeof RFO_DROP !== 'undefined') ? RFO_DROP : [];
+                const rc = (typeof RFO_CROP !== 'undefined') ? RFO_CROP : [];
+                const rp = (typeof RFO_PROD !== 'undefined') ? RFO_PROD : [];
+                const cell = v => (v == null || v === '' || v === '—') ? '—' : v;
+                const lvs = rm.map(x => x[1]).filter(v => typeof v === 'number');
+                const hps = rm.map(x => x[2]).filter(v => typeof v === 'number');
+                const boss = rm.filter(x => typeof x[1] === 'number' && x[1] >= 40);
+                /* 抗性格：〇=有，×=弱点，—=原表未记 */
+                const mk = v => v === '〇' ? '<span class="mon-yes">〇</span>'
+                    : (v === '×' ? '<span class="mon-no">×</span>' : '<span class="mon-no">—</span>');
+                const AREAS = ['土之精灵殿', '水之精灵殿', '炎之精灵殿', '风之精灵殿', '沉没船',
+                    '无名岛', '神殿岛', '古代石像', '石像岛', '密林岛', '热沙岛', '封冰岛',
+                    '艾利岛', '空中庭院', '石床庭院', '巨人的内部', '龙之祠堂', '圆形竞技场', '创世纪之战'];
+                const areaCnt = AREAS.map(a => {
+                    const n = rm.filter(x => (x[8] || '').indexOf(a) >= 0).length;
+                    const extra = /^神殿$/.test(a) ? 0 : 0;
+                    return [a, n + extra];
+                }).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1]);
+                const dropStr = items => items.length
+                    ? items.map(it => it[0] + ' <b>' + cell(it[1]) + '%</b>／<span class="mon-f">' + cell(it[2]) + '%</span>').join('、')
+                    : '<span class="mon-no">—</span>';
+                const cropStr = cs => cs.length
+                    ? cs.map(c => c[0] + '（好感' + cell(c[1]) + '）').join('、')
+                    : '<span class="mon-no">—</span>';
+
+                const rowOld = x => `<tr data-s="${x[0]} ${x[1]} ${x[3].join(' ')} ${x[4].join(' ')} ${x[5].join(' ')}">
                     <td class="td left mon-n">${x[0]}</td>
                     <td class="td">${x[1]}</td>
                     <td class="td mon-f">${x[3].length ? x[3].join('、') : '—'}</td>
@@ -1328,13 +1355,62 @@ const PAGES = [
                 const sysList = [];
                 mro.forEach(x => { if (x[1] && sysList.indexOf(x[1]) < 0) sysList.push(x[1]); });
                 return `
-            <p class="p">海洋这一作把「种田」搬到了岛上：<b>每只魔物都有自己偏好的作物</b>，收服它之后它会替你种那一类。所以这里的关键列不是掉落，而是<b>喜好作物</b>——先看你岛上缺哪种田，再去找对应的魔物。</p>
-            ${stat([['收录', mro.length + ' 种'], ['系别', sysList.length + ' 类'], ['数据源', '最强攻略 怪日表']])}
+            <p class="p">海洋这一作此前在站里<b>只有名字与喜好作物</b>——数值写死在程序里，攻略本只给了「怪日表」。现在补齐了<b>等级、HP、攻击／防御、魔攻／魔防、EXP、属性与状态抗性、掉落概率、能种的作物</b>，默认按等级从高到低排，最上面那批是终盘才该碰的。</p>
+            ${stat([['收录', rm.length + ' 只'], ['等级范围', (lvs.length ? Math.min.apply(null, lvs) + ' ～ ' + Math.max.apply(null, lvs) : '—')], ['HP 范围', (hps.length ? Math.min.apply(null, hps).toLocaleString() + ' ～ ' + Math.max.apply(null, hps).toLocaleString() : '—')], ['高等级（LV40+）', boss.length + ' 只']])}
+            <h2 class="h2">先按数值排：能不能碰一目了然</h2>
+            <p class="p">等级、HP 与双攻双防直接决定它在你当前练度下「能不能打」，<b>EXP 列决定是否值得绕路去刷</b>。最上面几只（原生巨人 LV65／HP 55000）已经是剧情终盘的对手，不是练级对象。</p>
+            ${ftableOwn(['魔物', 'LV', 'HP', '攻', '防', '魔攻', '魔防', 'EXP'],
+                    ['6.4rem', '1.9rem', '3rem', '2.2rem', '2.2rem', '2.4rem', '2.4rem', '2.6rem'],
+                    rm.map(x => [x[0] + ' ' + (x[8] || ''),
+                        [x[0], cell(x[1]), cell(x[2]), cell(x[3]), cell(x[4]), cell(x[5]), cell(x[6]), cell(x[7])]]),
+                    { cls: 'mon-aux', ph: '输入魔物名或地点筛选' })}
+            <h2 class="h2">区域分布：哪个岛／哪座殿有多少只</h2>
+            <p class="p">海洋的地图是<b>群岛 + 四座精灵殿</b>。下表按出现点统计每处能遇到多少种魔物，<b>数字越大越适合就近刷素材</b>——缺虫皮就守土之精灵殿，缺结晶就往深层走。</p>
+            ${tbl(['区域', '魔物种数'], areaCnt.map(x => [x[0], x[1] + ' 种']), { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
+            <h2 class="h2">属性抗性：带对武器才打得动</h2>
+            <p class="p">前六列是<b>它的攻击带什么属性</b>（决定你该穿什么抗性装备），后六列是<b>它扛什么属性</b>（决定你该拿什么武器）。<b>〇 = 有这项，× = 该属性的弱点，— = 原表未记</b>。</p>
+            ${ftableOwn(['魔物', '攻火', '攻水', '攻地', '攻风', '攻光', '攻暗', '防火', '防水', '防地', '防风', '防光', '防暗'],
+                    ['5.4rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem', '1.6rem'],
+                    rr.map(x => [x[0],
+                        [x[0], mk(x[1]), mk(x[2]), mk(x[3]), mk(x[4]), mk(x[5]), mk(x[6]),
+                            mk(x[7]), mk(x[8]), mk(x[9]), mk(x[10]), mk(x[11]), mk(x[12])]]),
+                    { cls: 'mon-aux', ph: '输入魔物名筛选' })}
+            <h2 class="h2">状态抗性：哪些异常能上、哪些免疫</h2>
+            <p class="p">海洋的异常一共九种。下表<b>〇 = 能上这个状态，× = 无效（免疫），— = 原表未记</b>。想靠毒／麻痹拖住对手，先查这一张。</p>
+            ${ftableOwn(['魔物', '毒', '麻痹', '封印', '眩晕', '睡眠', '疲劳', '感冒', '吸血', '即死'],
+                    ['5.4rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem', '1.7rem'],
+                    rr.map(x => [x[0],
+                        [x[0], mk(x[13]), mk(x[14]), mk(x[15]), mk(x[16]), mk(x[17]), mk(x[18]), mk(x[19]), mk(x[20]), mk(x[21])]]),
+                    { cls: 'mon-aux', ph: '输入魔物名筛选' })}
+            <h2 class="h2">掉落概率：刷素材前先算期望</h2>
+            <p class="p">每格写成<b>「物品 普通%／高级%」</b>——前一个是不带称号时的掉率，后一个是<b>带「高级」称号时</b>的掉率。想提高稀有素材出货，先把称号刷出来比多打几只有效。</p>
+            ${ftableOwn(['魔物', '掉落物（普通%／高级%）', '出现点'],
+                    ['5.4rem', 'auto', '7rem'],
+                    rd.map(x => [x[0] + ' ' + (x[2] || '') + ' ' + x[1].map(i => i[0]).join(' '),
+                        [x[0], dropStr(x[1]), cell(x[2])]]),
+                    { cls: 'mon-aux', ph: '按魔物名/掉落物/地点筛选' })}
+            <h2 class="h2">能替你种什么：自然育成与巨大化率</h2>
+            <p class="p">海洋的魔物收服后会<b>自己长东西</b>：「自然育成」写它长在哪一类上（作物／树木／生产），「巨大化率」是长成巨大作物的概率，<b>好感度越高、能种的作物种类越多</b>（好感 N 表示达到该值才解锁）。毛刷次数是刷到出产物所需的次数。</p>
+            ${ftableOwn(['魔物', '自然育成', '巨大化率', '农作物（好感度）', '毛刷', '出现点'],
+                    ['5rem', '2.4rem', '2.4rem', 'auto', '2rem', '6.4rem'],
+                    rc.map(x => [x[0] + ' ' + (x[5] || '') + ' ' + x[3].map(c => c[0]).join(' '),
+                        [x[0], cell(x[1]), (x[2] == null ? '—' : x[2] + '%'), cropStr(x[3]), cell(x[4]), cell(x[5])]]),
+                    { cls: 'mon-aux', ph: '按魔物名/作物/地点筛选' })}
+            <h2 class="h2">生产物：${rp.length} 只能固定产出</h2>
+            <p class="p">蛋、奶、毛这类<b>周期性产出</b>只出自下面这几只——「产出天数」是<b>隔几天出一次</b>。想做料理不缺蛋奶，先把它们收齐。</p>
+            ${ftableOwn(['魔物', '毛刷次数', '产出物', '产出天数', '出现点'],
+                    ['5.4rem', '2.6rem', '4rem', '2.6rem', 'auto'],
+                    rp.map(x => [x[0] + ' ' + (x[2] || '') + ' ' + (x[4] || ''),
+                        [x[0], cell(x[1]), cell(x[2]), (x[3] == null ? '—' : x[3] + ' 天'), cell(x[4])]]),
+                    { cls: 'mon-aux', ph: '按魔物名/产出物筛选' })}
+            <h2 class="h2">攻略本怪日表：另一套译名，${mro.length} 种</h2>
+            <p class="p">下面是站里原本就有的、来自《符文工厂海洋（最强攻略）》怪日表的名单，<b>译名与上面 wiki 表不完全一致</b>（例如「莫可莫可」＝「摩可摩可」、「小黄」＝「黄精灵」）。两张表都保留：这张的价值在<b>系别与功能分类</b>（树／收获／作物／产出／矿石），上面那些表的价值在<b>数值</b>。</p>
             ${bar(mro.length)}
             <div class="table mon-table" data-list="rfo"><table><thead><tr>
                 <th class="th left">魔物</th><th class="th">系</th><th class="th">喜好作物</th><th class="th">产出</th><th class="th">捕捉地点</th>
-            </tr></thead><tbody>${mro.map(row).join('')}</tbody></table></div>
-            <div class="note">原表的日文魔物名与地名已按系列通用译名转为中文，个别岛名（艾莉兰德、布利扎尔兰德、马格斯拉德）沿用意译或音译，可能与汉化版不同。</div>`;
+            </tr></thead><tbody>${mro.map(rowOld).join('')}</tbody></table></div>
+            <div class="note">${(typeof RFO_MONNOTE !== 'undefined') ? RFO_MONNOTE : ''}</div>
+            <div class="note">怪日表的日文魔物名与地名已按系列通用译名转为中文，个别岛名（艾莉兰德、布利扎尔兰德、马格斯拉德）沿用意译或音译；它与 wiki 表只对上了 ${mro.filter(x => rm.some(y => y[0] === x[0])).length} 个名字，<b>不对上的不强行合并</b>——与其猜一个对应关系，不如两套并列。</div>`;
             };
 
             /* ---------- RF2 ---------- */
@@ -1457,13 +1533,15 @@ const PAGES = [
                 </a>`).join('')}
             </div>`;
 
+            const rfoM = (typeof RFO_MON !== 'undefined') ? RFO_MON : [];
             const cnt = id === 'rf5' ? mon5.length
                 : /^rf4/.test(id) ? new Set(m4.map(x => x[0])).size
                     : id === 'rf1' ? m1.length
                         : id === 'rf2' ? m2.length
                             : id === 'rf3' ? m3.length
                                 : id === 'rff' ? (rfm.length || mf.length)
-                                    : mro.length;
+                                    : id === 'rfo' ? rfoM.length
+                                        : mro.length;
             const title = id === 'rf5' ? 'RF5' : (id === 'rfo' ? 'RFO'
                 : (/^rf4/.test(id) ? 'RF4' : (id === 'rf1' ? 'RF1'
                     : (id === 'rf2' ? 'RF2' : (id === 'rf3' ? 'RF3'
@@ -1482,7 +1560,7 @@ const PAGES = [
             <p class="p">系列里能收进牧场的魔物，才是这份表的主角——奶、蛋、毛、蜜全靠它们产出。怎么收服、怎么照料，在<a class="link" href="#/page/beast">魔物与伙伴</a>那一页；这边查具体是哪一只、它能给你什么。</p>
             ${title ? `<h2 class="h2">${title}：${cnt} 种魔物</h2>` : ''}
             ${bodyText}
-            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 来自《符文工厂海洋（最强攻略）》，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表，战斗数值与全套抗性来自 biligame 符文工厂 wiki；RFF（边境）的等级／HP／双防／魔法力／元素属性／出没地点／掉落物来自 biligame 符文工厂 wiki。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
+            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 的怪日表来自《符文工厂海洋（最强攻略）》，等级／HP／双攻双防／EXP／属性与状态抗性／掉落概率／农作物／生产物来自 biligame 符文工厂 wiki，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表，战斗数值与全套抗性来自 biligame 符文工厂 wiki；RFF（边境）的等级／HP／双防／魔法力／元素属性／出没地点／掉落物来自 biligame 符文工厂 wiki。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
         `;
         }
     },
@@ -3572,6 +3650,7 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-28　第三十三次：「魔物图鉴」补上海洋（RFO）的全套数值——此前只有 92 个名字与喜好作物，现在 115 只齐了等级／HP／攻防／魔攻魔防／EXP（LV1～65、HP 145～55000），外加 102 只的属性与状态抗性、92 只的掉落概率（普通／高级两档）、92 只的自然育成与巨大化率、19 只的周期产出物，并按出现点统计出「哪个岛／哪座殿有多少只」的区域分布表。攻略本怪日表作为另一套译名单独保留</h2>
             <h2 class="h2">2026-10-28　第三十二次：新增「中文译名对照」页（资料与设定组）——符文1、边境、海洋三作的汉化版定稿译名一次列全：符文1 818 条（物品 662、角色 27、地点与存档点 16、节日与生日 40、系统用词 73），边境 269 条（角色 33、地名与节日 45、物品 136、术语·星座·魔物 55），海洋 257 条（人名 55、地名 117、设施 44、节日活动 16、用词 24）。三张表都带搜索框，日文原文与英文原名并列，可中日英互查。同时按汉化定稿回改站内既有数据：边境节日改「海滩开放日／划船大赛／知识大赛／火锅大会」、角色名改「密丝特／萝赛塔／比安卡／塔芭莎／尤尼／阿涅多」、Boss「２回目」标为「（二次战）」；海洋魔物表的残留日文（サムライ、バッファムー 等）与「3F」楼层改为中文与「3层」；符文1 魔物特殊能力里的日文技能名（インフェルノ、ルフトメッサー 等）译成中文</h2>
             <h2 class="h2">2026-10-28　第三十一次：「魔物图鉴」补上 RF1 的战斗数值——63 只怪的 HP／经验／攻防、五属性抗性、六种状态抗性、捕捉所需抚摸次数与特殊能力一次列全，并说清「物理抗性普遍最低＝物理最通用」这条初代规律</h2>
             <h2 class="h2">2026-10-28　第三十次：「魔物图鉴」补上边境（RFF）——此前只有 101 个名字，现在 115 条齐了等级、HP、攻／防／魔法力、元素属性、出没地点与掉落物，等级从 1 一路到 99，并首次给出「掉落材料 Lv 有上限」这一机制（魔力结晶最高只到 Lv3）</h2>
