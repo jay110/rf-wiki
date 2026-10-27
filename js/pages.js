@@ -1935,11 +1935,23 @@ const PAGES = [
             ${(() => {
                     if (!(g && g.id === 'rf3')) return '';
                     const IT = (typeof ITEM_RF3 !== 'undefined') ? ITEM_RF3 : [];
-                    const dishN = IT.filter(r => r[1] === '料理').length;
+                    const C = (typeof RF3_COOK !== 'undefined') ? RF3_COOK : [];
+                    const cats = {};
+                    C.forEach(x => { cats[x[0]] = (cats[x[0]] || 0) + 1; });
+                    const catRows = Object.keys(cats).sort((a, b) => cats[b] - cats[a]).map(k => [k, cats[k] + ' 道']);
                     return `
-            <h2 class="h2">符文3：配方表待补</h2>
-            <p class="p">这一作在站里的料理数据目前只有<b>成品清单</b>——所有做得出来的菜都收在<a class="link" href="#/page/rf3list">物品一览</a>的「料理」一类里（共 ${dishN} 件，带完整说明）。但<b>配方级的细节还没整理</b>：每道菜要什么食材、几级能做、吃了具体回多少，这几栏暂时空着。</p>
-            <div class="note">原因：biligame 符文工厂 wiki 的 RF3 条目只是一个跳转页（<code>{{:Rune_Factory_3}}</code>），没有真正的配方表；手上也没有这一作的配方解包或汉化文本。等拿到源（像符文1 的 xlsx、边境与海洋的腾讯文档那样），就能把这一作也补进上面的统一配方表。<b>没核实的宁可不写</b>，所以这里先留空、不编数据。</div>
+            <h2 class="h2">符文3：${C.length} 道料理（名称 + 效果）</h2>
+            <p class="p">这一作在站里此前只有「成品清单」。现在把<b>全部做得出来的料理</b>补全了——名字与效果描述都来自 RF3 的游戏文本 dump（已汉化），共 ${C.length} 道，按烹饪方式分成 ${Object.keys(cats).length} 类。</p>
+            <div class="note">但要先说清：这份源是<b>游戏文本 dump</b>（物品名 + 描述），<b>不含材料配方组合</b>——每道菜要拿什么食材、几级能做，是游戏逻辑数据，不在这份文本里。所以这一页只给<b>「名称 + 效果」</b>，材料配方那一栏暂时空着。等拿到真正的配方解包，再补进统一配方表。<b>没核实的宁可不写</b>。</div>
+            ${stat([['料理道数', C.length + ' 道'], ['分类', Object.keys(cats).length + ' 类'], ['数据来源', 'RF3 游戏文本 dump（汉化）'], ['材料配方', '源未含，暂缺']])}
+            <h2 class="h2">分类一览</h2>
+            ${tbl(['分类', '道数'], catRows, { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
+            <h2 class="h2">全部料理：名称 + 效果（可搜索）</h2>
+            <p class="p">搜菜名找做法、搜「火」「暴击」「治愈」等关键词反查带该效果的菜。<b>材料配方暂缺</b>，这一页只呈现名称与食用效果。</p>
+            ${ftableOwn(['料理名', '分类', '效果描述'],
+                    ['5.4rem', '4.8rem', 'auto'],
+                    C.map(x => [x[1] + ' ' + x[0], [x[1], x[0], x[2].replace(/\{换行\}/g, '<br>')]]),
+                    { cls: 'mon-aux', ph: '搜菜名、分类或效果关键词' })}
             <div class="jump">
                 <a href="#/page/rf3list">
                     <div class="jp-t">物品一览</div>
