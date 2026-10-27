@@ -1159,12 +1159,13 @@ const PAGES = [
             const m3 = (typeof MON_RF3 !== 'undefined') ? MON_RF3 : [];
             const ore3 = (typeof ORE_RF3 !== 'undefined') ? ORE_RF3 : [];
             const boss3 = (typeof BOSS_RF3 !== 'undefined') ? BOSS_RF3 : [];
+            const rfm = (typeof RFF_MON !== 'undefined') ? RFF_MON : [];
             const others = [
                 ['rf1', '符文工房 新牧场物语', m1.length],
                 ['rf2', '符文工房2', m2.length],
                 ['rf3', '符文工房3', m3.length],
                 ['rfo', '符文工房 海洋', mro.length],
-                ['rff', '符文工房 边境', mf.length],
+                ['rff', '符文工房 边境', rfm.length || mf.length],
                 ['rf4', '符文工房4', m4.length],
                 ['rf5', '符文工房5', mon5.length],
             ].filter(x => x[2] > 0);
@@ -1328,18 +1329,34 @@ const PAGES = [
 
             /* ---------- 边境 RFF ---------- */
             const blockF = () => {
-                const row = (x, i) => `<tr data-s="${x[0]}">
-                    <td class="td">${i + 1}</td>
-                    <td class="td left mon-n">${x[0]}</td>
-                </tr>`;
+                const rm = (typeof RFF_MON !== 'undefined') ? RFF_MON : [];
+                const cell = v => (v == null || v === '' || v === '—') ? '—' : v;
+                const lvs = rm.map(x => x[1]).filter(v => typeof v === 'number');
+                const multi = rm.filter(x => /２回目|3回目|ED后/.test(x[0]));
+                const notes = rm.filter(x => x[9]);
                 return `
-            <p class="p">边境这作能拿到的<b>只有名字</b>：汉化工程表里有一段完整的怪物名字表，但<b>没有等级、属性、掉落与捕捉率</b>——那些数据在这一作的文本里根本不存在，数值是写死在程序里的。</p>
-            ${stat([['收录', mf.length + ' 种'], ['数值', '无'], ['数据源', '汉化工程文本表']])}
-            <div class="table mon-table" data-list="rff"><table><thead><tr>
-                <th class="th" style="width:3.4rem">序</th><th class="th left">魔物</th>
-            </tr></thead><tbody>${mf.map(row).join('')}</tbody></table></div>
-            <p class="p">名单里能看出这一作的怪物构成：<b>摩可摩可系（摩可摩可、摩奇摩奇）、昆虫系（黄蜂、女王蜂、蚂蚁、杀人蚁）、兽人系（兽人、高等兽人、兽人射手、兽人猎手）、哥布林系、牛头人系</b>——和 RF2 高度重合，说明两作共用了一大批怪物设计。差别在于边境加了<b>狮鹫、冰蛇、犬陶洛斯、貘</b>这些大型 Boss。</p>
-            <div class="note">为什么只给名单：<b>有名字而没有数据，就把名字列全，不编造数值</b>。同样地，本站也不把「宠物个体名」（摩可、摩奇、乌伦这一批起名用的词）混进种类表。</div>`;
+            <h2 class="h2">全魔物属性与掉落：${rm.length} 条，从等级 1 一路到等级 99</h2>
+            <p class="p">边境这一作此前在站里<b>只有名字</b>——数值写死在程序里、汉化文本表里根本不存在。现在补齐了<b>等级、HP、攻击力、防御力、魔法力、元素属性、出没地点与掉落物</b>，默认按等级从高到低排，最上面那批是终盘才该碰的。</p>
+            ${stat([['收录', rm.length + ' 条'], ['等级范围', (lvs.length ? Math.min.apply(null, lvs) + ' ～ ' + Math.max.apply(null, lvs) : '—')], ['有元素属性', rm.filter(x => x[6] !== '—').length + ' 只'], ['再战／ED 后形态', multi.length + ' 条']])}
+            <h2 class="h2">先按数值排：能不能打一目了然</h2>
+            <p class="p">等级与 HP 决定它在你当前练度下「能不能碰」，攻防与魔法力决定打得疼不疼。<b>名字带「２回目／3回目」的是同一只怪的再战形态</b>，等级与 HP 会跳一大截（瓦格纳 60 → 80 → 99）。</p>
+            ${ftableOwn(['魔物', '等级', 'HP', '攻', '防', '魔法力', '元素属性'],
+                    ['6.4rem', '2.2rem', '3rem', '2.4rem', '2.4rem', '2.6rem', '5.4rem'],
+                    rm.map(x => [x[0] + ' ' + x[7] + ' ' + x[8],
+                        [x[0], cell(x[1]), cell(x[2]), cell(x[3]), cell(x[4]), cell(x[5]), cell(x[6])]]),
+                    { cls: 'mon-aux', ph: '输入名称/地点/掉落筛选' })}
+            <div class="note">元素属性列写的是各属性的<b>抗性数值</b>：「火15水35风15地20」＝火 15／水 35／风 15／地 20，<b>数字越大越扛该属性</b>；「全属性N」表示四项统一。留「—」的是原表没记，<b>不是免疫</b>。</div>
+            <h2 class="h2">出没地点与掉落：刷素材前先查这里</h2>
+            <p class="p">掉落写成<b>「物品 LvN 概率」</b>，同一件材料常按 Lv 分档各占一个概率（例如冰蛇的舌头 Lv8 50%、Lv10 50%）——想要高 Lv 材料就得打对应的高等级形态。</p>
+            ${ftableOwn(['魔物', '出现地点', '总掉落物'],
+                    ['6.4rem', '8rem', 'auto'],
+                    rm.map(x => [x[0] + ' ' + x[7] + ' ' + x[8],
+                        [x[0], cell(x[7]), cell(x[8])]]),
+                    { cls: 'mon-aux', ph: '按名称/地点/掉落筛选' })}
+            <h2 class="h2">三只有特别备注的</h2>
+            ${tbl(['魔物', '备注'], notes.map(x => [x[0], x[9]]), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto'] })}
+            <div class="note">${(typeof RFF_MONNOTE !== 'undefined') ? RFF_MONNOTE : ''}</div>
+            <div class="note">本节的数值、地点与掉落全部取自 biligame 符文工厂 wiki 的「RFFmonster」页；站里原有的 ${mf.length} 个汉化定稿名仍留作种类名对照。<b>有名字而没有数据时不编造数值</b>——这条规矩补齐数据后依然成立：原表留空的格子一律显示「—」。</div>`;
             };
 
             /* ---------- 无数据 ---------- */
@@ -1405,7 +1422,7 @@ const PAGES = [
                     : id === 'rf1' ? m1.length
                         : id === 'rf2' ? m2.length
                             : id === 'rf3' ? m3.length
-                                : id === 'rff' ? mf.length
+                                : id === 'rff' ? (rfm.length || mf.length)
                                     : mro.length;
             const title = id === 'rf5' ? 'RF5' : (id === 'rfo' ? 'RFO'
                 : (/^rf4/.test(id) ? 'RF4' : (id === 'rf1' ? 'RF1'
@@ -1425,7 +1442,7 @@ const PAGES = [
             <p class="p">系列里能收进牧场的魔物，才是这份表的主角——奶、蛋、毛、蜜全靠它们产出。怎么收服、怎么照料，在<a class="link" href="#/page/beast">魔物与伙伴</a>那一页；这边查具体是哪一只、它能给你什么。</p>
             ${title ? `<h2 class="h2">${title}：${cnt} 种魔物</h2>` : ''}
             ${bodyText}
-            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 来自《符文工厂海洋（最强攻略）》，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
+            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 来自《符文工厂海洋（最强攻略）》，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表；RFF（边境）的等级／HP／双防／魔法力／元素属性／出没地点／掉落物来自 biligame 符文工厂 wiki。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
         `;
         }
     },
@@ -2639,7 +2656,7 @@ const PAGES = [
             <div class="jump">
                 <a href="#/page/mbook">
                     <div class="jp-t">魔物图鉴</div>
-                    <div class="jp-s">本作 ${(typeof MON_RFF !== 'undefined' ? MON_RFF.length : 0)} 种魔物的名字</div>
+                    <div class="jp-s">本作 ${(typeof RFF_MON !== 'undefined' ? RFF_MON.length : 0)} 条魔物的属性与掉落</div>
                 </a>
                 <a href="#/page/cook">
                     <div class="jp-t">料理与食材</div>
@@ -3407,6 +3424,7 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-28　第三十次：「魔物图鉴」补上边境（RFF）——此前只有 101 个名字，现在 115 条齐了等级、HP、攻／防／魔法力、元素属性、出没地点与掉落物，等级从 1 一路到 99，并首次给出「掉落材料 Lv 有上限」这一机制（魔力结晶最高只到 Lv3）</h2>
             <h2 class="h2">2026-10-28　第二十九次：「年度节日」页收官——补上 RF5 全部 22 场带日期日程（四季各 6／6／5／5 场），逐场给出举办时间、地点与评分规则，外加躲哞哞牛种得分、大胃王计分、堆雪人雪球速度三张子表。新数据源：biligame 符文工厂 wiki</h2>
             <h2 class="h2">2026-10-27　第二十八次：「年度节日」页补上 RF2——13 场带日期日程、逐场冠军条件与奖品，外加一张别处没有的「节日当天 NPC 分布位置」表（东地区／公园／码头／西地区／北广场／流星小道／医院各有哪些人）</h2>
             <h2 class="h2">2026-10-27　第二十七次：「年度节日」页补上边境（RFF）与海洋（RFO）——两作此前只有节日名、没有日期，现在各有一张四季日期表，外加 23 场节日的逐场玩法要点（触发时刻、对话对象、奖品与扣分规则）</h2>
