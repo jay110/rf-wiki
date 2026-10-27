@@ -557,3 +557,19 @@
 .content .table.rffnote td:last-child {
     text-align: left;
 }
+
+/* RF3 魔物表：两张 ftableOwn（数值 7 列 / 抗性掉落 4 列），列宽已定，
+   给最小宽度避免数字被压成竖排，超宽时容器横滑 */
+.content .table.mon-aux table {
+    min-width: 21rem;
+}
+
+.content .table.mon-aux .td {
+    white-space: nowrap;
+}
+
+/* 抗性与掉落是长文本，允许换行而非撑宽 */
+.content .table.mon-aux .td.mon-f {
+    white-space: normal;
+    word-break: break-word;
+}

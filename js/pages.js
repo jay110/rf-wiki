@@ -1156,9 +1156,13 @@ const PAGES = [
             const mro = (typeof MON_RFO !== 'undefined') ? MON_RFO : [];
             const m2 = (typeof MON_RF2 !== 'undefined') ? MON_RF2 : [];
             const mf = (typeof MON_RFF !== 'undefined') ? MON_RFF : [];
+            const m3 = (typeof MON_RF3 !== 'undefined') ? MON_RF3 : [];
+            const ore3 = (typeof ORE_RF3 !== 'undefined') ? ORE_RF3 : [];
+            const boss3 = (typeof BOSS_RF3 !== 'undefined') ? BOSS_RF3 : [];
             const others = [
                 ['rf1', '符文工房 新牧场物语', m1.length],
                 ['rf2', '符文工房2', m2.length],
+                ['rf3', '符文工房3', m3.length],
                 ['rfo', '符文工房 海洋', mro.length],
                 ['rff', '符文工房 边境', mf.length],
                 ['rf4', '符文工房4', m4.length],
@@ -1339,8 +1343,54 @@ const PAGES = [
             };
 
             /* ---------- 无数据 ---------- */
+            /* ---------- RF3 ---------- */
+            const block3 = () => {
+                const sorted = m3.slice().sort((x, y) =>
+                    (y[1] == null ? -1 : (x[1] == null ? 1 : y[1] - x[1])));
+                const joins = m3.filter(x => x[10]).length;
+                const nojoin = m3.length - joins;
+                const cell = v => (v == null || v === '') ? '—' : v;
+                const rowA = x => `<tr data-s="${x[0]} ${x[7]} ${x[8]} ${x[9]} ${x[11]}">
+                    <td class="td left mon-n">${x[0]}</td>
+                    <td class="td">${cell(x[1])}</td><td class="td">${cell(x[2])}</td>
+                    <td class="td">${cell(x[3])}</td><td class="td">${cell(x[4])}</td>
+                    <td class="td">${cell(x[5])}</td><td class="td">${cell(x[6])}</td>
+                </tr>`;
+                const rowB = x => `<tr data-s="${x[0]} ${x[7]} ${x[9]} ${x[11]}">
+                    <td class="td left mon-n">${x[0]}</td>
+                    <td class="td mon-f">${cell(x[7])}</td>
+                    <td class="td mon-f">${(x[8] && x[8] !== '无') ? x[8] : '—'}</td>
+                    <td class="td mon-f">${cell(x[9])}</td>
+                </tr>`;
+                return `
+            <h2 class="h2">全迷宫资料：这一作连数值都给了</h2>
+            <p class="p">RF3 的怪物表是站里<b>信息最完整</b>的一张——等级、HP、物攻／物防、魔攻／魔防、属性抗性、可采集物、掉落物、出没迷宫全部列齐。默认按等级从高到低排，最上面那批是终盘才该碰的。</p>
+            ${stat([['收录', m3.length + ' 种'], ['有出没地点', joins + ' 只'], ['不可加入（Boss／准 Boss）', nojoin + ' 只'], ['迷宫', ore3.length + ' 座']])}
+            <h2 class="h2">先按数值排：能不能碰一目了然</h2>
+            <p class="p">等级、HP 与双攻双防直接决定它在你当前等级下「能不能打」。Boss 与准 Boss 没有等级／HP（原表空格），排在最后。</p>
+            ${ftableOwn(['魔物', '等级', 'HP', '物攻', '物防', '魔攻', '魔防'],
+                ['5.4rem', '2rem', '2.8rem', '2.2rem', '2.2rem', '2.2rem', '2.2rem'],
+                sorted.map(x => [x[0] + ' ' + x[7] + ' ' + x[9] + ' ' + x[11],
+                    [x[0], cell(x[1]), cell(x[2]), cell(x[3]), cell(x[4]), cell(x[5]), cell(x[6])]]),
+                { cls: 'mon-aux', ph: '输入名称/迷宫/掉落筛选' })}
+            <h2 class="h2">属性抗性与掉落：打它之前先看这里</h2>
+            <p class="p">抗性列写的是<b>倍率关系</b>：<b>数字 = 该属性伤害的倍数</b>（1.5 倍＝扛揍，减半＝弱点，吸收＝回血，无效＝免疫）。「后仰抵抗」不是属性，是「不会被击退／击倒」的标记。同一种族往往共享弱点——兽人系火 1.5 倍／地减半，哥布林系火减半／风 1.5 倍。</p>
+            ${ftableOwn(['魔物', '抗性', '采集', '掉落'],
+                ['5rem', 'auto', '5.2rem', '7rem'],
+                sorted.map(x => [x[0] + ' ' + x[7] + ' ' + x[9] + ' ' + x[11],
+                    [x[0], cell(x[7]), (x[8] && x[8] !== '无') ? x[8] : '—', cell(x[9])]]),
+                { cls: 'mon-aux', ph: '按名称/抗性/掉落筛选' })}
+            <h2 class="h2">五座迷宫各自能挖什么</h2>
+            <p class="p">采矿是 RF3 装备与强化的命根子。下面是可采矿石清单——后期要白金、钻石、各色结晶，基本都卡在这几座迷宫的深层。</p>
+            ${tbl(['迷宫', '可采集矿石'], ore3, { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
+            <h2 class="h2">通信迷宫的 Boss／准 Boss</h2>
+            <p class="p">树下的通信迷宫（DLC 向）只收录 Boss 与准 Boss 级，原表没给等级／HP，只列了抗性与掉落。它们大多<b>抗后仰</b>（不会被击退），且抗性多为「某属性吸收、其余减半」——带对属性才能破。</p>
+            ${tbl(['名前', '抗性', '掉落'], boss3, { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto', 'auto'] })}
+            <div class="note">全部取自《符文工房3全攻略》（NW 旅团 qisiwole 整理，名词以 SOMA&游戏饭饭汉化版为准）。原表按迷宫分节，字段以制表符分隔；空格格为原表空（多为不可加入的 Boss）。抗性文字为原表直录，未做换算。</div>`;
+            };
+
             const blockNone = () => `
-            <p class="p">本站目前收录了 <b>4 部作品</b>的魔物名单，${nm} 这一作还没有整理——不是因为难，而是因为手上缺这一作的怪物表：攻略本只有 RF5、海洋与边境三本，其余作品靠二手资料，逐只核对的工作还没做完。</p>
+            <p class="p">本站目前收录了 <b>多部作品</b>的魔物名单，${nm} 这一作还没有整理——不是因为难，而是因为手上缺这一作的怪物表：攻略本只有 RF5、海洋与边境三本，其余作品靠二手资料，逐只核对的工作还没做完。</p>
             <div class="note">与其拿别作的名单凑一页，不如空着。这是本站一贯的规矩：<b>没核实的宁可不写</b>。</div>
             <h2 class="h2">已经收录的作品</h2>
             <div class="jump">
@@ -1354,25 +1404,28 @@ const PAGES = [
                 : /^rf4/.test(id) ? new Set(m4.map(x => x[0])).size
                     : id === 'rf1' ? m1.length
                         : id === 'rf2' ? m2.length
-                            : id === 'rff' ? mf.length
-                                : mro.length;
+                            : id === 'rf3' ? m3.length
+                                : id === 'rff' ? mf.length
+                                    : mro.length;
             const title = id === 'rf5' ? 'RF5' : (id === 'rfo' ? 'RFO'
                 : (/^rf4/.test(id) ? 'RF4' : (id === 'rf1' ? 'RF1'
-                    : (id === 'rf2' ? 'RF2' : (id === 'rff' ? 'RFF' : '')))));
+                    : (id === 'rf2' ? 'RF2' : (id === 'rf3' ? 'RF3'
+                        : (id === 'rff' ? 'RFF' : ''))))));
             const bodyText = id === 'rf5' ? block5()
                 : /^rf4/.test(id) ? block4()
                     : id === 'rf1' ? block1()
                         : id === 'rf2' ? block2()
-                            : id === 'rff' ? blockF()
-                                : id === 'rfo' ? blockR()
-                                    : blockNone();
+                            : id === 'rf3' ? block3()
+                                : id === 'rff' ? blockF()
+                                    : id === 'rfo' ? blockR()
+                                        : blockNone();
 
             return `
             <h2 class="h2">「图鉴」在符文工房里指的是伙伴名录</h2>
             <p class="p">系列里能收进牧场的魔物，才是这份表的主角——奶、蛋、毛、蜜全靠它们产出。怎么收服、怎么照料，在<a class="link" href="#/page/beast">魔物与伙伴</a>那一页；这边查具体是哪一只、它能给你什么。</p>
             ${title ? `<h2 class="h2">${title}：${cnt} 种魔物</h2>` : ''}
             ${bodyText}
-            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RFO 来自《符文工厂海洋（最强攻略）》，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
+            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 来自《符文工厂海洋（最强攻略）》，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
         `;
         }
     },
@@ -3269,6 +3322,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-27　第二十五次：「魔物图鉴」补齐 RF3——101 只迷宫魔物连同等级／HP／双攻双防／抗性／采集／掉落一次列全</h2>
+            <ul class="ul">
+                <li class="li"><b>RF3 进图鉴了</b>：从《符文工房3全攻略》（NW 旅团整理）的「全迷宫资料」抽出 <b>101 只</b>魔物，字段是全站最齐的一档——等级、HP、物攻／物防、魔攻／魔防、属性抗性、可采集物、掉落物、出没迷宫。默认按等级降序，终盘才该碰的排最上。</li>
+                <li class="li"><b>抗性是倍率不是加减</b>：原表写的「火 1.5 倍、地减半」就是该属性伤害的倍数，吸收是回血、无效是免疫，「后仰抵抗」是「不会被击退」。这一列我原样保留没做换算，配一段说明教怎么读。</li>
+                <li class="li"><b>不可加入的 Boss／准 Boss 单独拎出来</b>：原表这些格子是空的（没等级没 HP），分在五座主线迷宫里的 81 只「有出没地点」之外；通信迷宫的 20 个 Boss／准 Boss 单开一节，抗性多为「某属性吸收、其余减半」。</li>
+                <li class="li"><b>五座迷宫各能挖什么</b>：可采矿石也抽成了表——后期要白金、钻石、各色结晶，基本卡在深层。补完这作后，图鉴覆盖到 RF1／RF2／RF3／RF4／RF5／RFO／RFF 七作。</li>
+                <li class="li"><b>技术上</b>：源文本是 UTF-16 的 txt，字段以制表符分隔；构建脚本 <code>_build_mon3.py</code> 按迷宫分节解析、去重、归一化，导出 <code>js/mon3.js</code>。</li>
+            </ul>
             <h2 class="h2">2026-10-27　第二十四次：「农作」页接上边境（RFF）的 36 种作物——四个阶段的天数、十级出货额，和一套别处没有的「繁荣」缩放机制</h2>
             <ul class="ul">
                 <li class="li"><b>作物页多了一整节边境的</b>：春 12、夏 11、秋 10、不分季节 3，共 36 种。每种给出原表的<b>四阶段天数</b>（种／芽／叶／花）、<b>十级出货额</b>与<b>繁荣参考</b>，另附 36 条原表备注。</li>
@@ -3493,7 +3554,7 @@ const PAGES = [
             <ul class="ul">
                 <li class="li">RF2／边境／海洋／RF5 的节日具体日期（目前只有节日名）</li>
                 <li class="li">各作武器／料理完整数值表（本地已有配方表，待整理）</li>
-                <li class="li">RF1／RF3／边境／海洋的魔物图鉴（目前只有 RF4 与 RF5）</li>
+                <li class="li">RF1／边境／海洋的魔物图鉴（目前已有 RF2／RF3／RF4／RF5／RFO／RFF，RF1 仅有洞窟怪物表，边境无数值）</li>
             </ul>
             <div class="note">本站在浏览器本地运行，数据全部内嵌，不联网、不上传任何信息。资料整理性质，仅供查阅。</div>
         `
