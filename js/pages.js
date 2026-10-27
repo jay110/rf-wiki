@@ -1645,6 +1645,52 @@ const PAGES = [
                     md.map(rowM), { cls: 'mon-aux', ph: '搜药名或材料' })}
             <div class="note">${(typeof RF5_COOKNOTE !== 'undefined') ? RF5_COOKNOTE : ''}</div>`;
                 })()}
+            ${(() => {
+                    const ck = (typeof RF4_COOK !== 'undefined') ? RF4_COOK : [];
+                    const md = (typeof RF4_MED !== 'undefined') ? RF4_MED : [];
+                    if (!ck.length || !(g && /^rf4/.test(g.id))) return '';
+                    const cell = v => (v == null || v === '' || v === '—') ? '—' : v;
+                    const ORDER = ['徒手', '刀工', '平底锅', '搅拌机', '锅', '烤箱', '蒸笼'];
+                    const kinds = ORDER.filter(k => ck.some(x => x[0] === k));
+                    const lvs = ck.map(x => x[2]).filter(v => typeof v === 'number');
+                    const uniq = new Set(ck.map(x => x[1]));
+                    const kindRows = kinds.map(k => {
+                        const sub = ck.filter(x => x[0] === k);
+                        const ls = sub.map(x => x[2]).filter(v => typeof v === 'number');
+                        const easy = sub.slice().sort((a, b) => (a[2] || 0) - (b[2] || 0))[0];
+                        return [k, sub.length + ' 条', 'Lv' + Math.min.apply(null, ls) + '–' + Math.max.apply(null, ls),
+                            easy[1] + '（Lv' + easy[2] + '）'];
+                    });
+                    const rowC = x => [x[1] + ' ' + x[0] + ' ' + x[3].join(' '),
+                        [x[1], x[0], 'Lv' + cell(x[2]), x[3].join('、') || '—', cell(x[4])]];
+                    const rowE = x => [x[1] + ' ' + (x[11] || ''),
+                        [x[1], cell(x[5]), cell(x[6]), cell(x[8]), cell(x[9]), cell(x[10]), cell(x[11])]];
+                    const rowM = x => [x[1] + ' ' + x[0] + ' ' + x[3].join(' ') + ' ' + (x[4] || ''),
+                        [x[1], x[0], 'Lv' + cell(x[2]), x[3].join('、') || '—', cell(x[4]), cell(x[5])]];
+                    return `
+            <h2 class="h2">RF4：${uniq.size} 道菜、${ck.length} 条配方</h2>
+            <p class="p">下面按<b>配方表</b>与<b>效果表</b>两张分开列：前者回答「怎么做」，后者回答「吃了有什么用」。配方等级是做出这道菜所需的料理等级，<b>达不到就做不出</b>。</p>
+            ${stat([['料理', uniq.size + ' 道 / ' + ck.length + ' 条配方'], ['厨具', kinds.length + ' 种'], ['技能范围', 'Lv' + Math.min.apply(null, lvs) + ' – Lv' + Math.max.apply(null, lvs)], ['药学配方', md.length + ' 条']])}
+            <h2 class="h2">七类厨具：先看分类</h2>
+            <p class="p">RF4 的料理同样按厨具分七类，先有对应厨具才能做那一类。<b>平底锅最大（${ck.filter(x => x[0] === '平底锅').length} 条），蒸笼最少</b>。想练料理等级，从每类最低 Lv 那道反复做最划算。</p>
+            ${tbl(['厨具', '配方数', '技能范围', '入门一道'], kindRows, { leftFirst: true, cls: 'txt', colw: ['4.4rem', '3rem', '4rem', 'auto'] })}
+            <h2 class="h2">配方表：怎么做（可搜索）</h2>
+            <p class="p">按厨具、配方等级排序。搜菜名找做法，<b>搜食材名反查能做什么菜</b>。卖价是基础售价，成品等级越高卖得越贵。</p>
+            ${ftableOwn(['料理', '厨具', '配方等级', '材料', '卖价'],
+                    ['5.4rem', '3rem', '3rem', 'auto', '3rem'],
+                    ck.map(rowC), { cls: 'mon-aux', ph: '搜菜名、厨具或食材' })}
+            <h2 class="h2">效果表：吃了有什么用</h2>
+            <p class="p">「+220」即回复 220 点；<b>带百分比的（如「+5000，11%」）＝固定值 + 最大值的百分比</b>一并回复。力量／智力／体力同理，「+60，3%」是固定 60 点再加 3% 上限，<b>持续 12 小时</b>。这一列决定了「带哪道菜进迷宫」。</p>
+            ${ftableOwn(['料理', 'HP', 'RP', '力量', '智力', '体力', '其它特效'],
+                    ['5.4rem', '3.4rem', '3rem', '2.6rem', '2.6rem', '2.6rem', 'auto'],
+                    ck.map(rowE), { cls: 'mon-aux', ph: '搜菜名或特效' })}
+            <h2 class="h2">药学：${md.length} 条配方</h2>
+            <p class="p">药学是<b>独立于料理的第二条练级线</b>，管药品与调味料；<b>农药</b>那类洒在田里改作物属性（抗灾、成长速度、品质），不属于回复药。</p>
+            ${ftableOwn(['名称', '类别', '制造等级', '材料', '效果', '持续'],
+                    ['5rem', '2.6rem', '3rem', '6.4rem', 'auto', '2.2rem'],
+                    md.map(rowM), { cls: 'mon-aux', ph: '搜药名或材料' })}
+            <div class="note">${(typeof RF4_COOKNOTE !== 'undefined') ? RF4_COOKNOTE : ''}</div>`;
+                })()}
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
@@ -3691,6 +3737,7 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-28　第三十五次：「料理」页补上 RF4——170 条料理配方按七类厨具拆分（平底锅 52 条最多），配方表与效果表分开列：前者给配方等级、材料与卖价，后者给 HP／RP 回复量与力量／智力／体力加成；外加 46 条药学配方（药剂 30／调味料 4／农药 12）。译名采用《符文工房4 豪华版》官方简中</h2>
             <h2 class="h2">2026-10-28　第三十四次：「料理」页补上 RF5 的真实配方——184 条料理配方按七口厨具分类（平底锅 59 条最多、蒸笼 12 条最少），逐条给出所需料理等级、材料与成品特效；外加 46 条药品与农药配方（药物 36／农药 10）。两张表都可搜索，搜食材名能反查「这东西能做什么菜」</h2>
             <h2 class="h2">2026-10-28　第三十三次：「魔物图鉴」补上海洋（RFO）的全套数值——此前只有 92 个名字与喜好作物，现在 115 只齐了等级／HP／攻防／魔攻魔防／EXP（LV1～65、HP 145～55000），外加 102 只的属性与状态抗性、92 只的掉落概率（普通／高级两档）、92 只的自然育成与巨大化率、19 只的周期产出物，并按出现点统计出「哪个岛／哪座殿有多少只」的区域分布表。攻略本怪日表作为另一套译名单独保留</h2>
             <h2 class="h2">2026-10-28　第三十二次：新增「中文译名对照」页（资料与设定组）——符文1、边境、海洋三作的汉化版定稿译名一次列全：符文1 818 条（物品 662、角色 27、地点与存档点 16、节日与生日 40、系统用词 73），边境 269 条（角色 33、地名与节日 45、物品 136、术语·星座·魔物 55），海洋 257 条（人名 55、地名 117、设施 44、节日活动 16、用词 24）。三张表都带搜索框，日文原文与英文原名并列，可中日英互查。同时按汉化定稿回改站内既有数据：边境节日改「海滩开放日／划船大赛／知识大赛／火锅大会」、角色名改「密丝特／萝赛塔／比安卡／塔芭莎／尤尼／阿涅多」、Boss「２回目」标为「（二次战）」；海洋魔物表的残留日文（サムライ、バッファムー 等）与「3F」楼层改为中文与「3层」；符文1 魔物特殊能力里的日文技能名（インフェルノ、ルフトメッサー 等）译成中文</h2>
