@@ -23,3 +23,9 @@ standalone.html
 # 构建脚本依赖（_build_rffcrop.js 需要 xlsx）
 node_modules/
 _bwiki_titles.json
+
+# 抓取下来的中间数据（译名表原始导出）
+_rff_terms.csv
+_rff_terms2.csv
+_rff_terms_raw.json
+_rff_terms_raw2.json

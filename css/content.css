@@ -590,3 +590,19 @@
 .content .table.festnote td:last-child {
     text-align: left;
 }
+
+/* 译名对照表：日文／中文／英文三列，词条短，禁止换行以免被压成竖排；
+   末列（备注／形象）允许换行 */
+.content .table.term-aux table {
+    min-width: 19rem;
+}
+
+.content .table.term-aux .td {
+    white-space: nowrap;
+}
+
+.content .table.term-aux th:last-child,
+.content .table.term-aux td:last-child {
+    white-space: normal;
+    word-break: break-word;
+}
