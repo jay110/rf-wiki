@@ -1421,3 +1421,39 @@ img {
 .content .mon-table[data-rec] th:nth-child(3) {
     min-width: 3.2rem;
 }
+
+/* ---- 状态与抗性：数值标签 ---- */
+.content .fxk {
+    display: inline-block;
+    margin: 0 0.28em 0.2em 0;
+    padding: 0.05em 0.34em;
+    border-radius: 3px;
+    background: #e4eef4;
+    color: #355f76;
+    font-size: 1em;
+    line-height: 1.45;
+    white-space: nowrap;
+}
+
+.content .fxk b {
+    margin-left: 0.1em;
+    font-weight: 600;
+}
+
+.content .fxk.dn {
+    background: #fbeeec;
+    color: #b3352b;
+}
+
+.fxw .mon-table table,
+.table.fx table {
+    min-width: 25rem;
+}
+
+/* 效果／抗性列内容左对齐，避免标签被居中切开 */
+.fxw .mon-table th:last-child,
+.fxw .mon-table tbody td:last-child,
+.mon-table.fx th:last-child,
+.mon-table.fx tbody td:last-child {
+    text-align: left;
+}
