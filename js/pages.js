@@ -1932,6 +1932,25 @@ const PAGES = [
             <div class="note">${(typeof RF2_COOKNOTE !== 'undefined') ? RF2_COOKNOTE : ''}</div>
             <div class="note">「其它」类的 ${etc.length} 条（米饭、巧克力、红酒、艾丽草与各尺寸的鸡蛋／牛奶／奶酪／酸奶／蛋黄酱）是<b>没有配方的成品</b>，只能在店里买或打怪掉落——别在料理台上找它们。</div>`;
                 })()}
+            ${(() => {
+                    if (!(g && g.id === 'rf3')) return '';
+                    const IT = (typeof ITEM_RF3 !== 'undefined') ? ITEM_RF3 : [];
+                    const dishN = IT.filter(r => r[1] === '料理').length;
+                    return `
+            <h2 class="h2">符文3：配方表待补</h2>
+            <p class="p">这一作在站里的料理数据目前只有<b>成品清单</b>——所有做得出来的菜都收在<a class="link" href="#/page/rf3list">物品一览</a>的「料理」一类里（共 ${dishN} 件，带完整说明）。但<b>配方级的细节还没整理</b>：每道菜要什么食材、几级能做、吃了具体回多少，这几栏暂时空着。</p>
+            <div class="note">原因：biligame 符文工厂 wiki 的 RF3 条目只是一个跳转页（<code>{{:Rune_Factory_3}}</code>），没有真正的配方表；手上也没有这一作的配方解包或汉化文本。等拿到源（像符文1 的 xlsx、边境与海洋的腾讯文档那样），就能把这一作也补进上面的统一配方表。<b>没核实的宁可不写</b>，所以这里先留空、不编数据。</div>
+            <div class="jump">
+                <a href="#/page/rf3list">
+                    <div class="jp-t">物品一览</div>
+                    <div class="jp-s">RF3 全部 ${IT.length} 件，含料理成品与说明</div>
+                </a>
+                <a href="#/page/mbook">
+                    <div class="jp-t">魔物图鉴</div>
+                    <div class="jp-s">RF3 全迷宫魔物数值</div>
+                </a>
+            </div>`;
+                })()}
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
