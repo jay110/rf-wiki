@@ -573,3 +573,20 @@
     white-space: normal;
     word-break: break-word;
 }
+
+/* 节日玩法表：左列定宽（季节+日期+节日名），右列是长文本玩法说明。
+   fixed 布局让 colw 生效，配合换行避免长文本把表撑出视口 */
+.content .table.festnote table {
+    table-layout: fixed;
+}
+
+.content .table.festnote th,
+.content .table.festnote td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.festnote th:last-child,
+.content .table.festnote td:last-child {
+    text-align: left;
+}
