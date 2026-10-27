@@ -510,3 +510,50 @@
 .content .table.crop table {
     min-width: 41rem;
 }
+
+/* 边境作物表：6 列。前五列在 430px 内放得下，四段明细作为最后一列横滑查看；
+   用 fixed 布局让 colw 真正生效，否则季节列会被撑宽把后两列挤出屏幕 */
+.content .table.rffcrop table {
+    table-layout: fixed;
+    min-width: 31.2rem;
+}
+
+.content .table.rffcrop th,
+.content .table.rffcrop td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* 边境长周期分档：3 列 */
+.content .table.rfftier table {
+    min-width: 22rem;
+}
+
+/* 繁荣写法与含义：2 列，含义列是长文本 */
+.content .table.rffrate table {
+    table-layout: fixed;
+    min-width: 24rem;
+}
+
+.content .table.rffrate th,
+.content .table.rffrate td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* 原表备注：2 列，备注列是长文本，交给容器宽度换行而不是撑宽表格 */
+.content .table.rffnote table {
+    table-layout: fixed;
+}
+
+.content .table.rffnote th,
+.content .table.rffnote td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* 备注是长文本，左对齐更好读 */
+.content .table.rffnote th:last-child,
+.content .table.rffnote td:last-child {
+    text-align: left;
+}

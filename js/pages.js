@@ -277,6 +277,110 @@ function crop4Html() {
     `;
 }
 
+/* ------------------------------------------------------------
+   符文工房 边境（RFF）作物段
+   表结构：[季节, 作物名, [种,芽,叶,花], 十级出货额, 繁荣参考, 备注]
+   数据来自 RFF各作物各阶段所需时间.xls，另有 5 条原表说明存于 RFF_TIPS。
+   ------------------------------------------------------------ */
+function cropRffHtml() {
+    const R = (typeof RFF_CROP !== 'undefined') ? RFF_CROP : [];
+    const TIPS = (typeof RFF_TIPS !== 'undefined') ? RFF_TIPS : [];
+    const num = v => (v === null || v === undefined) ? '—' : v.toLocaleString('en-US');
+    const T = r => r[2].reduce((a, b) => a + b, 0);
+    const money = r => (r[3] === null || r[3] === undefined) ? '<span class="mon-no">—</span>' : num(r[3]);
+    const cnt = s => R.filter(r => r[0] === s).length;
+    const get = n => R.filter(r => r[1] === n)[0] || null;
+    const fast = R.slice().sort((a, b) => T(a) - T(b));
+    const slow = R.slice().sort((a, b) => T(b) - T(a));
+    const noBonus = R.filter(r => r[4] === '（空）');
+    const minT = Math.min.apply(null, R.map(T)), maxT = Math.max.apply(null, R.map(T));
+
+    /* 长周期作物按「天数 + 单价」成套出现，整理成分档表 */
+    const tier = {};
+    R.forEach(r => { const k = T(r); if (k >= 40) (tier[k] = tier[k] || []).push(r); });
+    const tierKeys = Object.keys(tier).sort((a, b) => a - b);
+    const tierRows = tierKeys.map(k => {
+        const L = tier[k];
+        const miss = ['春', '夏', '秋'].filter(s => !L.some(r => r[0] === s));
+        return [k + ' 天', num(L[0][3]),
+            L.map(r => r[1] + '（' + r[0] + '）').join('、') +
+            (miss.length ? ' <span class="mon-no">缺' + miss.join('、') + '</span>' : '')];
+    });
+
+    const K = {
+        gain: R.filter(r => /繁荣收获$/.test(r[4])),
+        regrow: R.filter(r => /繁荣连作$/.test(r[4])),
+        cannot: R.filter(r => /繁荣收获不可$/.test(r[4])),
+        fert: R.filter(r => /配合肥料/.test(r[4])),
+        plain: noBonus,
+    };
+    const names = L => L.map(r => r[1]).join('、');
+
+    const ORD = { '春': 0, '夏': 1, '秋': 2, '不论季节': 3 };
+    const bySeason = R.slice().sort((a, b) => (ORD[a[0]] - ORD[b[0]]) || (T(a) - T(b)));
+    const mainRows = bySeason.map(r => [r[1], [
+        r[1], r[0], String(T(r)), money(r),
+        r[4] === '（空）' ? '<span class="mon-no">无加成</span>' : r[4],
+        r[2].join(' · '),
+    ]]);
+    const noteRows = bySeason.map(r => [r[1], [r[1], r[5] || '<span class="mon-no">—</span>']]);
+    const tipRows = TIPS.map(t => {
+        const m = t.match(/^\d+：([^：]+)：(.*)$/);
+        return m ? [m[1], m[2]] : ['补充', t];
+    });
+    const GJ = get('金刚花'), YHC = get('樱花草'), BLD = get('白玫瑰');
+    const t40 = tier[40] || [], t60 = tier[60] || [], t100 = tier[100] || [];
+
+    return `
+        <h2 class="h2">边境的 ${R.length} 种作物：四季里有一季是空的</h2>
+        <p class="p">原表按季分组：春 ${cnt('春')} 种、夏 ${cnt('夏')} 种、秋 ${cnt('秋')} 种，另有 ${cnt('不论季节')} 种不分季节（${names(R.filter(r => r[0] === '不论季节'))}）。<b>冬季那一栏是空的</b>——整张表里没有一条冬季作物，所以冬天能种的只有这三种，其余地要么空着，要么留着等换季。</p>
+        ${stat([
+        ['收录作物', R.length + ' 种'],
+        ['最快成熟', minT + ' 天'],
+        ['最慢', maxT + ' 天'],
+    ])}
+        <p class="p">最快的 ${fast.filter(r => T(r) === minT).map(r => r[0]).join('、')} 四个阶段各 1 天，${minT} 天一轮；最慢的 ${slow[0][0]} 要 ${maxT} 天，同样是四个阶段，时间差了 ${Math.round(maxT / minT)} 倍。「四段天数」是原表给的种子／芽／叶／花各阶段天数，加起来就是总天数。</p>
+        ${ftableOwn(['作物', '季节', '合计', '十级出货额', '繁荣参考', '四段天数'],
+        ['5rem', '3.4rem', '3.2rem', '5.2rem', '8rem', '6.4rem'],
+        mainRows, { ph: '输入作物名', cls: 'rffcrop' })}
+        <div class="note">「十级出货额」是满级那一件的出货价，<b>不是每株收益</b>——这张原表没给种子价和每株产量，所以这里不算日收益，只列单价，不猜。<br>${get('牧草') ? '牧草那格是空的，它本来就不出货（价值在喂家畜）。' : ''}</div>
+
+        <h2 class="h2">长周期作物是同一条价格线，一个季节一件</h2>
+        <p class="p">把表按天数排开，后段不是零散的：<b>同一个天数对应同一个价格，而且春夏秋各有一件</b>。这是边境的「季节同款」设计——同一档装备不管你在哪季做，要的都是同一种作物，只是名字不同。</p>
+        ${tbl(['合计天数', '十级出货额', '同款作物（按季节）'], tierRows, {
+        leftFirst: true, colw: ['5.4rem', '5.6rem'], cls: 'rfftier',
+    })}
+        <p class="p">把单价摊到每天看（单价 ÷ 天数），只是为了把不同档位拉到同一尺度，<b>仍然不含种子成本</b>：${tierKeys.map(k => k + ' 天 ' + Math.round(tier[k][0][3] / Number(k))).join(' → ')}，天数越长这一项越高。所以后期只要有地有钱，就往最长那档种；前期种不起，${t40.length ? names(t40) + '（' + tierKeys[0] + ' 天）是性价比的第一道台阶' : ''}。</p>
+        <div class="key">春季是唯一有 ${maxT} 天作物的季节（${GJ[1]}，${num(GJ[3])}），代价是春天<b>没有 40 天那一档</b>——它最短的长周期作物直接跳到 ${t60.length ? (T(t60[0]) + ' 天') : '60 天'}。换句话说，春季前期靠 ${names(noBonus)} 撑着，中期断档，后期最强。</div>
+
+        <h2 class="h2">「繁荣」：边境把生长周期做成了一道缩放题</h2>
+        <p class="p">其他作品里作物天数写死，边境不是。<b>生长周期取决于特兰普利亚有几个地区的精灵数量超过 35 只</b>，这个数字就是表里写的「N 繁荣」。地区越繁荣，四个阶段缩得越短，最短每段 1 天、共 4 天——但长周期作物压不到 4 天，得配肥料，所以表里给的是「配合肥料 N 日收获」。</p>
+        ${tbl(['写法', '含义'], [
+        ['N 繁荣收获<br><span class="mon-no">' + K.gain.length + ' 件</span>', 'N 个地区精灵全部超过 35 只时，压到 4 日收获。' + names(K.gain)],
+        ['N 繁荣连作<br><span class="mon-no">' + K.regrow.length + ' 件</span>', '同上，且收完不拔、可以连续收。' + names(K.regrow)],
+        ['N 繁荣收获不可<br><span class="mon-no">' + K.cannot.length + ' 件</span>', '光靠繁荣压不到 4 日，必须再配合肥料。' + names(K.cannot)],
+        ['配合肥料 N 日收获<br><span class="mon-no">' + K.fert.length + ' 件</span>', '长周期作物：对应繁荣下再配合肥料，第 N 日收获。' + names(K.fert)],
+        ['（空）<br><span class="mon-no">' + K.plain.length + ' 件</span>', '四段本来就各 1 天，繁荣和肥料都不起作用。' + names(K.plain)],
+    ], { leftFirst: true, cls: 'rffrate', colw: ['6.6rem'] })}
+        <h3 class="h3">原表对繁荣与肥料的五条说明</h3>
+        <ul class="ul">
+            ${tipRows.map(t => '<li class="li"><b>' + t[0] + '</b>：' + t[1] + '</li>').join('')}
+        </ul>
+
+        <h2 class="h2">三个容易漏掉的细节</h2>
+        <ul class="ul">
+            <li class="li"><b>白玫瑰会变色</b>：收获期放着不收，第三天变成<b>蓝玫瑰</b>，十级出货 2912（白玫瑰 ${num(BLD[3])}）。急着拔反而亏。</li>
+            <li class="li"><b>迷之信件三个密码</b>：すごいかぶ → 金芜菁、すごいかぼちゃ → 金南瓜、はっぱばな → 花红叶，次日送达。三种拿到的都是种子，${get('金芜菁') ? '金芜菁只有 ' + T(get('金芜菁')) + ' 天却只能这样入手' : '金作物只能这样入手'}。</li>
+            <li class="li"><b>牧草不出货</b>：没有卖价，价值在喂家畜、喂精灵；靠割草类怪物上班收割，<b>怪物好感直接等于收获数量的倍数</b>，好感越高一次收得越多。</li>
+        </ul>
+
+        <h2 class="h2">原表备注：要做什么，该种什么</h2>
+        <p class="p">边境的装备材料大量来自作物，这 ${noteRows.length} 条备注最实用的就是这层对应——从装备反查要种什么，比按季翻作物快。</p>
+        ${ftableOwn(['作物', '原表备注'], ['5.4rem'], noteRows, { ph: '输入装备名或作物名', cls: 'rffnote' })}
+        <div class="note">备注里那句「无繁荣给肥料 N 日收获」是后期参考：到那时候大部分人已经不缺钱，维持每天的区域繁荣又要花时间管理精灵，所以原表专门给出了<b>放弃繁荣、只给肥料</b>的收获天数。</div>
+    `;
+}
+
 /* ---------- RF4 配方大全（锻造 / 工艺 / 料理·药学 三表） ---------- */
 function recipe4Html() {
     const rec = (typeof RECIPE4 !== 'undefined') ? RECIPE4 : [];
@@ -958,7 +1062,7 @@ const PAGES = [
             <h2 class="h2">品质与等级</h2>
             <p class="p">作物有等级，等级越高单价越高，也是料理与委托的要求。提升等级靠施肥与连续在同一块地上种植优良品。想稳定产出高等级作物，就要固定一块「种苗田」，专门循环优等品。</p>
             <div class="note">杂草与石头会占格，每天顺手清掉。别把清杂草当成杂活——它直接决定你当天能种多少。</div>
-            ${g.id.indexOf('rf4') === 0 ? crop4Html() : ''}
+            ${g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : '')}
         `
     },
     {
@@ -3165,6 +3269,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-27　第二十四次：「农作」页接上边境（RFF）的 36 种作物——四个阶段的天数、十级出货额，和一套别处没有的「繁荣」缩放机制</h2>
+            <ul class="ul">
+                <li class="li"><b>作物页多了一整节边境的</b>：春 12、夏 11、秋 10、不分季节 3，共 36 种。每种给出原表的<b>四阶段天数</b>（种／芽／叶／花）、<b>十级出货额</b>与<b>繁荣参考</b>，另附 36 条原表备注。</li>
+                <li class="li"><b>冬季是空的</b>。整张表里没有一条冬季作物——冬天能种的只有牧草、白玫瑰、谜之花这三种不分季节的。这一条是翻表才发现的，攻略里很少有人写。</li>
+                <li class="li"><b>长周期作物是「季节同款」</b>：40 天 9,800、60 天 18,200、90 天 30,800、100 天 36,400（三色水晶）、120 天 44,800（金刚花）。同一档天数必然同价，春夏秋各有一件，做同一件装备去哪季种都一样。<b>春季缺 40 天那一档</b>，却是唯一有 120 天作物的季节。</li>
+                <li class="li"><b>「繁荣」是边境独有的一套时间缩放</b>：生长周期取决于特兰普利亚有几个地区的精灵数量超过 35 只，那个数字就是表里的「N 繁荣」。繁荣越高四个阶段越短，最短每段 1 天、共 4 天；长周期作物压不到 4 天，得配肥料。<b>原表附的五条说明</b>（阶段、肥料、繁荣读法、为什么写无繁荣版、备注怎么用）一并收进来了。</li>
+                <li class="li"><b>三个容易漏的细节</b>：白玫瑰收获期不收，第三天变<b>蓝玫瑰</b>（十级出货 2,912，比白玫瑰 2,268 高）；<b>迷之信件三个密码</b>——すごいかぶ／すごいかぼちゃ／はっぱばな 分别换金芜菁、金南瓜、花红叶的种子；<b>牧草不出货</b>，靠割草类怪物上班收割，怪物好感等于收获数量的倍数。</li>
+                <li class="li"><b>技术上新接了一种格式</b>：这份数据是 1997 年的 <code>.xls</code>（OLE2 复合文档），不是 zip 包着的 xlsx，原来的零依赖解析器读不了，改用 SheetJS 抽成 JSON 交给前端。构建脚本 <code>_build_rffcrop.js</code> 一并入库。</li>
+            </ul>
+
             <h2 class="h2">2026-10-27　第二十三次：新增「状态与抗性」页——RF4 装备的 422 件里，180 件的附加率与十八种抗性第一次被整理出来</h2>
             <ul class="ul">
                 <li class="li"><b>新页「状态与抗性」</b>，挂在物品道具分类下，只对 RF4／RF4S 显示。数据来自 <code>Equipment List</code> 的最后二十几列——游戏面板从不显示，只有解包表里才有：<b>十一种附加率</b>（八种状态异常 + 会心／击飞／晕眩）与<b>十八种抗性</b>（七属性 + 十一种异常）。422 件装备里有附加率或抗性的 180 件全部收录。</li>

@@ -19,3 +19,6 @@ desktop.ini
 
 # 单文件构建产物（由 _inline.py 生成）
 standalone.html
+
+# 构建脚本依赖（_build_rffcrop.js 需要 xlsx）
+node_modules/
