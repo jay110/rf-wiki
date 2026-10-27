@@ -1774,10 +1774,45 @@ const PAGES = [
                     return tbl(['地点', '在场的人'], p, { leftFirst: true, cls: 'festnote', colw: ['5.4rem'] });
                 })()}
             <div class="note">这张表是<b>节日当天找人的捷径</b>——想送礼或触发对话，直接照着地点去蹲就行。到了儿女辈，新登场的人物会改在学校附近或学校里。</div>
+
+            <h2 class="h2">RF5：全年日程</h2>
+            <p class="p">这一作一共 ${(typeof FEST_RF5 !== 'undefined') ? FEST_RF5.length : 0} 场，是系列活动里<b>节日密度最高</b>的一作——几乎每隔几天就有一场。绝大多数比赛的流程是同一个模子：<b>当天 11：00 到繁华广场找西蒙娜报到</b>，交一件东西或打一场小游戏，按评分发奖。</p>
+            ${(() => {
+                    const d = (typeof FEST_RF5 !== 'undefined') ? FEST_RF5 : [];
+                    const rows = ['春', '夏', '秋', '冬'].map(s => {
+                        const it = d.filter(x => x[0] === s).sort((a, b) => a[1] - b[1]);
+                        return [s, it.map(x => x[1] + ' ' + x[2]).join('　')];
+                    }).filter(r => r[1]);
+                    return tbl(['季节', '日期与节日'], rows, { leftFirst: true, colw: ['2.9rem'] });
+                })()}
+            <p class="p">每一场的时间、地点和评分规则：</p>
+            ${(() => {
+                    const d = (typeof FEST_RF5 !== 'undefined') ? FEST_RF5 : [];
+                    return tbl(['节日', '时间地点与玩法'], d.map(x => {
+                        const meta = [x[3], x[4], x[5] ? '主办' + x[5] : ''].filter(Boolean).join('　');
+                        const desc = x[6] || '（原资料未记玩法）';
+                        return [x[0] + x[1] + '日　' + x[2], (meta ? meta + '｜' : '') + desc];
+                    }), { leftFirst: true, cls: 'festnote', colw: ['6.4rem'] });
+                })()}
+            <div class="note"><b>同一套评分模组</b>贯穿四场蔬菜比赛（春28／夏28／秋28／冬28）：看<b>农作物等级、物品等级、是否巨大化、是否符合当季</b>四项。所以别拿反季的高等级作物去，季节不符直接扣分。</div>
+            <p class="p">三场比赛有单独的计分表，值得对着练：</p>
+            ${(() => {
+                    const moo = (typeof RF5_MOO !== 'undefined') ? RF5_MOO : [];
+                    return tbl(['躲哞哞：牛种', '移动速度', '得分'], moo, { leftFirst: true, cls: 'festnote', colw: ['6rem', '3.4rem', '3rem'] });
+                })()}
+            ${(() => {
+                    const eat = (typeof RF5_EAT !== 'undefined') ? RF5_EAT : [];
+                    return tbl(['大胃王：食物', '得分', '按键次数'], eat, { leftFirst: true, cls: 'festnote', colw: ['6rem', '3.4rem', '3rem'] });
+                })()}
+            ${(() => {
+                    const sn = (typeof RF5_SNOW !== 'undefined') ? RF5_SNOW : [];
+                    return tbl(['堆雪人：雪球尺寸', '移动速度'], sn, { leftFirst: true, cls: 'festnote', colw: ['7rem', '3.4rem'] });
+                })()}
+            <div class="note">躲哞哞是<b>越往后刷新的牛越快、分也越高</b>，所以别一开始就追求躲开，先吃分再保命。大胃王按<b>按键次数</b>吃分，亲子盖饭与巨大金芜菁同为 12 次但差 500 分，<b>失败作是 −500 分</b>，宁可不吃也别交。堆雪人<b>雪球越大推得越慢</b>（3M 以上只剩 0.85 倍速），但堆得大分才高——<b>紫色雪球能大幅提速</b>，看到就抢。本节日期与计分数据来自 biligame 符文工厂 wiki 的「RF5festival」页，与站内原有的 RF5 节日名单逐条对过，这里多出「大海开放日」「宠物比赛」「锻造与装饰比赛」三场。</div>
+
             <h2 class="h2">其他作品的节日名</h2>
-            <p class="p">下面这两作暂时只有<b>节日名称</b>、没有可考的具体日期，请以游戏内日历为准。已经有日期表的（RF4／RF1／RF2／RF3／边境／海洋）见上文各节。</p>
+            <p class="p">下面这一作暂时只有<b>节日名称</b>、没有可考的具体日期，请以游戏内日历为准。已经有日期表的（RF4／RF1／RF2／RF3／RF5／边境／海洋）见上文各节。</p>
             <ul class="ul">
-                <li class="li"><b>RF5</b>：元旦、料理比赛、撒豆比赛、全鱼种钓鱼比赛、花卉节、四季蔬菜比赛、大海开放日、躲哞哞比赛、宠物比赛、夜晚海滩萤火祭、锻造与装饰比赛、情人节、大胃王比赛、万圣节点心比赛、白色情人节、堆雪人比赛、钓乌贼比赛、圣诞夜、除夕。</li>
                 <li class="li"><b>龙之天地</b>：新年参拜、七夕、烟花大会、放河灯、雪屋大会、便当／咖喱／美食／蔬菜大赛，以及数场垂钓大会。整体从「西式祭典」转向「东方岁时记」。</li>
             </ul>
         `
@@ -3372,6 +3407,7 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-28　第二十九次：「年度节日」页收官——补上 RF5 全部 22 场带日期日程（四季各 6／6／5／5 场），逐场给出举办时间、地点与评分规则，外加躲哞哞牛种得分、大胃王计分、堆雪人雪球速度三张子表。新数据源：biligame 符文工厂 wiki</h2>
             <h2 class="h2">2026-10-27　第二十八次：「年度节日」页补上 RF2——13 场带日期日程、逐场冠军条件与奖品，外加一张别处没有的「节日当天 NPC 分布位置」表（东地区／公园／码头／西地区／北广场／流星小道／医院各有哪些人）</h2>
             <h2 class="h2">2026-10-27　第二十七次：「年度节日」页补上边境（RFF）与海洋（RFO）——两作此前只有节日名、没有日期，现在各有一张四季日期表，外加 23 场节日的逐场玩法要点（触发时刻、对话对象、奖品与扣分规则）</h2>
             <h2 class="h2">2026-10-27　第二十六次：「年度节日」页的 RF3 段升级——把「无日期顺序列表」换成具体日期表，四季的节日与居民生日一并标出；补上蔬菜竞赛得分公式、四场钓鱼大会规则，以及 24 位居民的生日送礼偏好</h2>
