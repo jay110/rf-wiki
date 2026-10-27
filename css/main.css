@@ -1397,3 +1397,27 @@ img {
 .content .table.lv .td:last-child {
     white-space: nowrap;
 }
+
+/* ---- RF4 配方：素材类别标记 ---- */
+.content .rec-m .mk {
+    font-style: normal;
+    color: #3d7089;
+    background: #eef5f8;
+    border-radius: 3px;
+    padding: 0 0.15em;
+    white-space: nowrap;
+}
+
+/* 配方表：表头不竖排，类别列给足宽度 */
+.content .mon-table[data-rec] th {
+    white-space: nowrap;
+}
+
+.content .mon-table[data-rec] th:nth-child(2),
+.content .mon-table[data-rec] .td.rec-c {
+    min-width: 3.4rem;
+}
+
+.content .mon-table[data-rec] th:nth-child(3) {
+    min-width: 3.2rem;
+}

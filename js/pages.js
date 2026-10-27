@@ -277,6 +277,78 @@ function crop4Html() {
     `;
 }
 
+/* ---------- RF4 配方大全（锻造 / 工艺 / 料理·药学 三表） ---------- */
+function recipe4Html() {
+    const rec = (typeof RECIPE4 !== 'undefined') ? RECIPE4 : [];
+    const cats = (typeof RECIPE4_CATS !== 'undefined') ? RECIPE4_CATS : [];
+    const kinds = (typeof RECIPE4_KIND !== 'undefined') ? RECIPE4_KIND : [];
+    const cnt = (typeof RECIPE4_CNT !== 'undefined') ? RECIPE4_CNT : [];
+    const KINDS = ['料理', '武器', '防具', '饰品', '农具', '药学'];
+    const ksum = {};
+    cats.forEach((c, i) => { const k = kinds[i]; ksum[k] = (ksum[k] || 0) + (cnt[i] || 0); });
+    const forgeN = (ksum['武器'] || 0) + (ksum['农具'] || 0);
+    const craftN = (ksum['饰品'] || 0) + (ksum['防具'] || 0);
+    const cookN = (ksum['料理'] || 0) + (ksum['药学'] || 0);
+
+    const opts = KINDS.map(k => {
+        const inner = cats.map((c, i) => kinds[i] === k
+            ? `<option value="${i}">${c}（${cnt[i]}）</option>` : '').join('');
+        return inner ? `<optgroup label="${k}">${inner}</optgroup>` : '';
+    }).join('');
+
+    const matOf = m => m.indexOf('类') >= 0 ? `<i class="mk">${m}</i>` : m;
+    const rr = x => `<tr data-c="${x.c}" data-s="${x.n} ${x.m.join(' ')}">
+                <td class="td left rec-n">${x.n}</td>
+                <td class="td rec-c">${cats[x.c]}</td>
+                <td class="td rec-lv">${x.lv >= 900 ? '—' : x.lv}</td>
+                <td class="td rec-m">${x.m.map(matOf).join('、')}</td>
+            </tr>`;
+
+    const full = rec.filter(x => x.m.length >= 6);
+    const catCnt = rec.reduce((s, x) => s + x.m.filter(m => m.indexOf('类') >= 0).length, 0);
+    const catKinds = [];
+    rec.forEach(x => x.m.forEach(m => { if (m.indexOf('类') >= 0 && catKinds.indexOf(m) < 0) catKinds.push(m); }));
+    const topCat = rec.filter(x => x.lv < 900).sort((a, b) => b.lv - a.lv).slice(0, 3);
+
+    return `
+        <h2 class="h2">${rec.length} 条配方，三张表各算各的</h2>
+        <p class="p">RF4 的配方不是一张表，而是按工作台分成的三张互不相干的表：<b>锻造台</b>出武器和农具（${forgeN} 条）、<b>工艺台</b>出饰品和防具（${craftN} 条）、<b>料理台与药学台</b>出食物和药品（${cookN} 条）。三套对应三种完全独立的技能——锻造练到 50 级，不会让料理也跟着变成 50 级，想做什么就得单独练那一门。</p>
+        ${stat([['配方', rec.length + ' 条'], ['锻造 · 工艺', (forgeN + craftN) + ' 条'], ['料理 · 药学', cookN + ' 条']])}
+        <div class="rec-filter">
+            <input id="recQ" type="search" placeholder="输入配方名或素材筛选" />
+            <select id="recSel" aria-label="按分类筛选"><option value="all">全部分类</option>${opts}</select>
+            <span id="recCount" class="mon-count">${rec.length} 条</span>
+        </div>
+        <div class="table mon-table" data-rec><table><thead><tr>
+            <th class="th left">配方</th><th class="th">类别</th><th class="th">技能Lv</th><th class="th">素材</th>
+        </tr></thead><tbody>${rec.map(rr).join('')}</tbody></table></div>
+
+        <div class="key">素材栏里 <i class="mk">矿石类</i> 这种带「类」字的，是<b>素材类别</b>——意思是这一类里的任意一种都行，不用凑齐。全表 ${catKinds.length} 种类别、出现 ${catCnt} 次，其中锻造表用得最狠：武器配方动不动就写「矿石类」「爪、牙类」，实际上你往里面塞什么都能做出来，只是成品的属性和最终等级会跟着素材走。</div>
+        <p class="p"><b>等级是硬门槛</b>：技能等级不够，这条配方根本不会出现在可制作列表里；够了之后，成品的实际等级由「素材等级 + 你的技能等级」共同决定，所以同一张配方在不同阶段能做出差十几级的东西。<br>按等级排，${topCat.map(x => `<b>${x.n}</b>（${x.lv}）`).join('、')} 是常规配方的天花板，再往上的都是特殊品。</p>
+
+        <h2 class="h2">四季头饰与那条被剔除的护符</h2>
+        <p class="p">春季、夏季、秋季、冬季头饰这四件，原表的等级栏写的是 999，没有给出实际数值，页面上显示为「—」。四件都是「头饰 + 一种对应素材」的二料配方：<b>春=月落草、夏=粉红猫、秋=红水晶、冬=白水晶</b>，做出来是四件换季用的头饰。</p>
+        <div class="note">另有 <b>赛尔泽的护符</b>（Venti's Charm）在原表里占了两行、素材栏全空、等级 999 —— 没有任何材料能做出来的东西不是配方，是剧情道具，已从表中剔除（Craft Recipes 原表 161 条，剔除这 2 行后 ${craftN} 条并入工艺台）。<br>表里素材最多 ${Math.max.apply(null, rec.map(x => x.m.length))} 项，满配的有 ${full.length} 条：${full.slice(0, 4).map(x => x.n).join('、')} 这类。</div>
+
+        <div class="note">数据取自 RF4 数据解包表的三张配方表（Craft Recipes / Forge Recipes / Cook & Chem Recipes），配方名与素材名统一按《译名表》转成 RF4S 简体中文。RF4S 与 RF4 的配方基本一致，共用本表。</div>
+
+        <div class="jump">
+            <a href="#/page/cook">
+                <div class="jp-t">料理</div>
+                <div class="jp-s">七种器具的差别、料理等级怎么刷</div>
+            </a>
+            <a href="#/page/craft">
+                <div class="jp-t">锻造与药学</div>
+                <div class="jp-s">素材品质与技能等级怎么决定成品</div>
+            </a>
+            <a href="#/page/gear">
+                <div class="jp-t">装备打造·毕业套</div>
+                <div class="jp-s">知道配方之后：倍铁怎么把一件装备乘到极限</div>
+            </a>
+        </div>
+    `;
+}
+
 function ftable(head, colw, rows, opts) {
     const o = opts || {};
     const w = colw || [];
@@ -2634,8 +2706,9 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rf5'],
-        body: () => {
+        gms: ['rf4', 'rf4sp', 'rf5'],
+        body: g => {
+            if (g.id.indexOf('rf4') === 0) return recipe4Html();
             const rec = (typeof RECIPE !== 'undefined') ? RECIPE : [];
             const cats = (typeof RECIPE_CATS !== 'undefined') ? RECIPE_CATS : [];
             const cnt = (typeof RECIPE_CNT !== 'undefined') ? RECIPE_CNT : [];
@@ -2964,6 +3037,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-27　第二十二次：「配方大全」页接上 RF4 三张配方表——锻造、工艺、料理·药学共 635 条</h2>
+            <ul class="ul">
+                <li class="li"><b>「配方大全」页补上 RF4 段</b>。这一页原来只有 RF5 一套数据，现在把 <code>Craft Recipes</code>、<code>Forge Recipes</code>、<code>Cook &amp; Chem Recipes</code> 三张表合并接入：<b>锻造台 260 条</b>（七类武器 + 农具）、<b>工艺台 159 条</b>（饰品、铠甲、头饰、盾、鞋）、<b>料理·药学 216 条</b>（七种器具 + 化学）。三张表各自独立，筛选与搜索沿用同一套交互。</li>
+                <li class="li"><b>三套技能互不相通</b>：锻造、工艺、料理、药学是四种独立技能，锻造练到 50 级不会顺带把料理也练上去。想做哪一类，就得单独练那一门——这也是页面按工作台分组、而不是按「等级从低到高」混排的原因。</li>
+                <li class="li"><b>RF4 配方的核心是「素材类别」</b>：全表出现 <b>15 种类别、共 311 次</b>，包括矿石类、布、皮类、线、绳类、爪、牙类、棒、茎类、甲壳、骨类、羽毛类、鳞片类、结晶类、宝石类、石类、碎片类、液体类、粉末、秘药类、毛皮类。页面上把类别做了浅蓝底标记，与具体物品区分开——写「矿石类」时，往里面塞这一类的任意一种都算数。</li>
+                <li class="li"><b>剔除 2 行剧情道具</b>：<code>Venti's Charm</code>（赛尔泽的护符）在 <code>Craft Recipes</code> 里占了两行，素材栏全空、等级 999——没有材料能做的不是配方。剔除后 Craft 由 161 条降到 159 条，三表合计 <b>635 条</b>。</li>
+                <li class="li"><b>四季头饰没有等级</b>：春、夏、秋、冬头饰的等级栏是 999，页面上显示为「—」。四件都是「头饰 + 一种对应素材」的二料配方：春=月落草、夏=粉红猫、秋=红水晶、冬=白水晶。常规配方的等级上限是 99。</li>
+                <li class="li"><b>素材最多的有 6 项</b>：放松茶的茶叶（六色草）、至尊咖喱、究极咖喱、蛋糕、巧克力蛋糕等 8 条满配。配方名与素材名全部按《译名表》转成 RF4S 简体中文，译名覆盖率 615/618 与 308/309，剩下的是原表编码乱码（<code>No Rot α/β</code> 等希腊字母），已在构建脚本里修正。</li>
+            </ul>
+
             <h2 class="h2">2026-10-27　第二十一次：「农作」页接上 RF4 作物表——50 种作物的四段天数、再生周期与土壤系数</h2>
             <ul class="ul">
                 <li class="li"><b>「农作」页补上 RF4 段</b>。这一页原来是通用散文，没有任何具体数字；这次接上 <code>Crop Values</code> 表：<b>50 种可种作物</b>，含四段成长天数、再生间隔、每株产量、初始 HP、五项土壤系数，再与 <code>Item Values</code> 的种子买价、果实卖价对接，算出单株日收益。</li>
