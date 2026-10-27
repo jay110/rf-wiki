@@ -22,3 +22,4 @@ standalone.html
 
 # 构建脚本依赖（_build_rffcrop.js 需要 xlsx）
 node_modules/
+_bwiki_titles.json
