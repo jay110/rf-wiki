@@ -1,0 +1,512 @@
+@charset "utf-8";
+
+/* 正文排版 —— 对齐 矿石镇攻略百科 的 content.css 规格 */
+.content {
+    margin-top: 0.6rem;
+    padding: 0 1.05rem;
+    color: var(--ink);
+    font-size: 0.94rem;
+    line-height: 1.85;
+    word-break: break-word;
+}
+
+.content .head {
+    padding-bottom: 0.7rem;
+    margin-bottom: 0.3rem;
+    border-bottom: solid 1px var(--line-2);
+}
+
+.content .h1 {
+    font-size: 1.42rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #2f3a41;
+    margin: 0.2rem 0 0.25rem;
+    letter-spacing: 0.01em;
+}
+
+.content .time {
+    font-size: 0.68rem;
+    color: #a9b4ba;
+    letter-spacing: 0.02em;
+}
+
+.content .h2 {
+    position: relative;
+    font-size: 1.12rem;
+    font-weight: 600;
+    line-height: 1.7;
+    color: #2f3a41;
+    margin: 1.7rem 0 0.7rem;
+    padding-left: 0.7rem;
+}
+
+.content .h2::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.42rem;
+    bottom: 0.42rem;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--green);
+}
+
+.content .h3 {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    margin: 1.25rem 0 0.5rem;
+}
+
+.content .h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    margin: 1rem 0 0.35rem;
+}
+
+.content .p {
+    margin: 0.7rem 0;
+}
+
+.content .ul,
+.content .ol {
+    margin: 0.7rem 0;
+    padding-left: 1.3rem;
+}
+
+.content .li {
+    margin: 0.25rem 0;
+    line-height: 1.8;
+}
+
+.content .li::marker {
+    color: #b7c2c8;
+}
+
+.content .hr {
+    height: 0;
+    border: none;
+    border-top: solid 1px var(--line);
+    margin: 1.8rem 0;
+}
+
+.content .link {
+    color: var(--green) !important;
+    text-decoration: underline;
+    text-decoration-color: rgba(25, 141, 68, 0.32);
+    text-underline-offset: 3px;
+}
+
+.content .link:hover {
+    text-decoration-color: var(--green);
+}
+
+.content .red {
+    color: #c1272d;
+}
+
+.content .gold {
+    color: #b3761b;
+}
+
+.content .gray {
+    color: #8b979e;
+}
+
+.content .bold {
+    font-weight: 600;
+}
+
+/* 强调条 */
+.content .note {
+    position: relative;
+    font-size: 0.86rem;
+    line-height: 1.75;
+    margin: 0.9rem 0;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.5rem;
+    background: #f6f7f8;
+    color: #5e6a71;
+}
+
+.content .note::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.7rem;
+    bottom: 0.7rem;
+    width: 2px;
+    background: #d3d9dd;
+    border-radius: 2px;
+}
+
+.content .key {
+    font-size: 0.86rem;
+    line-height: 1.7;
+    padding: 0.7rem 0.9rem;
+    margin: 0.9rem 0;
+    border-radius: 0.5rem;
+    border: solid 1px #cfe5d8;
+    background: #f2f9f5;
+    color: #3c6b52;
+}
+
+/* 数据卡 */
+.content .stat {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: 0.5rem;
+    margin: 0.9rem 0;
+}
+
+.content .stat > div {
+    background: #f7f8f9;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.7rem;
+}
+
+.content .stat .k {
+    font-size: 0.66rem;
+    color: #a9b4ba;
+    letter-spacing: 0.04em;
+}
+
+.content .stat .v {
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    margin-top: 0.15rem;
+    font-weight: 600;
+}
+
+/* 表格 */
+.content .table {
+    width: 100%;
+    margin: 0.9rem 0;
+    font-size: 0.8rem;
+    border-collapse: collapse;
+    border-spacing: 0;
+    color: var(--ink-2);
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.content .table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.content .thead {
+    background: #52616b;
+    color: #fff;
+}
+
+.content .th,
+.content .td {
+    border: solid 1px #e2e7ea;
+    padding: 0.42rem 0.55rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.content .th {
+    font-weight: 600;
+    background: #f4f6f7;
+    color: var(--ink-2);
+}
+
+.content .tbody tr:nth-of-type(odd) {
+    background: #fbfcfc;
+}
+
+.content .tbody tr:nth-of-type(even) {
+    background: #f4f6f7;
+}
+
+.content .tbody tr:hover {
+    background: #eef7f1;
+}
+
+.content .td.left,
+.content .th.left {
+    text-align: left;
+}
+
+.content .repeat {
+    font-size: 0.72rem;
+    color: #93a0a7;
+}
+
+/* 魔物/角色卡片行 */
+.content .animal {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+    margin: 0.6rem 0;
+}
+
+.content .prop {
+    border: solid 1px var(--line);
+    border-radius: 0.55rem;
+    padding: 0.7rem 0.85rem;
+    margin: 0.6rem 0;
+}
+
+.content .prop .name {
+    font-weight: 600;
+    color: #2f3a41;
+    margin-bottom: 0.25rem;
+}
+
+.content .hang {
+    color: #a9b4ba;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+}
+
+.content .tag {
+    display: inline-block;
+    font-size: 0.66rem;
+    line-height: 1.5;
+    padding: 0 0.4rem;
+    border-radius: 0.3rem;
+    background: #eef1f2;
+    color: #7d8991;
+    margin-right: 0.25rem;
+    vertical-align: 1px;
+}
+
+.content .tag.g {
+    background: #e4f4e9;
+    color: var(--green);
+}
+
+.content .tag.r {
+    background: #fbeaea;
+    color: #bd6b6b;
+}
+
+.content .tag.y {
+    background: #fbf0d8;
+    color: #a97d1e;
+}
+
+.content .tag.b {
+    background: #e7f0fa;
+    color: #4a7dad;
+}
+
+/* 底部版权 */
+.copyright {
+    margin-top: 1.6rem;
+    padding: 1.4rem 1rem 2.2rem;
+    text-align: center;
+    font-size: 0.64rem;
+    line-height: 1.9;
+    color: #b0b9be;
+}
+
+/* 角色页 */
+.portrait {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.2rem 1rem 0.4rem;
+}
+
+.portrait-avatar {
+    width: 5.4rem;
+    height: 5.4rem;
+    border-radius: 1.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 600;
+    box-shadow: inset 0 -18px 26px rgba(0, 0, 0, 0.12);
+}
+
+.portrait-name {
+    font-size: 1.16rem;
+    font-weight: 600;
+    color: #2f3a41;
+}
+
+.portrait-jp {
+    font-size: 0.7rem;
+    color: #a9b4ba;
+    letter-spacing: 0.1em;
+}
+
+.kv {
+    margin: 0.8rem 1.05rem;
+    border-radius: 0.55rem;
+    overflow: hidden;
+    border: solid 1px var(--line-2);
+}
+
+.kv-row {
+    display: flex;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.82rem;
+    background: #fbfcfc;
+    border-bottom: solid 1px var(--line-2);
+}
+
+.kv-row:last-child {
+    border-bottom: 0;
+}
+
+.kv-row:nth-of-type(even) {
+    background: #f5f7f8;
+}
+
+.kv-k {
+    flex: 0 0 4.6rem;
+    color: #a9b4ba;
+    font-size: 0.76rem;
+}
+
+.kv-v {
+    flex: 1;
+    color: var(--ink-2);
+    min-width: 0;
+}
+
+.content code {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 0.92em;
+    padding: 0.05em 0.34em;
+    border-radius: 0.24em;
+    background: #eef1f2;
+    color: #5b6a73;
+}
+
+/* 物品一览：按分类分节 */
+.content .eqsec {
+    scroll-margin-top: 3.6rem;
+}
+
+.content .eqsec.hide {
+    display: none;
+}
+
+.content .eqsec > .h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+}
+
+.content .secn {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #a9b4ba;
+    letter-spacing: 0.02em;
+}
+
+.content #eqNav {
+    justify-content: flex-start;
+    margin: 0.2rem 0 0.7rem;
+}
+
+.content #eqNav .chip {
+    font-variant-numeric: tabular-nums;
+}
+
+/* 分类多的作品（RF3 16 类）把按钮收窄一点，少占一行 */
+@media (max-width: 480px) {
+    .content #eqNav.dense .chip {
+        font-size: 0.68rem;
+        padding: 0.22rem 0.48rem;
+    }
+}
+
+.content .eq-empty {
+    margin: 1.2rem 0 2rem;
+    padding: 1.1rem 0.9rem;
+    border-radius: 0.55rem;
+    background: #f7f8f9;
+    font-size: 0.84rem;
+    color: #8b959b;
+    text-align: center;
+}
+
+.content .eq-empty[hidden] {
+    display: none;
+}
+
+/* 物品表里的分类小标签（文本型数据用） */
+.content .txc {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0 0.3rem;
+    border-radius: 0.25rem;
+    background: #eef3f0;
+    color: #5f8f74;
+    font-size: 0.68rem;
+    font-weight: 400;
+    vertical-align: 0.05em;
+}
+
+/* 掉落表里的概率小字 */
+.content .dr {
+    color: #9aa4aa;
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 独立搜索表：一页多张表时彼此独立 */
+.content .eqown + .eqown {
+    margin-top: 1.6rem;
+}
+
+/* 名 + 长清单的段落式列表（村民喜欢清单、个人禁忌） */
+.content .txt-list p {
+    margin: 0 0 0.55rem;
+    padding: 0 0 0.55rem;
+    border-bottom: 1px dashed #e6ebe8;
+    font-size: 0.815rem;
+    line-height: 1.72;
+    color: #4b5459;
+}
+
+.content .txt-list p:last-child {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.content .txt-list p b {
+    color: #2f3a34;
+    font-weight: 600;
+}
+
+/* 村民喜好：四列里有一列是长清单，窄屏给表一个下限宽度靠横滑，
+   否则「超喜欢」会被压成每字一行 */
+.content .table.npc table {
+    min-width: 33rem;
+}
+
+/* 钓点表：6 列，窄屏给下限宽度靠横滑 */
+.content .table.spot table {
+    min-width: 31rem;
+}
+
+/* 回本与否的语义色（非股价语境：绿=好，红=差） */
+.content .up {
+    color: #0f6b33;
+}
+
+.content .dn {
+    color: #b3352b;
+}
+
+/* 作物表：8 列，窄屏靠横滑而不是把每列压成竖排 */
+.content .table.crop table {
+    min-width: 41rem;
+}

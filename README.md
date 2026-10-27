@@ -1,0 +1,68 @@
+# 符文工房攻略百科（Rune Factory Wiki · 中文）
+
+一个纯静态、可离线运行的符文工房（ルーンファクトリー / Rune Factory）系列中文资料站。
+
+结构参考 [mineraltown.net](https://wiki.mineraltown.net/setting) 的栏目划分与版式风格，
+数据则来自各作原始表格的整理与校对，**每部作品的物品、魔物、作物、钓点数据互相独立**，
+不混用通用表。
+
+## 特性
+
+- 纯静态：无 CDN、无构建步骤、无后端，双击 `index.html` 即可运行
+- Hash 路由单页应用：`index.html#/page/<页面key>`
+- 移动端优先：430px 宽度下表格横向滚动，不压成竖排
+- 全站搜索：物品 / 魔物 / 配方 / 作物 / 钓点均可按名称或属性筛选
+- 数据驱动：新增一部作品只需追加一个 `js/xxxdata.js`
+
+## 本地运行
+
+直接双击 `index.html`。若浏览器限制 `file://` 下的资源加载，可起一个本地服务：
+
+```bash
+python -m http.server 8000
+# 然后访问 http://localhost:8000
+```
+
+## 目录结构
+
+```
+index.html          入口（脚本加载顺序在此定义）
+css/main.css        布局、导航、主题
+css/content.css     正文组件：表格、区块、分节
+js/app.js           路由、渲染、搜索
+js/pages.js         全部页面的结构定义与正文（最大文件）
+js/icons.js         内联 SVG 图标
+
+js/data.js          系列作品一览
+js/items.js         RF1–RF4 物品
+js/items4.js        RF4 物品补充
+js/monsters.js      魔物总表
+js/mon4.js          RF4 魔物
+js/monrfo.js        RFO 魔物
+js/resist.js        属性抗性
+js/resist4.js       RF4 属性抗性
+js/recipes.js       配方
+js/fish.js          鱼类资料
+js/fishspot.js      RF5 钓点
+js/fishspot4.js     RF4 钓点
+js/npcdata.js       村民喜好（RF4 / RF5）
+js/cropdata.js      RF4 作物
+js/rf1data.js       RF1 数据
+js/rf2data.js       RF2 数据
+js/rf3data.js       RF3 数据
+js/rffdata.js       RFF 数据
+js/extradata.js     扩展数据
+
+_build_*.py         数据构建脚本（从源表格生成 js/*.js，非运行时依赖）
+_xlsx_read.py       零依赖 xlsx 解析器
+```
+
+## 数据说明
+
+`js/*.js` 中的数据文件均由 `_build_*.py` 从原始表格脚本化生成，构建脚本一并保留，
+便于日后校对与增量更新。构建脚本依赖 Python 3.9+，不需要第三方库。
+
+## 版权
+
+本站为非官方粉丝向资料站，游戏名称与相关素材版权归 Marvelous Inc. / はしもとよしふみ 所有。
+站内数据为手工整理与校对，仅供学习交流。

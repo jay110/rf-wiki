@@ -1,0 +1,21 @@
+# 临时验证脚本（headless 探针，不入库）
+_p_*.html
+_dump_*.txt
+_probe_*.js
+
+# Python
+__pycache__/
+*.pyc
+
+# 系统 / 编辑器
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+*~
+
+# WorkBuddy 本地数据
+.workbuddy/
+
+# 单文件构建产物（由 _inline.py 生成）
+standalone.html
