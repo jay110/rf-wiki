@@ -1872,6 +1872,66 @@ const PAGES = [
             <div class="note">${(typeof RF1_COOKNOTE !== 'undefined') ? RF1_COOKNOTE : ''}</div>
             <div class="note">「其它」类的 ${etc.length} 条（失败之作、米饭、巧克力、红酒、艾丽草与各尺寸的鸡蛋／牛奶／奶酪／酸奶／蛋黄酱）是<b>没有配方的成品</b>，只能买或掉落——别在料理台上找它们。</div>`;
                 })()}
+            ${(() => {
+                    const ck = (typeof RF2_COOK !== 'undefined') ? RF2_COOK : [];
+                    const md = (typeof RF2_MED !== 'undefined') ? RF2_MED : [];
+                    const bk = (typeof RF2_BOOK !== 'undefined') ? RF2_BOOK : [];
+                    if (!ck.length || !(g && g.id === 'rf2')) return '';
+                    const cell = v => (v == null || v === '' || v === '—') ? '—' : v;
+                    const ORDER = ['徒手', '菜刀', '平底锅', '锅子', '搅拌器', '蒸笼', '其它'];
+                    const kinds = ORDER.filter(k => ck.some(x => x[0] === k));
+                    const dish = ck.filter(x => x[0] !== '其它');
+                    const etc = ck.filter(x => x[0] === '其它');
+                    const mats = new Set();
+                    [...ck, ...md].forEach(x => x[3].forEach(m => mats.add(m)));
+                    const lvs = ck.map(x => x[2]).filter(v => typeof v === 'number');
+                    const kindRows = kinds.map(k => {
+                        const sub = ck.filter(x => x[0] === k);
+                        const ls = sub.map(x => x[2]).filter(v => typeof v === 'number');
+                        const hasLv = sub.filter(x => x[2] != null);
+                        const easy = (hasLv.length ? hasLv : sub).slice().sort((a, b) => (a[2] || 0) - (b[2] || 0))[0];
+                        return [k, sub.length + ' 条', ls.length ? ('Lv' + Math.min.apply(null, ls) + '–' + Math.max.apply(null, ls)) : '—',
+                            easy[2] == null ? easy[1] : easy[1] + '（Lv' + easy[2] + '）'];
+                    });
+                    const rowC = x => [x[1] + ' ' + x[0] + ' ' + x[3].join(' ') + ' ' + (x[4] || '') + ' ' + (x[9] || ''),
+                        [x[1], x[0], x[2] == null ? '—' : 'Lv' + x[2], x[3].join('、') || '—', cell(x[4]), cell(x[9])]];
+                    const rowE = x => [x[1] + ' ' + (x[5] || '') + ' ' + (x[4] || ''),
+                        [x[1], cell(x[4]), cell(x[5])]];
+                    const rowB = x => [x[0] + ' ' + x[1], [x[0], x[1], x[2] + ' 条', x[3]]];
+                    const rowM = x => [x[1] + ' ' + x[3].join(' ') + ' ' + (x[5] || '') + ' ' + (x[9] || ''),
+                        [x[1], x[2] == null ? '—' : 'Lv' + x[2], x[3].join('、') || '—', cell(x[5]),
+                            cell(x[6]), cell(x[7]), cell(x[8]), cell(x[9])]];
+                    const noTrade = md.filter(x => x[7] === '无法交易').length;
+                    return `
+            <h2 class="h2">符文2：${ck.length} 条料理 + ${md.length} 条药学</h2>
+            <p class="p">这一作最不一样的地方是：<b>配方不是买书，是在阿尔瓦纳学园上课学会的</b>——「配方课程」列就是课程名。没上过那堂课，材料齐了也做不出来。另外几条高阶药学配方更特殊，要在遗迹里<b>参拜石像</b>才学得到。</p>
+            ${stat([['料理 / 药学', ck.length + ' / ' + md.length], ['厨具', (kinds.length - 1) + ' 类 + 其它'], ['配方等级', 'Lv' + Math.min.apply(null, lvs) + '–' + Math.max.apply(null, lvs)], ['配方课程', bk.length + ' 门'], ['素材种类', mats.size + ' 种']])}
+            <h2 class="h2">六类厨具 + 「其它」</h2>
+            <p class="p">平底锅 51 条最多（光烤鱼就有 20 多种），蒸笼 11 条最少。<b>烤箱菜没有单列</b>：披萨、多利亚饭、奶油烤菜、蛋糕、曲奇饼干、苹果派、吐司这些，原表并进了「锅子」节（46 条）。末尾的<b>「其它」24 条没有配方</b>，是店里直接买的成品。</p>
+            ${tbl(['分类', '条数', '等级范围', '入门一道'], kindRows, { leftFirst: true, cls: 'txt', colw: ['4.6rem', '2.8rem', '4rem', 'auto'] })}
+            <h2 class="h2">配方表：怎么做（可搜索）</h2>
+            <p class="p">按厨具与配方等级排序。搜菜名找做法，<b>搜食材名反查能做什么菜</b>；「所学课程」列告诉你要先上哪门课，「其它来源」列写着任务奖励等特殊拿法。</p>
+            ${ftableOwn(['名称', '厨具', '等级', '材料', '所学课程', '其它来源'],
+                    ['5.4rem', '3.2rem', '2.6rem', 'auto', '6.2rem', '6rem'],
+                    ck.map(rowC), { cls: 'mon-aux', ph: '搜菜名、厨具或食材' })}
+            <h2 class="h2">效果表（可搜索）</h2>
+            <p class="p">这一作的效果<b>一整串写在一起</b>（HP／RP 回复、HP 上限、力量／智力／体力、解除异常、持续时间），按原表直录，<b>搜关键词最好用</b>——比如搜「中毒抗性」就列出所有带抗性的药。</p>
+            ${ftableOwn(['名称', '所学课程', '使用总效果'],
+                    ['5.4rem', '7rem', 'auto'],
+                    ck.map(rowE), { cls: 'mon-aux', ph: '搜菜名或效果关键词' })}
+            <h2 class="h2">配方课程：${bk.length} 门</h2>
+            <p class="p">课程按厨具分：平底锅的课程最多（${bk.filter(x => x[1] === '平底锅').length} 门），菜刀 5 门、锅子 4 门、搅拌器 3 门。药学末尾几行写的是<b>石像名而非课程</b>（斜光照射的腐朽神社石像、绵延至社石桥石像、过去纺织社迹石像）——那几条要参拜石像才学得到。</p>
+            ${ftableOwn(['课程 / 习得来源', '对应类别', '涵盖配方', '等级范围'],
+                    ['8.6rem', '3.4rem', '3.4rem', 'auto'],
+                    bk.map(rowB), { cls: 'mon-aux', ph: '搜课程名或石像名' })}
+            <h2 class="h2">药学：${md.length} 条（可搜索）</h2>
+            <p class="p">药学这边同样不是只有回血：<b>营养剂α／β／γ</b>让作物提早 1／2／3 天成熟，<b>速速绿</b>直接给作物 +1 级，<b>蛋・白・质／智力补品／生命果冻</b>是永久强化四维，<b>符文药水</b>甚至能<b>提升角色等级 +1</b>。标「无法交易」的 ${noTrade} 件（三档恢复壶）只能自己做。</p>
+            ${ftableOwn(['名称', '药学等级', '材料', '效果', '店铺', '卖价', '买价', '其它来源'],
+                    ['5rem', '3.2rem', 'auto', 'auto', '2.8rem', '2.6rem', '2.6rem', '6rem'],
+                    md.map(rowM), { cls: 'mon-aux', ph: '搜药名、材料或效果' })}
+            <div class="note">${(typeof RF2_COOKNOTE !== 'undefined') ? RF2_COOKNOTE : ''}</div>
+            <div class="note">「其它」类的 ${etc.length} 条（米饭、巧克力、红酒、艾丽草与各尺寸的鸡蛋／牛奶／奶酪／酸奶／蛋黄酱）是<b>没有配方的成品</b>，只能在店里买或打怪掉落——别在料理台上找它们。</div>`;
+                })()}
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
@@ -3918,6 +3978,7 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-28　第三十九次：「料理」页补上符文2（RF2）——190 条料理按六类厨具拆分 + 27 条药学。这一作的配方不靠买书、而是在阿尔瓦纳学园上课习得，故新增「配方课程」表（42 门：平底锅 16 门最多，菜刀 5、锅子 4、搅拌器 3），药学中 7 条高阶配方的习得来源是遗迹石像（斜光照射的腐朽神社石像、绵延至社石桥石像、过去纺织社迹石像）；效果沿用原表整串写法，可按关键词搜索。另修正原 wiki 表的一处重复：「烤箱」节实为「搅拌器」表的副本（17 条果汁类完全相同），已剔除，真正的烤箱菜（披萨／蛋糕／曲奇／苹果派／奶油烤菜）原表并入「锅子」节，页内已注明</h2>
             <h2 class="h2">2026-10-28　第三十八次：「料理」页补上符文1（RF1）——184 条料理按七类厨具拆分（平底锅 51 条最多、空手 12 条最少）另加 25 条无配方的成品（买来或掉落），效果栏是全站最细的一档：HP／RP／最大HP、STR／INT／DEX／VIT 四维、属性攻防（火+30 这类）、中毒／封印／麻痹／吹飞／倒地五种抗性、持续时间（秒）全部单列；外加 11 本配方书与 24 条药学（营养剂、解麻药、永久强化类及其掉落怪）。译名采用 RF1 汉化定稿</h2>
             <h2 class="h2">2026-10-28　第三十七次：「料理」页补上海洋（RFO）——181 道料理按六类厨具拆分（平底锅 47 道最多、蒸笼 13 道最少，其中「厨房」类是本作独有的不开火组合类，40 道里绝大多数是鱼），逐条给出料理等级、材料、持续时间、HP／RP 回复与抗性类特殊效果；外加 23 本配方书汇总（初级／中级／上级三档＋每类一本「奥义」）、7 种可调制药品（恢复壶层层递进到 X）与 9 件无法制作、效果永久保留的强化道具（六元素＋力量／体力／智力补品）及其掉落地点。另标注 31 道可直接在三姐妹旅馆买到成品的菜</h2>
             <h2 class="h2">2026-10-28　第三十六次：「料理」页补上边境（RFF）——228 条配方（料理 207／药学 21），六类厨具加药学各成一类，含边境独有的「配方书与入手地点」表：不先买到书，配方根本不会出现。物品译名优先采用汉化版定稿（能查到日文原名对应定稿的就用定稿名），配方书名汉化表未收录、按字面直译</h2>
