@@ -2637,6 +2637,36 @@ const PAGES = [
             </div>`;
             }
 
+            /* ---- 数据表：RF1／RF2／边境／海洋 走各自的通用数值表（WEQ_ALL，列随作自定） ---- */
+            const WX = (typeof WEQ_ALL !== 'undefined' && g && WEQ_ALL[id]) ? WEQ_ALL[id] : null;
+            if (WX) {
+                const rowsN = WX.rows.length;
+                const kindRows = WX.kinds.map(([k, n]) => [`${k}（${n} 件）`]);
+                return `
+            <p class="p">本页是<b>${g ? g.name : ''}</b>的武器：<b>${rowsN} 件、${WX.kinds.length} 种</b>。上面是种类分布，下面是全表。</p>
+            ${stat([['武器', rowsN + ' 件'], ['种类', WX.kinds.length + ' 种'], ['数据来源', 'biligame 数值表']])}
+
+            <h2 class="h2">武器种类分布</h2>
+            <p class="p">这一作武器分成 <b>${WX.kinds.length} 类</b>，件数如下。先确定要练哪一类，再看全表里这一类能到多高。</p>
+            ${tbl(['种类（件数）'], kindRows, { leftFirst: true, cls: 'txt', colw: ['12rem'] })}
+            <div class="key">前期只练一到两种武器。<b>武器技能等级是独立成长的</b>，分散练等于每个都不够用。</div>
+
+            <h2 class="h2">全武器清单</h2>
+            <p class="p">${rowsN} 件，按原表的种类与面板列出。<b>列多放不下时可左右滑动</b>；「—」表示该项为 0、无，或原表未给。搜武器名、种类、属性或特效都能筛。</p>
+            ${ftableOwn(WX.cols, WX.colw, WX.rows, { ph: '输入武器名、种类、属性或特效筛选' })}
+            <div class="note">${WX.note || ''}</div>
+            <div class="jump">
+                <a href="#/page/battle">
+                    <div class="jp-t">战斗与弱点</div>
+                    <div class="jp-s">属性到底该不该堆，看抗性净差</div>
+                </a>
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">技能等级怎么刷、配方什么时候开</div>
+                </a>
+            </div>`;
+            }
+
             /* ---- 数据表：RF1／RF2／RF3／边境走文本表 ---- */
             if (TX) {
                 return `
