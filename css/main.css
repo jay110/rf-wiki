@@ -1971,6 +1971,20 @@ img {
     text-align: center;
 }
 
+/* 有立绘头像时：底色留一点灰绿，浅色衣服的角色才不会和卡片白底糊在一起 */
+.npc-av.has-face {
+    overflow: hidden;
+    background: #eef2f0;
+    line-height: 0;
+}
+
+.npc-av.has-face img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .npc-main {
     flex: 1;
     min-width: 0;

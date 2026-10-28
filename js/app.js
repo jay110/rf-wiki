@@ -372,9 +372,12 @@ function viewResident(gameId, role, sort) {
             const idx = all.indexOf(x);
             const rg = roleGroup(x.r);
             const fav = (x.b || x.l || []).slice(0, 3);
+            const face = faceSrc(g.id, x.j);
             return `<a class="npc-card" href="#/char/${g.id}/${encodeURIComponent(x.n)}">
-                <div class="npc-av" style="background:linear-gradient(150deg,
-                    hsl(${(g.hue + idx * 37) % 360} 42% 58%), hsl(${(g.hue + idx * 37 + 26) % 360} 46% 44%))">${String(x.n).slice(0, 1)}</div>
+                ${face
+                    ? `<div class="npc-av has-face"><img src="${face}" alt="" loading="lazy" decoding="async"></div>`
+                    : `<div class="npc-av" style="background:linear-gradient(150deg,
+                    hsl(${(g.hue + idx * 37) % 360} 42% 58%), hsl(${(g.hue + idx * 37 + 26) % 360} 46% 44%))">${String(x.n).slice(0, 1)}</div>`}
                 <div class="npc-main">
                     <div class="npc-name">${escHtml(x.n)}<span class="npc-jp">${escHtml(x.j || '')}</span></div>
                     <div class="npc-meta">
@@ -414,6 +417,7 @@ function viewChar(gameId, key) {
 
     const idx = all.indexOf(c);
     const hue = (g.hue + Math.max(0, idx) * 37) % 360;
+    const face = faceSrc(g.id, c.j);
     const kv = [
         ['原名', [c.j, c.e].filter(Boolean).join('　') || '—'],
         ['别名', c.al || '—'],
@@ -441,8 +445,10 @@ function viewChar(gameId, key) {
 
     return `
     <div class="portrait">
-        <div class="portrait-avatar" style="background:linear-gradient(150deg,
-            hsl(${hue} 42% 58%), hsl(${(hue + 26) % 360} 46% 44%))">${String(c.n).slice(0, 1)}</div>
+        ${face
+            ? `<div class="portrait-avatar has-face"><img src="${face}" alt=""></div>`
+            : `<div class="portrait-avatar" style="background:linear-gradient(150deg,
+            hsl(${hue} 42% 58%), hsl(${(hue + 26) % 360} 46% 44%))">${String(c.n).slice(0, 1)}</div>`}
         <div class="portrait-name">${escHtml(c.n)}</div>
         <div class="portrait-jp">${escHtml(c.j || '')}${c.e ? ' / ' + escHtml(c.e) : ''}</div>
     </div>
@@ -1102,6 +1108,18 @@ function scoreEntry(e, words) {
 
 function escHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* 角色头像地址。查不到就返回空串，视图退回「首字色块」——宁可显示色块，
+   也不要给一张破图或 404。表在 js/faces.js，键是日文名。
+   单文件版（standalone.html）没有外部文件可加载，_inline.py 会把图片转成
+   data URI 塞进 FACE_DATA，这里优先取它。 */
+function faceSrc(gid, jp) {
+    const m = (typeof FACE !== 'undefined') && FACE[gid];
+    if (!(m && jp && m[jp])) return '';
+    const path = `assets/face/${gid}/${m[jp]}.png`;
+    if (typeof FACE_DATA !== 'undefined' && FACE_DATA[path]) return FACE_DATA[path];
+    return path;
 }
 
 function markKw(text, head) {

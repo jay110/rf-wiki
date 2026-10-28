@@ -331,6 +331,18 @@
     box-shadow: inset 0 -18px 26px rgba(0, 0, 0, 0.12);
 }
 
+.portrait-avatar.has-face {
+    overflow: hidden;
+    background: #eef2f0;
+}
+
+.portrait-avatar.has-face img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .portrait-name {
     font-size: 1.16rem;
     font-weight: 600;
