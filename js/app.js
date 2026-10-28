@@ -353,6 +353,7 @@ function viewResident(gameId, role, sort) {
             href="${q(k)}">${k}</a>`).join('')}
         <a class="filter-btn sort-btn ${byBd ? 'on' : ''}"
            href="#/resident/${g.id}/${encodeURIComponent(active)}${byBd ? '' : '/bd'}">${byBd ? '✓ 按生日排' : '按生日排'}</a>
+        ${schedOf(g.id) ? `<a class="filter-btn" href="#/sched/${g.id}">每日行程</a>` : ''}
     </div>
     ${all.length ? `<div class="npc-sum">
         <span><b>${all.length}</b> 人</span>
@@ -455,8 +456,161 @@ function viewChar(gameId, key) {
         ${!tastes.length && !bonus.length ? `<div class="note">这一位的礼物数据暂未收录。<b>不是查漏了就是源里没有</b>——本站不填推测值，等有可靠来源再补。</div>` : ''}
         ${c.bd ? `<div class="key">生日：<b>${c.bd}</b>　·　生日当天送礼，好感加成显著高于平日。</div>`
             : `<div class="note">生日未收录。本站不填写未经核实的日期。</div>`}
-        <p class="p"><a class="link" href="#/resident/${g.id}/全部">‹ 返回 ${g.short} 居民一览</a></p>
+        <p class="p"><a class="link" href="#/resident/${g.id}/全部">‹ 返回 ${g.short} 居民一览</a>
+            ${schedOf(g.id) ? `　·　<a class="link" href="#/sched/${g.id}/${encodeURIComponent(c.n)}">看这一位的每日行程 ›</a>` : ''}</p>
     </div>`;
+}
+
+/* ---------- 村民行程表 ----------
+   数据在 js/sched.js，目前只有 RF1 有源（biligame「村民每日行程表」）。
+   一格 = 一个小时；同一地点的连续小时合并成一格，待了多久一眼看得出。 */
+let SCHD_DAY = 0;    // 第几种星期状态
+let SCHD_HL = '';    // 当前高亮的建筑
+
+const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const DAY_LABEL = {
+    '一': '周一', '二': '周二', '三': '周三', '四': '周四', '五': '周五',
+    '祝': '祝日', '平日（雨、雪）': '雨天·平日', '祝日（雨、雪）': '雨天·祝日',
+};
+
+function schedOf(gid) {
+    return (typeof SCHED !== 'undefined' && SCHED[gid]) ? SCHED[gid] : null;
+}
+
+function schedSpot(d, ch) {
+    return d.spots[B62.indexOf(ch)] || ['—', '', 'none'];
+}
+
+/* 把一串编码压成「连续同地点」的段 */
+function schedRuns(code, di, len) {
+    const out = [];
+    const st = di * len;
+    for (let i = 0; i < len; i++) {
+        const c = code.charAt(st + i);
+        const last = out[out.length - 1];
+        if (last && last.c === c) last.n++;
+        else out.push({ c: c, n: 1, i: i });
+    }
+    return out;
+}
+
+function schedSpan(d, i, n) {
+    const a = d.times[i], b = d.times[(i + n) % d.times.length];
+    return `${a}–${b}`;
+}
+
+/* 表格行：某人当天的行程 */
+function schedRows(d, di, gid) {
+    return d.people.map(p => {
+        const runs = schedRuns(p[3], di, d.times.length);
+        const tds = runs.map(r => {
+            const s = schedSpot(d, r.c);
+            const tip = s[0] + (s[1] ? ' ' + s[1] : '') + '　' + schedSpan(d, r.i, r.n);
+            const hl = SCHD_HL && SCHD_HL === s[0] ? ' hl' : '';
+            return `<td class="c-${s[2]}${hl}" colspan="${r.n}" data-b="${escHtml(s[0])}"
+                title="${escHtml(tip)}">${escHtml(s[0])}</td>`;
+        }).join('');
+        return `<tr data-n="${escHtml(p[0])}" data-j="${escHtml(p[1] || '')}" data-a="${escHtml(p[2] || '')}">
+            <th class="sch-n"><a href="#/char/${gid}/${encodeURIComponent(p[0])}">${escHtml(p[0])}</a>
+                ${p[1] ? `<span class="sch-jp">${escHtml(p[1])}</span>` : ''}</th>
+            ${tds}
+        </tr>`;
+    }).join('');
+}
+
+function viewSched(gid, who) {
+    const id = gid || 'rf1';
+    const d = schedOf(id);
+    const g = GAMES.find(x => x.id === id);
+    if (!d || !g) return viewError('这部作品还没有行程数据');
+
+    if (SCHD_DAY >= d.days.length) SCHD_DAY = 0;
+    const kw = who || '';
+    const withSched = d.people.length;
+
+    return `
+    <div class="section-title"><span>${g.short}　村民行程</span><span class="en">SCHEDULE</span></div>
+    <div class="sch-days" id="schDays">
+        ${d.days.map((k, i) => `<button class="filter-btn ${i === SCHD_DAY ? 'on' : ''}"
+            data-d="${i}">${DAY_LABEL[k] || k}</button>`).join('')}
+    </div>
+    <div class="sch-tools">
+        <input id="schQ" class="sch-q" type="search" placeholder="输入人名筛选" value="${escHtml(kw)}">
+        <span class="sch-tip">点格子高亮同建筑</span>
+    </div>
+    <div class="sch-wrap">
+        <table class="sch-tb${SCHD_HL ? ' has-hl' : ''}" id="schTb">
+            <thead><tr><th class="sch-n">村民</th>
+                ${d.times.map(t => `<th>${t.replace(':00', '')}</th>`).join('')}
+            </tr></thead>
+            <tbody id="schBody">${schedRows(d, SCHD_DAY, id)}</tbody>
+        </table>
+    </div>
+    <div class="sch-legend">
+        <span class="lg c-home">住处</span><span class="lg c-shop">店铺</span>
+        <span class="lg c-pub">公共设施</span><span class="lg c-out">户外</span>
+        <span class="lg c-cave">洞窟</span><span class="lg c-none">源页未标注</span>
+    </div>
+    <div class="content" style="margin-top:0">
+        <div class="note">
+            横向是整点，从早上 6:00 到次日 0:00，一格一小时；同一地点连着几个小时就并成一格，格子的宽度就是<strong>他在这里待了多久</strong>。
+            <br>「祝日」是本作的节日（晴天），雨天另外两版——村民在雨天会改去室内，找人的时候别按晴天的表跑。
+            <br>共 <strong>${withSched} 位</strong>村民收录在内。点表的某个地点格，会把<strong>同一栋建筑</strong>里的其他人一起点亮，方便一次找齐。
+        </div>
+        <div class="copyright">
+            <div>行程数据来自 biligame 符文工厂 wiki「村民每日行程表」（CC BY-SA）</div>
+            <div>人名按作品官方中文版统一；源页未标注的时段记为「—」，不做推测</div>
+        </div>
+    </div>`;
+}
+
+/* 行程表交互：换天、筛人、点亮同建筑 */
+function bindSched() {
+    const d = schedOf('rf1');
+    const tb = document.getElementById('schTb');
+    const tbody = document.getElementById('schBody');
+    if (!d || !tb || !tbody) return;
+
+    const redraw = () => {
+        tbody.innerHTML = schedRows(d, SCHD_DAY, 'rf1');
+        tb.classList.toggle('has-hl', !!SCHD_HL);
+        applyFilter();
+    };
+
+    document.querySelectorAll('#schDays [data-d]').forEach(b => {
+        b.addEventListener('click', () => {
+            SCHD_DAY = Number(b.dataset.d);
+            document.querySelectorAll('#schDays [data-d]').forEach(x => x.classList.toggle('on', x === b));
+            redraw();
+        });
+    });
+
+    /* 筛人：名字 / 日文名 / 源页旧译任一命中 */
+    const q = document.getElementById('schQ');
+    function applyFilter() {
+        const v = (q ? q.value : '').trim().toLowerCase();
+        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+            const hay = (tr.dataset.n + '\u0001' + tr.dataset.j + '\u0001' + tr.dataset.a).toLowerCase();
+            tr.hidden = !!v && !hay.includes(v);
+        });
+    }
+    if (q) q.addEventListener('input', applyFilter);
+
+    /* 点亮同建筑 */
+    tbody.addEventListener('click', e => {
+        const td = e.target.closest('td');
+        if (!td) return;
+        const b = td.dataset.b || '';
+        SCHD_HL = (SCHD_HL === b || b === '—') ? '' : b;
+        tb.classList.toggle('has-hl', !!SCHD_HL);
+        tbody.querySelectorAll('td').forEach(x => x.classList.toggle('hl', !!SCHD_HL && x.dataset.b === SCHD_HL));
+        const tip = document.querySelector('.sch-tip');
+        if (tip) tip.textContent = SCHD_HL ? `已点亮：${SCHD_HL}` : '点格子高亮同建筑';
+    });
+
+    if (q && q.value.trim()) {
+        try { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } catch (e) { }
+    }
 }
 
 function viewGames() {
@@ -973,6 +1127,11 @@ function render() {
         case 'char':
             html = viewChar(r.args[0], r.args[1]); title = g.name; tab = 'resident';
             break;
+        case 'sched':
+            html = viewSched(r.args[0], r.args[1]);
+            title = (GAMES.find(x => x.id === (r.args[0] || 'rf1')) || g).name;
+            tab = 'resident';
+            break;
         case 'games':
             html = viewGames(); title = '选择作品'; tab = 'setting';
             break;
@@ -1064,6 +1223,9 @@ function render() {
 
     /* 设置页交互 */
     if (r.name === 'setting') bindSetting();
+
+    /* 行程表 */
+    if (r.name === 'sched') bindSched();
 
     /* 魔物图鉴筛选 */
     const mq = document.getElementById('monQ');

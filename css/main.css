@@ -2113,3 +2113,156 @@ img {
     gap: 0.22rem;
     line-height: 1.6;
 }
+
+/* ============ 村民行程表（#/sched） ============ */
+.sch-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+    padding: 0 0.9rem 0.5rem;
+}
+
+.sch-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.9rem 0.5rem;
+}
+
+.sch-q {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.78rem;
+    color: var(--ink);
+    font-family: inherit;
+}
+
+.sch-q:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.sch-tip {
+    font-size: 0.66rem;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+
+.sch-wrap {
+    margin: 0 0.9rem;
+    padding: 0.4rem;
+    background: #fff;
+    border-radius: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sch-tb {
+    width: 100%;
+    min-width: 660px;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 2px;
+}
+
+.sch-tb thead th {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    text-align: center;
+    padding: 0.15rem 0;
+}
+
+.sch-tb thead th.sch-n {
+    width: 92px;
+    text-align: left;
+    padding-left: 4px;
+}
+
+.sch-tb tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 92px;
+    background: #fff;
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-align: left;
+    padding: 0 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sch-tb tbody th a {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.sch-tb tbody th a:hover {
+    color: var(--green);
+}
+
+.sch-jp {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 400;
+    color: var(--ink-4);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sch-tb td {
+    height: 32px;
+    font-size: 0.64rem;
+    line-height: 1.1;
+    text-align: center;
+    border-radius: 4px;
+    padding: 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: opacity 0.15s ease-out;
+}
+
+.sch-tb td.c-home { background: #e8f1fb; color: #31597f; }
+.sch-tb td.c-shop { background: #fdf1e3; color: #8a5a22; }
+.sch-tb td.c-pub  { background: #e9f5ec; color: #2d6a3e; }
+.sch-tb td.c-out  { background: #eef1f3; color: #4a5a64; }
+.sch-tb td.c-cave { background: #f0ecf9; color: #5b468c; }
+.sch-tb td.c-none { background: #fafbfb; color: #c9ced2; }
+
+.sch-tb.has-hl td {
+    opacity: 0.34;
+}
+
+.sch-tb.has-hl td.hl {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px var(--green);
+}
+
+.sch-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.55rem 0.95rem 0.2rem;
+}
+
+.sch-legend .lg {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.42rem;
+    border-radius: 3px;
+}
+
+.sch-legend .c-home { background: #e8f1fb; color: #31597f; }
+.sch-legend .c-shop { background: #fdf1e3; color: #8a5a22; }
+.sch-legend .c-pub  { background: #e9f5ec; color: #2d6a3e; }
+.sch-legend .c-out  { background: #eef1f3; color: #4a5a64; }
+.sch-legend .c-cave { background: #f0ecf9; color: #5b468c; }
+.sch-legend .c-none { background: #fafbfb; color: #c9ced2; }
