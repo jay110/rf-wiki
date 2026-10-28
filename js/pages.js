@@ -279,12 +279,74 @@ function fishspot4Html() {
                 <a href="#/page/mine">
                     <div class="jp-t">采矿与钓鱼</div>
                     <div class="jp-s">钓鱼在一天的体力预算里占多少</div>
-                </a>
-            </div>`;
-}
+            </a>
+        </div>`;
+    }
 
-/* ------------------------------------------------------------
-   RF4 农作（crop 页的 RF4 段）
+    /* ------------------------------------------------------------
+       RFO 钓点与季节（fishspot 页的 RFO 段）
+       数据 SPOT_RFO：[地点, 区域, 季节, 时间, [[鱼名, 概率], ...]]
+       源：biligame RFOfishing（地点 × 区域 × 季节 × 时间 × 4 鱼概率）
+       ------------------------------------------------------------ */
+    function fishspotRfoHtml() {
+        const R = (typeof SPOT_RFO !== 'undefined') ? SPOT_RFO : [];
+        if (!R.length) return '';
+        const show = r => r[0] + (r[1] ? ' ' + r[1] : '');
+        const locSet = {}; R.forEach(r => locSet[show(r)] = 1);
+        const locs = Object.keys(locSet);
+        const fishSet = {}; R.forEach(r => r[4].forEach(f => fishSet[f[0]] = 1));
+        const fishes = Object.keys(fishSet).sort();
+        const byFish = {};
+        R.forEach(r => r[4].forEach(f => { (byFish[f[0]] = byFish[f[0]] || new Set()).add(show(r)); }));
+        const cell = v => v > 0 ? v + '%' : '<span class="mon-no">—</span>';
+        const fc = f => f[0] + ' <b>' + f[1] + '%</b>';
+        const pad = arr => { const a = arr.slice(); while (a.length < 4) a.push(null); return a; };
+
+        const rows = R.map(r => {
+            const sc = pad(r[4]);
+            return [show(r) + ' ' + r[2] + r[3], [
+                show(r), r[2], r[3],
+                sc[0] ? fc(sc[0]) : cell(0), sc[1] ? fc(sc[1]) : cell(0),
+                sc[2] ? fc(sc[2]) : cell(0), sc[3] ? fc(sc[3]) : cell(0),
+            ]];
+        });
+        const fishRows = fishes.map(n => {
+            const ls = Array.from(byFish[n]);
+            return [n, [n, ls.length + ' 处', ls.slice(0, 4).join('、') + (ls.length > 4 ? '…' : '')]];
+        });
+
+        return `
+        <h2 class="h2">海洋的钓鱼是「地点 × 季节 × 时间」三重坐标</h2>
+        <p class="p">和 RF4（环境列平铺）、RF5（钓点 × 季节）都不同，海洋把概率拆成了<b>地点、区域、季节、时段（昼／夜）四层</b>。同一个地点，白天和晚上出的鱼可能完全不一样——比如白沙海滩白天是沙丁鱼针鱼，晚上变成乌贼河豚。每一格内部归一化成 100%，格子之间不能比。</p>
+        ${stat([['钓点', locs.length + ' 处'], ['鱼与钓物', fishes.length + ' 种'], ['有效条目', R.length + ' 条']])}
+        <div class="key">最省事的用法是<b>反向查</b>：想钓某种鱼，直接去「鱼种 → 钓点」那张表看它常出没在哪，再对照上面的时间。比如<b>虾</b>几乎只在海边的洞窟 2 池（95%）和夜晚近海出现；<b>金枪鱼</b>只在外洋、封冰岛、触礁沉船这些远海点；<b>西太公鱼</b>系列（铜／银／金）是封冰岛 2 池的独占高阶鱼。</div>
+
+        <h2 class="h2">全部 ${R.length} 条：地点 × 季节 × 时间</h2>
+        <p class="p">百分比是该地点在该季节该时段的占比，<b>每一格内部加起来 100%</b>。空缺（—）是这个组合完全不出。「鱼1~4」按源表顺序，概率由高到低大致排列。</p>
+        ${ftableOwn(['钓点', '季', '时', '鱼1', '鱼2', '鱼3', '鱼4'],
+            ['9rem', '2.4rem', '2.4rem', 'auto', 'auto', 'auto', 'auto'],
+            rows, { ph: '输入钓点或鱼名筛选' })}
+
+        <h2 class="h2">${fishes.length} 种鱼：去哪钓</h2>
+        <p class="p">下表按鱼种列出它出现过的钓点数量，并给出前几处。某鱼只在「鱼群 B」这类特殊点出现，说明它是乌贼系专属；只在封冰岛 2 池出现的，多为西太公鱼高阶变种。</p>
+        ${ftableOwn(['鱼', '出现钓点', '常出没'], ['6rem', '4rem', 'auto'], fishRows, { ph: '输入鱼名筛选' })}
+
+        <div class="note">源表来自 biligame 符文工厂 wiki《RFOfishing》。原表为「地点·区域·季节·时间·四鱼概率」的二维表，本页逐条录入共 ${R.length} 条、${locs.length} 个钓点、${fishes.length} 种鱼（含西太公鱼／铜／银／金 四种进阶变种）。概率栏为源表原值（百分比）。季节对海洋是「春／夏／秋／冬」四档，时间分昼（06:00–18:00）与夜（18:00–06:00）。</div>
+
+        <div class="jump">
+            <a href="#/page/mine">
+                <div class="jp-t">采矿与钓鱼</div>
+                <div class="jp-s">钓鱼在一天体力预算里占多少</div>
+            </a>
+            <a href="#/page/cook">
+                <div class="jp-t">料理</div>
+                <div class="jp-s">哪道菜要哪种鱼</div>
+            </a>
+        </div>`;
+    }
+
+    /* ------------------------------------------------------------
+       RF4 农作（crop 页的 RF4 段）
    表结构：[名, [四段天数], 再生天数, 每株产量, 初始HP, 种子价, 单个卖价, [土综合,土速度,土品质,土尺寸,土数量]]
    ------------------------------------------------------------ */
 function crop4Html() {
@@ -4192,11 +4254,14 @@ const PAGES = [
                 <td class="td f-p">${x.p || '<span class="mon-no">—</span>'}</td>
             </tr>`;
 
-            const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5')
+            const rfoFishNote = (g && g.id === 'rfo')
+                ? `<div class="note"><b>海洋（RFO）</b>的鱼类尺寸与金杯线暂缺可靠来源，本页下方 RF4／RF5 鱼表仅作通用机制参考。但海洋的<b>钓点 × 鱼种 × 概率</b>分布已在 <a href="#/page/fishspot">钓点与季节</a> 页完整收录（共 28 处钓点、30 种鱼），要查「哪片海出什么鱼、概率多少」请直接去那页。</div>`
+                : '';
+            const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5' && g.id !== 'rfo')
                 ? `<div class="note"><b>${g.name}</b> 的鱼类专项数据暂缺可靠来源。本页鱼种全表是系列最完整的 <b>RF4／RF5</b> 数据，供横向参考；钓鱼机制（鱼影、四种状态、金杯线）全系列通用，可直接用在本作。</div>`
                 : '';
             return `
-            ${crossNote}
+            ${rfoFishNote}${crossNote}
             <h2 class="h2">钓鱼不是抽奖，鱼影早就把答案写在脸上</h2>
             <p class="p">RF 的钓鱼系统里，水面下那个影子在你下竿之前就暴露了三件事：<b>色泽、大小、抖动频率</b>。看懂这三点，你要的那条鱼一出现你就知道；反过来，不看鱼影硬拉，等于在随机池里捞——这不是运气问题，是信息问题。</p>
             ${tbl(['看什么', '怎么读', '意味着什么'], [
@@ -4272,8 +4337,9 @@ const PAGES = [
     /* ================= RF5 钓点与季节分布 ================= */
     {
         key: 'fishspot', group: 'item', title: '钓点与季节', icon: 'fish',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rf4', 'rf4sp', 'rf5', 'rfo'],
         body: g => {
+            if (g.id === 'rfo') return fishspotRfoHtml();
             if (String(g.id).indexOf('rf5') !== 0) return fishspot4Html();
             const S = (typeof SPOT_RF5 !== 'undefined') ? SPOT_RF5 : [];
             const SH = (typeof SPOT_SHARE !== 'undefined') ? SPOT_SHARE : [];
