@@ -1320,10 +1320,12 @@ function render() {
             break;
         case 'resident':
             html = viewResident(r.args[0], r.args[1], r.args[2]);
-            title = g.name; tab = 'resident';
+            /* 路径里带着作品，标题要跟着它走；用 cur() 会留着上一个作品的标题 */
+            title = (GAMES.find(x => x.id === r.args[0]) || g).name; tab = 'resident';
             break;
         case 'char':
-            html = viewChar(r.args[0], r.args[1]); title = g.name; tab = 'resident';
+            html = viewChar(r.args[0], r.args[1]);
+            title = (GAMES.find(x => x.id === r.args[0]) || g).name; tab = 'resident';
             break;
         case 'sched':
             html = viewSched(r.args[0], r.args[1], r.args[2]);
