@@ -18,6 +18,9 @@
 - 移动端优先：430px 宽度下表格横向滚动，不压成竖排
 - 全站搜索：不只搜页面标题——当前作品四千多行数据表里的每个条目名都建了索引，
   输入即出建议，点结果跳到该页并高亮那一行（同名条目自动合并，多词搜不到时退回首词）
+- 人物名册：7 部作品 199 人，每位带生日、声优、四档送礼喜好与回礼；
+  可按「结婚候补／居民」筛选，也能一键按生日排出春夏秋冬的顺序，
+  人名与礼物名都进了全站搜索（搜「金刚花」能翻出谁最喜欢它）
 - 数据驱动：新增一部作品只需追加一个 `js/xxxdata.js`
 
 ## 本地运行
@@ -51,7 +54,8 @@ js/recipes.js       配方
 js/fish.js          鱼类资料
 js/fishspot.js      RF5 钓点
 js/fishspot4.js     RF4 钓点
-js/npcdata.js       村民喜好（RF4 / RF5）
+js/npcfull.js       人物档案（7 部作品 199 人：生日 / 声优 / 喜好 / 回礼）
+js/npcdata.js       村民喜好（RF4 / RF5，解包表横向统计用）
 js/cropdata.js      RF4 作物
 js/rf1data.js       RF1 数据
 js/rf2data.js       RF2 数据
@@ -67,6 +71,11 @@ _xlsx_read.py       零依赖 xlsx 解析器
 
 `js/*.js` 中的数据文件均由 `_build_*.py` 从原始表格脚本化生成，构建脚本一并保留，
 便于日后校对与增量更新。构建脚本依赖 Python 3.9+，不需要第三方库。
+
+人物档案（`js/npcfull.js`）由 `_build_npcfull.py` 从
+[biligame 符文工厂 wiki](https://wiki.biligame.com/runefactory/) 的
+`RF1characters`～`RFOcharacters` 七个页面解析而来，原站内容以 CC BY-SA 授权，
+本站在此基础上做了译名统一、按日文名对齐与字段清洗。原始 wikitext 抓取件留在本地 `_npc_src/`（不入库，需要时用 API 重抓即可）。
 
 ## 版权
 

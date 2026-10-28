@@ -91,7 +91,8 @@ function latestUpdates(n) {
    攻略目录在 #/wiki，两者分开，跟版式参考站的结构一致。 */
 function viewWelcome() {
     const g = cur();
-    const chars = GAMES.reduce((s, x) => s + (x.chars ? x.chars.length : 0), 0);
+    /* 用人物档案的总数（199 人），不是 data.js 里那份只收候补的旧名单 */
+    const chars = GAMES.reduce((s, x) => s + npcOf(x).length, 0);
     const ups = latestUpdates(3);
 
     return `
@@ -196,7 +197,7 @@ function footer(g) {
     return `
     <div class="copyright">
         <div>符文工房攻略百科　·　非官方中文资料站</div>
-        <div>当前收录：${g.name}　|　共 ${PAGES.filter(p => pageVis(p, g)).length} 个条目 / ${g.chars.length} 位角色</div>
+        <div>当前收录：${g.name}　|　共 ${PAGES.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
         <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
     </div>`;
 }
@@ -281,67 +282,178 @@ function focusRow(name) {
     }
 }
 
-function viewResident(gameId, role) {
+/* ============================================================
+   人物：居民 / 结婚候补 / 主角
+   NPC_FULL（js/npcfull.js）覆盖 7 部作品 199 人，字段来自 biligame
+   符文工厂 wiki 的人物页；没有对应源的作品（龙之天地）回退到 GAMES[].chars
+   ============================================================ */
+
+const NPC_KEY = { rf3sp: 'rf3', rf4sp: 'rf4' };
+
+function npcOf(g) {
+    const k = NPC_KEY[g.id] || g.id;
+    const full = (typeof NPC_FULL !== 'undefined') && NPC_FULL[k];
+    if (full && full.length) return full;
+    return (g.chars || []).map(c => ({
+        n: c.name, j: c.jp || '', r: c.role || '', cv: c.cv, nt: c.note, bd: c.bday || ''
+    }));
+}
+
+/* 花嫁候补 / 花婿候补 / 结婚候补 统一归为「结婚候补」——各作源的叫法不一样 */
+function roleGroup(r) {
+    if (!r) return '居民';                    /* 源页是村民名册，非候补即居民 */
+    if (r === '主角') return '主角';
+    if (/花嫁|花婿|结婚/.test(r)) return '结婚候补';
+    if (r === '关键角色') return '关键角色';
+    return '居民';
+}
+
+const SEASON_I = { '春': 0, '夏': 1, '秋': 2, '冬': 3 };
+function bdayKey(s) {
+    const m = /^([春夏秋冬])(\d+)/.exec(s || '');
+    return m ? SEASON_I[m[1]] * 100 + Number(m[2]) : 9999;
+}
+
+/* 每部作品的礼物机制差异——不写清楚，读者会以为我们漏收 */
+const GIFT_NOTE = {
+    rf1: 'RF1 的机制里<b>没有「讨厌」与「最讨厌」</b>两档：送错了不掉好感，只是不涨。所以本作只有最喜欢与喜欢两份清单。',
+    rf2: 'RF2 <b>没有「最喜欢」档</b>，只有喜欢与讨厌；生日礼物是单独指定的一件东西，收益高于平时送的喜欢品。',
+    rf3: 'RF3 除了四档礼物，每位候补还有<b>喜欢的香水</b>——香水是独立于料理与素材的一条加成线，本作独有。',
+    rf4: 'RF4 的四档齐全，另有<b>回赠品</b>：送礼之后对方会回一件东西，类型因人而异（料理、素材、失败作……）。',
+    rf5: 'RF5 把清单叫「喜欢的东西／讨厌的东西」，另设<b>回礼</b>与<b>生日礼物</b>两项。',
+    rff: '边境<b>没有「最讨厌」档</b>，只有最喜欢／喜欢／讨厌三份；且同一件东西在不同作里的译名不一样，别名一栏收的是民间译法。',
+    rfo: '海洋<b>没有「最讨厌」档</b>；本作角色名在 wiki 源里按 RF4S 官方译名写，与民间译法的差异记在别名一栏。'
+};
+
+function tasteTags(arr, cls) {
+    if (!arr || !arr.length) return '<span class="mon-no">—</span>';
+    return arr.map(x => `<span class="tag ${cls}">${escHtml(x)}</span>`).join('');
+}
+
+function viewResident(gameId, role, sort) {
     const g = GAMES.find(x => x.id === gameId) || cur();
-    const roles = ['全部', '主角', '花嫁候补', '花婿候补', '居民', '关键角色'];
+    const all = npcOf(g);
     const active = role || '全部';
-    const list = g.chars.filter(c => active === '全部' || c.role === active);
+    const byBd = sort === 'bd';
+    const roles = ['全部', '主角', '结婚候补', '居民'];
+    const hasRole = k => all.some(x => roleGroup(x.r) === k);
+
+    let list = all.filter(x => active === '全部' || roleGroup(x.r) === active);
+    if (byBd) list = list.slice().sort((a, b) => bdayKey(a.bd) - bdayKey(b.bd) || String(a.n).localeCompare(String(b.n)));
+
+    const withBd = all.filter(x => x.bd).length;
+    const withCv = all.filter(x => x.cv).length;
+    const marry = all.filter(x => roleGroup(x.r) === '结婚候补').length;
+    const q = k => `#/resident/${g.id}/${encodeURIComponent(k)}${byBd ? '/bd' : ''}`;
 
     return `
     <div class="section-title"><span>${g.short}　居民</span><span class="en">RESIDENTS</span></div>
     <div class="filter-bar">
-        ${roles.map(r => `<a class="filter-btn ${r === active ? 'on' : ''}"
-            href="#/resident/${g.id}/${encodeURIComponent(r)}">${r}</a>`).join('')}
+        ${roles.filter(k => k === '全部' || hasRole(k)).map(k => `<a class="filter-btn ${k === active ? 'on' : ''}"
+            href="${q(k)}">${k}</a>`).join('')}
+        <a class="filter-btn sort-btn ${byBd ? 'on' : ''}"
+           href="#/resident/${g.id}/${encodeURIComponent(active)}${byBd ? '' : '/bd'}">${byBd ? '✓ 按生日排' : '按生日排'}</a>
     </div>
-    ${list.length ? `<div class="menu-resident">
-        ${list.map(c => {
-            const i = g.chars.indexOf(c);
-            return `<a class="resident" href="#/char/${g.id}/${i}">
-                <div class="resident-icon" style="background:linear-gradient(150deg,
-                    hsl(${(g.hue + i * 37) % 360} 42% 58%), hsl(${(g.hue + i * 37 + 26) % 360} 46% 44%))">
-                    ${c.name.slice(0, 1)}
+    ${all.length ? `<div class="npc-sum">
+        <span><b>${all.length}</b> 人</span>
+        <span>结婚候补 <b>${marry}</b></span>
+        <span>生日已知 <b>${withBd}</b></span>
+        <span>声优已知 <b>${withCv}</b></span>
+    </div>
+    ${!list.length ? `<div class="empty">这个分类下暂无角色<br><span style="font-size:0.74rem">换个分类看看，或点「全部」</span></div>` : ''}
+    <div class="npc-list">
+        ${list.map(x => {
+            const idx = all.indexOf(x);
+            const rg = roleGroup(x.r);
+            const fav = (x.b || x.l || []).slice(0, 3);
+            return `<a class="npc-card" href="#/char/${g.id}/${encodeURIComponent(x.n)}">
+                <div class="npc-av" style="background:linear-gradient(150deg,
+                    hsl(${(g.hue + idx * 37) % 360} 42% 58%), hsl(${(g.hue + idx * 37 + 26) % 360} 46% 44%))">${String(x.n).slice(0, 1)}</div>
+                <div class="npc-main">
+                    <div class="npc-name">${escHtml(x.n)}<span class="npc-jp">${escHtml(x.j || '')}</span></div>
+                    <div class="npc-meta">
+                        ${rg ? `<span class="tag role-${rg === '结婚候补' ? 'marry' : rg === '主角' ? 'hero' : 'town'}">${escHtml(x.r)}</span>` : ''}
+                        ${x.bd ? `<span class="npc-bd">🎂 ${x.bd}</span>` : ''}
+                        ${x.cv ? `<span class="npc-cv">CV ${escHtml(x.cv)}</span>` : ''}
+                    </div>
+                    ${fav.length ? `<div class="npc-fav">${fav.map(f => `<span class="tag fav">${escHtml(f)}</span>`).join('')}${(x.b || x.l).length > 3 ? `<span class="npc-more">+${(x.b || x.l).length - 3}</span>` : ''}</div>` : ''}
                 </div>
-                <div class="resident-text">${c.name}</div>
-                <div class="resident-role">${c.role}</div>
+                ${icon('chev', 'chev')}
             </a>`;
         }).join('')}
     </div>` : `<div class="empty">这个分类下暂未收录角色</div>`}
-    ${g.chars.length <= 3 ? `<div class="content" style="margin-top:0;padding-top:0">
-        <div class="note">《${g.short}》的角色名单尚未补全，目前只收录了与主线直接相关的几位。
-        本站的原则是「没核实的宁可不写」——与其填一堆可能错的名字，不如留白，等有可靠来源再补。</div>
+    ${GIFT_NOTE[NPC_KEY[g.id] || g.id] ? `<div class="content" style="margin-top:0;padding-top:0">
+        <div class="note">${GIFT_NOTE[NPC_KEY[g.id] || g.id]}</div>
     </div>` : ''}
+    ${byBd ? `<div class="note" style="margin:0 0.9rem 0.6rem">已按游戏内日期排序：春 → 夏 → 秋 → 冬。生日当天送礼的好感加成显著高于平日，提前一天备好礼物即可。</div>` : ''}
     <div class="copyright">
-        <div>角色名单与声优取自 Marvelous 官方作品页 / 世嘉《符文工厂3豪华版》官网</div>
+        <div>角色档案改编自 biligame 符文工厂 wiki 的人物页（CC BY-SA），译名以作品官方中文版为准</div>
         <div>未核实的字段留空，不做推测填写</div>
     </div>`;
 }
 
-function viewChar(gameId, idx) {
+function viewChar(gameId, key) {
     const g = GAMES.find(x => x.id === gameId) || cur();
-    const c = g.chars[Number(idx)];
+    const all = npcOf(g);
+    let c = all.find(x => x.n === key);
+    /* 旧链接 #/char/<作>/<序号> 仍然可用 */
+    if (!c && /^\d+$/.test(key || '')) c = all[Number(key)] || (g.chars[Number(key)] ?
+        { n: g.chars[Number(key)].name, j: g.chars[Number(key)].jp, r: g.chars[Number(key)].role } : null);
     if (!c) return viewError('没有这个角色');
-    const hue = (g.hue + g.chars.indexOf(c) * 37) % 360;
-    const rows = [
-        ['原名', c.jp || '—'],
-        ['身份', c.role],
+
+    const idx = all.indexOf(c);
+    const hue = (g.hue + Math.max(0, idx) * 37) % 360;
+    const kv = [
+        ['原名', [c.j, c.e].filter(Boolean).join('　') || '—'],
+        ['别名', c.al || '—'],
+        ['身份', c.r || '居民'],
         ['声优', c.cv || '未收录'],
-        ['生日', c.bday || '未收录'],
-        ['所属', `${g.short}　${g.stage}`],
-    ];
+        ['生日', c.bd || '未收录'],
+        ['住址', c.ad || '—'],
+    ].filter(r => r[1] !== '—');
+
+    const tastes = [
+        ['最讨厌', c.w, 'worst'],
+        ['讨厌', c.h, 'hate'],
+        ['喜欢', c.l, 'like'],
+        ['最喜欢', c.b, 'best'],
+    ].filter(t => t[1] && t[1].length);
+
+    const bonus = [
+        ['回礼', c.g], ['生日礼物', c.bg], ['求婚道具', c.pr], ['喜欢的香水', c.pf],
+    ].filter(t => t[1]);
+
+    const cdRows = c.cd ? Object.entries(c.cd).map(([k, v]) => {
+        const [cond, kk] = k.split('·');
+        return `<div class="kv-row"><div class="kv-k">${cond}</div><div class="kv-v">${tasteTags(v, kk === 'hate' ? 'hate' : kk === 'worst' ? 'worst' : 'like')}</div></div>`;
+    }).join('') : '';
+
     return `
     <div class="portrait">
         <div class="portrait-avatar" style="background:linear-gradient(150deg,
-            hsl(${hue} 42% 58%), hsl(${(hue + 26) % 360} 46% 44%))">${c.name.slice(0, 1)}</div>
-        <div class="portrait-name">${c.name}</div>
-        <div class="portrait-jp">${c.jp || ''}</div>
+            hsl(${hue} 42% 58%), hsl(${(hue + 26) % 360} 46% 44%))">${String(c.n).slice(0, 1)}</div>
+        <div class="portrait-name">${escHtml(c.n)}</div>
+        <div class="portrait-jp">${escHtml(c.j || '')}${c.e ? ' / ' + escHtml(c.e) : ''}</div>
     </div>
     <div class="kv">
-        ${rows.map(([k, v]) => `<div class="kv-row"><div class="kv-k">${k}</div><div class="kv-v">${v}</div></div>`).join('')}
+        ${kv.map(([k, v]) => `<div class="kv-row"><div class="kv-k">${k}</div><div class="kv-v">${escHtml(v)}</div></div>`).join('')}
     </div>
     <div class="content">
-        <h2 class="h2">简介</h2>
-        <p class="p">${c.note || '暂无说明。'}</p>
-        ${c.bday ? `<div class="key">生日：<b>${c.bday}</b>　·　生日当天送礼，好感加成显著。</div>`
+        ${c.nt ? `<h2 class="h2">简介</h2><p class="p">${escHtml(c.nt)}</p>` : ''}
+        ${tastes.length ? `<h2 class="h2">礼物喜好</h2>
+        <p class="p">按「最讨厌 → 最喜欢」排；同一个人的清单是全游戏查得到的全部条目，不是节选。</p>
+        <div class="taste">
+            ${tastes.map(([label, arr, cls]) => `
+            <div class="taste-row">
+                <div class="taste-k ${cls}">${label}<span>${arr.length}</span></div>
+                <div class="taste-v">${tasteTags(arr, cls)}</div>
+            </div>`).join('')}
+        </div>` : ''}
+        ${cdRows ? `<h2 class="h2">特殊情况</h2><div class="kv">${cdRows}</div>` : ''}
+        ${bonus.length ? `<h2 class="h2">送礼之外</h2>
+        <div class="kv">${bonus.map(([k, v]) => `<div class="kv-row"><div class="kv-k">${k}</div><div class="kv-v">${escHtml(v)}</div></div>`).join('')}</div>` : ''}
+        ${!tastes.length && !bonus.length ? `<div class="note">这一位的礼物数据暂未收录。<b>不是查漏了就是源里没有</b>——本站不填推测值，等有可靠来源再补。</div>` : ''}
+        ${c.bd ? `<div class="key">生日：<b>${c.bd}</b>　·　生日当天送礼，好感加成显著高于平日。</div>`
             : `<div class="note">生日未收录。本站不填写未经核实的日期。</div>`}
         <p class="p"><a class="link" href="#/resident/${g.id}/全部">‹ 返回 ${g.short} 居民一览</a></p>
     </div>`;
@@ -368,9 +480,10 @@ function viewGames() {
 
 function viewTodo() {
     const g = cur();
-    const withBday = g.chars.filter(c => c.bday);
+    /* 用人物档案的生日（覆盖 7 部作品 173 人），比 GAMES[].chars 里的零散几条完整得多 */
+    const withBday = npcOf(g).filter(c => c.bd);
     const parsed = withBday.map(c => {
-        const m = c.bday.match(/([春夏秋冬])\s*(\d+)/);
+        const m = c.bd.match(/([春夏秋冬])\s*(\d+)/);
         if (!m) return null;
         return { c, s: SEASON_NAMES.indexOf(m[1]), d: Number(m[2]) };
     }).filter(Boolean);
@@ -387,14 +500,14 @@ function viewTodo() {
         <div class="section-title"><span>${nm}季生日</span><span class="en">SEASON ${si + 1}</span></div>
         <div class="todo-list">
             ${list.map(o => `
-                <a class="todo-item" href="#/char/${g.id}/${g.chars.indexOf(o.c)}">
+                <a class="todo-item" href="#/char/${g.id}/${encodeURIComponent(o.c.n)}">
                     <div class="todo-badge">
                         <div class="tb-d">${o.d}</div>
                         <div class="tb-s">${nm}</div>
                     </div>
                     <div class="todo-body">
-                        <div class="todo-name">${o.c.name}</div>
-                        <div class="todo-meta">${o.c.role}${o.c.cv ? '　·　' + o.c.cv : ''}</div>
+                        <div class="todo-name">${o.c.n}</div>
+                        <div class="todo-meta">${o.c.r || '居民'}${o.c.cv ? '　·　' + o.c.cv : ''}</div>
                     </div>
                     <div class="todo-days">${o.s === S.cur.s && o.d === S.cur.d ? '今天' : ''}</div>
                 </a>`).join('')}
@@ -425,10 +538,10 @@ function viewTodo() {
                         <div class="tb-s">${o.left === 0 ? '天' : '天后'}</div>
                     </div>
                     <div class="todo-body">
-                        <div class="todo-name">${o.c.name} 的生日</div>
-                        <div class="todo-meta">${fmtDay({ s: o.s, d: o.d })}　·　${o.c.role}</div>
+                        <div class="todo-name">${o.c.n} 的生日</div>
+                        <div class="todo-meta">${fmtDay({ s: o.s, d: o.d })}　·　${o.c.r || '居民'}</div>
                     </div>
-                    <a href="#/char/${g.id}/${g.chars.indexOf(o.c)}" class="todo-days" style="color:#198d44">查看</a>
+                    <a href="#/char/${g.id}/${encodeURIComponent(o.c.n)}" class="todo-days" style="color:#198d44">查看</a>
                 </div>`).join('')}
         </div>` : `
         <div class="section-title"><span>即将到来</span><span class="en">UPCOMING</span></div>
@@ -439,7 +552,7 @@ function viewTodo() {
                     <div class="tb-s">${nextOne ? '天后' : '无'}</div>
                 </div>
                 <div class="todo-body">
-                    <div class="todo-name">${nextOne ? '下一个生日：' + nextOne.c.name : '本作暂无已收录的生日'}</div>
+                    <div class="todo-name">${nextOne ? '下一个生日：' + nextOne.c.n : '本作暂无已收录的生日'}</div>
                     <div class="todo-meta">${nextOne
                 ? fmtDay({ s: nextOne.s, d: nextOne.d }) + '　·　超出提前提醒范围，可在设置里调大'
                 : '角色生日未收录，本站不做推测填写'}</div>
@@ -610,6 +723,24 @@ function buildIndex(g) {
             });
         }
     }
+    /* 人物名册不是 PAGES 里的页面（走 #/resident 与 #/char 路由），
+       但玩家最常搜的就是人名和「谁喜欢 X」，所以单独补进索引 */
+    try {
+        const ppl = npcOf(g);
+        for (const x of ppl) {
+            const tastes = ['最喜欢', '喜欢', '讨厌', '最讨厌']
+                .map((k, i) => (x[['b', 'l', 'h', 'w'][i]] || []).length
+                    ? k + '：' + x[['b', 'l', 'h', 'w'][i]].join('、') : '')
+                .filter(Boolean).join(' ');
+            const text = [x.n, x.j, x.e, x.al, x.bd, x.cv, x.r, tastes].filter(Boolean).join(' ');
+            list.push({
+                k: 'npc', t: '人物名册', i: 'users', grp: 'life',
+                n: x.n, cells: [x.n, x.j || '', x.bd || '', x.cv || ''],
+                s: text.toLowerCase(), raw: text,
+                href: '#/char/' + g.id + '/' + encodeURIComponent(x.n)
+            });
+        }
+    } catch (e) { }
     IDXCACHE[g.id] = list;
     /* 只留最近两作：十作全缓存要几十 MB，手机上不值当 */
     IDXORDER.push(g.id);
@@ -693,10 +824,15 @@ function searchEntries(g, words) {
         const m = merged.get(e.n);
         if (m) {
             m.c++;
-            if (!m.pages.some(x => x.k === e.k)) m.pages.push({ k: e.k, t: e.t });
+            /* 同名条目在「村民喜好」和「人物名册」里都有时，人物档案信息更全，
+               排在前面，用户点进去才不会被过时的解析表挡在门外 */
+            if (!m.pages.some(x => x.k === e.k)) {
+                if (e.href) m.pages.unshift({ k: e.k, t: e.t, href: e.href });
+                else m.pages.push({ k: e.k, t: e.t, href: e.href });
+            }
             if (sc > m.sc) { m.sc = sc; m.raw = e.raw; m.first = e; }
         } else {
-            merged.set(e.n, { sc, n: e.n, raw: e.raw, c: 1, first: e, pages: [{ k: e.k, t: e.t }] });
+            merged.set(e.n, { sc, n: e.n, raw: e.raw, c: 1, first: e, pages: [{ k: e.k, t: e.t, href: e.href }] });
         }
     }
     const list = [...merged.values()].sort((a, b) => b.sc - a.sc || a.n.length - b.n.length);
@@ -781,7 +917,7 @@ function viewSearch(q) {
             ? (it.n.toLowerCase().includes(head) ? snippetOf(it.n, head) : it.n.slice(0, 26) + '…')
             : it.n;
         return `
-            <a class="sres-item" href="#/page/${pg.k}/${encodeURIComponent(it.n)}">
+            <a class="sres-item" href="${pg.href || '#/page/' + pg.k + '/' + encodeURIComponent(it.n)}">
                 <div class="sres-top">
                     <span class="sres-name">${markKw(label, head)}</span>
                     ${it.c > 1 ? `<span class="sres-cnt">×${it.c}</span>` : ''}
@@ -831,7 +967,7 @@ function render() {
             html = viewHome(g); showBack = false; tab = 'wiki';
             break;
         case 'resident':
-            html = viewResident(r.args[0], r.args[1]);
+            html = viewResident(r.args[0], r.args[1], r.args[2]);
             title = g.name; tab = 'resident';
             break;
         case 'char':
@@ -903,7 +1039,7 @@ function render() {
                             ? (it.n.toLowerCase().includes(words[0]) ? snippetOf(it.n, words[0]) : it.n.slice(0, 16) + '…')
                             : it.n;
                         return `
-                        <a class="qsug-item" href="#/page/${pg.k}/${encodeURIComponent(it.n)}">
+                        <a class="qsug-item" href="${pg.href || '#/page/' + pg.k + '/' + encodeURIComponent(it.n)}">
                             <span class="qsug-n">${markKw(nm, words[0])}</span>
                             <span class="qsug-p">${pg.t}${more}</span>
                         </a>`;

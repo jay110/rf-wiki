@@ -1905,3 +1905,211 @@ img {
     text-align: center;
     font-size: 0.8rem;
 }
+
+/* ============ 人物名册（居民 / 结婚候补 / 主角） ============ */
+.npc-sum {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.9rem;
+    margin: 0 0.9rem 0.5rem;
+    padding: 0.42rem 0.7rem;
+    border-radius: 0.45rem;
+    background: var(--bg-2);
+    font-size: 0.7rem;
+    color: var(--ink-3);
+}
+
+.npc-sum b {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.npc-list {
+    margin: 0 0.9rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    border: solid 1px var(--line);
+    overflow: hidden;
+}
+
+.npc-card {
+    display: flex;
+    align-items: center;
+    gap: 0.62rem;
+    padding: 0.6rem 0.7rem;
+    border-bottom: solid 1px var(--line-2);
+    text-decoration: none;
+    color: inherit;
+}
+
+.npc-card:last-child {
+    border-bottom: none;
+}
+
+.npc-card:active {
+    background: #f7faf8;
+}
+
+.npc-av {
+    flex: 0 0 2.1rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 2.1rem;
+    text-align: center;
+}
+
+.npc-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.npc-name {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.4;
+}
+
+.npc-jp {
+    margin-left: 0.36rem;
+    font-size: 0.64rem;
+    font-weight: 400;
+    color: var(--ink-4);
+}
+
+.npc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.26rem;
+    margin-top: 0.18rem;
+    font-size: 0.63rem;
+    color: var(--ink-3);
+}
+
+.npc-bd {
+    color: #b8791f;
+}
+
+.npc-cv {
+    color: var(--ink-4);
+}
+
+.npc-fav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.22rem;
+    margin-top: 0.26rem;
+}
+
+.npc-more {
+    font-size: 0.6rem;
+    color: var(--ink-4);
+    align-self: center;
+}
+
+/* 通用小标签 */
+.tag {
+    display: inline-block;
+    padding: 0.06rem 0.32rem;
+    border-radius: 0.28rem;
+    font-size: 0.63rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    background: var(--line-2);
+    color: var(--ink-2);
+}
+
+.tag.fav {
+    background: #fdf3ea;
+    color: #a8703a;
+}
+
+.tag.role-marry {
+    background: #fdeef0;
+    color: #b0455a;
+}
+
+.tag.role-hero {
+    background: #eaf5ef;
+    color: #1a7a45;
+}
+
+.tag.role-town {
+    background: #eef2f6;
+    color: #5d7a90;
+}
+
+.tag.best {
+    background: #fdeaea;
+    color: #b23b34;
+}
+
+.tag.like {
+    background: #edf6f0;
+    color: #22794b;
+}
+
+.tag.hate {
+    background: #eef1f4;
+    color: #647783;
+}
+
+.tag.worst {
+    background: #3f4a52;
+    color: #fff;
+}
+
+.sort-btn {
+    margin-left: auto;
+}
+
+/* 角色详情的喜好分区 */
+.taste {
+    margin: 0.3rem 0 0.9rem;
+    border-radius: 0.55rem;
+    border: solid 1px var(--line);
+    overflow: hidden;
+}
+
+.taste-row {
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    border-bottom: solid 1px var(--line-2);
+}
+
+.taste-row:last-child {
+    border-bottom: none;
+}
+
+.taste-k {
+    flex: 0 0 3.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.7;
+}
+
+.taste-k span {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: var(--ink-4);
+}
+
+.taste-k.best { color: #b23b34; }
+.taste-k.like { color: #22794b; }
+.taste-k.hate { color: #647783; }
+.taste-k.worst { color: #3f4a52; }
+
+.taste-v {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.22rem;
+    line-height: 1.6;
+}
