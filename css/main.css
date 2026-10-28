@@ -1142,6 +1142,14 @@ img {
     text-align: left;
 }
 
+.content .mon-table .td.rec-eff {
+    color: #6b7780;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    max-width: 23rem;
+    text-align: left;
+}
+
 /* ---- 鱼类图鉴 ---- */
 .content .mon-table[data-fish] th:first-child,
 .content .mon-table[data-fish5] th:first-child {

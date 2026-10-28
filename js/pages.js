@@ -401,12 +401,31 @@ function recipe4Html() {
     }).join('');
 
     const matOf = m => m.indexOf('类') >= 0 ? `<i class="mk">${m}</i>` : m;
-    const rr = x => `<tr data-c="${x.c}" data-s="${x.n} ${x.m.join(' ')}">
+    /* 料理效果：从 RF4_COOK 反查（名字 → 紧凑效果摘要），仅料理类（c<=6）有，武器/防具/农具/药学留 — */
+    const effMap4 = {};
+    (typeof RF4_COOK !== 'undefined' ? RF4_COOK : []).forEach(r => {
+        if (!r || r[0] === '药学' || r.length < 12) return;
+        const p = [];
+        if (r[5]) p.push('HP' + r[5]);
+        if (r[6]) p.push('RP' + r[6]);
+        if (r[7]) p.push('RP上限' + r[7]);
+        if (r[8]) p.push('力量' + r[8]);
+        if (r[9]) p.push('智力' + r[9]);
+        if (r[10]) p.push('体力' + r[10]);
+        if (r[11]) p.push(r[11]);
+        effMap4[r[1]] = p.join(' ');
+    });
+    const rr = x => {
+        const isCook = x.c >= 0 && x.c <= 6;
+        const eff = isCook ? (effMap4[x.n] || '—') : '—';
+        return `<tr data-c="${x.c}" data-s="${x.n} ${x.m.join(' ')} ${isCook ? (effMap4[x.n] || '') : ''}">
                 <td class="td left rec-n">${x.n}</td>
                 <td class="td rec-c">${cats[x.c]}</td>
                 <td class="td rec-lv">${x.lv >= 900 ? '—' : x.lv}</td>
                 <td class="td rec-m">${x.m.map(matOf).join('、')}</td>
+                <td class="td rec-eff">${eff}</td>
             </tr>`;
+    };
 
     const full = rec.filter(x => x.m.length >= 6);
     const catCnt = rec.reduce((s, x) => s + x.m.filter(m => m.indexOf('类') >= 0).length, 0);
@@ -424,10 +443,10 @@ function recipe4Html() {
             <span id="recCount" class="mon-count">${rec.length} 条</span>
         </div>
         <div class="table mon-table" data-rec><table><thead><tr>
-            <th class="th left">配方</th><th class="th">类别</th><th class="th">技能Lv</th><th class="th">素材</th>
+            <th class="th left">配方</th><th class="th">类别</th><th class="th">技能Lv</th><th class="th">素材</th><th class="th">效果（料理）</th>
         </tr></thead><tbody>${rec.map(rr).join('')}</tbody></table></div>
 
-        <div class="key">素材栏里 <i class="mk">矿石类</i> 这种带「类」字的，是<b>素材类别</b>——意思是这一类里的任意一种都行，不用凑齐。全表 ${catKinds.length} 种类别、出现 ${catCnt} 次，其中锻造表用得最狠：武器配方动不动就写「矿石类」「爪、牙类」，实际上你往里面塞什么都能做出来，只是成品的属性和最终等级会跟着素材走。</div>
+            <div class="key">素材栏里 <i class="mk">矿石类</i> 这种带「类」字的，是<b>素材类别</b>——意思是这一类里的任意一种都行，不用凑齐。全表 ${catKinds.length} 种类别、出现 ${catCnt} 次，其中锻造表用得最狠：武器配方动不动就写「矿石类」「爪、牙类」，实际上你往里面塞什么都能做出来，只是成品的属性和最终等级会跟着素材走。</div>
         <p class="p"><b>等级是硬门槛</b>：技能等级不够，这条配方根本不会出现在可制作列表里；够了之后，成品的实际等级由「素材等级 + 你的技能等级」共同决定，所以同一张配方在不同阶段能做出差十几级的东西。<br>按等级排，${topCat.map(x => `<b>${x.n}</b>（${x.lv}）`).join('、')} 是常规配方的天花板，再往上的都是特殊品。</p>
 
         <h2 class="h2">四季头饰与那条被剔除的护符</h2>
@@ -3641,12 +3660,19 @@ const PAGES = [
                 return inner ? `<optgroup label="${k}">${inner}</optgroup>` : '';
             }).join('');
 
-            const rr = x => `<tr data-c="${x.c}" data-s="${x.n} ${x.m.join(' ')}">
+            const effMap5 = {};
+            (typeof RF5_COOK !== 'undefined' ? RF5_COOK : []).forEach(r => { if (r && r.length >= 5) effMap5[r[1]] = r[4]; });
+            const rr = x => {
+                const isCook = x.c >= 0 && x.c <= 6;
+                const eff = isCook ? (effMap5[x.n] || '—') : '—';
+                return `<tr data-c="${x.c}" data-s="${x.n} ${x.m.join(' ')} ${isCook ? (effMap5[x.n] || '') : ''}">
                 <td class="td left rec-n">${x.n}</td>
                 <td class="td rec-c">${short(cats[x.c])}</td>
                 <td class="td rec-lv">${x.lv}</td>
                 <td class="td rec-m">${x.m.join('、')}</td>
+                <td class="td rec-eff">${eff}</td>
             </tr>`;
+            };
 
             return `
             <h2 class="h2">${rec.length} 条配方，一条不落</h2>
@@ -3658,7 +3684,7 @@ const PAGES = [
                 <span id="recCount" class="mon-count">${rec.length} 条</span>
             </div>
             <div class="table mon-table" data-rec><table><thead><tr>
-                <th class="th left">配方</th><th class="th">类别</th><th class="th">技能Lv</th><th class="th">素材</th>
+                <th class="th left">配方</th><th class="th">类别</th><th class="th">技能Lv</th><th class="th">素材</th><th class="th">效果（料理）</th>
             </tr></thead><tbody>${rec.map(rr).join('')}</tbody></table></div>
 
             <div class="key">用法很直接：<b>按技能等级排，做到哪一档就停在哪一档</b>。等级是连续的，做完 20 级那批才会自然刷到能做 30 级的水平——所以别跳过便宜的配方去硬凑贵的，那只会卡在「素材不够、等级也不够」。</div>
