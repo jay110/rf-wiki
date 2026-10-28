@@ -66,7 +66,8 @@ RF1_GROUPS = {
 # 与官网 15 周年立绘的人工比对；花嫁/花婿候补各有 _W 婚礼差分，这里不用。
 RF2_GROUPS = {
     'pic_pc00':   'kyle',       # 凯尔（主角）
-    'pic_pc01':   'ars',        # 阿鲁斯（子代）
+    'pic_pc01':   'ars',        # 阿鲁斯（子代·男）
+    'pic_pc02':   'aria',       # 阿莉亚（子代·女，与阿鲁斯是双胞胎）
     'pic_npc01':  'douglas',    # 道格拉斯
     'pic_npc02':  'mana',       # 玛娜
     'pic_npc03':  'julia',      # 茱莉雅

@@ -48,6 +48,7 @@ var FACE = {
     rf2: {
         'カイル': 'kyle',
         'アルス': 'ars',
+        'アリア': 'aria',
         'マナ': 'mana',
         'ジュリア': 'julia',
         'アリシア': 'alicia',

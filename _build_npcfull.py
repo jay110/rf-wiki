@@ -14,6 +14,17 @@ SKIP_NAMES = {'儿子','女儿','简介','参考与注释','村民互动','结�
 #   rf2 ヘリチャコス 被源页记作 Herman，罗马字推不出这两个音节
 DROP_EN = {('rf2', 'ヘリチャコス')}
 
+# 源页没有、但站内可以核实的英文名（依据：官方 15 周年站与日文官网记的罗马字）
+#   rf2 子代双胞胎在源页里没有单独条目，官方日文站作 Ars / Alia，美版作 Aaron / Aria
+ADD_EN = {
+    ('rf2', 'アルス'): 'Aaron',
+    ('rf2', 'アリア'): 'Aria',
+}
+# 站内补充的别名（同样是源页没有、但圈内通用的另一种音译）
+ADD_AL = {
+    ('rf2', 'アリア'): '阿莉亚、艾莉亚',
+}
+
 # 源页把物品名抄错的地方。判据有两条，缺一不可：
 #   ① 站内物品表（items.js / items4.js / 各作 cook 与 recipe 表）里有正确写法，且用了很多次；
 #   ② 错写法除了这几处，全站不再出现——即「孤例」才动手，两派并存的译名不动（见页面上「没有统一的」一节）
@@ -207,6 +218,14 @@ for gid, page in SRC.items():
             if match.get('sec') and not item.get('r'):
                 item['r'] = '结婚候补' if '结婚候补' in match['sec'] else '居民'
             if match.get('nt') and not item.get('nt'): item['nt'] = match['nt']
+        if (gid, jp) in ADD_EN:
+            item.setdefault('e', ADD_EN[(gid, jp)])
+        if (gid, jp) in ADD_AL:
+            seen_al = [a.strip() for a in (item.get('al', '') or '').split('、') if a.strip()]
+            for a in (x.strip() for x in ADD_AL[(gid, jp)].split('、')):
+                if a and a not in seen_al:
+                    seen_al.append(a)
+            item['al'] = '、'.join(seen_al)
         if item.get('bd') in ('无','',None): item.pop('bd', None)
         if not item.get('bd') and c.get('bday'): item['bd'] = norm_bd(c['bday'])
         merged.append(item)

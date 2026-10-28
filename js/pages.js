@@ -4540,6 +4540,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-29　第六十六次：符文2 补上凯尔的女儿「雅莉亚」，子代双胞胎这才凑齐</h2>
+            <ul class="ul">
+                <li class="li"><b>一直缺的是女儿</b>：符文2 的人物名录此前 26 人，对照 fandom 的角色表（主角 3 + 花嫁 7 + 居民 11 + 二代候补 6）正好少一个——<b>凯尔之女 アリア</b>。上一轮做头像时把她和二代花婿「凌（リーン／Leonel）」弄混了，其实凌是二代的结婚候补，不是主角的孩子。</li>
+                <li class="li"><b>立绘就在解包里</b>：<code>pic_pc02</code>（与儿子 <code>pic_pc01</code> 同为 6 帧、同构图），红棕短发、呆毛、黑裙，和阿鲁斯是同一张脸的女版——与官方说的「双胞胎、只在二代开场同框」对得上。裁出来的头像 105px，呆毛没被圆框削掉。</li>
+                <li class="li"><b>译名取「雅莉亚」</b>：RF2 没有官方中文，biligame 符文工厂 wiki 用这个写法；「阿莉亚」「艾莉亚」留作别名。英文名两条都写了——官方日文站的罗马字是 <b>Ars / Alia</b>，美版是 <b>Aaron / Aria</b>，条目里按后者显示、前者写进说明。声优前田爱（阿鲁斯是粕谷雄太）。</li>
+                <li class="li"><b>顺带说明的设定</b>：孩子的性别由玩家在一代末选定，儿子女儿是<b>二选一</b>，不会同时登场；女儿路线下，二代可与凌、奥斐斯、罗伊结为「过家家」伴侣。另外 <code>pic_pc03</code>／<code>pic_pc04</code> 两张<b>婴儿期立绘</b>留在文件里，游戏里并没有用到（wiki 也是这么记的），本次不接。</li>
+                <li class="li"><b>补数据走了正规流水线</b>：人物名册是生成物，没有手改——先改 <code>js/data.js</code>，跑 <code>_build_sitechars.py</code> 再跑 <code>_build_npcfull.py</code>；英文名与别名源页没有，加进生成脚本的 <code>ADD_EN</code>／<code>ADD_AL</code> 补充表，这样重跑不会丢。重跑后 196 人中<b>只有这两行变化</b>，其余逐字节一致。README 人数 195 → 196。</li>
+            </ul>
             <h2 class="h2">2026-10-29　第六十五次：符文5 也接上头像了，31 位居民接了 27 位</h2>
             <ul class="ul">
                 <li class="li"><b>换了条路子</b>：符文5 是 Unity 游戏（PC 版现成），头像不在 NDS 那种 NCER 立绘里，而在 Addressables 的 <code>FaceIconSpriteAtlas</code>——就是游戏里 HUD 上那张小圆脸，约 62×64 像素。用 UnityPy 从两个 bundle 里取出 108 张精灵，按 <code>Icon_chNNN</code> 归类。</li>
