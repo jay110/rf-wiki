@@ -16,6 +16,21 @@ def en2cn(x):
 z4, sst4, sh4 = R.load(F4)
 d4 = {n: R.rows(z4, sst4, t) for n, t in sh4}
 
+# 解包表用的是它自己一套译名，与站内定稿（wiki 源页的 [[定稿|别名]]）不一致。
+# 这里统一到站内口径，人物喜好页与人物名册才对得上、也才能互相跳转。
+# 依据是 RF4characters 源页的条目写法，例如「[[基尔|奇尔]]（キール，Kiel）」。
+F4_NAME = {
+    '沃尔卡农': '沃卡农',      # ヴォルカノン Volkanon
+    '基尔': '奇尔',            # キール Kiel
+    '巴特': '巴德',            # バド Bado
+    '铃华': '铃芳',            # リンファ Lin Fa
+    '艾尔米娜达': '艾露米娜塔',  # エルミナータ Illuminata
+    '布罗萨姆': '巴洛索姆',      # ブロッサム Blossom
+    '雷欧': '雷昂',            # レオン Leon
+    '赛尔泽薇德': '瑟尔泽薇德',  # セルザウィード Ventuswill
+    '多娜': '托娜',            # トゥーナ Raven
+}
+
 m4 = {}
 m4['Traveler'] = '旅行者'
 for r in d4['Item Values'][2:]:
@@ -32,7 +47,8 @@ for r in d4['村民喜好'][1:]:
     typ = (r[2] or '').strip()
     if name not in idx4:
         idx4[name] = len(npc4)
-        npc4.append([cn or name, [], [], []])
+        shown = cn or name
+        npc4.append([F4_NAME.get(shown, shown), [], [], []])
     rec = npc4[idx4[name]]
     for i in range(3, len(r) - 1, 2):
         item = (r[i] or '').strip()
@@ -77,9 +93,13 @@ for r in d5['译名表'][1:]:
     cn = (r[2] if len(r) > 2 else '').strip()
     if en and cn:
         m5[en] = cn
-EXTRA5 = {'Fuuka': '芙卡', 'Great Autumn Grass': '上等秋之草', 'Manju': '馒头',
-          'Livia': '莉薇亚', 'Radea': '蕾迪亚', 'Darroch': '达洛奇', 'Julian': '朱利安',
-          'Margaret': '玛格丽特', 'Son/Daughter': '儿子／女儿', 'Son': '儿子', 'Daughter': '女儿'}
+# 与 RF4 同理：解包表按英文名给译名，和站内定稿（RF5characters 源页）不一致。
+# 依据源页条目写法，例如「[[塞西尔]]（セシル、Cecile）」「[[流卡]]（リュカ、Lyka）」。
+EXTRA5 = {'Fuuka': '芙佳', 'Great Autumn Grass': '上等秋之草', 'Manju': '馒头',
+          'Livia': '莉薇亚', 'Radea': '蕾迪亚', 'Darroch': '道格', 'Julian': '朱利安',
+          'Margaret': '玛格丽特', 'Cecil': '塞西尔', 'Cecile': '塞西尔',
+          'Ryker': '流卡', 'Lyka': '流卡',
+          'Son/Daughter': '儿子／女儿', 'Son': '儿子', 'Daughter': '女儿'}
 m5.update(EXTRA5)
 
 KEY = {'VeryFavoriteItem': 3, 'FavoriteItem': 4, 'NotFavoriteItem': 5, 'NotFavoriteBadlyItem': 6}

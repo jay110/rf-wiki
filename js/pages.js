@@ -3828,7 +3828,7 @@ const PAGES = [
                     P5.map(r => [
                         [r[0], r[1], r[3].join(' '), r[6].join(' ')].join(' '),
                         [
-                            r[0] + (r[2].length ? '' : ' <span class="txc">不可婚</span>'),
+                            npcLink('rf5', r[0]) + (r[2].length ? '' : ' <span class="txc">不可婚</span>'),
                             r[1] || '<span class="mon-no">—</span>',
                             cut(r[3], 6),
                             cut(r[6], 3),
@@ -3837,7 +3837,7 @@ const PAGES = [
 
                 <details class="mon-fold">
                     <summary>展开 ${marry.length} 位可婚对象的节日花与婚后日常礼物</summary>
-                    ${tbl(['村民', '节日花', '婚后每日礼物'], marry.map(r => [r[0], r[2].join('、'), r[7].join('、')]), { leftFirst: true, colw: ['5.6rem', '10rem'] })}
+                    ${tbl(['村民', '节日花', '婚后每日礼物'], marry.map(r => [npcLink('rf5', r[0]), r[2].join('、'), r[7].join('、')]), { leftFirst: true, colw: ['5.6rem', '10rem'] })}
                     <div class="note" style="margin-top:.8rem">这三样东西的用法各不相同：<b>节日花</b>是节日当天送的花（三种，对应不同季节的品种），<b>婚后每日礼物</b>是结婚以后每天递给对方的那一份——它是固定清单，不是你挑的。</div>
                 </details>
 
@@ -3852,7 +3852,7 @@ const PAGES = [
                     <div class="txt-list">${per.map(([n, xs]) => `<p><b>${n}</b>：${xs.join('、') || '<span class="mon-no">除垃圾外无禁忌</span>'}</p>`).join('')}</div>
                 </details>
 
-                <div class="note">取自《RF5_Data 数据解包汉化版》的 <code>NPCGiftData</code> 表（${P5.length} 个角色块，每块六行）。原表是英文 1.0.1 版，物品名用同文件的「译名表」（1576 条英中对照）转成简中；译名表里缺的几个（芙卡、莉薇亚、蕾迪亚、达洛奇、朱利安、玛格丽特、儿子／女儿）按日文原名补齐。原表中以 <code>-</code> 表示的「无」按空处理。<br>「超喜欢」「喜欢」等档位名称沿用解包字段 <code>VeryFavoriteItem / FavoriteItem / NotFavoriteItem / NotFavoriteBadlyItem</code>，<b>本页不给具体 FP 数值</b>——RF5 的解包表没有把这几档换算成数字，所以这里只描述方向，不编造档差。</div>
+                <div class="note">取自《RF5_Data 数据解包汉化版》的 <code>NPCGiftData</code> 表（${P5.length} 个角色块，每块六行）。原表是英文 1.0.1 版，物品名用同文件的「译名表」（1576 条英中对照）转成简中；译名表里缺的几个按日文原名补齐。<br><b>人名统一到站内口径</b>：解包表按英文名给出的译名与人物名册不一致，本页按名册显示——芙卡→<b>芙佳</b>、Cecil→<b>塞西尔</b>、Ryker→<b>流卡</b>、达洛奇→<b>道格</b>。对照表写在 <code>_build_npc.py</code>，所以表里的人名可以直接点进人物档案。<br>「儿子」「女儿」「儿子／女儿」三条是解包表的占位条目（对应孩子那几位），原表没有拆开，本页照原样保留、不做链接。原表中以 <code>-</code> 表示的「无」按空处理。<br>「超喜欢」「喜欢」等档位名称沿用解包字段 <code>VeryFavoriteItem / FavoriteItem / NotFavoriteItem / NotFavoriteBadlyItem</code>，<b>本页不给具体 FP 数值</b>——RF5 的解包表没有把这几档换算成数字，所以这里只描述方向，不编造档差。</div>
 
                 <div class="jump">
                     <a href="#/page/gift">
@@ -3906,7 +3906,7 @@ const PAGES = [
             ${ftableOwn(['村民', '超喜欢', '讨厌'], ['6.4rem', 'auto', '10rem'],
                 P4.map(r => [
                     [r[0], r[1].join(' '), r[3].join(' ')].join(' '),
-                    [r[0], cut(r[1], 8), cut(r[3], 4)],
+                    [npcLink('rf4', r[0]), cut(r[1], 8), cut(r[3], 4)],
                 ]), { ph: '输入村民名或物品名', cls: 'npc' })}
 
             <details class="mon-fold">
@@ -3915,7 +3915,7 @@ const PAGES = [
                 <div class="txt-list">${P4.map(r => `<p><b>${r[0]}</b>：${r[2].join('、') || '<span class="mon-no">原表为整类，未拆条</span>'}</p>`).join('')}</div>
             </details>
 
-            <div class="note">取自《RF4 数据解包汉化版 Datamining Compendium》的「村民喜好」表（110 行，${P4.length} 人 × 四行一组）。物品名用同文件的「Item Values」表（1098 条英中对照）转成简中，《RF4S 简体》列直接作为中文名。<br>原表里有 <code>#8100</code>～<code>#8114</code> 这类分类代码，表示「对某一整类物品的反应」（多为 FP 0 的中性），因为无法可靠还原成具体物品，<b>本页未收录</b>；同理，FP 为 0 的条目一律不进表。表中的「旅行者」是英文版里泛指的 Traveler，原表中文列写作「男性旅行者（英文版都叫 Traveler）」。</div>
+            <div class="note">取自《RF4 数据解包汉化版 Datamining Compendium》的「村民喜好」表（110 行，${P4.length} 人 × 四行一组）。物品名用同文件的「Item Values」表（1098 条英中对照）转成简中，《RF4S 简体》列直接作为中文名。<br>原表里有 <code>#8100</code>～<code>#8114</code> 这类分类代码，表示「对某一整类物品的反应」（多为 FP 0 的中性），因为无法可靠还原成具体物品，<b>本页未收录</b>；同理，FP 为 0 的条目一律不进表。<br><b>人名统一到站内口径</b>：这份解包表用的是它自己一套译名（沃尔卡农／基尔／巴特／铃华／艾尔米娜达／布罗萨姆／雷欧／赛尔泽薇德／多娜），人物名册用的是 wiki 的（沃卡农／奇尔／巴德／铃芳／艾露米娜塔／巴洛索姆／雷昂／瑟尔泽薇德／托娜）。本页按后者显示，对照表写在 <code>_build_npc.py</code> 里，所以表里的人名可以直接点进人物档案。<br><b>其中有四条不是人名</b>：「女儿」指双胞胎诺埃尔与露娜（解包表把两人合为一条），「儿子」原表另有一条、但这一作的子代是双胞胎女儿，归属未说明；「幻想的雾香」与「旅行者」是特殊占位条目，前者原表未注明是谁，后者是英文版泛指的 Traveler（原表中文列写作「男性旅行者」）。这四条不做链接。</div>
 
             <div class="jump">
                 <a href="#/page/gift">
@@ -4547,7 +4547,9 @@ const PAGES = [
                 <li class="li"><b>旧名字没丢</b>：搜索打「海齐利格斯」「海利齐格斯」照样落在这一条上（查询时先归一到现名），改名前存下的链接也能打开。他本人生日冬 10 日、喜欢菠萝汁、讨厌玉米片、生日礼物咖喱饭，都是合并后才挂到这条上的——原来都散在源页那一份里。</li>
                 <li class="li"><b>节日表里 9 个旧译名一起统一</b>：符文2 的「节日当天大家在哪」取自一部老攻略，用的是它自己的一套译名。这次统一到站内口径，并保留原攻略给的身份注：<b>卡侬→卡农、安德列→恩多尔、海利齐格斯→赫理查科斯、布莱→布莱伊、茱丽雅→茱莉雅、马库思→麦克斯、塔尼娅→塔喵、阿莉西娅→阿莉希亚、巴雷特→巴瑞特</b>。其中最容易被当成「写错了」的是安德列——源页的民译就叫这个，站内定稿是恩多尔，同一人。</li>
                 <li class="li"><b>节日表现在能点人</b>：表里 19 个人名全部变成链接，直接进人物档案。想送礼之前不必先回名册翻一遍；名录里查不到的名字不会做成链接，宁可没入口，也不给一个点了没反应的东西。</li>
-                <li class="li"><b>数据链</b>：译名归一表写在 <code>_build_fest_rf2.py</code> 的 <code>FESTPOS_NAME</code> 里，改一次、重跑一次就生效，不用手改生成出来的 <code>rf2cal.js</code>；<code>_build_npcfull.py</code> 新增两处：站内别名与源页民译会<b>合并去重</b>而不是互相覆盖，另有一张「英文名不可信就不用」的排除表。</li>
+                <li class="li"><b>同一毛病在村民喜好页也有，一起治了</b>：那两张表来自解包数据，用的是解包方自己那套译名，和人物名册差得更远。符文4 有 9 个对不上（沃尔卡农→<b>沃卡农</b>、基尔→<b>奇尔</b>、巴特→<b>巴德</b>、铃华→<b>铃芳</b>、艾尔米娜达→<b>艾露米娜塔</b>、布罗萨姆→<b>巴洛索姆</b>、雷欧→<b>雷昂</b>、赛尔泽薇德→<b>瑟尔泽薇德</b>、多娜→<b>托娜</b>），符文5 有 4 个（芙卡→<b>芙佳</b>、Cecil→<b>塞西尔</b>、Ryker→<b>流卡</b>、达洛奇→<b>道格</b>）。<b>达洛奇这一条是比对喜好内容才敢定的</b>——超喜欢同样是飞溅之星、大地锤、龙幻石、奥利哈钢、绿宝石，与「道格」一字不差，才确认是同一个人。</li>
+                <li class="li"><b>两页的人名也接上了档案</b>：符文4 的 23 人、符文5 的 26 人全部可点。剩下的「儿子」「女儿」「儿子／女儿」不是人名——那是解包表对孩子那几位的占位条目，符文4 的「女儿」其实对应双胞胎诺埃尔与露娜，页面上写明了，也没做成链接。</li>
+                <li class="li"><b>数据链</b>：译名归一表写在 <code>_build_fest_rf2.py</code> 的 <code>FESTPOS_NAME</code> 与 <code>_build_npc.py</code> 的 <code>F4_NAME</code>／<code>EXTRA5</code> 里，改一次、重跑一次就生效，不用手改生成出来的 <code>rf2cal.js</code> 与 <code>npcdata.js</code>；<code>_build_npcfull.py</code> 新增两处：站内别名与源页民译会<b>合并去重</b>而不是互相覆盖，另有一张「英文名不可信就不用」的排除表。</li>
             </ul>
             <h2 class="h2">2026-10-28　第六十二次：符文2 的居民也换上立绘头像</h2>
             <ul class="ul">
