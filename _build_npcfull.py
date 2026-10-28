@@ -14,6 +14,43 @@ SKIP_NAMES = {'儿子','女儿','简介','参考与注释','村民互动','结�
 #   rf2 ヘリチャコス 被源页记作 Herman，罗马字推不出这两个音节
 DROP_EN = {('rf2', 'ヘリチャコス')}
 
+# 源页把物品名抄错的地方。判据有两条，缺一不可：
+#   ① 站内物品表（items.js / items4.js / 各作 cook 与 recipe 表）里有正确写法，且用了很多次；
+#   ② 错写法除了这几处，全站不再出现——即「孤例」才动手，两派并存的译名不动（见页面上「没有统一的」一节）
+# 别在这里塞「咖喱／咖哩」这类两家译名并存的词，那不是错字，是两套译名，属于另一个问题。
+ITEM_FIX = {
+    '飞瓣之星': '飞溅之星',          # 站内物品表只有「飞溅之星」，用了 11 次
+    '奥利合钢': '奥利哈钢',          # オリハルコン，站内 120 处都作「奥利哈钢」
+    '奥利哈刚': '奥利哈钢',          # 同上，另一种错写
+    '梅西菜特矿石': '梅西莱特矿石',
+    '黏糊糊的液体': '粘糊糊的液体',    # 站内 30 处都作「粘糊糊」，统一用「粘」
+    '导雷之角': '引雷之角',          # 站内 20 处都作「引雷之角」
+    '星之南瓜布丁': '星星南瓜布丁',
+    '极上蘑菇': '极品蘑菇',
+    '古代鱼的鱼鳍': '古代鱼的羽鳍',    # 羽鳍才是「鳍」的写法，站内 22 处
+    '盐烤山女': '盐烤山女鳟',        # 只按整名替换，不会误伤「盐烤山女鳟」
+    # 下面这批是「同一件东西两种写法」，不是错字：站内物品表（解包原始数据）只有一种写法，
+    # 名册抄的是另一种，统一到物品表这一侧，顺带让搜索和「村民喜好」页对得上。
+    '味增田乐烧': '味噌田乐烧',      # 味噌；站内料理表 5 个文件都作「味噌」
+    '芜菁天国': '芜菁天堂',
+    '奶汁烤菜': '奶油烤菜',
+    '海鲜奶汁烤菜': '海鲜奶油烤菜',
+    '魔人之角': '魔人的角',
+    '野菜汁': '蔬菜汁',
+    '混合果汁': '综合果汁',
+}
+# L 型 / M 型 / S 型：源页用半角字母，站内物品表用全角，统一到全角
+GRADE_FIX = str.maketrans({'L': 'Ｌ', 'M': 'Ｍ', 'S': 'Ｓ'})
+GRADE_RE = re.compile(r'^(.*?)([LMS])型$')
+
+def fix_item(name):
+    if not isinstance(name, str) or not name:
+        return name
+    m = GRADE_RE.match(name)
+    if m and re.search(r'[\u4e00-\u9fa5]', m.group(1)):
+        name = m.group(1) + m.group(2).translate(GRADE_FIX) + '型'
+    return ITEM_FIX.get(name, name)
+
 def clean(v):
     v = re.sub(r'<br\s*/?>', ' ', v)
     v = re.sub(r'\[\[File:[^\]]*\]\]', '', v)
@@ -103,13 +140,13 @@ def parse(name):
         if clean(v) in ('无', '未知', '不明', '—', '-', ''):
             continue
         if key in LISTK:
-            arr = [x for x in split_items(v) if clean(x) not in ('无','未知','不明')]
+            arr = [fix_item(x) for x in split_items(v) if clean(x) not in ('无','未知','不明')]
             if not arr: continue
             if cond: cur.setdefault('cond', {})['%s·%s' % (cond, key)] = arr
             else: cur[key] = arr
         else:
             v = clean(v)
-            if v and v not in ('↑','—','-'): cur[key] = v
+            if v and v not in ('↑','—','-'): cur[key] = fix_item(v)
     return [c for c in out if c['n'] not in SKIP_NAMES]
 
 def norm_bd(s):

@@ -9,7 +9,7 @@
 """
 import sys, json, io
 sys.path.insert(0, '.')
-import xlsx_read as X
+import _xlsx_read as X
 
 P = r'G:/10257/Downloads/符文攻略/'
 OUT = r'G:/wit_tools/work/RF_WIKI/js/extradata.js'
@@ -26,8 +26,16 @@ def sheet(path, name):
     raise SystemExit('sheet not found: ' + name)
 
 
+# 资料包里的原表把 オリハルコン 抄成「奥利哈刚」，站内一律作「奥利哈钢」（120 处）。
+# 掉落格是「阔刃剑、小盾牌、奥利哈刚、小结晶」这种顿号串起来的，所以按「、」切成
+# 词逐个查表，再拼回去——只换整词，别的一律不动。
+NAME_FIX = {'奥利哈刚': '奥利哈钢'}
+
 def cell(r, i):
-    return (r[i] if i < len(r) else '').strip()
+    v = (r[i] if i < len(r) else '').strip()
+    if not v:
+        return v
+    return '、'.join(NAME_FIX.get(p, p) for p in v.split('、'))
 
 
 # ---------- 1. RF4 魔物喜好 ----------

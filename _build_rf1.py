@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """生成 js/rf1data.js —— 数据源：RF1文本翻译对照表-校对7（删除易混淆列）.xlsx"""
 import os
-import xlsx_read as X
+import _xlsx_read as X
 
 SRC = r'G:/10257/Downloads/RF1文本翻译对照表-校对7（删除易混淆列）.xlsx'
 OUT = r'G:/wit_tools/work/RF_WIKI/js/rf1data.js'
@@ -12,7 +12,13 @@ SEGS = [
     ('草与花', 19, 48),
     ('药', 48, 73),
     ('料理与食材', 73, 254),
-    ('武器', 254, 330),
+    # 武器段（254~330）在解包表里是按武器种类顺着排的，这里拆成五种，
+    # 免得整段都标成笼统的「武器」——区间是照排布数出来的，一改前面的段就要重算
+    ('单手剑', 254, 275),
+    ('双手剑', 275, 296),
+    ('长枪', 296, 317),
+    ('锤', 317, 324),
+    ('斧', 324, 330),
     ('农具与工具', 330, 361),
     ('盾与饰品', 361, 446),
     ('道具', 446, 465),
@@ -150,6 +156,13 @@ out.append('const NPC_RF1 = ' + js(npc_u) + ';')
 out.append('')
 out.append('/* 年度日程：解包表给的是顺序，不含日期 */')
 out.append('const CAL_RF1 = ' + js(sched_u) + ';')
+
+# 源表（RF1 汉化工程的文本对照表）写的是「蜜丝特」，第五十九次全站已统一成「密丝特」。
+# 生成物要跟着站内口径走，否则重跑一次就把统一过的译名改回去了。
+# 按整串文本替换，所以「蜜丝特布鲁姆」也会一并对上。
+NAME_FIX = {'蜜丝特': '密丝特'}
+for a, b in NAME_FIX.items():
+    out = [ln.replace(a, b) for ln in out]
 
 with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
     f.write('\n'.join(out) + '\n')
