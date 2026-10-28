@@ -324,6 +324,50 @@ function crop5Html() {
 }
 
 /* ------------------------------------------------------------
+   符文工房1（RF1）作物段
+   表结构：[名, 季节, 总生长天, 再生(1=可,0=否), 种子买价, 作物卖价, 食用效果]
+   数据来自 biligame《RF1farm》作物详细表（仅取有生长天数的可种植作物，32 种）
+   ------------------------------------------------------------ */
+function crop1Html() {
+    const R = (typeof CROP_RF1 !== 'undefined') ? CROP_RF1 : [];
+    const num = v => (v && v > 0) ? v.toLocaleString('en-US') : '—';
+    const tot = R.length;
+    const buyable = R.filter(r => r[4] > 0).length;
+    const regRows = R.filter(r => r[3] > 0);
+    const bad = R.filter(r => /HP-5/.test(r[6]));
+    const mainRows = R.slice().sort((a, b) => a[2] - b[2] || a[0].localeCompare(b[0], 'zh'))
+        .map(r => [r[0], [
+            r[0], r[1], String(r[2]),
+            r[3] ? '可' : '<span class="mon-no">—</span>',
+            r[4] > 0 ? num(r[4]) : '<span class="mon-no">—</span>',
+            r[5] > 0 ? num(r[5]) : '<span class="mon-no">—</span>',
+            r[6],
+        ]]);
+    return `
+        <h2 class="h2">${tot} 种可种植作物，从 ${Math.min.apply(null, R.map(r => r[2]))} 天到 ${Math.max.apply(null, R.map(r => r[2]))} 天</h2>
+        <p class="p">下面这张表来自 biligame《RF1farm》的作物详细表，只收<b>有生长天数</b>的可种植作物（野生草、采集物不列入农作表）。RF1 的作物按<b>季节</b>种：春、夏、秋各有一批，「连续收获」标「可」的收完不拔能再结。注意 RF1 原表<b>没有单列单株产量</b>，所以这里不推算日收益——不编没有的数据。</p>
+        ${stat([['收录作物', tot + ' 种'], ['可买种子', buyable + ' 种'], ['再生型', regRows.length + ' 种']])}
+        <p class="p">「种子买价／作物卖价」是 biligame 原表直接列的价格（买种子花多少、出货作物得多少）。它们看起来有些「种不如卖种子划算」，那是原表口径，本页不替它圆回来——RF1 作物的价值更多在<b>料理、送礼、任务</b>，不在于纯出货。</p>
+        ${ftableOwn(['作物', '季节', '生长天', '再生', '种子买价', '作物卖价', '食用效果'],
+            ['5.6rem', '4.4rem', '4rem', '3.4rem', '5rem', '5rem', '8rem'],
+            mainRows, { ph: '输入作物名或季节', cls: 'crop' })}
+
+        <h2 class="h2">再生型 ${regRows.length} 种：收完别拔</h2>
+        <p class="p">「再生」列标「可」的 ${regRows.map(r => r[0]).join('、')} 收一轮后不拔，隔几天再结一次——和 RF4/RF5 的再生型一个道理，种子钱只花一次。其余一次性的拔了就没。</p>
+        ${tbl(['作物', '季节', '生长天', '作物卖价'], regRows.map(r => [
+            r[0], r[1], String(r[2]), num(r[5]),
+        ]), { leftFirst: true, colw: ['6.6rem', '4.4rem', '4rem', '5rem'] })}
+
+        <h2 class="h2">${bad.length} 种花与水晶：吃了掉血、换 RP</h2>
+        <p class="p">樱草、灯草、青／绿／红水晶、金刚花、铁千轮、四叶草、原之焰火、树形草、红叶花、蒲公英这些——食用效果是 <b>HP-5、RP+21</b>。它们不是拿来吃的（吃下去掉血），而是<b>提升 RP 上限</b>的关键材料，通常种来送礼或交任务，或者提纯 RP 药剂。种子贵（金刚花 10000、四叶草 9000），属于后期高投入作物。</p>
+        ${tbl(['作物', '季节', '生长天', '种子买价', '食用效果'], bad.map(r => [
+            r[0], r[1], String(r[2]), num(r[4]), '<b>' + r[6] + '</b>',
+        ]), { leftFirst: true, colw: ['6.6rem', '4.4rem', '4rem', '5.4rem', '9rem'], cls: 'spot' })}
+        <div class="note">牧草（春夏秋，9 天）是喂家畜的必需品，原表没给出货价（价值不在卖钱），这里卖价记 —。季节里写「春夏秋」的是跨季作物，三季都能种。</div>
+    `;
+}
+
+/* ------------------------------------------------------------
    符文工房 边境（RFF）作物段
    表结构：[季节, 作物名, [种,芽,叶,花], 十级出货额, 繁荣参考, 备注]
    数据来自 RFF各作物各阶段所需时间.xls，另有 5 条原表说明存于 RFF_TIPS。
@@ -1127,7 +1171,7 @@ const PAGES = [
             <h2 class="h2">品质与等级</h2>
             <p class="p">作物有等级，等级越高单价越高，也是料理与委托的要求。提升等级靠施肥与连续在同一块地上种植优良品。想稳定产出高等级作物，就要固定一块「种苗田」，专门循环优等品。</p>
             <div class="note">杂草与石头会占格，每天顺手清掉。别把清杂草当成杂活——它直接决定你当天能种多少。</div>
-            ${g.id.indexOf('rf5') === 0 ? crop5Html() : (g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : ''))}
+            ${g.id.indexOf('rf1') === 0 ? crop1Html() : (g.id.indexOf('rf5') === 0 ? crop5Html() : (g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : '')))}
         `
     },
     {
