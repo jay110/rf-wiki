@@ -20,7 +20,7 @@ from PIL import Image
 SRC = r'G:/BaiduNetdiskDownload/ARFJ_NCER_ext'
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'face', 'rf1')
 SIZE = 112          # 头像边长（原始像素，不放大）
-TOP_PAD = 3         # 头顶到框顶留几像素
+TOP_PAD = 11        # 头顶到框顶留几像素（圆形裁切会吃掉四角，留少了头顶会被削）
 
 # 源文件组名 -> 站内角色 key（key 同时是文件名与 FACE 表的取值）
 GROUPS = {
