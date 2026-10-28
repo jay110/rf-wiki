@@ -277,6 +277,52 @@ function crop4Html() {
     `;
 }
 
+function crop5Html() {
+    const R = (typeof CROP_RF5 !== 'undefined') ? CROP_RF5 : [];
+    const num = v => (v && v > 0) ? v.toLocaleString('en-US') : '—';
+    const gross = r => r[4] * r[6];
+    const day = r => (r[4] > 0 && r[5] > 0) ? (gross(r) - r[5]) / r[1] : 0;
+    const regDay = r => r[7] > 0 ? gross(r) / r[7] : 0;
+    const bk = r => gross(r) > 0 ? r[5] / gross(r) : 0;
+    const tot = R.length;
+    const buyable = R.filter(r => r[5] > 0).length;
+    const regRows = R.filter(r => r[7] > 0 && r[4] > 0);
+    const topDay = R.slice().filter(r => r[4] > 0 && r[5] > 0).sort((a, b) => day(b) - day(a)).slice(0, 8);
+    const mainRows = R.slice().sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], 'zh'))
+        .map(r => [(r[0] + ' ' + (r[2] || '') + ' ' + (r[3] || '')).trim(), [
+            r[0], r[2] || '—', r[3] || '—', String(r[1]),
+            r[4] ? String(r[4]) : '<span class="mon-no">—</span>',
+            r[5] > 0 ? num(r[5]) : '<span class="mon-no">—</span>',
+            r[6] > 0 ? num(r[6]) : '<span class="mon-no">—</span>',
+            (r[4] > 0 && r[5] > 0) ? '<b>' + day(r).toFixed(1) + '</b>' : '<span class="mon-no">—</span>',
+        ]]);
+    return `
+        <h2 class="h2">${tot} 种作物，从 ${Math.min.apply(null, R.map(r => r[1]))} 天到 ${Math.max.apply(null, R.map(r => r[1]))} 天</h2>
+        <p class="p">下面这张表来自官方资料（fandom 与 3DM 中文攻略交叉核对），不是估的。RF5 的作物没有 RF4 那种「四阶段天数」拆解，只有<b>总生长天数</b>；季节标的是「最好／最坏」，最坏季种下去也能长，只是慢。<b>果树（橘／葡／苹）与牧草成熟后每天可收</b>，不在「首轮」里算，单独放在再生型里。</p>
+        ${stat([['收录作物', tot + ' 种'], ['可买种子', buyable + ' 种'], ['再生型', regRows.length + ' 种']])}
+        <p class="p">「首轮日收益」= （单株产量 × 单价 − 种子价）÷ 总天数，指一株、一轮的平均日产出，没算你手里有几块地。产量或种子价记 0 的（树、装备、流星、辉树）不适用这个概念，页面不硬填。</p>
+        ${ftableOwn(['作物', '最好季', '最坏季', '总天', '产量', '种子价', '卖价', '首轮日收益'],
+            ['6.6rem', '5rem', '5rem', '3.6rem', '3.6rem', '5rem', '5rem', '6rem'],
+            mainRows, { ph: '输入作物名或季节', cls: 'crop' })}
+
+        <h2 class="h2">长得最慢的反而最赚——黄金系压在土里三个月起</h2>
+        <p class="p">按首轮日收益排，前八名基本是<b>黄金系与高单价作物</b>：黄金芜菁、黄金卷心菜、黄金土豆、火热果、洋葱、大葱、黄金南瓜、卷心菜。和「短周期滚钱」的直觉相反——短周期作物的日收益被种子价摊得很薄，长周期作物种子贵但卖价贵得更多。</p>
+        ${tbl(['作物', '总天', '种子价', '单株卖', '首轮日收益'], topDay.map(r => [
+            r[0], String(r[1]), num(r[5]), num(gross(r)), '<b>' + day(r).toFixed(1) + '</b>',
+        ]), { leftFirst: true, colw: ['7rem', '5rem', '6rem', '6rem', '7rem'] })}
+        <div class="key">但日收益高不等于周转快：黄金芜菁一株要 120 天、占一格地；同样一格地在 120 天里能轮 40 茬芜菁。真正该问的是「我这块地有多少天可以押」。</div>
+
+        <h2 class="h2">再生型 ${regRows.length} 种：种下去之后每天都有进项</h2>
+        <p class="p">再生型作物（含果树与牧草）收完不拔，隔固定天数再结一次。果树与牧草成熟后<b>每天可收</b>（再生天记作 1），其余按表内天数。这类作物的正确算法是<b>「回本次数」</b>：种子价 ÷ 一次收获总价。大于 1 就说明第一轮还亏，必须收第二轮才回本。</p>
+        ${tbl(['作物', '种子价', '一次收获', '回本还差', '再生间隔', '再生期日收益'], regRows.sort((a, b) => regDay(b) - regDay(a)).map(r => [
+            r[0], num(r[5]), num(gross(r)),
+            bk(r) > 1 ? '<b class="dn">' + (bk(r) * 100 - 100).toFixed(0) + '%</b>' : '<b class="up">已回本</b>',
+            r[7] === 1 ? '每日' : r[7] + ' 天', '<b>' + regDay(r).toFixed(0) + '</b>',
+        ]), { leftFirst: true, colw: ['6.6rem', '5.4rem', '5.4rem', '5.6rem', '5rem', '7rem'], cls: 'spot' })}
+        <div class="note">番茄、青椒、少女蜜瓜、菠萝的首轮是负收益（种子比一茬收成还贵），但因为再生间隔只有 3 天，从第二轮开始就变纯利润。这类作物最怕种下去收一轮就拔掉，等于白亏种子钱。<br>另外，<b>流星作物</b>（流星玉米／南瓜／马铃薯／草莓）种子不在店里卖，只能挖陨石拿，卖价统一 10000G，是后期纯赚的特殊作物，这里只列名与卖价，不硬算收益。</div>
+    `;
+}
+
 /* ------------------------------------------------------------
    符文工房 边境（RFF）作物段
    表结构：[季节, 作物名, [种,芽,叶,花], 十级出货额, 繁荣参考, 备注]
@@ -1081,7 +1127,7 @@ const PAGES = [
             <h2 class="h2">品质与等级</h2>
             <p class="p">作物有等级，等级越高单价越高，也是料理与委托的要求。提升等级靠施肥与连续在同一块地上种植优良品。想稳定产出高等级作物，就要固定一块「种苗田」，专门循环优等品。</p>
             <div class="note">杂草与石头会占格，每天顺手清掉。别把清杂草当成杂活——它直接决定你当天能种多少。</div>
-            ${g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : '')}
+            ${g.id.indexOf('rf5') === 0 ? crop5Html() : (g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : ''))}
         `
     },
     {
