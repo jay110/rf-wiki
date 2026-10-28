@@ -50,6 +50,86 @@ function ftableOwn(head, colw, rows, opts) {
 }
 
 /* ------------------------------------------------------------
+   符文工房 2 / 边境 —— 鱼类表（fish 页的旧作分支）
+   FISH_RF2 : [名, 卖价, 买价, 概率, 钓点]
+   FISH_RFF : [名, 买价, 卖价, 等级范围, 钓点]
+   两作买卖价列序相反，是源表原样，故分别渲染、不合并成同一套列。
+   ------------------------------------------------------------ */
+function fishOldHtml(g) {
+    const id = g.id;
+    /* 价格为「—」时不要拼成「—G」 */
+    const money = v => (v === '—' || v === '' ? '<span class="mon-no">—</span>' : v + 'G');
+
+    if (id === 'rf2') {
+        const A = (typeof FISH_RF2 !== 'undefined') ? FISH_RF2 : [];
+        if (!A.length) return '';
+        const fish = A.filter(r => r[3] !== '—');
+        const junk = A.filter(r => r[3] === '—');
+        const rows = A.map(r => [r[0] + ' ' + r[4], [r[0], money(r[1]), money(r[2]), r[3], r[4]]]);
+        const best = fish.slice().sort((a, b) => parseInt(b[1]) - parseInt(a[1])).slice(0, 5);
+        return `
+        <p class="p">本页是<b>《符文工房2》</b>的 ${fish.length} 种鱼${junk.length ? `，另有 ${junk.length} 种钓上杂物` : ''}。这一作的鱼<b>买得到也卖得掉</b>，但两边价差很大——指望低买高卖不是生意，是亏钱；鱼真正的用处是回 RP、做料理、喂宠物。</p>
+        ${stat([['鱼种', fish.length + ' 种'], ['钓物', junk.length + ' 种'], ['字段', '买卖价·概率·钓点']])}
+        <div class="key">最贵的是<b>${best.map(x => x[0] + '（卖 ' + x[1] + 'G）').join('、')}</b>。注意「卖价」永远低于「买价」，所以想要某条鱼，钓比买划算；反过来想换钱，钓上来直接出货，别绕商店。</div>
+
+        <h2 class="h2">全鱼种</h2>
+        <p class="p">「出现概率」是钓上该鱼的概率，标成区间的是随钓点或等级浮动。<b>家门口 100%</b> 指的是初始钓点只会出珠星三块鱼——所以别在自家门口刷稀有鱼，换个地方。</p>
+        ${ftableOwn(['鱼种', '卖价', '买价', '出现概率', '钓点'],
+            ['7rem', '3.8rem', '3.8rem', '5.4rem'],
+            rows, { ph: '输入鱼名、价格或地名筛选' })}
+        <div class="note">源表「钓点」一栏标注为<b>SOMA 版</b>地点。概率栏写「—」的四件（空罐、高筒靴、石头、树枝）是钓上来的杂物而非鱼，源表不给概率，此处照录。</div>
+
+        <h2 class="h2">钓鱼在这作里是什么定位</h2>
+        <p class="p">RF2 没有 RF4／RF5 那套鱼影读法（色泽、大小、抖动），操作更直接：抛竿、等咬钩、提竿。<b>真正要规划的是「在哪钓」而不是「怎么提竿」</b>——上表的钓点栏就是为这个准备的。想看鱼影机制，去鱼类图鉴的 RF4／RF5 段。</p>
+        <div class="jump">
+            <a href="#/page/mine">
+                <div class="jp-t">采矿与钓鱼</div>
+                <div class="jp-s">一天的体力怎么在锤子和鱼竿之间分</div>
+            </a>
+            <a href="#/page/rp">
+                <div class="jp-t">体力与 RP</div>
+                <div class="jp-s">鱼是 RP 的稳定来源之一</div>
+            </a>
+        </div>`;
+    }
+
+    if (id === 'rff') {
+        const A = (typeof FISH_RFF !== 'undefined') ? FISH_RFF : [];
+        if (!A.length) return '';
+        const rows = A.map(r => [r[0] + ' ' + r[4], [r[0], money(r[1]), money(r[2]), r[3], r[4]]]);
+        const best = A.slice().sort((a, b) => parseInt(b[2]) - parseInt(a[2])).slice(0, 5);
+        const lv = A.map(r => parseInt((r[3] || '').split('~')[1] || 0));
+        const lvMax = Math.max.apply(null, lv.filter(x => !isNaN(x)));
+        return `
+        <p class="p">本页是<b>《符文工房 边境》</b>的 ${A.length} 种鱼。<b>全部无法购买</b>——买价一栏一律是「—」，鱼只能自己钓；钓上来可以出货，也可以拿来喂魔物、做料理。</p>
+        ${stat([['鱼种', A.length + ' 种'], ['可购买', '0 种'], ['钓点等级上限', lvMax + ' 级']])}
+        <div class="key">最值钱的是<b>${best.map(x => x[0] + '（' + x[2] + 'G）').join('、')}</b>。注意「等级范围」不是鱼的实力，而是<b>它能出现的钓点等级区间</b>——同样一条鱼，在高级水域钓上来的等级更高，卖价按等级走。</div>
+
+        <h2 class="h2">全鱼种</h2>
+        <p class="p">这一作的钓点按<b>塔与遗迹的地下层数</b>划分，越深越高级。想刷某条鱼，直接看它的钓点栏里有哪几层，按层数排行程比乱跑省时间。</p>
+        ${ftableOwn(['鱼种', '买价', '卖价', '等级范围', '钓点'],
+            ['7rem', '3.8rem', '3.8rem', '5rem'],
+            rows, { ph: '输入鱼名、价格或遗迹层数筛选' })}
+        <div class="note">买价一栏全为「—」是源表原样：边境的鱼没有商店出售渠道。钓点里的「鲸鱼岛」各部位（胸鳍／侧腹／尾巴大树／空中回廊／四座塔庭院）与「若草／蔓草／雪草遗迹」地下层，都是游戏内实际地名。</div>
+
+        <h2 class="h2">钓鱼在这里是「素材线」不是「赚钱线」</h2>
+        <p class="p">边境的鱼更多是<b>料理与调合的原料</b>：高级鱼直接决定你能做出什么等级的料理。所以鱼竿的优先级跟着料理走——要做什么菜，就先去查那道菜要哪种鱼，再按上表的钓点去找。</p>
+        <div class="jump">
+            <a href="#/page/cook">
+                <div class="jp-t">料理</div>
+                <div class="jp-s">哪道菜要哪种鱼，料理等级怎么抬</div>
+            </a>
+            <a href="#/page/mine">
+                <div class="jp-t">采矿与钓鱼</div>
+                <div class="jp-s">一天的体力怎么在锤子和鱼竿之间分</div>
+            </a>
+        </div>`;
+    }
+
+    return '';
+}
+
+/* ------------------------------------------------------------
    RF4 钓点与季节（fishspot 页的 RF4 段）
    表结构：[鱼名, 春,春·雨,夏,夏·雨,秋,秋·雨,冬,冬·雨,
              沙池, 伊德拉B2, 伊德拉B1, 约克米尔瀑布, 约克米尔池,
@@ -3221,8 +3301,14 @@ const PAGES = [
             const P = id === 'rf5' ? (typeof POT_RF5 !== 'undefined' ? POT_RF5 : [])
                 : is4 ? (typeof POT_RF4 !== 'undefined' ? POT_RF4 : []) : [];
 
+            /* RF2／RF3／边境／海洋 有完整的药品数值表，优先于文本清单；
+               这里的件数要与下方表格一致，所以先算 OD 再写 intro */
+            const OD = (typeof POT_OLD !== 'undefined')
+                ? (POT_OLD[id] || (/^rf3/.test(id) ? POT_OLD.rf3 : null)) : null;
+            const cnt = P.length || (OD ? OD.rows.length : (TX ? TX.n : 0));
+
             const intro = `
-            <p class="p">本页是<b>${g ? g.name : ''}</b>的药品${P.length || TX ? '：<b>' + (P.length || TX.n) + ' 件</b>。' : '：带什么、怎么配。这一作还没有物品数据，所以只有思路、没有表。'}</p>
+            <p class="p">本页是<b>${g ? g.name : ''}</b>的药品${cnt ? '：<b>' + cnt + ' 件</b>。' : '：带什么、怎么配。这一作还没有物品数据，所以只有思路、没有表。'}</p>
             <h2 class="h2">常用药</h2>
             ${tbl(['类型', '作用', '入手'], [
                 ['回复药', '回复 HP', '购买／药学调配'],
@@ -3254,6 +3340,35 @@ const PAGES = [
                 <a href="#/page/craft">
                     <div class="jp-t">锻造与药学</div>
                     <div class="jp-s">药学等级怎么刷、配方什么时候开</div>
+                </a>
+            </div>`;
+            }
+
+            /* ---- RF2／RF3／边境／海洋：完整药品数值表 ---- */
+            if (OD && OD.rows.length) {
+                const rows = OD.rows.map(r => [r.join(' '), r]);
+                const OWN = {
+                    rf2: '这一作的药分成两类：<b>回复 / 治疗类</b>（恢复壶、解毒药等）和<b>农用物资类</b>（营养剂、速速绿、中和剂）。后者不给人吃，是往田里用的——买之前先看清「其它效果」那一栏写的是回血还是催熟。',
+                    rf3: '<b>同一个药名会出现两行，这不是重复</b>：一行是基础材料配方，另一行是用高级材料替代的配方，制造等级更高。等级越高，同样做一瓶药消耗的 RP 越少——所以配方表要连着「制造等级」一起看。',
+                    rff: '边境的药品和素材在解包表里是同一段，所以这里的名字和「素材与矿石」页有重叠——同一件东西的两种用法。配方书分<b>调合白书</b>（入门）和<b>调合全书</b>（高级），买错书等于白花钱。',
+                    rfo: '注意<b>元素类（火／水／风／地／光／暗）无法制作</b>，只能靠鉴定不明物品或特定敌人掉落；属性提升类（蛋白质、生命果冻、智力补品）同理。真正能自己调的是恢复系和状态治疗系。',
+                };
+                const keys = { rf2: 'rf2', rf3: 'rf3', rff: 'rff', rfo: 'rfo' };
+                const own = OWN[keys[id] || (/^rf3/.test(id) ? 'rf3' : '')] || '';
+                return intro + `
+            ${stat([['药品', OD.rows.length + ' 条'], ['字段', OD.head.length + ' 项'], ['来源', 'biligame ' + id.toUpperCase() + ' 药品数据']])}
+            <h2 class="h2">全药品清单</h2>
+            <p class="p">${own}</p>
+            ${ftableOwn(OD.head, null, rows, { ph: '输入药品名、材料或效果筛选' })}
+            <div class="note">数值直接取自源表，未做推算：恢复量、配方材料、买卖价都是游戏内数值。表中「—」表示该字段在这一作不适用或源表未给，<b>不是 0</b>。</div>
+            <div class="jump">
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">药学等级怎么刷、配方书什么时候买</div>
+                </a>
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
                 </a>
             </div>`;
             }
@@ -3872,6 +3987,9 @@ const PAGES = [
     {
         key: 'fish', group: 'item', title: '鱼类图鉴', icon: 'fish',
         body: (g) => {
+            /* RF2 / 边境 有自身的鱼表，走专用分支，不套用 RF4／RF5 数据 */
+            const oldFish = fishOldHtml(g || {});
+            if (oldFish) return oldFish;
             const f4 = (typeof FISH_RF4 !== 'undefined') ? FISH_RF4 : [];
             const f5 = (typeof FISH_RF5 !== 'undefined') ? FISH_RF5 : [];
             const CATS = ['稀有鱼', '大型鱼', '中型鱼', '小型鱼', '钓物'];
