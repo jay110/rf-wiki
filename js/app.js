@@ -106,9 +106,10 @@ function viewHome(g) {
         <div><div class="qk">主角</div><div class="qv">${g.hero}</div></div>
     </div>
     <div class="search">
-        <input id="q" type="search" placeholder="搜索条目，如「锻造」「结婚」" />
+        <input id="q" type="search" autocomplete="off" placeholder="搜索条目，如「生命果冻」「锻造」" />
         <button id="qbtn">搜索</button>
     </div>
+    <div class="qsug" id="qsug"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:0.2rem 1rem 0">
         <span style="font-size:0.68rem;color:#a4aeb4;letter-spacing:0.04em">
             ${g.stageJp}　·　${g.heroJp}
@@ -183,6 +184,30 @@ function viewPage(key) {
         <p class="p"><a class="link" href="#/page/series">› 查看系列作品一览</a></p>
     </div>
     ${footer(g)}`;
+}
+
+/* 从搜索结果跳进来时，把那一条行标出来并滚到眼前。
+   索引里的名字可能取自第二格（首格是行号时），所以逐格比对。 */
+function focusRow(name) {
+    const norm = s => (s || '').replace(/\s+/g, '');
+    const want = norm(name);
+    const trs = document.querySelectorAll('#main .table tbody tr');
+    for (const tr of trs) {
+        const kids = tr.children || [];
+        for (const c of kids) {
+            if (norm(c.textContent) === want) {
+                tr.classList.add('hit-row');
+                /* 等这一帧布局完成再滚，否则刚写入 innerHTML 时位置还算不出来 */
+                const defer = typeof requestAnimationFrame === 'function'
+                    ? requestAnimationFrame : (f) => setTimeout(f, 16);
+                defer(() => {
+                    try { tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { }
+                });
+                setTimeout(() => tr.classList.remove('hit-row'), 3200);
+                return;
+            }
+        }
+    }
 }
 
 function viewResident(gameId, role) {
@@ -452,7 +477,7 @@ function viewSetting() {
             </div>
             <div class="setting-row">
                 <div class="setting-label">版本</div>
-                <div class="setting-value">v1.0.0 · 2026-10-27</div>
+                <div class="setting-value">v1.1.0 · 2026-10-28</div>
             </div>
         </div>
 
@@ -464,19 +489,239 @@ function viewSetting() {
     </div>`;
 }
 
+/* ------------------------------------------------------------
+   全站条目搜索
+   只匹配页面标题远远不够：站内四千多行数据表（武器·料理·素材·
+   魔物·鱼类…）里的任何具体名字，按标题都搜不出来。这里把每页
+   渲染出的 <tr> 抽成条目索引，首格作名称、整行作检索文本；命中
+   后跳到该页并高亮那一行。索引按作品惰性构建（实测 25~35ms），
+   构建一次后缓存在内存里，换作品才重建。
+   ------------------------------------------------------------ */
+const IDXCACHE = {};
+const IDXORDER = [];
+
+/* tight=true 时标签直接删掉，不退化成空格。
+   条目名必须这么取：浏览器的 textContent 不插空格，名称若多出空格，
+   跳转过来按名字找行就会对不上，高亮失效。 */
+function stripTags(s, tight) {
+    return (s || '')
+        .replace(/<[^>]*>/g, tight ? '' : ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"').replace(/&#x?[0-9a-f]+;/gi, '')
+        .replace(/\s+/g, ' ').trim();
+}
+
+function buildIndex(g) {
+    if (IDXCACHE[g.id]) return IDXCACHE[g.id];
+    const list = [];
+    for (const p of PAGES) {
+        if (!pageVis(p, g)) continue;
+        let h = '';
+        try { h = p.body(g) || ''; } catch (e) { continue; }
+        const trs = h.match(/<tr[^>]*>[\s\S]*?<\/tr>/g);
+        if (!trs) continue;
+        for (const tr of trs) {
+            if (/<th[\s>]/.test(tr)) continue;
+            const cells = tr.match(/<td[^>]*>[\s\S]*?<\/td>/g);
+            if (!cells || !cells.length) continue;
+            const ctext = cells.map(c => stripTags(c));
+            /* 有些表首格是行号（系列一览、抗性表），拿它当名字毫无意义，
+               退一格取真正的内容 */
+            let ci = 0;
+            if (/^\d{1,4}$/.test(ctext[0]) && ctext.length > 1) ci = 1;
+            const name = ctext[ci].replace(/\s+/g, ' ').trim();
+            if (!name || name === '—' || name === '-' || name === '?') continue;
+            const text = stripTags(tr);
+            list.push({
+                k: p.key, t: p.title, i: p.icon, grp: p.group,
+                n: name, cells: ctext, s: text.toLowerCase(), raw: text
+            });
+        }
+    }
+    IDXCACHE[g.id] = list;
+    /* 只留最近两作：十作全缓存要几十 MB，手机上不值当 */
+    IDXORDER.push(g.id);
+    while (IDXORDER.length > 2) {
+        const old = IDXORDER.shift();
+        if (old !== g.id) delete IDXCACHE[old];
+    }
+    return list;
+}
+
+/* 所有词都要命中；首词落在名称里比落在数值里得分高得多 */
+function scoreEntry(e, words) {
+    for (const w of words) if (!e.s.includes(w)) return 0;
+    const n = e.n.toLowerCase(), head = words[0];
+    let sc = 30;
+    if (n === head) sc = 100;
+    else if (n.indexOf(head) === 0) sc = 82;
+    else if (n.includes(head)) sc = 66;
+    if (words.every(w => n.includes(w))) sc += 8;
+    return sc;
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function markKw(text, head) {
+    if (!head) return escHtml(text);
+    const low = text.toLowerCase();
+    let out = '', i = 0, j;
+    while ((j = low.indexOf(head, i)) >= 0) {
+        out += escHtml(text.slice(i, j)) + '<mark>' + escHtml(text.slice(j, j + head.length)) + '</mark>';
+        i = j + head.length;
+    }
+    return out + escHtml(text.slice(i));
+}
+
+function snippetOf(text, head) {
+    const i = text.toLowerCase().indexOf(head);
+    if (i < 0) return text.slice(0, 48) + (text.length > 48 ? '…' : '');
+    const a = Math.max(0, i - 16), b = Math.min(text.length, i + head.length + 30);
+    return (a > 0 ? '…' : '') + text.slice(a, b) + (b < text.length ? '…' : '');
+}
+
+/* 搜索主逻辑：同一名字在多个页面重复出现时合并成一条，附页面标签与
+   出现次数，免得「生命果冻」一次刷出四条同名结果；多词全部落空时
+   退回首个关键词，好过直接报「没有找到」。 */
+function searchEntries(g, words) {
+    const idx = buildIndex(g);
+    const run = ws => {
+        const head = ws[0] || '';
+        const hits = [];
+        for (const e of idx) {
+            const sc = scoreEntry(e, ws);
+            if (!sc) continue;
+            /* 首格是日文、中文在第二格的表（译名对照），
+               展示成用户搜的那个名字才有意义 */
+            let name = e.n;
+            if (head && !name.toLowerCase().includes(head) && e.cells) {
+                const alt = e.cells.find(c => c && c.toLowerCase().includes(head));
+                if (alt) name = alt;
+            }
+            hits.push([sc, name === e.n ? e : Object.assign({}, e, { n: name })]);
+        }
+        return hits;
+    };
+    let used = words, relaxed = false;
+    let hits = run(used);
+    /* 多词搜索常常是「想找剑类里攻击高的」这种意图，而表头不在行内，
+       真去 AND 匹配只会剩噪声。全词命中太少时改用首词，并给出提示。 */
+    if (words.length > 1 && hits.length < 3) {
+        const solo = run([words[0]]);
+        if (solo.length > Math.max(3, hits.length * 3)) {
+            used = [words[0]];
+            relaxed = true;
+            hits = solo;
+        }
+    }
+    const merged = new Map();
+    for (const [sc, e] of hits) {
+        const m = merged.get(e.n);
+        if (m) {
+            m.c++;
+            if (!m.pages.some(x => x.k === e.k)) m.pages.push({ k: e.k, t: e.t });
+            if (sc > m.sc) { m.sc = sc; m.raw = e.raw; m.first = e; }
+        } else {
+            merged.set(e.n, { sc, n: e.n, raw: e.raw, c: 1, first: e, pages: [{ k: e.k, t: e.t }] });
+        }
+    }
+    const list = [...merged.values()].sort((a, b) => b.sc - a.sc || a.n.length - b.n.length);
+    return { list, relaxed, used, rows: hits.length };
+}
+
 function viewSearch(q) {
-    const kw = (q || '').toLowerCase();
-    const hit = PAGES.filter(p => pageVis(p, cur()) && p.title.toLowerCase().includes(kw));
+    const raw = (q || '').trim();
+    const kw = raw.toLowerCase();
+    const g = cur();
+    const words = kw.split(/\s+/).filter(Boolean);
+
+    const box = `
+    <div class="search search-inline">
+        <input id="q" type="search" value="${escHtml(raw)}"
+               placeholder="搜条目名、素材、数值，如「生命果冻」「锻造」" />
+        <button id="qbtn">搜索</button>
+    </div>`;
+
+    if (!words.length) {
+        return `
+        <div class="section-title"><span>搜索</span><span class="en">SEARCH</span></div>
+        ${box}
+        <div class="empty">输入关键词开始搜索<br>
+            <span style="font-size:0.74rem">可以搜物品名（「生命果冻」）、页面名（「锻造」），也可以多个词一起搜（「剑 攻击」）</span>
+        </div>`;
+    }
+
+    /* ① 页面级命中：标题 */
+    const pgHit = PAGES.filter(p => pageVis(p, g) && (
+        p.title.toLowerCase().includes(kw) || (p.en || '').toLowerCase().includes(kw)));
+
+    /* ② 条目级命中：数据表每一行 */
+    const { list, relaxed, used, rows } = searchEntries(g, words);
+    const head = used[0];
+    const LIMIT = 80;
+    const shown = list.slice(0, LIMIT);
+    const total = list.length;
+
+    /* ③ 条目集中出现的页面，补进「页面」一栏 */
+    const cnt = new Map();
+    for (const it of list) for (const pg of it.pages) cnt.set(pg.k, (cnt.get(pg.k) || 0) + 1);
+    const extra = [...cnt.entries()]
+        .filter(([k]) => !pgHit.some(p => p.key === k))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([k, n]) => ({ p: PAGE_MAP[k], n }))
+        .filter(x => x.p);
+
     return `
-    <div class="section-title"><span>搜索「${q}」</span><span class="en">${hit.length} RESULTS</span></div>
-    ${hit.length ? `<div class="list">
-        ${hit.map(p => `
+    <div class="section-title"><span>搜索「${escHtml(raw)}」</span><span class="en">${total} ENTRIES</span></div>
+    ${box}
+    ${relaxed ? `<div class="sres-tip">同时含有「${escHtml(words.join('」「'))}」的条目没有，下面按「${escHtml(head)}」单独匹配。</div>` : ''}
+    ${(pgHit.length || extra.length) ? `
+        <div class="sres-head">页面　<span class="sres-n">${pgHit.length + extra.length}</span></div>
+        <div class="list">
+            ${pgHit.map(p => `
+            <a class="list-item" href="#/page/${p.key}">
+                <div class="li-ico">${icon(p.icon)}</div>
+                <div class="list-item-title">${markKw(p.title, head)}</div>
+                ${icon('chev', 'chev')}
+            </a>`).join('')}
+            ${extra.map(({ p, n }) => `
             <a class="list-item" href="#/page/${p.key}">
                 <div class="li-ico">${icon(p.icon)}</div>
                 <div class="list-item-title">${p.title}</div>
+                <div class="list-item-sub">${n} 条命中</div>
                 ${icon('chev', 'chev')}
             </a>`).join('')}
-    </div>` : `<div class="empty">没有找到相关条目<br><span style="font-size:0.74rem">试试「农场」「锻造」「结婚」</span></div>`}
+        </div>` : ''}
+    ${total ? `
+        <div class="sres-head">表内条目　<span class="sres-n">${total}</span>
+            ${rows > total ? `<span class="sres-more">合并自 ${rows} 行</span>` : ''}
+            ${total > LIMIT ? `<span class="sres-more">只列前 ${LIMIT} 条，加个词收窄</span>` : ''}
+        </div>
+        <div class="sres">
+            ${shown.map(it => {
+        const pg = it.pages[0];
+        const more = it.pages.length > 1 ? ` +${it.pages.length - 1}` : '';
+        /* 少数表的首格是整段描述，直接当标题会撑爆一行 */
+        const label = it.n.length > 30
+            ? (it.n.toLowerCase().includes(head) ? snippetOf(it.n, head) : it.n.slice(0, 26) + '…')
+            : it.n;
+        return `
+            <a class="sres-item" href="#/page/${pg.k}/${encodeURIComponent(it.n)}">
+                <div class="sres-top">
+                    <span class="sres-name">${markKw(label, head)}</span>
+                    ${it.c > 1 ? `<span class="sres-cnt">×${it.c}</span>` : ''}
+                    <span class="sres-page">${pg.t}${more}</span>
+                </div>
+                <div class="sres-snip">${markKw(snippetOf(it.raw, head), head)}</div>
+            </a>`;
+    }).join('')}
+        </div>` : ''}
+    ${(!total && !pgHit.length && !extra.length) ? `<div class="empty">没有找到「${escHtml(raw)}」<br>
+        <span style="font-size:0.74rem">本站只收录已核对的数据；换个别名或更短的关键词再试，例如「药草」「锻造」「结婚」</span></div>` : ''}
     <div style="padding:1rem"><a class="link" href="#/" style="font-size:0.84rem">‹ 返回攻略目录</a></div>`;
 }
 
@@ -508,8 +753,7 @@ function render() {
             break;
         case 'page':
             html = viewPage(r.args[0]); title = g.name; tab = 'wiki';
-            break;
-        case 'news': /* 保留位 */
+            break;        case 'news': /* 保留位 */
             html = viewHome(g); showBack = false; tab = 'wiki';
             break;
         case 'resident':
@@ -557,7 +801,7 @@ function render() {
         lastHash = location.hash;
     }
 
-    /* 首页搜索 */
+    /* 首页搜索 + 边打字边出条目建议 */
     const q = document.getElementById('q');
     if (q) {
         const submit = () => {
@@ -565,7 +809,47 @@ function render() {
             if (v) go('/search/' + encodeURIComponent(v));
         };
         q.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-        document.getElementById('qbtn').addEventListener('click', submit);
+        const qb = document.getElementById('qbtn');
+        if (qb) qb.addEventListener('click', submit);
+
+        const sug = document.getElementById('qsug');
+        if (sug) {
+            let timer = null;
+            const draw = () => {
+                const v = q.value.trim().toLowerCase();
+                if (!v) { sug.innerHTML = ''; return; }
+                const words = v.split(/\s+/).filter(Boolean);
+                const { list } = searchEntries(g, words);
+                const top = list.slice(0, 6);
+                sug.innerHTML = top.length
+                    ? top.map(it => {
+                        const pg = it.pages[0];
+                        const more = it.pages.length > 1 ? ` +${it.pages.length - 1}` : (it.c > 1 ? ` ×${it.c}` : '');
+                        const nm = it.n.length > 18
+                            ? (it.n.toLowerCase().includes(words[0]) ? snippetOf(it.n, words[0]) : it.n.slice(0, 16) + '…')
+                            : it.n;
+                        return `
+                        <a class="qsug-item" href="#/page/${pg.k}/${encodeURIComponent(it.n)}">
+                            <span class="qsug-n">${markKw(nm, words[0])}</span>
+                            <span class="qsug-p">${pg.t}${more}</span>
+                        </a>`;
+                    }).join('')
+                    + `<a class="qsug-all" href="#/search/${encodeURIComponent(q.value.trim())}">查看全部 ${list.length} 条结果 ›</a>`
+                    : `<div class="qsug-none">当前作品里没有匹配的条目</div>`;
+            };
+            q.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(draw, 60);
+            });
+        }
+    }
+
+    /* 从搜索结果点进来的条目：定位并高亮 */
+    if (r.name === 'page' && r.args[1]) focusRow(r.args[1]);
+
+    /* 从顶栏搜索按钮进来（无关键词）时直接聚焦输入框 */
+    if (r.name === 'search' && !r.args[0] && q) {
+        try { q.focus(); } catch (e) { }
     }
 
     /* 设置页交互 */
@@ -811,5 +1095,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('backBtn').addEventListener('click', () => {
         if (history.length > 1) history.back(); else go('/');
     });
+    const sb = document.getElementById('searchBtn');
+    if (sb) sb.addEventListener('click', () => go('/search'));
     render();
 });

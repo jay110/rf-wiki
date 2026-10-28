@@ -125,6 +125,31 @@ img {
     letter-spacing: 0.05em;
 }
 
+/* 顶栏搜索入口：任何页面都能直接搜，不必先回首页 */
+.titlebar .tsearch {
+    position: absolute;
+    right: 3.4rem;
+    width: 2.2rem;
+    height: 2.5rem;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: var(--ink-3);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.titlebar .tsearch svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.titlebar .tsearch:hover {
+    color: var(--green);
+}
+
 .main {
     width: 100%;
     min-height: calc(100vh - 2.5rem - 3.8rem);
@@ -515,6 +540,168 @@ img {
 .search button:hover {
     background: #a9bcc9;
     color: #fff;
+}
+
+/* 搜索页顶部的输入框：与首页同款，只是自带上下留白 */
+.search-inline {
+    margin: 0.1rem 0.9rem 0.5rem;
+}
+
+/* ============ 搜索建议（首页边打字边出） ============ */
+.qsug:empty {
+    display: none;
+}
+
+.qsug {
+    margin: 0.35rem 0.9rem 0.2rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    border: solid 1px var(--line);
+    overflow: hidden;
+}
+
+.qsug-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    text-decoration: none;
+    border-bottom: solid 1px var(--line-2);
+}
+
+.qsug-item:last-of-type {
+    border-bottom: none;
+}
+
+.qsug-item:hover {
+    background: var(--bg-2);
+}
+
+.qsug-n {
+    font-size: 0.82rem;
+    color: var(--ink);
+    font-weight: 600;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.qsug-p {
+    font-size: 0.68rem;
+    color: var(--ink-3);
+    margin-left: auto;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.qsug-all {
+    display: block;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.74rem;
+    color: var(--green);
+    text-decoration: none;
+    background: #f7faf8;
+}
+
+.qsug-none {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.76rem;
+    color: var(--ink-3);
+}
+
+/* ============ 搜索结果 ============ */
+.sres-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem 0.4rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+}
+
+.sres-n {
+    font-size: 0.7rem;
+    color: var(--green);
+    font-weight: 700;
+}
+
+.sres-more {
+    margin-left: auto;
+    font-size: 0.66rem;
+    color: var(--ink-4);
+}
+
+.sres {
+    margin: 0 0.9rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    border: solid 1px var(--line);
+    overflow: hidden;
+}
+
+.sres-item {
+    display: block;
+    padding: 0.55rem 0.8rem;
+    text-decoration: none;
+    border-bottom: solid 1px var(--line-2);
+}
+
+.sres-item:last-child {
+    border-bottom: none;
+}
+
+.sres-item:hover {
+    background: var(--bg-2);
+}
+
+.sres-top {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.sres-name {
+    font-size: 0.84rem;
+    color: var(--ink);
+    font-weight: 600;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.sres-page {
+    margin-left: auto;
+    font-size: 0.66rem;
+    color: #8b98a0;
+    background: var(--line-2);
+    border-radius: 0.3rem;
+    padding: 0.06rem 0.36rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.sres-snip {
+    margin-top: 0.18rem;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: var(--ink-3);
+    word-break: break-all;
+}
+
+.sres mark,
+.qsug mark {
+    background: #ffeaa0;
+    color: inherit;
+    border-radius: 0.15rem;
+    padding: 0 0.06rem;
+}
+
+/* 从搜索跳转过来时高亮的那一行 */
+.table tbody tr.hit-row td {
+    background: #fff7d6;
+    box-shadow: inset 0 0 0 1px #f0d97a;
 }
 
 /* ============ 设置 ============ */
@@ -1464,4 +1651,24 @@ img {
 .mon-table.fx th:last-child,
 .mon-table.fx tbody td:last-child {
     text-align: left;
+}
+
+/* 搜索页的收窄提示与重复计数 */
+.sres-tip {
+    margin: 0.2rem 0.9rem 0.1rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.45rem;
+    background: #fff8e6;
+    border: solid 1px #f3e2b4;
+    font-size: 0.72rem;
+    line-height: 1.65;
+    color: #8a6d1f;
+}
+
+.sres-cnt {
+    font-size: 0.64rem;
+    color: #98a4ac;
+    background: var(--line-2);
+    border-radius: 0.3rem;
+    padding: 0.06rem 0.3rem;
 }
