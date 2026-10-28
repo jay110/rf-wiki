@@ -2566,7 +2566,8 @@ const PAGES = [
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
             const TX = txPack(id, 'weapon');
-            const W = id === 'rf5' ? (typeof EQW_RF5 !== 'undefined' ? EQW_RF5 : [])
+            const W = id === 'rf3' ? (typeof EQW_RF3 !== 'undefined' ? EQW_RF3 : [])
+                : id === 'rf5' ? (typeof EQW_RF5 !== 'undefined' ? EQW_RF5 : [])
                 : is4 ? (typeof EQW_RF4 !== 'undefined' ? EQW_RF4 : []) : [];
 
             /* 本作实际有的类型与件数：有结构化数据就按种类字段统计，否则按文本分类 */
