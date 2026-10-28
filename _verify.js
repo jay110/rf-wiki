@@ -52,6 +52,25 @@ function check(name, htmlstr) {
 }
 console.log('检查页面实例', checked, '异常', bad);
 
+/* 头像表自检：FACE 里写的每个键都得有对应的 png，且不是空文件。
+   破图比没有头像难看得多——宁可退回首字色块，所以这里一律当错误报出来。 */
+if (!only) {
+    const FACE = ctx.FACE || {};
+    let fok = 0, fbad = 0;
+    for (const gid of Object.keys(FACE)) {
+        for (const [jp, key] of Object.entries(FACE[gid])) {
+            const p = ROOT + 'assets/face/' + gid + '/' + key + '.png';
+            let sz = 0;
+            try { sz = fs.statSync(p).size; } catch (e) { }
+            if (sz > 100) { fok++; continue; }
+            console.log('!! 头像缺失 ' + gid + '/' + key + '（' + jp + '）');
+            fbad++;
+        }
+    }
+    console.log('头像', Object.keys(FACE).length + ' 作', fok + ' 张，缺', fbad);
+    bad += fbad;
+}
+
 // 抽查新页
 if (!only) {
     const p = PAGES.find(x => x.key === 'zhname');
