@@ -1950,6 +1950,15 @@ img {
     background: #f7faf8;
 }
 
+/* icon() 产出的 svg 没有宽高属性，尺寸全靠这里给；
+   漏了这条 chev 会按 SVG 默认尺寸撑满，把整张卡片的 flex 挤塌 */
+.npc-card .chev {
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #d3d8db;
+}
+
 .npc-av {
     flex: 0 0 2.1rem;
     width: 2.1rem;
@@ -2255,9 +2264,12 @@ img {
 }
 
 .sch-legend .lg {
+    flex: 0 0 auto;
     font-size: 0.62rem;
+    line-height: 1.6;
     padding: 0.1rem 0.42rem;
     border-radius: 3px;
+    white-space: nowrap;
 }
 
 .sch-legend .c-home { background: #e8f1fb; color: #31597f; }
@@ -2265,4 +2277,4 @@ img {
 .sch-legend .c-pub  { background: #e9f5ec; color: #2d6a3e; }
 .sch-legend .c-out  { background: #eef1f3; color: #4a5a64; }
 .sch-legend .c-cave { background: #f0ecf9; color: #5b468c; }
-.sch-legend .c-none { background: #fafbfb; color: #c9ced2; }
+.sch-legend .c-none { background: #f4f6f7; color: #8f9aa1; }
