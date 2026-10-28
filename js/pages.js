@@ -1955,6 +1955,7 @@ const PAGES = [
                     return `
             <h2 class="h2">符文3：${C.length} 道料理、${recipes.length} 条配方</h2>
             <p class="p">这一作现在把<b>「材料配方」也补上了</b>——每道菜要拿什么食材、几级能做、卖多少，全部来自 bilibili wiki 的 RF3 料理表（已汉化）。另外 ${C.length} 道菜的<b>名称与食用效果</b>来自 RF3 游戏文本 dump。两份来源合并，正好拼成「怎么做 + 吃了怎样」。</p>
+            <div class="note"><b>怎么拿到这些配方？</b> RF3 没有「配方书」系统。要解锁某道菜的配方，得吃对应的<b>配方面包（料理パン）</b>——面包名基本就是「该料理名 ＋ パン」，吃下立即习得，之后才能在对应厨具上做出来。所以下表里每条配方都要<b>先吃到对应面包才开放</b>；表中「制造等级」只是做出成品所需的技能门槛，不是解锁条件。</div>
             <div class="note">配方来源是<b>网络 wiki（bilibili《符文工房3》RF3recipecook 页）</b>，并非官方解包，数值以游戏内为准。同一道菜用不同尺寸材料（小/中/大牛奶、普通/优质/每日健康蛋）会拆成多行，这是源表本来的写法。末尾<b>「其它」${etc.length} 件是没有配方的成品</b>（米饭、巧克力、失败之作等），只能买或掉落，制造等级与材料栏标 —。</div>
             ${stat([['料理效果', C.length + ' 道（游戏文本）'], ['配方 / 其它', recipes.length + ' / ' + etc.length], ['厨具', (kinds.length - 1) + ' 类 + 其它'], ['技能范围', 'Lv' + Math.min.apply(null, lvs) + '–' + Math.max.apply(null, lvs)], ['数据来源', 'bilibili wiki（汉化）']])}
             <h2 class="h2">七类厨具 + 「其它」</h2>
