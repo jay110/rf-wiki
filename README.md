@@ -61,7 +61,7 @@ js/fishspot4.js     RF4 钓点
 js/npcfull.js       人物档案（7 部作品 196 人：生日 / 声优 / 喜好 / 回礼）
 js/sched.js         符文1 村民每日行程表（28 人 × 8 种星期 × 19 个整点）
 js/boss.js          BOSS 战数据（符文1／2／3／海洋，71 条剧情与迷宫 BOSS）
-js/faces.js         角色头像映射（日文名 → assets/face/rf1/ 下的文件名）
+js/faces.js         角色头像映射（日文名 → assets/face/<作>/ 下的文件名，符文1／2 已接）
 js/npcdata.js       村民喜好（RF4 / RF5，解包表横向统计用）
 js/cropdata.js      RF4 作物
 js/rf1data.js       RF1 数据
@@ -85,15 +85,27 @@ _xlsx_read.py       零依赖 xlsx 解析器
 本站在此基础上做了译名统一、按日文名对齐与字段清洗。原始 wikitext 抓取件留在本地 `_npc_src/`（不入库，需要时用 API 重抓即可）。
 
 ### 角色头像
-`assets/face/rf1/` 下是符文1 的角色头像，由 `_build_faces.py` 从解包出的 NCER 立绘页裁出：
-一张立绘 512×256、一人一张、同人有多帧表情，裁成以头为中心的方图，一次跑完全部角色。
-生成脚本依赖源目录（默认 `G:/BaiduNetdiskDownload/ARFJ_NCER_ext`）与 Pillow，产物已入库，
-平时不需要重跑。
+`assets/face/rf1/`、`assets/face/rf2/` 下是符文1 与符文2 的角色头像，由 `_build_faces.py` 从解包出的
+NCER 立绘页裁出：一张立绘 512×256、一人一张、同人有多帧表情，裁成以头为中心的方图，一次跑完全部角色。
+生成脚本依赖源目录与 Pillow，产物已入库，平时不需要重跑。
+
+```
+python _build_faces.py            # 符文1（默认）
+python _build_faces.py rf2        # 符文2
+python _build_faces.py rf1 --all  # 连表情差分一起出
+python _preview_faces.py rf2      # 拼一张带中/日文名的总览图，检查取景
+```
+
+源目录：符文1 在 `G:/BaiduNetdiskDownload/ARFJ_NCER_ext`，符文2 在 `G:/BaiduNetdiskDownload/A6NJ_NCER_extract`。
 
 - 认人按**日文名**，不用罗马字代号——游戏内部文件名跟各作英译对不上（拉碧丝 = Lara，文件却叫 `e_lapis`）。
+- 符文2 的解包图只有 `pic_npc01` 这类流水号，没有名字，归属靠两条独立证据确认：一是反查 wiki 角色页
+  引用了哪张图（`_probe_rf2_owners.py`），二是拿官网 15 周年立绘逐张比对（`_fetch_portraits.py`）。
+  另外那套图里带 `_W` 后缀的婚礼差分正好是 7 位花嫁候补 + 4 位花婿候补 + 主角，可作交叉验证。
 - 清单外的三个（艾泽尔巴德、吉尔伯特、主角之子）也切好了，键名以 `xt_` 开头，暂未接入名录。
 - 默认每人只出一张；表情差分要的话跑 `python _build_faces.py --all`。
 - 图查不到时视图退回原来的「首字色块」，所以还没做头像的作品不会出破图。
+- 站内「海齐利格斯」与「赫理查科斯」是同一人的两条记录，头像表里两个日文名指向同一张图。
 
 ### BOSS 战数据
 

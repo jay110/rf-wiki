@@ -52,3 +52,10 @@ _rf3recipes_src.html
 
 # 人物页 wikitext 抓取件（_build_npcfull.py 的输入，本地保留）
 _npc_src/
+
+# 认人用的临时对照图与官网立绘（_fetch_portraits.py 可重新下载）
+_face_src/portrait/
+_zoom_*.png
+_cmp_*.png
+_sheet_*.png
+_preview_face_*.png
