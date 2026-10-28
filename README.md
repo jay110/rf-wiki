@@ -61,7 +61,7 @@ js/fishspot4.js     RF4 钓点
 js/npcfull.js       人物档案（7 部作品 195 人：生日 / 声优 / 喜好 / 回礼）
 js/sched.js         符文1 村民每日行程表（28 人 × 8 种星期 × 19 个整点）
 js/boss.js          BOSS 战数据（符文1／2／3／海洋，71 条剧情与迷宫 BOSS）
-js/faces.js         角色头像映射（日文名 → assets/face/<作>/ 下的文件名，符文1／2 已接）
+js/faces.js         角色头像映射（日文名 → assets/face/<作>/ 下的文件名，符文1／2／5 已接）
 js/npcdata.js       村民喜好（RF4 / RF5，解包表横向统计用）
 js/cropdata.js      RF4 作物
 js/rf1data.js       RF1 数据
@@ -85,7 +85,9 @@ _xlsx_read.py       零依赖 xlsx 解析器
 本站在此基础上做了译名统一、按日文名对齐与字段清洗。原始 wikitext 抓取件留在本地 `_npc_src/`（不入库，需要时用 API 重抓即可）。
 
 ### 角色头像
-`assets/face/rf1/`、`assets/face/rf2/` 下是符文1 与符文2 的角色头像，由 `_build_faces.py` 从解包出的
+`assets/face/rf1/`、`assets/face/rf2/`、`assets/face/rf5/` 下是符文1、符文2 与符文5 的角色头像。
+
+- **符文1／2**：由 `_build_faces.py` 从解包出的
 NCER 立绘页裁出：一张立绘 512×256、一人一张、同人有多帧表情，裁成以头为中心的方图，一次跑完全部角色。
 生成脚本依赖源目录与 Pillow，产物已入库，平时不需要重跑。
 
@@ -97,6 +99,12 @@ python _preview_faces.py rf2      # 拼一张带中/日文名的总览图，检�
 ```
 
 源目录：符文1 在 `G:/BaiduNetdiskDownload/ARFJ_NCER_ext`，符文2 在 `G:/BaiduNetdiskDownload/A6NJ_NCER_extract`。
+
+- **符文5**：PC 版是 Unity 游戏，头像不在 ROM 打包的 NCER 里，而在 Addressables 的
+  `FaceIconSpriteAtlas` 中（游戏内 HUD 小头像，约 62×64）。由 `_build_face_rf5.py` 用 UnityPy 取出，
+  bundle 名与容器路径都是哈希，只有对象名 `Icon_chNNN` 能读，认人靠 `_face_src/rf5_map.md` 里
+  三条互相印证的线索（编号表 / 立绘目录 / 发色）。31 位居民接了 27 位，剩下帕尔摩、妃那、塔克、
+  玛格丽特未能核实，按站内规矩留空——取不到图时视图会退回「首字色块」，不会出破图。
 
 - 认人按**日文名**，不用罗马字代号——游戏内部文件名跟各作英译对不上（拉碧丝 = Lara，文件却叫 `e_lapis`）。
 - 符文2 的解包图只有 `pic_npc01` 这类流水号，没有名字，归属靠两条独立证据确认：一是反查 wiki 角色页

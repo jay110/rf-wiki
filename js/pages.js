@@ -4540,6 +4540,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-29　第六十五次：符文5 也接上头像了，31 位居民接了 27 位</h2>
+            <ul class="ul">
+                <li class="li"><b>换了条路子</b>：符文5 是 Unity 游戏（PC 版现成），头像不在 NDS 那种 NCER 立绘里，而在 Addressables 的 <code>FaceIconSpriteAtlas</code>——就是游戏里 HUD 上那张小圆脸，约 62×64 像素。用 UnityPy 从两个 bundle 里取出 108 张精灵，按 <code>Icon_chNNN</code> 归类。</li>
+                <li class="li"><b>难点在认人</b>：bundle 名和容器路径全是哈希，能读的只有对象名 <code>Icon_ch030</code> 这种流水号。三条线索互相印证才敢落笔——① 游戏里 <code>NpcLifeCycleTable/02_Prisila</code> 这套带编号的角色表；② 立绘目录 <code>BU_03Prs</code> 这类带编号的英文名；③ 把头像和官网立绘各自取主发色做色距比对。ch026=ドグ、ch027=ジュリアン、ch028=ヒナ 三连色距都在 3 以内，可以直接钉死。</li>
+                <li class="li"><b>有一处三线索打架，按发色定案</b>：编号表写的是 15_Viviage、16_Heinz，但色距是 ch015=Heinz（亮黄，色距 6）、ch016=Viviage（橙红帽，色距 2），两个特征色都极鲜明，取发色；Viviage 站内名录没有，这一张<b>不接</b>。</li>
+                <li class="li"><b>没接的四位写清楚</b>：帕尔摩、妃那、塔克、玛格丽特——官网没有这四位的立绘做参照，站内的中文／日文名又对不上任何一条编号线索，<b>宁可退回色块</b>。另外 ch030／ch031 是主角常服差分（各 36 张表情），与 ch000／ch001 同一张脸，暂不用。全部理由登记在 <code>_face_src/rf5_map.md</code>。</li>
+                <li class="li"><b>顺带</b>：符文5 的头像比符文1／2 的小得多（62px 对 100～220px），列表里 33px、详情页 64px 都够用，但没有放大空间——等哪天能取到官网立绘再换。</li>
+            </ul>
             <h2 class="h2">2026-10-28　第六十四次：村民喜好里的物品名跟物品表对了一遍，改正 26 个写法</h2>
             <ul class="ul">
                 <li class="li"><b>为什么要对</b>：人物名册的物品名是从 wiki 源页抄的，村民喜好表来自解包表，两边都不是「物品表」本身——同一件东西，三处可能三种写法。这次拿站内自己维护的物品／料理／素材表（来自解包原始数据，最可信）当尺子，逐字比对：<b>同长度、只差一个字</b>的，基本就是抄错。</li>

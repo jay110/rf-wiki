@@ -73,6 +73,39 @@ var FACE = {
         'リーン': 'leen',
         'ムー&スー': 'muu',
         'ラムリア': 'ramlia'
+    },
+    /* 符文5：源是 PC 版（Unity）的 FaceIconSpriteAtlas，游戏内 HUD 头像，约 62px。
+       由 _build_face_rf5.py 从 Addressables 的 bundle 里取出，ch 编号与人的对应
+       见 _face_src/rf5_map.md（编号表 + 立绘目录 + 发色三条互相印证）。
+       没核实的编号（ch016 / ch032 / ch033 / ch035）一律不接，宁可退回色块。 */
+    rf5: {
+        'アレス': 'ares',
+        'アリス': 'alice',
+        'プリシラ': 'priscilla',
+        'ルーシー': 'lucy',
+        'スカーレット': 'scarlett',
+        'フーカ': 'fuqua',
+        'ベアトリス': 'beatrice',
+        'ルドミラ': 'ludmila',
+        'マーティン': 'martin',
+        'セシル': 'cecile',
+        'むらくも': 'murakumo',
+        'リュカ': 'lyka',
+        'ラインハルト': 'reinhard',
+        'ルーカス': 'lucas',
+        'エルシェ': 'elsje',
+        'ハインツ': 'heinz',
+        'ランドルフ': 'randolph',
+        'ユキ': 'yuki',
+        'シモーヌ': 'simone',
+        'みささぎ': 'misasagi',
+        'テリー': 'terry',
+        'リヴィア': 'rivia',
+        'レディア': 'laedia',
+        'ドグ': 'doug',
+        'ジュリアン': 'julian',
+        'ヒナ': 'hina',
+        'オズワルド': 'oswald'
     }
 };
 
