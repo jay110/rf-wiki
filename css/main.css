@@ -1468,6 +1468,25 @@ img {
     line-height: 1.6;
 }
 
+/* ---- BOSS 战 ----
+   最弱属性用红字点出来（一代是点数制，数值最小的那项才是弱点）；
+   抗性／掉落那类长文字列允许换行，否则整表会被撑到几屏宽 */
+.content .table.boss .td b.wk {
+    color: #c0392b;
+}
+
+.content .table.boss .td {
+    font-variant-numeric: tabular-nums;
+}
+
+.content .table.boss.wraplast .td:last-child,
+.content .table.boss.wraplast .th:last-child {
+    white-space: normal;
+    text-align: left;
+    line-height: 1.6;
+    min-width: 11rem;
+}
+
 /* 多张跳转卡纵向排列时的间距（.jump 内可放多张） */
 .content .jump > a + a {
     margin-top: 0.55rem;

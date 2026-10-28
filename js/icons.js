@@ -46,6 +46,7 @@ const ICON_PATHS = {
     search: '<circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.4 15.4 4.4 4.4"/>',
     trash: '<path d="M4.6 6.6h14.8"/><path d="M9.4 6.6V4.2h5.2v2.4"/><path d="M6.4 6.6 7.4 21h9.2l1-14.4"/>',
     check: '<path d="m4.6 12.6 5 5L19.4 7"/>',
+    skull: '<path d="M12 2.8c-4.3 0-7.3 3-7.3 6.9 0 2.4 1.1 4.3 2.8 5.5v2.4c0 1.1.8 1.9 1.8 1.9h5.4c1 0 1.8-.8 1.8-1.9v-2.4c1.7-1.2 2.8-3.1 2.8-5.5 0-3.9-3-6.9-7.3-6.9z"/><circle cx="9.4" cy="9.9" r="1.15" fill="currentColor" stroke="none"/><circle cx="14.6" cy="9.9" r="1.15" fill="currentColor" stroke="none"/><path d="M10.9 13.4h2.2M10.4 19.5v-1.6M13.6 19.5v-1.6"/>',
 };
 
 function icon(name, cls) {
