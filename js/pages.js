@@ -1936,18 +1936,37 @@ const PAGES = [
                     if (!(g && g.id === 'rf3')) return '';
                     const IT = (typeof ITEM_RF3 !== 'undefined') ? ITEM_RF3 : [];
                     const C = (typeof RF3_COOK !== 'undefined') ? RF3_COOK : [];
-                    const cats = {};
-                    C.forEach(x => { cats[x[0]] = (cats[x[0]] || 0) + 1; });
-                    const catRows = Object.keys(cats).sort((a, b) => cats[b] - cats[a]).map(k => [k, cats[k] + ' 道']);
+                    const rec = (typeof RF3_RECIPE !== 'undefined') ? RF3_RECIPE : [];
+                    const ORDER_RF3 = ['徒手', '菜刀', '平底锅', '搅拌机', '锅', '烤箱', '蒸笼', '其它'];
+                    const kinds = ORDER_RF3.filter(k => rec.some(x => x[0] === k));
+                    const recipes = rec.filter(x => x[2] !== '—');
+                    const etc = rec.filter(x => x[0] === '其它');
+                    const lvs = recipes.map(x => parseInt(x[2], 10)).filter(v => !isNaN(v));
+                    const kindRows = kinds.map(k => {
+                        const sub = rec.filter(x => x[0] === k);
+                        const hasLv = sub.filter(x => x[2] !== '—');
+                        const ls = hasLv.map(x => parseInt(x[2], 10));
+                        const easy = (hasLv.length ? hasLv : sub).slice().sort((a, b) => (parseInt(a[2], 10) || 0) - (parseInt(b[2], 10) || 0))[0];
+                        return [k, sub.length + ' 条', ls.length ? ('Lv' + Math.min.apply(null, ls) + '–' + Math.max.apply(null, ls)) : '—',
+                            easy[2] === '—' ? easy[1] : easy[1] + '（Lv' + easy[2] + '）'];
+                    });
+                    const rowR = x => [x[1] + ' ' + x[0] + ' ' + x[3].join(' ') + ' ' + x[5],
+                        [x[1], x[0], x[2] === '—' ? '—' : 'Lv' + x[2], x[3].join('、') || '—', x[4] === '—' ? '—' : x[4] + 'G', x[5]]];
                     return `
-            <h2 class="h2">符文3：${C.length} 道料理（名称 + 效果）</h2>
-            <p class="p">这一作在站里此前只有「成品清单」。现在把<b>全部做得出来的料理</b>补全了——名字与效果描述都来自 RF3 的游戏文本 dump（已汉化），共 ${C.length} 道，按烹饪方式分成 ${Object.keys(cats).length} 类。</p>
-            <div class="note">但要先说清：这份源是<b>游戏文本 dump</b>（物品名 + 描述），<b>不含材料配方组合</b>——每道菜要拿什么食材、几级能做，是游戏逻辑数据，不在这份文本里。所以这一页只给<b>「名称 + 效果」</b>，材料配方那一栏暂时空着。等拿到真正的配方解包，再补进统一配方表。<b>没核实的宁可不写</b>。</div>
-            ${stat([['料理道数', C.length + ' 道'], ['分类', Object.keys(cats).length + ' 类'], ['数据来源', 'RF3 游戏文本 dump（汉化）'], ['材料配方', '源未含，暂缺']])}
-            <h2 class="h2">分类一览</h2>
-            ${tbl(['分类', '道数'], catRows, { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
-            <h2 class="h2">全部料理：名称 + 效果（可搜索）</h2>
-            <p class="p">搜菜名找做法、搜「火」「暴击」「治愈」等关键词反查带该效果的菜。<b>材料配方暂缺</b>，这一页只呈现名称与食用效果。</p>
+            <h2 class="h2">符文3：${C.length} 道料理、${recipes.length} 条配方</h2>
+            <p class="p">这一作现在把<b>「材料配方」也补上了</b>——每道菜要拿什么食材、几级能做、卖多少，全部来自 bilibili wiki 的 RF3 料理表（已汉化）。另外 ${C.length} 道菜的<b>名称与食用效果</b>来自 RF3 游戏文本 dump。两份来源合并，正好拼成「怎么做 + 吃了怎样」。</p>
+            <div class="note">配方来源是<b>网络 wiki（bilibili《符文工房3》RF3recipecook 页）</b>，并非官方解包，数值以游戏内为准。同一道菜用不同尺寸材料（小/中/大牛奶、普通/优质/每日健康蛋）会拆成多行，这是源表本来的写法。末尾<b>「其它」${etc.length} 件是没有配方的成品</b>（米饭、巧克力、失败之作等），只能买或掉落，制造等级与材料栏标 —。</div>
+            ${stat([['料理效果', C.length + ' 道（游戏文本）'], ['配方 / 其它', recipes.length + ' / ' + etc.length], ['厨具', (kinds.length - 1) + ' 类 + 其它'], ['技能范围', 'Lv' + Math.min.apply(null, lvs) + '–' + Math.max.apply(null, lvs)], ['数据来源', 'bilibili wiki（汉化）']])}
+            <h2 class="h2">七类厨具 + 「其它」</h2>
+            <p class="p">先有对应厨具才能做那一类。<b>平底锅最多（${rec.filter(x => x[0] === '平底锅').length} 条），徒手最少</b>。「其它」是没有配方的成品，别在料理台上找它们。</p>
+            ${tbl(['分类', '条数', '等级范围', '入门一道'], kindRows, { leftFirst: true, cls: 'txt', colw: ['4.6rem', '2.8rem', '4rem', 'auto'] })}
+            <h2 class="h2">配方表：怎么做（可搜索）</h2>
+            <p class="p">按厨具与制造等级排序。搜菜名找做法，<b>搜食材名反查能做什么菜</b>（例如搜「闪光鲷鱼」列出所有用它的菜）。卖价是 Lv1 基础售价，用更高级材料做出的成品卖得更贵。</p>
+            ${ftableOwn(['名称', '厨具', '制造等级', '材料', '卖价', '属性效果'],
+                    ['5.4rem', '3rem', '3.4rem', 'auto', '3rem', 'auto'],
+                    rec.map(rowR), { cls: 'mon-aux', ph: '搜菜名、厨具或食材' })}
+            <h2 class="h2">食用效果（游戏文本）</h2>
+            <p class="p">这一张直接录 RF3 游戏文本 dump 里每道菜的<b>官方中文描述</b>，偏风味说明（「蘸上酱油等调味料食用」「食用后较易打出暴击」）。想找「加暴击」「火属性减半」这类具体数值效果，用上一张配方表的属性效果列搜更快。</p>
             ${ftableOwn(['料理名', '分类', '效果描述'],
                     ['5.4rem', '4.8rem', 'auto'],
                     C.map(x => [x[1] + ' ' + x[0], [x[1], x[0], x[2].replace(/\{换行\}/g, '<br>')]]),
