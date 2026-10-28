@@ -72,6 +72,76 @@ function go(path) {
    视图
    ============================================================ */
 
+/* 从更新日志页里取最新的几条标题，给主页「最近更新」用。
+   直接读 changelog 的正文，不另维护一份列表，免得又忘同步。 */
+function latestUpdates(n) {
+    try {
+        const p = PAGE_MAP['changelog'];
+        if (!p) return [];
+        const hs = (p.body() || '').match(/<h2[^>]*>([\s\S]*?)<\/h2>/g) || [];
+        return hs.slice(0, n).map(s => {
+            let t = stripTags(s, true).replace(/^\d{4}-\d{1,2}-\d{1,2}[\s　]*/, '');
+            if (t.length > 42) t = t.slice(0, 40) + '…';
+            return t;
+        }).filter(Boolean);
+    } catch (e) { return []; }
+}
+
+/* 站点主页（#/）：站点层面的介绍与入口，不是某一部作品的攻略目录。
+   攻略目录在 #/wiki，两者分开，跟版式参考站的结构一致。 */
+function viewWelcome() {
+    const g = cur();
+    const chars = GAMES.reduce((s, x) => s + (x.chars ? x.chars.length : 0), 0);
+    const ups = latestUpdates(3);
+
+    return `
+    <div class="wcover">
+        <div class="wcover-jp">ルーンファクトリー</div>
+        <div class="wcover-name">符文工房攻略百科</div>
+        <div class="wcover-en">RUNE FACTORY WIKI</div>
+        <div class="wcover-sub">非官方中文资料站</div>
+        <div class="wcover-stat">
+            <div><b>${GAMES.length}</b><span>部作品</span></div>
+            <div><b>${PAGES.length}</b><span>个条目</span></div>
+            <div><b>${chars}</b><span>位角色</span></div>
+        </div>
+        <a class="wcover-go" href="#/wiki">进入攻略　›</a>
+    </div>
+
+    <div class="section-title"><span>选择作品</span><span class="en">TITLES</span></div>
+    <div class="wgrid">
+        ${GAMES.map(x => `
+            <a class="wcard${x.id === g.id ? ' cur' : ''}" href="#/switch/${x.id}"
+               style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
+                <div class="wcard-no">${x.no}</div>
+                <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
+                <div class="wcard-stage">${x.stage}</div>
+                <div class="wcard-meta">${x.date.slice(0, 4)}　${platShort(x.plat)}</div>
+            </a>`).join('')}
+    </div>
+
+    ${ups.length ? `
+    <div class="section-title"><span>最近更新</span><span class="en">UPDATES</span></div>
+    <div class="wlist">
+        ${ups.map(t => `<div class="witem">${t}</div>`).join('')}
+        <a class="wmore" href="#/page/changelog">查看完整更新日志　›</a>
+    </div>` : ''}
+
+    <div class="section-title"><span>关于本站</span><span class="en">ABOUT</span></div>
+    <div class="wabout">
+        <p>玩家整理的《符文工房》系列中文资料站，按作品分册收录世界观、牧场生活、战斗与生产系统、物品与魔物数据。每部作品的数值互相独立，<b>没核实的字段一律留空</b>，不拿别作的数凑。</p>
+        <div class="wrow"><span class="wk">数据来源</span><span class="wv">各作解包表格、biligame 符文工厂 wiki、Marvelous 官方作品页</span></div>
+        <div class="wrow"><span class="wk">版式参考</span><span class="wv"><a class="link" href="https://wiki.mineraltown.net" target="_blank" rel="noopener">矿石镇的攻略百科</a>（WTFPL）</span></div>
+        <div class="wrow"><span class="wk">源码</span><span class="wv"><a class="link" href="https://github.com/jay110/rf-wiki" target="_blank" rel="noopener">jay110/rf-wiki</a>　纯静态，可离线运行</span></div>
+        <div class="wrow"><span class="wk">声明</span><span class="wv">非官方粉丝站，与 Marvelous Inc. 无隶属关系</span></div>
+    </div>
+    <div class="copyright">
+        <div>符文工房攻略百科　·　非官方中文资料站</div>
+        <div>收录 ${GAMES.length} 部作品　/　${PAGES.length} 个条目　/　${chars} 位角色</div>
+        <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
+    </div>`;
+}
+
 function viewHome(g) {
     const groups = GROUPS.map(grp => {
         const items = PAGES.filter(p => p.group === grp.key && pageVis(p, g));
@@ -117,6 +187,7 @@ function viewHome(g) {
         <a href="#/games" style="font-size:0.7rem;color:#198d44">切换作品 ›</a>
     </div>
     ${groups}
+    <div class="wback"><a class="link" href="#/">‹ 站点主页</a></div>
     ${footer(g)}
     `;
 }
@@ -722,7 +793,7 @@ function viewSearch(q) {
         </div>` : ''}
     ${(!total && !pgHit.length && !extra.length) ? `<div class="empty">没有找到「${escHtml(raw)}」<br>
         <span style="font-size:0.74rem">本站只收录已核对的数据；换个别名或更短的关键词再试，例如「药草」「锻造」「结婚」</span></div>` : ''}
-    <div style="padding:1rem"><a class="link" href="#/" style="font-size:0.84rem">‹ 返回攻略目录</a></div>`;
+    <div style="padding:1rem"><a class="link" href="#/wiki" style="font-size:0.84rem">‹ 返回攻略目录</a></div>`;
 }
 
 function viewError(msg) {
@@ -746,7 +817,10 @@ function render() {
 
     switch (r.name) {
         case 'home':
-            html = viewHome(g); title = '符文工房攻略百科'; showBack = false; tab = 'wiki';
+            html = viewWelcome(); title = '符文工房攻略百科'; showBack = false; tab = 'wiki';
+            break;
+        case 'wiki':
+            html = viewHome(g); title = g.name; showBack = false; tab = 'wiki';
             break;
         case 'cat':
             html = viewCat(r.args[0]); title = g.name; tab = 'wiki';
@@ -770,7 +844,7 @@ function render() {
             if (r.args[0] && GAMES.some(x => x.id === r.args[0])) {
                 S.game = r.args[0]; saveState();
             }
-            location.hash = '/';
+            location.hash = '/wiki';
             return;
         case 'todo':
             html = viewTodo(); title = g.name; tab = 'todo';

@@ -123,6 +123,11 @@ img {
     font-size: 0.62rem;
     line-height: 1.1rem;
     letter-spacing: 0.05em;
+    text-decoration: none;
+}
+
+.titlebar .mark:hover {
+    color: var(--green);
 }
 
 /* 顶栏搜索入口：任何页面都能直接搜，不必先回首页 */
@@ -1671,4 +1676,232 @@ img {
     background: var(--line-2);
     border-radius: 0.3rem;
     padding: 0.06rem 0.3rem;
+}
+
+/* ============ 站点主页（#/）：站点介绍，不是某部作品的攻略目录 ============ */
+.wcover {
+    position: relative;
+    padding: 2.5rem 1.1rem 1.5rem;
+    background: linear-gradient(152deg, #1c5c39 0%, #2e7d4e 52%, #17492e 100%);
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+}
+
+.wcover::after {
+    content: "";
+    position: absolute;
+    right: -3rem;
+    top: -3.5rem;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.wcover-jp {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    opacity: 0.8;
+}
+
+.wcover-name {
+    margin-top: 0.5rem;
+    font-size: 1.44rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.wcover-en {
+    margin-top: 0.32rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    opacity: 0.62;
+}
+
+.wcover-sub {
+    margin-top: 0.7rem;
+    font-size: 0.74rem;
+    opacity: 0.84;
+}
+
+.wcover-stat {
+    display: flex;
+    justify-content: center;
+    gap: 1.7rem;
+    margin-top: 1.15rem;
+}
+
+.wcover-stat div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wcover-stat b {
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.wcover-stat span {
+    margin-top: 0.18rem;
+    font-size: 0.63rem;
+    opacity: 0.72;
+    letter-spacing: 0.05em;
+}
+
+.wcover-go {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.48rem 1.6rem;
+    border-radius: 1.2rem;
+    background: rgba(255, 255, 255, 0.16);
+    border: solid 1px rgba(255, 255, 255, 0.34);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+}
+
+.wcover-go:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+/* 作品卡 */
+.wgrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin: 0 0.9rem;
+}
+
+.wcard {
+    position: relative;
+    display: block;
+    min-height: 5.1rem;
+    padding: 0.66rem 0.8rem 0.6rem;
+    border-radius: 0.6rem;
+    color: #fff;
+    text-decoration: none;
+    overflow: hidden;
+}
+
+.wcard.cur {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.wcard-no {
+    position: absolute;
+    right: 0.55rem;
+    top: 0.48rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    opacity: 0.78;
+}
+
+.wcard-name {
+    padding-right: 1.1rem;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* 「符文工房」十张卡上重复十次，弱化处理，让「5」「边境」这些区分项站出来 */
+.wpre {
+    margin-right: 0.22rem;
+    font-size: 0.64rem;
+    font-weight: 400;
+    opacity: 0.66;
+}
+
+.wcard-stage {
+    margin-top: 0.1rem;
+    font-size: 0.6rem;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 不绝对定位：窄屏上作品名换行后，贴底的 meta 会压住上面一行 */
+.wcard-meta {
+    margin-top: 0.34rem;
+    font-size: 0.6rem;
+    opacity: 0.74;
+}
+
+/* 最近更新 */
+.wlist {
+    margin: 0 0.9rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    border: solid 1px var(--line);
+    overflow: hidden;
+}
+
+.witem {
+    padding: 0.62rem 0.85rem;
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: var(--ink-2);
+    border-bottom: solid 1px var(--line-2);
+}
+
+.witem:last-of-type {
+    border-bottom: none;
+}
+
+.wmore {
+    display: block;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.72rem;
+    color: var(--green);
+    text-decoration: none;
+    background: #f7faf8;
+}
+
+/* 关于本站 */
+.wabout {
+    margin: 0 0.9rem;
+}
+
+.wabout p {
+    margin: 0.2rem 0 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.95;
+    color: var(--ink-2);
+}
+
+.wrow {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.42rem 0;
+    border-top: dashed 1px var(--line);
+    font-size: 0.74rem;
+    line-height: 1.7;
+}
+
+.wk {
+    flex: 0 0 4.2rem;
+    color: var(--ink-4);
+    letter-spacing: 0.04em;
+}
+
+.wv {
+    flex: 1;
+    color: var(--ink-2);
+    word-break: break-word;
+}
+
+@media (min-width: 560px) {
+    .wgrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+/* 攻略目录底部回站点主页 */
+.wback {
+    padding: 0.9rem 1rem 0.2rem;
+    text-align: center;
+    font-size: 0.8rem;
 }
