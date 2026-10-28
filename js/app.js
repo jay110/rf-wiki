@@ -157,6 +157,11 @@ function viewHome(g) {
                     <div class="item-icon">${icon(p.icon)}</div>
                     <div class="item-text">${p.title}</div>
                 </a>`).join('')}
+            ${grp.key === 'life' && schedOf(g.id) ? `
+                <a class="item" href="#/sched/${g.id}">
+                    <div class="item-icon">${icon('clock')}</div>
+                    <div class="item-text">村民行程</div>
+                </a>` : ''}
         </div>`;
     }).join('');
 
@@ -464,8 +469,11 @@ function viewChar(gameId, key) {
 /* ---------- 村民行程表 ----------
    数据在 js/sched.js，目前只有 RF1 有源（biligame「村民每日行程表」）。
    一格 = 一个小时；同一地点的连续小时合并成一格，待了多久一眼看得出。 */
-let SCHD_DAY = 0;    // 第几种星期状态
-let SCHD_HL = '';    // 当前高亮的建筑
+let SCHD_DAY = null;   // 第几种星期状态；null = 还没定过，按今天算
+let SCHD_HL = '';      // 当前高亮的建筑
+let SCHD_GID = 'rf1';  // 当前看的作品
+let SCHD_MODE = 'p';   // 'p' 按人看 / 'h' 按时段看
+let SCHD_HOUR = -1;    // 时段视图选中的整点下标；-1 = 按现在算
 
 const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const DAY_LABEL = {
@@ -478,7 +486,7 @@ function schedOf(gid) {
 }
 
 function schedSpot(d, ch) {
-    return d.spots[B62.indexOf(ch)] || ['—', '', 'none'];
+    return d.spots[B62.indexOf(ch)] || ['—', '', 'none', ''];
 }
 
 /* 把一串编码压成「连续同地点」的段 */
@@ -499,13 +507,79 @@ function schedSpan(d, i, n) {
     return `${a}–${b}`;
 }
 
+/* 今天对应哪一种星期状态。源页只有平日（周一至周五同表）、祝日、
+   两种雨天，周六周日没有单列，所以只对周一至周五自动定位。 */
+function schedToday(d) {
+    const w = new Date().getDay();          // 0 = 周日
+    const want = ['日', '一', '二', '三', '四', '五', '六'][w];
+    const i = d.days.indexOf(want);
+    return i >= 0 ? i : -1;
+}
+
+/* 现在几点落在哪个整点格。早于 6 点算「还在昨天」，钳到第一格 */
+function schedNowHour(d) {
+    const h = new Date().getHours();
+    const hit = d.times.findIndex(t => parseInt(t, 10) === h);
+    if (hit >= 0) return hit;
+    return h < 6 ? 0 : d.times.length - 1;
+}
+
+/* 反查：某个星期状态、某个整点，全村人分别在哪。
+   返回按人数降序的建筑分组，顺带算出每人在那待到这个点。 */
+function schedAt(d, di, hi) {
+    const len = d.times.length;
+    const map = new Map();
+    for (const p of d.people) {
+        const ch = p[3].charAt(di * len + hi);
+        const s = schedSpot(d, ch);
+        if (s[0] === '—') continue;         // 源页没标注的不进反查表
+        let n = 0;
+        while (hi + n < len && p[3].charAt(di * len + hi + n) === ch) n++;
+        const key = s[0] + '\u0001' + s[1];
+        if (!map.has(key)) map.set(key, { b: s[0], fl: s[1], cat: s[2], aka: s[3] || '', ppl: [] });
+        map.get(key).ppl.push({ n: p[0], j: p[1], u: d.times[(hi + n) % len] });
+    }
+    return [...map.values()]
+        .sort((a, b) => b.ppl.length - a.ppl.length || a.b.localeCompare(b.b));
+}
+
+const SCHD_CATN = { home: '住处', shop: '店铺', pub: '公共设施', out: '户外', cave: '洞窟', none: '未标注' };
+
+/* 时段视图的分组卡片 */
+function schedAtHtml(d, di, hi, id) {
+    const groups = schedAt(d, di, hi);
+    if (!groups.length) return `<div class="empty">这个时段源页没有标注任何人的去处</div>`;
+    return groups.map(x => `
+    <div class="sch-at">
+        <div class="sch-at-hd">
+            <span class="sch-at-b">${escHtml(x.b)}${x.fl ? `<i>${escHtml(x.fl)}</i>` : ''}${x.aka ? `<em>${escHtml(x.aka)}</em>` : ''}</span>
+            <span class="sch-at-c c-${x.cat}">${SCHD_CATN[x.cat] || ''}</span>
+            <span class="sch-at-n">${x.ppl.length} 人</span>
+        </div>
+        <div class="sch-at-ppl">
+            ${x.ppl.map(p => `<a class="sch-chip" href="#/char/${id}/${encodeURIComponent(p.n)}"
+                >${escHtml(p.n)}<b>待至 ${p.u.slice(0, 5)}</b></a>`).join('')}
+        </div>
+    </div>`).join('');
+}
+
+function schedStatsHtml(d, di, hi) {
+    const groups = schedAt(d, di, hi);
+    const total = groups.reduce((s, x) => s + x.ppl.length, 0);
+    const live = schedToday(d) === di && schedNowHour(d) === hi;
+    return `<span><b>${d.times[hi]}</b>　${DAY_LABEL[d.days[di]] || d.days[di]}</span>
+        <span>在外 <b>${total}</b> 人</span>
+        <span>${groups.length} 处</span>
+        ${live ? '<span class="sch-live">此刻</span>' : ''}`;
+}
+
 /* 表格行：某人当天的行程 */
 function schedRows(d, di, gid) {
     return d.people.map(p => {
         const runs = schedRuns(p[3], di, d.times.length);
         const tds = runs.map(r => {
             const s = schedSpot(d, r.c);
-            const tip = s[0] + (s[1] ? ' ' + s[1] : '') + '　' + schedSpan(d, r.i, r.n);
+            const tip = s[0] + (s[1] ? ' ' + s[1] : '') + (s[3] ? '（' + s[3] + '）' : '') + '　' + schedSpan(d, r.i, r.n);
             const hl = SCHD_HL && SCHD_HL === s[0] ? ' hl' : '';
             return `<td class="c-${s[2]}${hl}" colspan="${r.n}" data-b="${escHtml(s[0])}"
                 title="${escHtml(tip)}">${escHtml(s[0])}</td>`;
@@ -518,22 +592,73 @@ function schedRows(d, di, gid) {
     }).join('');
 }
 
-function viewSched(gid, who) {
+function viewSched(gid, arg2, arg3) {
     const id = gid || 'rf1';
     const d = schedOf(id);
     const g = GAMES.find(x => x.id === id);
     if (!d || !g) return viewError('这部作品还没有行程数据');
+    SCHD_GID = id;
 
+    /* 第一次进来按今天定位；周六周日源页没有单列，落在周一 */
+    if (SCHD_DAY === null) {
+        const t = schedToday(d);
+        SCHD_DAY = t >= 0 ? t : 0;
+    }
     if (SCHD_DAY >= d.days.length) SCHD_DAY = 0;
+
+    /* #/sched/rf1/h/12 → 时段视图第 12 格 */
+    const who = (arg2 && arg2 !== 'h') ? arg2 : '';
+    if (arg2 === 'h') {
+        SCHD_MODE = 'h';
+        const n = Number(arg3);
+        SCHD_HOUR = Number.isFinite(n) ? Math.max(0, Math.min(d.times.length - 1, n)) : schedNowHour(d);
+    } else {
+        SCHD_MODE = 'p';
+    }
+
     const kw = who || '';
     const withSched = d.people.length;
+    const nowH = schedNowHour(d);
+    const nowD = schedToday(d);
+    const isNow = SCHD_DAY === nowD;
+    const url = (mode, h) => mode === 'h'
+        ? `#/sched/${id}/h/${h == null ? (SCHD_HOUR >= 0 ? SCHD_HOUR : nowH) : h}`
+        : `#/sched/${id}${kw ? '/' + encodeURIComponent(kw) : ''}`;
 
-    return `
+    const head = `
     <div class="section-title"><span>${g.short}　村民行程</span><span class="en">SCHEDULE</span></div>
+    <div class="sch-mode">
+        <a class="filter-btn ${SCHD_MODE === 'p' ? 'on' : ''}" href="${url('p')}">按人看</a>
+        <a class="filter-btn ${SCHD_MODE === 'h' ? 'on' : ''}" href="${url('h')}">按时段看</a>
+    </div>
     <div class="sch-days" id="schDays">
         ${d.days.map((k, i) => `<button class="filter-btn ${i === SCHD_DAY ? 'on' : ''}"
-            data-d="${i}">${DAY_LABEL[k] || k}</button>`).join('')}
-    </div>
+            data-d="${i}">${DAY_LABEL[k] || k}${i === nowD ? '<i class="sch-now">今天</i>' : ''}</button>`).join('')}
+    </div>`;
+
+    if (SCHD_MODE === 'h') {
+        const hi = SCHD_HOUR >= 0 ? SCHD_HOUR : nowH;
+        return `${head}
+        <div class="sch-hours" id="schHours">
+            ${d.times.map((t, i) => `<button class="sch-h ${i === hi ? 'on' : ''}" data-h="${i}">${t.replace(':00', '')}</button>`).join('')}
+        </div>
+        <div class="sch-stats" id="schStats">${schedStatsHtml(d, SCHD_DAY, hi)}</div>
+        <div class="sch-at-list" id="schAt">${schedAtHtml(d, SCHD_DAY, hi, id)}</div>
+        <div class="content" style="margin-top:0">
+            <div class="note">
+                这里是反过来查：选一个整点，看<strong>全村人此刻分别在哪儿</strong>，点名字直接进人物档案。
+                找 NPC 送礼、触发事件的时候，比一行行扫表快。
+                <br>每处建筑按人头从多到少排；「待至」是他会在那里待到几点，赶时间就照这个算。
+                <br>共 <strong>${withSched} 位</strong>村民收录在内。源页没标注的时段不进这张表，不做推测。
+            </div>
+            <div class="copyright">
+                <div>行程数据来自 biligame 符文工厂 wiki「村民每日行程表」（CC BY-SA）</div>
+                <div>人名按作品官方中文版统一；源页未标注的时段记为「—」</div>
+            </div>
+        </div>`;
+    }
+
+    return `${head}
     <div class="sch-tools">
         <input id="schQ" class="sch-q" type="search" placeholder="输入人名筛选" value="${escHtml(kw)}">
         <span class="sch-tip">点格子高亮同建筑</span>
@@ -541,7 +666,7 @@ function viewSched(gid, who) {
     <div class="sch-wrap">
         <table class="sch-tb${SCHD_HL ? ' has-hl' : ''}" id="schTb">
             <thead><tr><th class="sch-n">村民</th>
-                ${d.times.map(t => `<th>${t.replace(':00', '')}</th>`).join('')}
+                ${d.times.map((t, i) => `<th class="${isNow && i === nowH ? 'sch-col-now' : ''}">${t.replace(':00', '')}</th>`).join('')}
             </tr></thead>
             <tbody id="schBody">${schedRows(d, SCHD_DAY, id)}</tbody>
         </table>
@@ -555,6 +680,7 @@ function viewSched(gid, who) {
         <div class="note">
             横向是整点，从早上 6:00 到次日 0:00，一格一小时；同一地点连着几个小时就并成一格，格子的宽度就是<strong>他在这里待了多久</strong>。
             <br>「祝日」是本作的节日（晴天），雨天另外两版——村民在雨天会改去室内，找人的时候别按晴天的表跑。
+            ${isNow ? '<br>表头标出的那一列是<strong>现在这个点</strong>。' : ''}
             <br>共 <strong>${withSched} 位</strong>村民收录在内。点表的某个地点格，会把<strong>同一栋建筑</strong>里的其他人一起点亮，方便一次找齐。
         </div>
         <div class="copyright">
@@ -566,40 +692,65 @@ function viewSched(gid, who) {
 
 /* 行程表交互：换天、筛人、点亮同建筑 */
 function bindSched() {
-    const d = schedOf('rf1');
+    const d = schedOf(SCHD_GID);
+    if (!d) return;
+    const id = SCHD_GID;
     const tb = document.getElementById('schTb');
     const tbody = document.getElementById('schBody');
-    if (!d || !tb || !tbody) return;
+    const hourBar = document.getElementById('schHours');
+    const atList = document.getElementById('schAt');
+    const stats = document.getElementById('schStats');
+    const days = document.querySelectorAll('#schDays [data-d]');
 
-    const redraw = () => {
-        tbody.innerHTML = schedRows(d, SCHD_DAY, 'rf1');
-        tb.classList.toggle('has-hl', !!SCHD_HL);
-        applyFilter();
+    /* 时段视图：只换下面两块，不动滚动位置 */
+    const paintAt = hi => {
+        if (atList) atList.innerHTML = schedAtHtml(d, SCHD_DAY, hi, id);
+        if (stats) stats.innerHTML = schedStatsHtml(d, SCHD_DAY, hi);
     };
+    const curHour = () => (SCHD_HOUR >= 0 ? SCHD_HOUR : schedNowHour(d));
 
-    document.querySelectorAll('#schDays [data-d]').forEach(b => {
-        b.addEventListener('click', () => {
-            SCHD_DAY = Number(b.dataset.d);
-            document.querySelectorAll('#schDays [data-d]').forEach(x => x.classList.toggle('on', x === b));
-            redraw();
+    if (hourBar) {
+        hourBar.addEventListener('click', e => {
+            const b = e.target.closest('[data-h]');
+            if (!b) return;
+            SCHD_HOUR = Number(b.dataset.h);
+            hourBar.querySelectorAll('[data-h]').forEach(x => x.classList.toggle('on', x === b));
+            paintAt(SCHD_HOUR);
         });
-    });
+    }
+
+    /* 换天：按人看要重画整张表，按时段看只换分组 */
+    days.forEach(b => b.addEventListener('click', () => {
+        SCHD_DAY = Number(b.dataset.d);
+        days.forEach(x => x.classList.toggle('on', x === b));
+        if (atList) paintAt(curHour());
+        else redraw();
+    }));
 
     /* 筛人：名字 / 日文名 / 源页旧译任一命中 */
     const q = document.getElementById('schQ');
     function applyFilter() {
+        if (!tbody) return;
         const v = (q ? q.value : '').trim().toLowerCase();
         Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
             const hay = (tr.dataset.n + '\u0001' + tr.dataset.j + '\u0001' + tr.dataset.a).toLowerCase();
             tr.hidden = !!v && !hay.includes(v);
         });
     }
+
+    function redraw() {
+        if (!tb || !tbody) return;
+        tbody.innerHTML = schedRows(d, SCHD_DAY, id);
+        tb.classList.toggle('has-hl', !!SCHD_HL);
+        applyFilter();
+    }
+
     if (q) q.addEventListener('input', applyFilter);
 
     /* 点亮同建筑 */
-    tbody.addEventListener('click', e => {
+    if (tbody) tbody.addEventListener('click', e => {
         const td = e.target.closest('td');
-        if (!td) return;
+        if (!td || !tb) return;
         const b = td.dataset.b || '';
         SCHD_HL = (SCHD_HL === b || b === '—') ? '' : b;
         tb.classList.toggle('has-hl', !!SCHD_HL);
@@ -895,6 +1046,33 @@ function buildIndex(g) {
             });
         }
     } catch (e) { }
+    /* 行程表同理：#/sched 不在 PAGES 里，但「搜个地名看谁会去」很常用。
+       每人一条，文本放他八天里去过的全部地点，点进去直接落在那人的行程上 */
+    try {
+        const d = schedOf(g.id);
+        if (d && d.people) {
+            const T = d.times.length;
+            for (const p of d.people) {
+                const seen = [];
+                for (let di = 0; di < d.days.length; di++) {
+                    for (let hi = 0; hi < T; hi++) {
+                        const s = schedSpot(d, p[3].charAt(di * T + hi));
+                        if (s[0] === '—') continue;
+                        const full = s[0] + (s[1] ? ' ' + s[1] : '') + (s[3] ? '（' + s[3] + '）' : '');
+                        if (seen.indexOf(full) < 0) seen.push(full);
+                    }
+                }
+                if (!seen.length) continue;
+                const text = [p[0], p[1], p[2], seen.join(' ')].filter(Boolean).join(' ');
+                list.push({
+                    k: 'sched', t: '村民行程', i: 'clock', grp: 'life',
+                    n: p[0], cells: [p[0], p[1] || '', seen.slice(0, 4).join('、')],
+                    s: text.toLowerCase(), raw: text,
+                    href: '#/sched/' + g.id + '/' + encodeURIComponent(p[0])
+                });
+            }
+        }
+    } catch (e) { }
     IDXCACHE[g.id] = list;
     /* 只留最近两作：十作全缓存要几十 MB，手机上不值当 */
     IDXORDER.push(g.id);
@@ -951,9 +1129,10 @@ function searchEntries(g, words) {
             const sc = scoreEntry(e, ws);
             if (!sc) continue;
             /* 首格是日文、中文在第二格的表（译名对照），
-               展示成用户搜的那个名字才有意义 */
+               展示成用户搜的那个名字才有意义。
+               行程条目例外：那里人名的下一格是一串地点，换了标题就看不出是谁 */
             let name = e.n;
-            if (head && !name.toLowerCase().includes(head) && e.cells) {
+            if (head && e.k !== 'sched' && !name.toLowerCase().includes(head) && e.cells) {
                 const alt = e.cells.find(c => c && c.toLowerCase().includes(head));
                 if (alt) name = alt;
             }
@@ -979,9 +1158,10 @@ function searchEntries(g, words) {
         if (m) {
             m.c++;
             /* 同名条目在「村民喜好」和「人物名册」里都有时，人物档案信息更全，
-               排在前面，用户点进去才不会被过时的解析表挡在门外 */
+               排在前面，用户点进去才不会被过时的解析表挡在门外；
+               行程排在档案之后——先看人是谁，再看他几点在哪 */
             if (!m.pages.some(x => x.k === e.k)) {
-                if (e.href) m.pages.unshift({ k: e.k, t: e.t, href: e.href });
+                if (e.k === 'npc') m.pages.unshift({ k: e.k, t: e.t, href: e.href });
                 else m.pages.push({ k: e.k, t: e.t, href: e.href });
             }
             if (sc > m.sc) { m.sc = sc; m.raw = e.raw; m.first = e; }
@@ -1128,7 +1308,7 @@ function render() {
             html = viewChar(r.args[0], r.args[1]); title = g.name; tab = 'resident';
             break;
         case 'sched':
-            html = viewSched(r.args[0], r.args[1]);
+            html = viewSched(r.args[0], r.args[1], r.args[2]);
             title = (GAMES.find(x => x.id === (r.args[0] || 'rf1')) || g).name;
             tab = 'resident';
             break;

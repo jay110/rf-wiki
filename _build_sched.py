@@ -17,18 +17,29 @@ NAME_ALIAS = {
     '塞希莉娅': '塞西莉娅', '琳妮特': '莉妮特',
 }
 # 地点：源页同一建筑两种译名，统一
-SPOT_ALIAS = {'卡尔迪亚图书馆': '图书馆'}
+SPOT_ALIAS = {
+    '卡尔迪亚图书馆': '图书馆',
+    '密丝特的家': '蜜丝特的家',   # 人名按 NAME_ALIAS 已统一成「蜜丝特」，地址跟着走
+}
+
+# 洞窟源页只写玩家俗称（1洞/6洞），站内 rf1mon.js 的 RF1_PLACE 已有定稿汉化名。
+# 第二个值是俗称，留着给玩家对照；不写进显示名，免得一张卡片两套叫法。
+CAVE_ALIAS = {
+    '1洞': ('卡麦特洞窟', '1洞'),
+    '5洞': ('蜜丝特布鲁姆', '5洞'),
+    '6洞': ('卡西米尔遗迹', '6洞'),
+}
 
 # 建筑分类 → 配色
 CAT = {
-    '密丝特的家': 'home', '镇长府': 'home', '查克里努斯豪宅': 'home',
+    '蜜丝特的家': 'home', '镇长府': 'home', '查克里努斯豪宅': 'home',
     '诺伊曼的农场': 'home', '卡缪的农场': 'home', '拉格纳的家': 'home', '牧场': 'home',
     '旅馆': 'shop', '杂货店': 'shop', '酒馆': 'shop', '铁匠铺': 'shop',
     '海之家': 'shop', '浴场': 'shop',
     '图书馆': 'pub', '教堂': 'pub', '医院': 'pub', '中央广场': 'pub',
     '镇第1排街道': 'out', '镇第2排街道': 'out', '镇第3排街道': 'out',
     '海岸': 'out', '克莱门斯山': 'out',
-    '1洞': 'cave', '5洞': 'cave', '6洞': 'cave',
+    '卡麦特洞窟': 'cave', '蜜丝特布鲁姆': 'cave', '卡西米尔遗迹': 'cave',
     '—': 'none',
 }
 FLOOR_RE = re.compile(r'(大厅|门口|[0-9]F|B[0-9])$')
@@ -46,27 +57,34 @@ SUBS = ('1F', '2F', '3F', 'B1', '大厅', '门口')
 LOST = []
 
 
+def normalize_spot(x):
+    """俗称 / 旧译 -> 站内定稿名；第二个返回值是俗称，用于对照"""
+    x = SPOT_ALIAS.get(x, x)
+    if x in CAVE_ALIAS:
+        return CAVE_ALIAS[x][0], CAVE_ALIAS[x][1]
+    return x, ''
+
+
 def split_spot(txt):
-    """'旅馆1F' -> ('旅馆','1F')；'查克里努斯豪宅大厅' -> ('查克里努斯豪宅','大厅')"""
+    """'旅馆1F' -> ('旅馆','1F','')；'6洞门口' -> ('卡西米尔遗迹','门口','6洞')"""
     t = unwiki(txt)
-    if t in SPOT_ALIAS:
-        t = SPOT_ALIAS[t]
+    t, aka = normalize_spot(t)
     if t in CAT:
-        return t, ''
+        return t, '', aka
     m = FLOOR_RE.search(t)
     if m:
-        base = SPOT_ALIAS.get(t[:m.start()], t[:m.start()])
+        base, aka2 = normalize_spot(t[:m.start()])
         if base in CAT:
-            return base, m.group(1)
+            return base, m.group(1), aka2
     # '20:40到克莱门斯山' 之类带前缀的杂项：认建筑，前缀记一笔不问
     for k in sorted(CAT, key=len, reverse=True):
         if k in t:
             pre = t.replace(k, '').strip()
             if pre:
                 LOST.append((t, k, pre))
-            return k, ''
+            return k, '', ''
     LOST.append((t, '', '未归类'))
-    return t, ''
+    return t, '', ''
 
 
 def load_npcfull():
@@ -89,14 +107,14 @@ def main():
     people = {}      # 显示名 -> {'jp':, 'alt':, 'rows': {day: [19 spots]}}
     order = []
     spot_index = {}
-    spots = []       # [base, floor, cat]
+    spots = []       # [base, floor, cat, aka]
 
     def spot_id(txt):
-        base, floor = split_spot(txt)
+        base, floor, aka = split_spot(txt)
         key = base + '\u0001' + floor
         if key not in spot_index:
             spot_index[key] = len(spots)
-            spots.append([base, floor, CAT.get(base, 'out')])
+            spots.append([base, floor, CAT.get(base, 'out'), aka])
         return spot_index[key]
 
     for l in rows:

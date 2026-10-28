@@ -2278,3 +2278,191 @@ img {
 .sch-legend .c-out  { background: #eef1f3; color: #4a5a64; }
 .sch-legend .c-cave { background: #f0ecf9; color: #5b468c; }
 .sch-legend .c-none { background: #f4f6f7; color: #8f9aa1; }
+
+/* ---- 行程表：按人 / 按时段 两视图 ---- */
+.sch-mode {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0 0.9rem 0.45rem;
+}
+
+.sch-mode .filter-btn {
+    flex: 0 0 auto;
+    min-width: 4.6rem;
+    text-align: center;
+}
+
+.sch-now {
+    display: inline-block;
+    margin-left: 3px;
+    padding: 0 3px;
+    border-radius: 3px;
+    background: var(--green);
+    color: #fff;
+    font-size: 0.5rem;
+    font-style: normal;
+    line-height: 1.5;
+    vertical-align: 1px;
+}
+
+.sch-tb thead th.sch-col-now {
+    color: var(--green);
+    font-weight: 700;
+}
+
+.sch-hours {
+    display: grid;
+    /* auto-fit：桌面一行排完 19 个，手机自动折成两行；
+       用固定列宽而不是 flex-grow，最后一行才不会被横向拉长 */
+    grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
+    gap: 3px;
+    padding: 0 0.9rem 0.5rem;
+}
+
+.sch-h {
+    padding: 0.3rem 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    color: var(--ink-3);
+    font-size: 0.58rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+
+.sch-h:hover {
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.sch-h.on {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+    font-weight: 700;
+}
+
+.sch-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0 0.95rem 0.55rem;
+    font-size: 0.68rem;
+    color: var(--ink-3);
+}
+
+.sch-stats b {
+    color: var(--ink);
+    font-size: 0.82rem;
+}
+
+.sch-live {
+    margin-left: auto;
+    padding: 0.05rem 0.4rem;
+    border-radius: 3px;
+    background: #e9f5ec;
+    color: #2d6a3e;
+    font-size: 0.6rem;
+}
+
+.sch-at-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0 0.9rem;
+}
+
+.sch-at {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+}
+
+.sch-at-hd {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.sch-at-b {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.sch-at-b i {
+    margin-left: 3px;
+    font-size: 0.6rem;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--ink-4);
+}
+
+/* 源页的俗称（1洞 / 6洞），站内定稿名后面缀一笔对照 */
+.sch-at-b em {
+    margin-left: 4px;
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--ink-4);
+}
+
+.sch-at-b em::before {
+    content: '（';
+}
+
+.sch-at-b em::after {
+    content: '）';
+}
+
+.sch-at-c {
+    padding: 0 0.32rem;
+    border-radius: 3px;
+    font-size: 0.56rem;
+    line-height: 1.6;
+}
+
+.sch-at-n {
+    margin-left: auto;
+    font-size: 0.64rem;
+    color: var(--ink-3);
+}
+
+.sch-at-ppl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.sch-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 0.14rem 0.45rem;
+    border-radius: 4px;
+    background: #f5f7f8;
+    color: var(--ink);
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.sch-chip:hover {
+    background: #e9f5ec;
+    color: #2d6a3e;
+}
+
+.sch-chip b {
+    color: var(--ink-4);
+    font-size: 0.58rem;
+    font-weight: 400;
+}
+
+.sch-at .c-home { background: #e8f1fb; color: #31597f; }
+.sch-at .c-shop { background: #fdf1e3; color: #8a5a22; }
+.sch-at .c-pub  { background: #e9f5ec; color: #2d6a3e; }
+.sch-at .c-out  { background: #eef1f3; color: #4a5a64; }
+.sch-at .c-cave { background: #f0ecf9; color: #5b468c; }
+.sch-at .c-none { background: #f4f6f7; color: #8f9aa1; }
