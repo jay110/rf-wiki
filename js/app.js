@@ -231,16 +231,22 @@ function viewPage(key) {
     const g = cur();
     const grp = GROUPS.find(x => x.key === p.group);
     if (!pageVis(p, g)) {
+        /* 可用作品可能不止一部（例：BOSS 战收 4 作、状态与抗性收 RF4/RF4S），
+           所以按 p.gms 逐个列出来，不再写死某一作 */
+        const gs = (p.gms || []).map(id => GAMES.find(x => x.id === id)).filter(Boolean);
+        const names = gs.map(x => '《' + x.name + '》').join('、');
+        const links = gs.map(x =>
+            `<a class="link" href="#/switch/${x.id}">› 切换到《${x.name}》查看本条目</a>`).join('<br>');
         return `
     <div class="content">
         <div class="head">
             <div class="h1">${p.title}</div>
-            <div class="time">${grp.title}　·　仅收录于《符文工房5》</div>
+            <div class="time">${grp.title}　·　收录于${names}</div>
         </div>
-        <p class="p">这一条的内容只对《符文工房5》成立，当前作品是<b>${g.name}</b>，所以没有可显示的正文——与其拿别作的数值凑一段，不如直接留白。</p>
+        <p class="p">这一条的内容只对${names}成立，当前作品是<b>${g.name}</b>，所以没有可显示的正文——与其拿别作的数值凑一段，不如直接留白。</p>
         <div class="note">玩家整理的习惯是「没核实的宁可不写」。其他作品的同类内容（<b>${grp.title}</b> 一栏下的共通机制）仍然可以正常查看。</div>
         <p class="p">
-            <a class="link" href="#/switch/rf5">› 切换到《符文工房5》查看本条目</a><br>
+            ${links}<br>
             <a class="link" href="#/cat/${grp.key}">› 回到「${grp.title}」目录</a>
         </p>
     </div>
