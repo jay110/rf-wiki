@@ -10,6 +10,9 @@ SRC = {'rf1':'RF1characters','rf2':'RF2characters','rf3':'RF3characters',
        'rf4':'RF4characters','rf5':'RF5characters','rff':'RFFcharacters','rfo':'RFOcharacters'}
 SITE_MAP = {'rf3sp':'rf3','rf4sp':'rf4'}
 SKIP_NAMES = {'儿子','女儿','简介','参考与注释','村民互动','结婚候补','村民','其他'}
+# 源页的英文名与日文读音对不上的，不写出来（宁可不写，也不给一个查不到的英文名）
+#   rf2 ヘリチャコス 被源页记作 Herman，罗马字推不出这两个音节
+DROP_EN = {('rf2', 'ヘリチャコス')}
 
 def clean(v):
     v = re.sub(r'<br\s*/?>', ' ', v)
@@ -146,13 +149,22 @@ for gid, page in SRC.items():
         item = {'n': c['name'], 'j': jp, 'r': c.get('role','')}
         if c.get('cv'): item['cv'] = c['cv']
         if c.get('note'): item['nt'] = c['note']
+        # 站内自己标了别名（多半是合并过的旧译名）就先占位，下面与源页民译合并
+        if c.get('al'): item['al'] = c['al']
         if match:
             used.add(match['n'])
             for k in ('b','l','h','w','g','bg','pr','pf','ad'):
                 if match.get(k): item[k] = match[k]
             if match.get('cv') and not item.get('cv'): item['cv'] = match['cv']
-            if match.get('e'): item['e'] = match['e']
-            if match.get('al'): item['al'] = match['al']
+            if match.get('e') and (gid, match.get('j','')) not in DROP_EN:
+                item['e'] = match['e']
+            if match.get('al'):
+                # 站内别名优先，再并上源页的民译；两边写法不同（海齐利格斯 / 海利齐格斯）时都留着
+                seen_al = [a.strip() for a in (item.get('al', '') or '').split('、') if a.strip()]
+                for a in (x.strip() for x in match['al'].split('、')):
+                    if a and a not in seen_al:
+                        seen_al.append(a)
+                item['al'] = '、'.join(seen_al)
             if match.get('bd'): item['bd'] = norm_bd(match['bd'])
             if match.get('cond'): item['cd'] = match['cond']
             if match.get('sec') and not item.get('r'):
@@ -169,6 +181,7 @@ for gid, page in SRC.items():
         if x.get('sec'):
             item['r'] = '结婚候补' if '结婚候补' in x['sec'] else '居民'
         for k in ('e','cv','b','l','h','w','g','bg','pr','pf','al','ad'):
+            if k == 'e' and (gid, x.get('j','')) in DROP_EN: continue
             if x.get(k): item[k] = x[k]
         if x.get('bd'): item['bd'] = norm_bd(x['bd'])
         if x.get('cond'): item['cd'] = x['cond']

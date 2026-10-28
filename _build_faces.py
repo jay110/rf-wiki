@@ -79,7 +79,7 @@ RF2_GROUPS = {
     'pic_npc13':  'cecilia',    # 塞西莉娅
     'pic_npc14':  'jake',       # 杰克
     'pic_npc19':  'barrett',    # 巴瑞特
-    'pic_npc21':  'herman',     # 海齐利格斯（日文 ハイリヒクス）
+    'pic_npc21':  'herman',     # 赫理查科斯（日文 ヘリチャコス）
     'pic_npc22':  'rosalind',   # 罗萨琳德
     'pic_npc23':  'max',        # 麦克斯
     'pic_npc25':  'yue',        # 由绘

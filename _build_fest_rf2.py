@@ -13,7 +13,7 @@
   RF2_FESTPOS [地点, 人物]
 """
 import json
-import os
+import os, re
 
 FEST_RF2 = [
     ['春', 1, '元旦', '元日',
@@ -44,6 +44,20 @@ FEST_RF2 = [
      '貌似也没什么情况。'],
 ]
 
+# 原攻略（《RF2 攻略合辑》）用的是民译，和站内定稿译名不一致。
+# 这里统一到站内口径；括号里保留原攻略给的身份注，那是核对过的信息。
+FESTPOS_NAME = {
+    '卡侬': '卡农',          # カノン Cammy
+    '安德列': '恩多尔',      # エンドール Egan，wiki 民译「安德列」
+    '海利齐格斯': '赫理查科斯',  # ヘリチャコス
+    '布莱': '布莱伊',        # ブライ Byron
+    '茱丽雅': '茱莉雅',      # ジュリア
+    '马库思': '麦克斯',      # マックス Max
+    '塔尼娅': '塔喵',        # ターニャ Tanya
+    '阿莉西娅': '阿莉希亚',  # アリシア
+    '巴雷特': '巴瑞特',      # バレット
+}
+
 # 节日当天 NPC 所在位置（参加比赛等特殊情况除外）
 RF2_FESTPOS = [
     ['东地区', '罗伊（武器店老板儿子）　卡侬（多洛茜的妹妹）　安德列（旅店老板）'],
@@ -63,6 +77,14 @@ def dump(name, rows):
     return 'const %s = [\n%s\n];\n' % (name, ',\n'.join(lines))
 
 
+def fix_names(rows):
+    res = []
+    for place, who in rows:
+        who = re.sub(r'(^|\u3000)([^\u3000（]+)(?=（|$)', lambda m: m.group(1) + FESTPOS_NAME.get(m.group(2), m.group(2)), who)
+        res.append([place, who])
+    return res
+
+
 def main():
     out = []
     out.append('/*')
@@ -72,7 +94,7 @@ def main():
     out.append(' * RF2_FESTPOS：[地点, 人物]')
     out.append(' */')
     out.append(dump('FEST_RF2', FEST_RF2))
-    out.append(dump('RF2_FESTPOS', RF2_FESTPOS))
+    out.append(dump('RF2_FESTPOS', fix_names(RF2_FESTPOS)))
 
     dst = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js', 'rf2cal.js')
     with open(dst, 'w', encoding='utf-8') as f:
