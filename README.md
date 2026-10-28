@@ -61,7 +61,7 @@ js/fishspot4.js     RF4 钓点
 js/npcfull.js       人物档案（7 部作品 196 人：生日 / 声优 / 喜好 / 回礼）
 js/sched.js         符文1 村民每日行程表（28 人 × 8 种星期 × 19 个整点）
 js/boss.js          BOSS 战数据（符文1／2／3／海洋，71 条剧情与迷宫 BOSS）
-js/faces.js         角色头像映射（日文名 → assets/face/<作>/ 下的文件名，符文1／2／5 已接）
+js/faces.js         角色头像映射（日文名 → assets/face/<作>/ 下的文件名，符文1／2／3／5 已接）
 js/npcdata.js       村民喜好（RF4 / RF5，解包表横向统计用）
 js/cropdata.js      RF4 作物
 js/rf1data.js       RF1 数据
@@ -85,7 +85,7 @@ _xlsx_read.py       零依赖 xlsx 解析器
 本站在此基础上做了译名统一、按日文名对齐与字段清洗。原始 wikitext 抓取件留在本地 `_npc_src/`（不入库，需要时用 API 重抓即可）。
 
 ### 角色头像
-`assets/face/rf1/`、`assets/face/rf2/`、`assets/face/rf5/` 下是符文1、符文2 与符文5 的角色头像。
+`assets/face/rf1/`、`assets/face/rf2/`、`assets/face/rf3/`、`assets/face/rf5/` 下是符文1、2、3、5 的角色头像。
 
 - **符文1／2**：由 `_build_faces.py` 从解包出的
 NCER 立绘页裁出：一张立绘 512×256、一人一张、同人有多帧表情，裁成以头为中心的方图，一次跑完全部角色。
@@ -100,6 +100,12 @@ python _preview_faces.py rf2      # 拼一张带中/日文名的总览图，检�
 ```
 
 源目录：符文1 在 `G:/BaiduNetdiskDownload/ARFJ_NCER_ext`，符文2 在 `G:/BaiduNetdiskDownload/A6NJ_NCER_extract`。
+
+- **符文3**：ROM（NDS）主档案里的立绘是索引色、没有文件名表，认不出谁是谁，改走官网全身立绘——
+花嫁候补用 15 周年站的 560×940，镇民用发售时旧官网（`marv.jp/special/game/ds/runefactory3/chara/`）的
+220×360／270×430，那一页的 `alt` 属性直接带日文名。源图收在 `_face_src/rf3/`，一样跑 `_build_faces.py rf3`。
+这批是全身立绘，头只占身高的七八分之一，所以裁切带按人物实际高度算（`band_scale`），不再用固定行数。
+25 位居民接了 22 位，缺克璐璐法（隐藏花嫁，官网无立绘）、恩德珐与泽杰（旧官网镇民页只有 11 张，不含这两位）。
 
 - **符文5**：PC 版是 Unity 游戏，头像不在 ROM 打包的 NCER 里，而在 Addressables 的
   `FaceIconSpriteAtlas` 中（游戏内 HUD 小头像，约 62×64）。由 `_build_face_rf5.py` 用 UnityPy 取出，

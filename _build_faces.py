@@ -96,6 +96,37 @@ RF2_GROUPS = {
     'pic_npc24':  'ramlia',     # 拉姆莉雅
 }
 
+# 符文3：官网立绘。新官网（15 周年站）11 张 560x940，旧官网（marv.jp 2009）21 张 220x360。
+# 两套都是官方全身立绘、透明底，谁能拿到大图就用谁：花嫁候补用新官网，镇民用旧官网。
+# 隐藏花嫁 クルルファ 官网没有立绘（要通关才解锁，官方不做宣传），オンドルファ 与 ゼゼ
+# 两张名单页里也没有，这三位宁可空着。
+RF3_GROUPS = {
+    # 新官网 runefactory.marv.jp/series/rf3/
+    'マイス':     'mais',        # 主角
+    'シア':       'sia',
+    'トゥーナ':   'toona',
+    'カリン':     'karin',
+    'ショコラ':   'chocolat',
+    'マリオン':   'marion',
+    'ソフィア':   'sophia',
+    'ペルシャ':   'persia',
+    'さくや':     'sakuya',
+    'イオン':     'ion',
+    'ダリア':     'dahlia',
+    # 旧官网 marv.jp/special/game/ds/runefactory3/chara/townspeople.html
+    'ウェルズ':   'wells',
+    'モニカ':     'monica',
+    'マージョリー': 'marjorie',
+    'ガジ':       'gadzhi',
+    'グルテン':   'gluten',
+    'ラスク':     'rusk',
+    'しののめ':   'shinonome',
+    'ヘーゼル':   'hazel',
+    'ドンチャコス': 'donchacos',
+    'エリザ':     'elisa',
+    'カルロス':   'carlos',
+}
+
 CONF = {
     'rf1': {
         'src': r'G:/BaiduNetdiskDownload/ARFJ_NCER_ext',
@@ -126,6 +157,30 @@ CONF = {
             'pic_npc24': {'dy': -8},
         },
     },
+    'rf3': {
+        # 官网立绘（源图连同出处清单见 _face_src/rf3/SOURCES.md）
+        'src': r'G:/wit_tools/work/_rf3/_face_rf3_src',
+        'out': 'assets/face/rf3',
+        # 一人一张，文件名就是日文名，不带帧号
+        'pattern': r'^(.+)\.png$',
+        'merge_case': False,
+        'groups': RF3_GROUPS,
+        'over': {
+            # 伊奥头上那顶宽檐帽把测量带撑到 204px，按它定框人只剩一顶帽子：
+            # 脸在帽子右下方，缩框、右移再下移才露得出来
+            'イオン': {'side': 180, 'dx': 22, 'dy': 45},
+            # 主角头顶那撮呆毛贴着框顶
+            'マイス': {'dy': -8},
+            # 帽子/兜帽顶到画布上沿的几位
+            'ガジ': {'dy': -6},
+            'マリオン': {'dy': -10},
+            'マージョリー': {'dy': -8},
+            'ウェルズ': {'dy': -8},
+        },
+        # 这批是全身立绘，头在画面上部；测量带按图的高度缩放，别照搬立绘页的固定值
+        'band_scale': True,
+        'max_side': 160,
+    },
 }
 
 TOP_PAD = 11        # 头顶到框顶留几像素（圆形裁切会吃掉四角，留少了头顶会被削）
@@ -140,7 +195,9 @@ def collect(conf):
         m = re.match(conf['pattern'], base)
         if not m:
             continue
-        name, idx = m.group(1), int(m.group(2))
+        g = m.groups()
+        name = g[0]
+        idx = int(g[1]) if len(g) > 1 and g[1] else 0
         files.setdefault(name, []).append((idx, p))
 
     groups = conf['groups']
@@ -167,7 +224,7 @@ def collect(conf):
     return merged
 
 
-def head_anchor(im):
+def head_anchor(im, band=None):
     """头顶 y、头部水平中心与头宽。
 
     两个坑都在「头顶」上：
@@ -175,11 +232,15 @@ def head_anchor(im):
     2) 直接取包围盒中心，又会被人物垂下或举起的手臂带跑。
     所以跳过最上面 12 行，用下面 40 行（额头到下巴这一带）来定中心与宽度。
     头宽再用来定裁框边长，好让所有人的脸在头像里大小一致。
+
+    全身立绘（符文3 那批）图更大、头更小，固定 40 行会量到肩膀上，
+    所以带 band 参数时按比例缩。
     """
+    lo, hi = band or BAND
     a = np.array(im)[:, :, 3] > 8
     ys = np.nonzero(a)[0]
     y0 = int(ys.min())
-    band = a[y0 + BAND[0]:y0 + BAND[1]]
+    band = a[y0 + lo:y0 + hi]
     xs = np.nonzero(band)[1]
     if len(xs) == 0:                      # 极矮的图（如婴儿）退回整体
         band = a[y0:]
@@ -189,7 +250,7 @@ def head_anchor(im):
     return y0, cx, hw
 
 
-def cut(im, y0, cx, hw, over=None):
+def cut(im, y0, cx, hw, over=None, check=40):
     """按头宽定裁框，保证每张头像里「头占多大」是一致的。
 
     一开始用固定边长 112，列表里的圆形头像只有 33px，脸缩得太小、五官糊成一片。
@@ -208,7 +269,7 @@ def cut(im, y0, cx, hw, over=None):
     # 自检：头顶这 40 行的横向跨度不能超出圆形边界，超了就把框往上挪。
     # 圆形头像裁出的边不是直线，帽檐、兽耳、呆毛贴着框顶时会被削掉一块。
     a = np.array(im)[:, :, 3] > 8
-    band = a[y0:y0 + 40]
+    band = a[y0:y0 + check]
     xs = np.nonzero(band)[1]
     if len(xs):
         half = int(max(abs(xs.min() - cx), abs(xs.max() - cx)))
@@ -245,7 +306,17 @@ def main():
             continue
         over = conf['over'].get(gname)
         im0 = Image.open(lst[0][1]).convert('RGBA')
-        y0, cx, hw = head_anchor(im0)
+        # 符文3 是全身立绘，头只占身高的七八分之一，固定 40 行会一路量到肩膀上。
+        # 改成按「人物在画面里的实际高度」取 2%~10% 这一段（额头到下巴），两套尺寸都适用。
+        if conf.get('band_scale'):
+            a0 = np.array(im0)[:, :, 3] > 8
+            ys0 = np.nonzero(a0)[0]
+            bh = int(ys0.max() - ys0.min())
+            bd = (max(4, int(round(bh * 0.02))), max(12, int(round(bh * 0.10))))
+        else:
+            bd = None
+        y0, cx, hw = head_anchor(im0, bd)
+        chk = (bd[1] - bd[0]) if bd else 40
         for pos, (idx, p) in enumerate(lst):
             if pos > 0 and not want_all:
                 continue
@@ -253,8 +324,13 @@ def main():
                 im, y, c, w = im0, y0, cx, hw
             else:
                 im = Image.open(p).convert('RGBA')
-                y, c, w = head_anchor(im)
-            tile = cut(im, y, c, w, over)
+                y, c, w = head_anchor(im, bd)
+            tile = cut(im, y, c, w, over, chk)
+            # 符文3 官网立绘裁出来有 224px，比符号1／2 的（92~224）大一圈，
+            # 列表里 33px、详情页 64px 都用不到这么多像素，压到 160 省一半体积
+            cap = conf.get('max_side')
+            if cap and tile.width > cap:
+                tile = tile.resize((cap, cap), Image.LANCZOS)
             name = f'{key}.png' if pos == 0 else f'{key}_{idx:02d}.png'
             tile.save(os.path.join(out, name))
             n += 1

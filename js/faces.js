@@ -75,6 +75,35 @@ var FACE = {
         'ムー&スー': 'muu',
         'ラムリア': 'ramlia'
     },
+    /* 符文3：ROM 里的立绘是 NCGR/NSCR 索引色、没有文件名表，认不出谁是谁，改走官网。
+       花嫁候补用 15 周年站的 560x940 立绘，镇民用发售时旧官网（marv.jp 2009）的 220x360，
+       都是官方透明底全身立绘，按身高比例定裁切带（_build_faces.py 的 band_scale）。
+       隐藏花嫁 クルルファ 官网没有立绘（通关才解锁、官方不做宣传），
+       オンドルファ 与 ゼゼ 两张名单页里也没有，这三位宁可空着。 */
+    rf3: {
+        'マイス': 'mais',
+        'シア': 'sia',
+        'トゥーナ': 'toona',
+        'マリオン': 'marion',
+        'ショコラ': 'chocolat',
+        'イオン': 'ion',
+        'ペルシャ': 'persia',
+        'ダリア': 'dahlia',
+        'さくや': 'sakuya',
+        'ソフィア': 'sophia',
+        'カリン': 'karin',
+        'ウェルズ': 'wells',
+        'モニカ': 'monica',
+        'マージョリー': 'marjorie',
+        'ガジ': 'gadzhi',
+        'グルテン': 'gluten',
+        'ラスク': 'rusk',
+        'しののめ': 'shinonome',
+        'ヘーゼル': 'hazel',
+        'ドンチャコス': 'donchacos',
+        'エリザ': 'elisa',
+        'カルロス': 'carlos'
+    },
     /* 符文5：源是 PC 版（Unity）的 FaceIconSpriteAtlas，游戏内 HUD 头像，约 62px。
        由 _build_face_rf5.py 从 Addressables 的 bundle 里取出，ch 编号与人的对应
        见 _face_src/rf5_map.md（编号表 + 立绘目录 + 发色三条互相印证）。
