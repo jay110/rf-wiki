@@ -83,7 +83,7 @@ var FACE = {
     rf3: {
         'マイス': 'mais',
         'シア': 'sia',
-        'トゥーナ': 'toona',
+        'トゥーナ': 'raven',
         'マリオン': 'marion',
         'ショコラ': 'chocolat',
         'イオン': 'ion',
@@ -136,6 +136,40 @@ var FACE = {
         'ジュリアン': 'julian',
         'ヒナ': 'hina',
         'オズワルド': 'oswald'
+    },
+    /* 符文4：14 位主角与婚配候补用 RF4SP 旧官网（marv.jp/special/game/runefactory4SP）
+       的 540x1098 全身彩图；镇民 13 人官网没放，用 wiki 解包出的游戏内立绘。
+       归属靠 imageusage 反查，出处与编号对照见 _face_src/rf4/SOURCES.md。
+       这批姿态花（鱼竿、宽檐帽、盘腿坐），自动量头宽会被道具带跑，
+       所以 14 位都是人工标框裁出（_build_faces.py 的 face_box）。 */
+    rf4: {
+        'レスト': 'lest',
+        'フレイ': 'frey',
+        'マーガレット': 'margaret',
+        'コハク': 'kohaku',
+        'ビシュナル': 'vishnal',
+        'ディラス': 'dylas',
+        'フォルテ': 'forte',
+        'ドルチェ': 'dolce',
+        'アーサー': 'arthur',
+        'キール': 'kiel',
+        'シャオパイ': 'xiaopai',
+        'クローリカ': 'clorica',
+        'ダグ': 'doug',
+        'レオン': 'leon',
+        'ヴォルカノン': 'volkanon',
+        'バド': 'bado',
+        'ポコリーヌ': 'porcoline',
+        'リンファ': 'linfa',
+        'エルミナータ': 'illuminata',
+        'ブロッサム': 'blossom',
+        'ジョーンズ': 'jones',
+        'ナンシー': 'nancy',
+        'セルザウィード': 'ventuswill',
+        'バレット': 'barrett',
+        'トゥーナ': 'raven',
+        'ノエル': 'noel',
+        'ルーナ': 'luna'
     }
 };
 

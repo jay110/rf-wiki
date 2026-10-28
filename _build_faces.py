@@ -127,6 +127,42 @@ RF3_GROUPS = {
     'カルロス':   'carlos',
 }
 
+# 符文4：主角与婚配候补 14 人用官网（RF4SP 官方站，540x1089 全身彩图）；
+# 镇民 13 人官网没放，用 wiki 上解包出的游戏内立绘（NN NAME body 00 00.png，约 200x255）。
+# 归属靠 imageusage 反查：每个文件被哪个日文名的页面引用，就是谁。
+# 详细出处与编号对照见 _face_src/rf4/SOURCES.md。
+RF4_GROUPS = {
+    # 官网 www.marv.jp/special/game/runefactory4SP/character/
+    'レスト':       'lest',        # 男主
+    'フレイ':       'frey',        # 女主
+    'マーガレット': 'margaret',
+    'コハク':       'kohaku',
+    'ビシュナル':   'vishnal',
+    'ディラス':     'dylas',
+    'フォルテ':     'forte',
+    'ドルチェ':     'dolce',
+    'アーサー':     'arthur',
+    'キール':       'kiel',
+    'シャオパイ':   'xiaopai',
+    'クローリカ':   'clorica',
+    'ダグ':         'doug',
+    'レオン':       'leon',
+    # 游戏内立绘（wiki 解包）
+    'ヴォルカノン': 'volkanon',
+    'バド':         'bado',
+    'ポコリーヌ':   'porcoline',
+    'リンファ':     'linfa',
+    'エルミナータ': 'illuminata',
+    'ブロッサム':   'blossom',
+    'ジョーンズ':   'jones',
+    'ナンシー':     'nancy',
+    'セルザウィード': 'ventuswill',
+    'バレット':     'barrett',     # 就是符文2 那位巴雷特，RF4 客串登场
+    'トゥーナ':     'raven',       # 就是符文3 那位托娜，RF4 里来塞尔菲亚找矿；官方英文 Raven
+    'ノエル':       'noel',        # 主角的孩子（子），站内原缺日文名
+    'ルーナ':       'luna',        # 主角的孩子（女），站内原缺日文名
+}
+
 CONF = {
     'rf1': {
         'src': r'G:/BaiduNetdiskDownload/ARFJ_NCER_ext',
@@ -181,6 +217,41 @@ CONF = {
         'band_scale': True,
         'max_side': 160,
     },
+    'rf4': {
+        'src': r'G:/wit_tools/work/_rf3/_face_rf4_src',
+        'out': 'assets/face/rf4',
+        # 一人一张，文件名就是日文名
+        'pattern': r'^(.+)\.png$',
+        'merge_case': False,
+        'groups': RF4_GROUPS,
+        'over': {},
+        # 官网这 14 张姿态花（鱼竿、宽檐帽、盘腿坐），自动测量会被道具带跑：
+        # 迪拉斯的框会跑到鱼竿上、朵儿洁量到帽檐、奇尔盘腿坐时头顶在半图高，
+        # 两位主角的立绘则是半身带道具，量出来的「头宽」其实是扇子/围巾。
+        # 所以全部 14 位直接标「框在哪」——(左上角 x, 左上角 y, 边长)，原图像素。
+        # 先在 400 宽预览图上目测，再由 _rf4_box.py 按各图实际宽度换算回原图。
+        'face_box': {
+            'レスト':       ( 31,   6,  95),
+            'フレイ':       ( 83,  20,  90),
+            'マーガレット': (135, 162, 135),
+            'コハク':       (155, 223, 176),
+            'ビシュナル':   (189, 122, 155),
+            'ディラス':     (196, 162, 148),
+            'フォルテ':     (321,  62, 214),
+            'ドルチェ':     (138,  90, 180),
+            'アーサー':     (159, 159, 135),
+            'キール':       (196, 310, 148),
+            'シャオパイ':   (202, 155, 216),
+            'クローリカ':   (142, 202, 162),
+            'ダグ':         (196, 173, 135),
+            'レオン':       (196, 142, 176),
+        },
+        # 两批都是全身立绘：官网那批 540x1089、解包那批 200x255，头都只占身高一小截
+        'band_scale': True,
+        # 官网这批姿态花（鱼竿、宽檐帽、盘腿坐），得先剔掉细长装饰再量
+        'robust_band': True,
+        'max_side': 160,
+    },
 }
 
 TOP_PAD = 11        # 头顶到框顶留几像素（圆形裁切会吃掉四角，留少了头顶会被削）
@@ -224,7 +295,7 @@ def collect(conf):
     return merged
 
 
-def head_anchor(im, band=None):
+def head_anchor(im, band=None, robust=False):
     """头顶 y、头部水平中心与头宽。
 
     两个坑都在「头顶」上：
@@ -235,29 +306,51 @@ def head_anchor(im, band=None):
 
     全身立绘（符文3 那批）图更大、头更小，固定 40 行会量到肩膀上，
     所以带 band 参数时按比例缩。
+
+    robust=True 是给符文4 官网那批彩图准备的：它们姿态花得多——迪拉斯手上
+    斜着一根鱼竿、朵儿洁顶着宽檐帽、奇尔盘腿坐着。鱼竿顶端比头还高，包围盒
+    与中心会被它整个带跑（迪拉斯量出来的「头宽」是 463px 的鱼竿）。所以先按
+    列密度把这类细长物剔掉：只留下「实心」的列再找头顶与中心。
     """
     lo, hi = band or BAND
     a = np.array(im)[:, :, 3] > 8
+    cols = None
+    if robust:
+        col = a.sum(axis=0)
+        keep = col >= max(3, col.max() * 0.25)
+        if keep.sum() < 8:                 # 图太窄就别剔了
+            keep = col > 0
+        a = a[:, keep]
+        cols = np.nonzero(keep)[0]
     ys = np.nonzero(a)[0]
     y0 = int(ys.min())
-    band = a[y0 + lo:y0 + hi]
-    xs = np.nonzero(band)[1]
+    _band = a[y0 + lo:y0 + hi]
+    xs = np.nonzero(_band)[1]
     if len(xs) == 0:                      # 极矮的图（如婴儿）退回整体
-        band = a[y0:]
-        xs = np.nonzero(band)[1]
+        _band = a[y0:]
+        xs = np.nonzero(_band)[1]
+    if robust and cols is not None:
+        xs = cols[xs]
     cx = int(round((xs.min() + xs.max()) / 2))
     hw = int(xs.max() - xs.min() + 1)
     return y0, cx, hw
 
 
-def cut(im, y0, cx, hw, over=None, check=40):
+def cut(im, y0, cx, hw, over=None, check=40, box=None):
     """按头宽定裁框，保证每张头像里「头占多大」是一致的。
 
     一开始用固定边长 112，列表里的圆形头像只有 33px，脸缩得太小、五官糊成一片。
     改成边长 = 头宽 × 1.7：脸在框里稳定占六成左右。
     不做统一缩放——原始像素直接输出，放大反而糊（本作头宽只有 49~127 像素，
     放大到 128 就看得出来了）。输出尺寸因此不齐，交给 CSS 的 object-fit 处理。
+
+    box 给的是 (left, top, side)：图太难自动定位时（符文4 官网那批）直接按标好的框裁。
     """
+    if box:
+        left, top, side = box
+        tile = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+        tile.alpha_composite(im.crop((left, top, left + side, top + side)))
+        return tile
     side = int(round(hw * 1.7))
     side = max(72, min(224, side))
     if over:                              # 个别角色按帽子量出来会过大，单独覆盖
@@ -315,8 +408,10 @@ def main():
             bd = (max(4, int(round(bh * 0.02))), max(12, int(round(bh * 0.10))))
         else:
             bd = None
-        y0, cx, hw = head_anchor(im0, bd)
+        y0, cx, hw = head_anchor(im0, bd, conf.get('robust_band', False))
         chk = (bd[1] - bd[0]) if bd else 40
+        # 标了绝对框的几位：直接用标好的框裁，不再走「头宽 × 1.7」那套
+        box = conf.get('face_box', {}).get(gname)
         for pos, (idx, p) in enumerate(lst):
             if pos > 0 and not want_all:
                 continue
@@ -325,7 +420,7 @@ def main():
             else:
                 im = Image.open(p).convert('RGBA')
                 y, c, w = head_anchor(im, bd)
-            tile = cut(im, y, c, w, over, chk)
+            tile = cut(im, y, c, w, over, chk, box if pos == 0 else None)
             # 符文3 官网立绘裁出来有 224px，比符号1／2 的（92~224）大一圈，
             # 列表里 33px、详情页 64px 都用不到这么多像素，压到 160 省一半体积
             cap = conf.get('max_side')

@@ -16,13 +16,23 @@ DROP_EN = {('rf2', 'ヘリチャコス')}
 
 # 源页没有、但站内可以核实的英文名（依据：官方 15 周年站与日文官网记的罗马字）
 #   rf2 子代双胞胎在源页里没有单独条目，官方日文站作 Ars / Alia，美版作 Aaron / Aria
+#   rf4 主角的两个孩子源页标题没带日文读音，英文名取官方默认名（美版 Son/Noel、Daughter/Luna）
 ADD_EN = {
     ('rf2', 'アルス'): 'Aaron',
     ('rf2', 'アリア'): 'Aria',
+    ('rf4', 'ノエル'): 'Noel',
+    ('rf4', 'ルーナ'): 'Luna',
 }
 # 站内补充的别名（同样是源页没有、但圈内通用的另一种音译）
 ADD_AL = {
     ('rf2', 'アリア'): '阿莉亚、艾莉亚',
+}
+# 源页条目标题没带日文名的，按 (作品, 中文条目名) 补。依据：源页条目标题旁的
+# File 名就是该角色的日文名（如 rf4 诺埃尔的标题图 ノエル_f_4.png），
+# 头像映射（faces.js）按日文名取图，缺了日文名头像接不上。
+ADD_JP = {
+    ('rf4', '诺埃尔'): 'ノエル',
+    ('rf4', '露娜'): 'ルーナ',
 }
 
 # 源页把物品名抄错的地方。判据有两条，缺一不可：
@@ -233,12 +243,21 @@ for gid, page in SRC.items():
     add = 0
     for x in src:
         if x['n'] in used: continue
-        item = {'n': x['n'], 'j': x.get('j',''), 'r': ''}
+        jp = ADD_JP.get((gid, x['n']), x.get('j', ''))
+        item = {'n': x['n'], 'j': jp, 'r': ''}
         if x.get('sec'):
             item['r'] = '结婚候补' if '结婚候补' in x['sec'] else '居民'
         for k in ('e','cv','b','l','h','w','g','bg','pr','pf','al','ad'):
             if k == 'e' and (gid, x.get('j','')) in DROP_EN: continue
             if x.get(k): item[k] = x[k]
+        if (gid, jp) in ADD_EN:
+            item.setdefault('e', ADD_EN[(gid, jp)])
+        if (gid, jp) in ADD_AL:
+            seen_al = [a.strip() for a in (item.get('al', '') or '').split('、') if a.strip()]
+            for a in (t.strip() for t in ADD_AL[(gid, jp)].split('、')):
+                if a and a not in seen_al:
+                    seen_al.append(a)
+            item['al'] = '、'.join(seen_al)
         if x.get('bd'): item['bd'] = norm_bd(x['bd'])
         if x.get('cond'): item['cd'] = x['cond']
         if x.get('nt'): item['nt'] = x['nt']
