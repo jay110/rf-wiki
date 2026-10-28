@@ -616,10 +616,10 @@ const EQCAT = {
 function txPack(id, key) {
     const IT = id === 'rf1' ? (typeof ITEM_RF1 !== 'undefined' ? ITEM_RF1 : [])
         : id === 'rf2' ? (typeof ITEM_RF2 !== 'undefined' ? ITEM_RF2 : [])
-            : id === 'rf3' ? (typeof ITEM_RF3 !== 'undefined' ? ITEM_RF3 : [])
+            : /^rf3/.test(id) ? (typeof ITEM_RF3 !== 'undefined' ? ITEM_RF3 : [])
                 : id === 'rff' ? (typeof ITEM_RFF !== 'undefined' ? ITEM_RFF : [])
                     : [];
-    const cats = (EQCAT[id] || {})[key];
+    const cats = (EQCAT[id] || EQCAT[String(id).replace(/sp$/, '')] || {})[key];
     if (!IT.length || !cats) return null;
     const list = IT.filter(r => cats.indexOf(r[1]) >= 0);
     if (!list.length) return null;
@@ -1647,19 +1647,19 @@ const PAGES = [
                 : /^rf4/.test(id) ? new Set(m4.map(x => x[0])).size
                     : id === 'rf1' ? m1.length
                         : id === 'rf2' ? m2.length
-                            : id === 'rf3' ? m3.length
+                            : /^rf3/.test(id) ? m3.length
                                 : id === 'rff' ? (rfm.length || mf.length)
                                     : id === 'rfo' ? rfoM.length
                                         : mro.length;
             const title = id === 'rf5' ? 'RF5' : (id === 'rfo' ? 'RFO'
                 : (/^rf4/.test(id) ? 'RF4' : (id === 'rf1' ? 'RF1'
-                    : (id === 'rf2' ? 'RF2' : (id === 'rf3' ? 'RF3'
+                    : (id === 'rf2' ? 'RF2' : (/^rf3/.test(id) ? 'RF3'
                         : (id === 'rff' ? 'RFF' : ''))))));
             const bodyText = id === 'rf5' ? block5()
                 : /^rf4/.test(id) ? block4()
                     : id === 'rf1' ? block1()
                         : id === 'rf2' ? block2()
-                            : id === 'rf3' ? block3()
+                            : /^rf3/.test(id) ? block3()
                                 : id === 'rff' ? blockF()
                                     : id === 'rfo' ? blockR()
                                         : blockNone();
@@ -2062,7 +2062,7 @@ const PAGES = [
             <div class="note">「其它」类的 ${etc.length} 条（米饭、巧克力、红酒、艾丽草与各尺寸的鸡蛋／牛奶／奶酪／酸奶／蛋黄酱）是<b>没有配方的成品</b>，只能在店里买或打怪掉落——别在料理台上找它们。</div>`;
                 })()}
             ${(() => {
-                    if (!(g && g.id === 'rf3')) return '';
+                    if (!(g && /^rf3/.test(g.id))) return '';
                     const IT = (typeof ITEM_RF3 !== 'undefined') ? ITEM_RF3 : [];
                     const C = (typeof RF3_COOK !== 'undefined') ? RF3_COOK : [];
                     const rec = (typeof RF3_RECIPE !== 'undefined') ? RF3_RECIPE : [];
@@ -2566,7 +2566,7 @@ const PAGES = [
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
             const TX = txPack(id, 'weapon');
-            const W = id === 'rf3' ? (typeof EQW_RF3 !== 'undefined' ? EQW_RF3 : [])
+            const W = /^rf3/.test(id) ? (typeof EQW_RF3 !== 'undefined' ? EQW_RF3 : [])
                 : id === 'rf5' ? (typeof EQW_RF5 !== 'undefined' ? EQW_RF5 : [])
                 : is4 ? (typeof EQW_RF4 !== 'undefined' ? EQW_RF4 : []) : [];
 
@@ -2797,7 +2797,7 @@ const PAGES = [
             <p class="p">${TX.n} 件，按解包顺序排列。这一作的防具与饰品${TX.cats.length > 1 ? '分成 ' + TX.cats.join('、') + ' 两类' : '没有细分，归在「' + TX.cats[0] + '」一类里'}。</p>
             ${ftable(['名称', '说明'], ['7.6rem'], TX.rows,
                     { chips: TX.cats.length > 1 ? TX.cats : null, ph: '输入防具名或说明里的词筛选' })}
-            <div class="note">分类依据是物品在解包表里的排列顺序，不是游戏里写的字段。</div>
+            <div class="note">分类依据是物品在解包表里的排列顺序，不是游戏里写的字段。<b>本作的防具与饰品目前只有解包文本（名称＋说明），防御力／抗性等数值暂无可靠来源</b>，所以只列名称与说明、不填数值——不做推算。</div>
             <div class="jump">
                 <a href="#/page/battle">
                     <div class="jp-t">战斗与弱点</div>
@@ -3062,6 +3062,44 @@ const PAGES = [
                     <div class="jp-t">采矿与钓鱼</div>
                     <div class="jp-s">哪一层出什么矿，深层迷宫怎么进</div>
                 </a>
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">素材等级怎么决定成品等级</div>
+                </a>
+            </div>`;
+            }
+
+            /* ---- RF3：素材强化属性表（biligame RF3item） ---- */
+            if (/^rf3/.test(id) && typeof MAT_RF3 !== 'undefined' && MAT_RF3.length) {
+                const A = MAT_RF3;
+                const nz2 = v => v !== '—';
+                const num = v => (v === '—' ? null : parseInt(v, 10));
+                const cntAtk = A.filter(r => nz2(r[3]) || nz2(r[4])).length;
+                const cntDef = A.filter(r => nz2(r[5]) || nz2(r[6])).length;
+                const cntStat = A.filter(r => nz2(r[7]) || nz2(r[8]) || nz2(r[9])).length;
+                const topDef = A.filter(r => num(r[5]) !== null).sort((a, b) => num(b[5]) - num(a[5]))[0];
+                const negs = A.filter(r => [r[3], r[4], r[5], r[6], r[7], r[8], r[9]].some(v => (num(v) || 0) < 0));
+                const eff = r => {
+                    const t = [];
+                    if (r[10] !== '—') t.push('攻:' + r[10]);
+                    if (r[11] !== '—') t.push('防:' + r[11]);
+                    return t.join(' ') || '—';
+                };
+                const rows = A.map(r => [
+                    r[0],
+                    [r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], eff(r), r[12]]
+                ]);
+                return intro + `
+            ${stat([['素材', A.length + ' 件'], ['带攻/魔攻', cntAtk + ' 件'], ['带防/魔防', cntDef + ' 件'], ['带力/智/体', cntStat + ' 件']])}
+            <h2 class="h2">素材强化属性表</h2>
+            <p class="p">RF3 的素材不只是「稀有度越高越好」——<b>每件素材作为强化材料时，会给装备加上固定的属性</b>（攻／魔攻／防／魔防／力量／智力／体力），而且<b>可以是负数</b>。表里「—」表示该项为 0 或无。</p>
+            <div class="key">强化前先看这张表：<b>要堆物防就找「防」高的，要补力量就找力量素材，别拿会扣属性的去凑格数</b>。全表有 ${negs.length} 件带负属性（如废铁扣防、豹爪扣防），用错会倒扣。</div>
+            <p class="p">「强化难度」是把它打进装备所需的强化等级——数字越大越难成功。${topDef ? '单件「防」最高的是<b>' + topDef[0] + '（' + topDef[5] + '）</b>。' : ''}</p>
+            ${ftableOwn(['素材', '买价', '卖价', '攻', '魔攻', '防', '魔防', '力量', '智力', '体力', '特效', '强化难度'],
+                    ['7rem', '4rem', '4rem', '3rem', '4rem', '3rem', '4rem', '3.6rem', '3.6rem', '3.6rem', '6rem', '4.4rem'],
+                    rows, { ph: '输入素材名或特效筛选' })}
+            <div class="note">取自 biligame《RF3item》${A.length} 条素材的强化属性表。数值是该素材<b>作为强化材料</b>时提供的加成，不是它自身的属性；「—」为 0 或无，负数会扣属性。强化难度为原表的强化等级要求。</div>
+            <div class="jump">
                 <a href="#/page/craft">
                     <div class="jp-t">锻造与药学</div>
                     <div class="jp-s">素材等级怎么决定成品等级</div>
@@ -3833,7 +3871,7 @@ const PAGES = [
 
     {
         key: 'fish', group: 'item', title: '鱼类图鉴', icon: 'fish',
-        body: () => {
+        body: (g) => {
             const f4 = (typeof FISH_RF4 !== 'undefined') ? FISH_RF4 : [];
             const f5 = (typeof FISH_RF5 !== 'undefined') ? FISH_RF5 : [];
             const CATS = ['稀有鱼', '大型鱼', '中型鱼', '小型鱼', '钓物'];
@@ -3861,7 +3899,11 @@ const PAGES = [
                 <td class="td f-p">${x.p || '<span class="mon-no">—</span>'}</td>
             </tr>`;
 
+            const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5')
+                ? `<div class="note"><b>${g.name}</b> 的鱼类专项数据暂缺可靠来源。本页鱼种全表是系列最完整的 <b>RF4／RF5</b> 数据，供横向参考；钓鱼机制（鱼影、四种状态、金杯线）全系列通用，可直接用在本作。</div>`
+                : '';
             return `
+            ${crossNote}
             <h2 class="h2">钓鱼不是抽奖，鱼影早就把答案写在脸上</h2>
             <p class="p">RF 的钓鱼系统里，水面下那个影子在你下竿之前就暴露了三件事：<b>色泽、大小、抖动频率</b>。看懂这三点，你要的那条鱼一出现你就知道；反过来，不看鱼影硬拉，等于在随机池里捞——这不是运气问题，是信息问题。</p>
             ${tbl(['看什么', '怎么读', '意味着什么'], [
