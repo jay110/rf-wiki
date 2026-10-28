@@ -62,7 +62,7 @@ lines = read('js/data.js').split('\n')
 start = next(i for i, l in enumerate(lines) if "id: 'rff'" in l)
 end = next(i for i, l in enumerate(lines) if i > start and "id: 'rf4'" in l)
 seg = '\n'.join(lines[start:end])
-pairs = [('蜜丝特', '密丝特'), ('萝洁塔', '萝赛塔'), ('碧安卡', '比安卡'),
+pairs = [('密丝特', '密丝特'), ('萝洁塔', '萝赛塔'), ('碧安卡', '比安卡'),
          ('塔巴莎', '塔芭莎'), ('尤妮', '尤尼'), ('安妮特', '阿涅多')]
 n = 0
 for a, b in pairs:

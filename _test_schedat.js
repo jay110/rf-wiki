@@ -102,7 +102,7 @@ const cases = [
     ['rf1', 'h', '12', 'h'],
     ['rf1', 'h', '999', 'h'],      // 越界要钳到最后一格
     ['rf1', 'h', '0', 'h'],
-    ['rf1', '蜜丝特', undefined, 'p'],
+    ['rf1', '密丝特', undefined, 'p'],
 ];
 for (const [a, b, c, want] of cases) {
     vm.runInContext(`SCHD_MODE = ''; viewSched(${JSON.stringify(a)}, ${JSON.stringify(b)}, ${JSON.stringify(c)})`, ctx);

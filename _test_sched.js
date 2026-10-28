@@ -59,15 +59,15 @@ for (let day = 0; day < 8; day++) {
 
 /* 3. 带人名过滤 / 无数据作品 / 错误路由 */
 vm.runInContext('SCHD_DAY = 0', ctx);
-const one = ctx.viewSched('rf1', '蜜丝特');
-if (!/value="蜜丝特"/.test(one)) bad.push('带人名进入时未预填筛选框');
+const one = ctx.viewSched('rf1', '密丝特');
+if (!/value="密丝特"/.test(one)) bad.push('带人名进入时未预填筛选框');
 if (!/已收录|位<\/strong>/.test(one)) bad.push('缺少人数说明');
 
 const none = ctx.viewSched('rf2');
 if (!/还没有行程数据/.test(none)) bad.push('无数据作品未给出提示');
 
-/* 4. 样本：周一蜜丝特的一天 */
-const mist = D.people.find(p => p[0] === '蜜丝特');
+/* 4. 样本：周一密丝特的一天 */
+const mist = D.people.find(p => p[0] === '密丝特');
 const runs = ctx.schedRuns(mist[3], 0, T);
 const seq = runs.map(r => {
     const s = ctx.schedSpot(D, r.c);
@@ -76,4 +76,4 @@ const seq = runs.map(r => {
 
 console.log(`渲染 8 种星期 × ${D.people.length} 人 = ${rows} 行 / ${cells} 段`);
 console.log(bad.length ? '异常：\n' + bad.slice(0, 15).join('\n') : '全部正常');
-console.log('周一 蜜丝特：' + seq);
+console.log('周一 密丝特：' + seq);

@@ -405,6 +405,11 @@ function viewChar(gameId, key) {
     /* 旧链接 #/char/<作>/<序号> 仍然可用 */
     if (!c && /^\d+$/.test(key || '')) c = all[Number(key)] || (g.chars[Number(key)] ?
         { n: g.chars[Number(key)].name, j: g.chars[Number(key)].jp, r: g.chars[Number(key)].role } : null);
+    /* 译名统一前存下的链接（蜜丝特 → 密丝特）跟着走 */
+    if (!c) {
+        const fixed = fixNames([key || ''])[0];
+        if (fixed !== key) c = all.find(x => x.n === fixed);
+    }
     if (!c) return viewError('没有这个角色');
 
     const idx = all.indexOf(c);
@@ -616,7 +621,7 @@ function viewSched(gid, arg2, arg3) {
         SCHD_MODE = 'p';
     }
 
-    const kw = who || '';
+    const kw = fixNames([who || ''])[0];
     const withSched = d.people.length;
     const nowH = schedNowHour(d);
     const nowD = schedToday(d);
@@ -731,7 +736,7 @@ function bindSched() {
     const q = document.getElementById('schQ');
     function applyFilter() {
         if (!tbody) return;
-        const v = (q ? q.value : '').trim().toLowerCase();
+        const v = fixNames([(q ? q.value : '').trim().toLowerCase()])[0];
         Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
             const hay = (tr.dataset.n + '\u0001' + tr.dataset.j + '\u0001' + tr.dataset.a).toLowerCase();
             tr.hidden = !!v && !hay.includes(v);
@@ -1120,7 +1125,20 @@ function snippetOf(text, head) {
 /* 搜索主逻辑：同一名字在多个页面重复出现时合并成一条，附页面标签与
    出现次数，免得「生命果冻」一次刷出四条同名结果；多词全部落空时
    退回首个关键词，好过直接报「没有找到」。 */
+/* 全站统一译名后留下的旧写法：查询时先归一到现名，老读者按记忆里的字也搜得到。
+   只做查询侧归一，不动索引文本，索引里也不留两套写法 */
+const NAME_FIX = { '蜜丝特布鲁姆': '密丝特布鲁姆', '蜜丝特': '密丝特' };
+
+function fixNames(words) {
+    return words.map(w => {
+        let s = String(w || '');
+        for (const k in NAME_FIX) if (s.indexOf(k) >= 0) s = s.split(k).join(NAME_FIX[k]);
+        return s;
+    });
+}
+
 function searchEntries(g, words) {
+    words = fixNames(words);
     const idx = buildIndex(g);
     const run = ws => {
         const head = ws[0] || '';
