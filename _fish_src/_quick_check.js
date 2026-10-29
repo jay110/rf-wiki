@@ -1,0 +1,17 @@
+const fs = require('fs'), vm = require('vm');
+const ROOT = require('path').join(__dirname, '..') + '/';
+const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
+const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, addEventListener() {}, appendChild() {}, querySelectorAll: () => [], scrollIntoView() {} };
+const ctx = { console, window: { addEventListener() {}, location: { hash: '' }, innerWidth: 1280, scrollTo() {} }, document: { addEventListener() {}, getElementById: () => stubEl, querySelector: () => stubEl, querySelectorAll: () => [], createElement: () => stubEl, body: stubEl } };
+vm.createContext(ctx);
+const src = files.map(f => fs.readFileSync(ROOT + f, 'utf8')).join('\n;\n');
+vm.runInContext(src, ctx, { filename: 'bundle.js' });
+const out = ctx.fishspotRfoHtml ? ctx.fishspotRfoHtml() : 'NO FN';
+console.log('函数存在:', !!ctx.fishspotRfoHtml);
+console.log('输出长度:', out.length);
+console.log('含 172 条:', out.indexOf('172') >= 0);
+console.log('含 28 处:', out.indexOf('28 处') >= 0);
+console.log('含 30 种:', out.indexOf('30 种') >= 0);
+console.log('含 金枪鱼:', out.indexOf('金枪鱼') >= 0);
+console.log('开头片段:', out.slice(0, 160));
