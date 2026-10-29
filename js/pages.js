@@ -952,6 +952,142 @@ function eqbar(n, ph) {
 /* 数值列：0 显示为破折号 */
 function nz(v) { return (v === 0 || v === '' || v == null) ? '—' : v; }
 
+/* ---------- 村民喜好：rf1 / rf2 / rf3 / rff / rfo 通用分支 ----------
+   与「人物档案」同源（js/npcfull.js），字段：b 最喜欢 / l 喜欢 / h 讨厌 /
+   w 最讨厌 / bg 生日礼物 / pf 喜欢的香水 / bd 生日。各作档位本来就不齐——
+   rf1 没有讨厌档、rf2 没有最喜欢档，所以页面按该作实有的档位出列，
+   不为了"看起来统一"去补一列空表头。 */
+const GIFT_KEY = { rf3sp: 'rf3' };
+const GIFT_SEAS = ['春', '夏', '秋', '冬'];
+
+/* 各作机制差异，读者最容易在这里误会成"漏收" */
+const GIFT_DIFF = {
+    rf1: '这一作<b>只有「最喜欢」和「喜欢」两份清单</b>——送错了不掉好感，只是白送。所以本页的讨厌栏是空的，不是没查。',
+    rf2: '<b>没有「最喜欢」档</b>，取而代之的是每人指定一件「生日礼物」，只在生日当天送才吃满收益。讨厌档齐备，这一作的雷区反而最值得记。',
+    rf3: '四档里<b>讨厌档特别整齐</b>，另有每位候补的<b>喜欢的香水</b>——香水是独立于料理与素材的一条加成线，本作独有。',
+    rff: '<b>没有「最讨厌」档</b>，只有最喜欢／喜欢／讨厌三份。人物与初代重叠很多，生日也大半沿用了初代的日期。',
+    rfo: '<b>没有「最讨厌」档</b>。这一作的喜好清单偏长，几乎人人二十样起步，查的时候按人翻比按物品找快。'
+};
+
+function giftPage(g) {
+    const k = GIFT_KEY[g.id] || g.id;
+    const A = ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
+    if (!A.length) return '<div class="note">这一作的人物喜好数据尚未收录。</div>';
+
+    const bdKey = s => {
+        const m = /^([春夏秋冬])(\d+)日/.exec(s || '');
+        return m ? GIFT_SEAS.indexOf(m[1]) * 100 + Number(m[2]) : 9999;
+    };
+    const hasList = f => A.some(x => x[f] && x[f].length);
+    const HAS_B = hasList('b'), HAS_L = hasList('l');
+    const HAS_PF = A.some(x => x.pf && String(x.pf).length);
+    const HAS_H = hasList('h') || hasList('w');
+    const HAS_BG = A.some(x => x.bg);
+    const B_MULTI = A.some(x => (x.b || []).length > 2);   /* 各作"最喜欢"的粒度差很多：有的一人一件，有的列十几样 */
+    const marryable = x => /花嫁|花婿|结婚/.test(x.r || '');
+    const cut = (arr, n) => !arr || !arr.length ? '<span class="mon-no">—</span>'
+        : arr.length > n ? arr.slice(0, n).join('、') + ` <span class="txc">等 ${arr.length} 样</span>`
+            : arr.join('、');
+
+    /* 生日年表：全年按季节日排，一行一个人 */
+    const bdRows = A.filter(x => x.bd).slice().sort((a, b) => bdKey(a.bd) - bdKey(b.bd) || String(a.n).localeCompare(String(b.n)));
+    const bdName = x => (HAS_B ? cut(x.b, 2) : (x.bg || '<span class="mon-no">—</span>'));
+
+    /* 最喜欢 / 生日礼物的跨人频次 */
+    const fb = {};
+    A.forEach(x => (x.b || []).forEach(i => { const t = String(i).trim(); if (t) fb[t] = (fb[t] || 0) + 1; }));
+    const topB = Object.entries(fb).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const multiB = topB.filter(x => x[1] > 1);
+
+    /* 雷区频次：讨厌 + 最讨厌合并计数 */
+    const withH = A.filter(x => (x.h || []).length || (x.w || []).length).length;
+    const fh = {};
+    A.forEach(x => (x.h || []).concat(x.w || []).forEach(i => { const t = String(i).trim(); if (t) fh[t] = (fh[t] || 0) + 1; }));
+    const topH = Object.entries(fh).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const uniH = topH.filter(x => x[1] >= Math.max(2, Math.round(withH * 0.5)));
+
+    const totL = A.reduce((s, x) => s + (x.l || []).length, 0);
+    const avgL = totL / (A.filter(x => (x.l || []).length).length || 1);
+    const CUT = avgL <= 6 ? 99 : 4;
+    const longest = A.slice().sort((a, b) => (b.l || []).length - (a.l || []).length)[0];
+
+    const head = ['村民', '生日'];
+    const colw = ['6.6rem', '5rem'];
+    if (HAS_B) { head.push('最喜欢'); colw.push('auto'); }
+    if (HAS_BG && !HAS_B) { head.push('生日礼物'); colw.push('auto'); }
+    if (HAS_L) { head.push('喜欢'); colw.push('auto'); }
+    if (HAS_H) { head.push('讨厌'); colw.push('9rem'); }
+
+    const rowOf = x => {
+        const s = [x.n, x.bd || '', (x.b || []).join(' '), x.bg || '', (x.l || []).join(' '), (x.h || []).concat(x.w || []).join(' ')].join(' ');
+        const cells = [npcLink(k, x.n) + (marryable(x) ? '' : ' <span class="txc">不可婚</span>'), x.bd || '<span class="mon-no">—</span>'];
+        if (HAS_B) cells.push(cut(x.b, 8));
+        if (HAS_BG && !HAS_B) cells.push(x.bg || '<span class="mon-no">—</span>');
+        if (HAS_L) cells.push(cut(x.l, CUT));
+        if (HAS_H) cells.push(cut((x.h || []).concat(x.w || []), 3));
+        return [s, cells];
+    };
+
+    return `
+    <h2 class="h2">先说清这一作有哪些档</h2>
+    <p class="p">${GIFT_DIFF[k] || ''}</p>
+    ${stat([['收录村民', A.length + ' 人'], ['有生日', bdRows.length + ' 人'], ['喜欢条目', totL + ' 条']])}
+    <div class="key">下面先按<b>日历</b>排一遍——什么时候该备什么礼，一次看全；再按<b>人头</b>排一遍，点名的时候查。</div>
+
+    <h2 class="h2">全年生日表：${bdRows.length} 个人，一年 ${bdRows.length} 次送礼机会</h2>
+    <p class="p">生日当天送对东西，好感涨得比平时多得多——这是整个送礼系统里唯一有明确倍数收益的时刻。所以第一件事不是背清单，是<b>把日期排出来</b>。</p>
+    ${tbl(['生日', '村民', HAS_B ? '最喜欢' : '生日礼物'], bdRows.map(x => [x.bd, npcLink(k, x.n), bdName(x)]), { leftFirst: true, cls: 'txt', colw: ['5.4rem', '8rem'] })}
+    <div class="note" style="margin-top:.7rem">按 春夏秋冬 → 日 排序。${!HAS_B ? '「生日礼物」是源表单独指定的一件东西，不是他平时的喜欢品——生日当天送它才对。' : B_MULTI ? '「最喜欢」一列只取源表排在最前的两样——这一作有的人只有一件，有的人列了十几样，全量看下面的速查卡。' : '「最喜欢」一列就是他那件最想要的东西——这一作每人都只有一件，没有并列。'}</div>
+
+    <h2 class="h2">${HAS_H ? (uniH.length ? (uniH.length === 1 ? '只有一样东西，人人讨厌' : `${uniH.length} 样东西，几乎人人讨厌`) : '雷区很散，没有公认的垃圾') : '这一作没有雷区'}</h2>
+    ${!HAS_H ? `<p class="p">${k === 'rf1' ? '初代的机制里干脆没有「讨厌」这一档：递错东西不扣好感，只是不加。所以初代送礼可以随便试，试出喜欢的东西为止。' : '本作源表未收录讨厌档。'}</p>`
+            : uniH.length ? `
+        <p class="p">把 ${withH} 位有讨厌记录的村民并起来数一遍，${uniH.length} 样东西撞上了半数以上的人。这些东西有个共同点——<b>都是田里、路边、矿洞里随手捡的废料</b>。</p>
+        ${tbl(['物品', '几个人讨厌', '占比'], uniH.map(([n2, c]) => [n2, `${c} / ${withH} 人`, Math.round(c / withH * 100) + '%']), { leftFirst: true, cls: 'txt', colw: ['10rem', '7rem', '4.4rem'] })}
+        ${topH.length > uniH.length ? `<div class="note" style="margin-top:.6rem">表里只列命中过半数的那几样。第 ${uniH.length + 1} 名往后各只有 ${topH[uniH.length][1]} 人，${topH[uniH.length][1] <= 4 ? '已经不成规律，多半是真的个人口味' : '往下是一个连续的长尾'}。</div>` : ''}
+        <div class="key">这份清单的用法不是"送礼时避开"，而是<b>整理背包时把它们单独塞一格</b>。${uniH[0] ? `<b>${uniH[0][0]}</b> 有 ${uniH[0][1]} 个人讨厌——` : ''}拿它当礼物递出去，好感是往下走的。</div>`
+            : `<p class="p">${withH} 位村民的讨厌清单加起来 ${topH.reduce((s, x) => s + x[1], 0)} 条，最多的一样也只被 ${topH.length ? topH[0][1] : 0} 个人点名——说明<b>这一作的喜恶很个人化</b>，没有"公认垃圾"这回事。送礼前最好按名字查一下，别凭经验推。</p>
+        ${tbl(['物品', '几个人讨厌'], topH.slice(0, 8).map(([n2, c]) => [n2, `${c} / ${withH} 人`]), { leftFirst: true, cls: 'txt', colw: ['10rem', '7rem'] })}`}
+
+    <h2 class="h2">${HAS_B ? (multiB.length ? `${multiB.length} 样东西，不止一个人最喜欢` : '最喜欢全是一人一样，没有通用解') : '生日礼物：一人一件，不能通用'}</h2>
+    ${!HAS_B ? `<p class="p">这一作没有"最喜欢"这一档，每人只有一件指定的生日礼物。${A.filter(x => x.bg).length} 个人对下来是 ${new Set(A.filter(x => x.bg).map(x => x.bg)).size} 种东西，${new Set(A.filter(x => x.bg).map(x => x.bg)).size === A.filter(x => x.bg).length ? '<b>没有一样重复</b>——完全是一对一的配置' : '<b>只有少数几样撞车</b>'}。所以不存在"备一样东西走天下"的捷径，只能在生日那天翻表。</p>`
+            : multiB.length ? `
+        <p class="p">${topB.length} 种被标成"最喜欢"的东西里，只有 ${multiB.length} 种被两个人以上同时点名：</p>
+        ${tbl(['最喜欢', '几个人'], multiB.slice(0, 10).map(([n2, c]) => [n2, `${c} 人`]), { leftFirst: true, cls: 'txt', colw: ['10rem', '5rem'] })}
+        <div class="key">其余 ${topB.length - multiB.length} 种<b>只被一个人点名</b>，也就是谁喜欢的东西基本只有他自己吃。这一作没有哪样东西能当通用礼物刷全场——想高效涨好感，只能照着名字送。</div>`
+            : `<p class="p">${topB.length} 种"最喜欢"分摊到 ${A.filter(x => (x.b || []).length).length} 个人身上，<b>没有一种被重复点名</b>——每个人喜欢的都是自己的东西。这一作不存在"通用神物"，送礼只能按人查。</p>`}
+
+    <h2 class="h2">每人一张速查卡</h2>
+    <p class="p">要查特定的人就搜名字，要查"这东西能不能送"就搜物品名——下面这张表右边几列都参与搜索。标记 <span class="txc">不可婚</span> 的是店主、长辈与孩子，好感照涨，只是没有结婚线。</p>
+    ${ftableOwn(head, colw, A.map(rowOf), { ph: '输入村民名或物品名', cls: 'npc' })}
+
+    ${HAS_L ? `<details class="mon-fold">
+        <summary>展开全部 ${A.length} 人的「喜欢」清单（共 ${totL} 条）</summary>
+        <p class="p" style="padding:.2rem 0 .8rem">平均一人 ${avgL.toFixed(1)} 条${longest && (longest.l || []).length > CUT ? `，最长的是 <b>${longest.n}</b>，一个人 ${longest.l.length} 样` : ''}。这一档宽到没有筛选价值——基本等于"这一类他都吃"，送礼时按类别挑就行。</p>
+        <div class="txt-list">${A.map(x => `<p><b>${x.n}</b>：${(x.l || []).join('、') || '<span class="mon-no">源表无记录</span>'}</p>`).join('')}</div>
+        ${k === 'rf2' ? '<div class="note" style="margin-top:.6rem">RF2 的源表把两代分开记，个别条目带着「第一章：」「第二章无喜好物」这样的前缀，本页照原文保留、不删不改——那句话本身就是信息。</div>' : ''}
+    </details>` : ''}
+
+    ${HAS_PF ? `<details class="mon-fold">
+        <summary>展开 ${A.filter(x => x.pf && String(x.pf).length).length} 位候补的「喜欢的香水」</summary>
+        <p class="p" style="padding:.2rem 0 .8rem">香水在本作是独立于料理和素材的第三条加成线：同一个人对香水的反应，跟他的喜欢清单<b>不是一套</b>，不能互相推。</p>
+        <div class="txt-list">${A.filter(x => x.pf && String(x.pf).length).map(x => `<p><b>${x.n}</b>：${[].concat(x.pf).join('、')}</p>`).join('')}</div>
+    </details>` : ''}
+
+    <div class="note">数据与「人物档案」是同一批源——biligame 符文工厂 wiki 各作人物页（CC BY-SA），由 <code>_build_npcfull.py</code> 生成到 <code>js/npcfull.js</code>。本页只是把同一份数据横过来看：<b>没有新增任何推断值</b>，所以你在人物页和这里看到的清单一定一致。<br>源表没给的字段就是空的：${A.length} 人里有 ${A.filter(x => !x.bd).length} 人查不到生日、${A.filter(x => !(x.b || []).length).length} 人没有最喜欢记录，本页留「—」，不按同族或同村推一个日期出来。</div>
+
+    <div class="jump">
+        <a href="#/resident/${g.id}/全部">
+            <div class="jp-t">居民一览</div>
+            <div class="jp-s">按身份、生日排序，点进去看完整档案</div>
+        </a>
+        <a href="#/page/love">
+            <div class="jp-t">恋爱与结婚</div>
+            <div class="jp-s">好感怎么涨、告白条件与婚后生活</div>
+        </a>
+    </div>`;
+}
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -3968,11 +4104,13 @@ const PAGES = [
             <div class="note">取自《RF4 全怪物喜好表》998 行（含各级变体与重复行），按名字去重后 ${G4.length} 只，原表的 <code>???</code> 占位行已剔除。原表只给「喜好 1～3」三格，没有捕捉率——<b>RF4 不给初始概率数值</b>，所以本页不编造。</div>`;
         }
     },
+
     /* ================= 村民喜好（人，不是魔物） ================= */
     {
         key: 'npcgift', group: 'life', title: '村民喜好', icon: 'users',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
         body: g => {
+            if (g.id !== 'rf4' && g.id !== 'rf4sp' && g.id !== 'rf5') return giftPage(g);
             const is5 = g.id === 'rf5';
             const P4 = (typeof NPC_RF4 !== 'undefined') ? NPC_RF4 : [];
             const P5 = (typeof NPC_RF5 !== 'undefined') ? NPC_RF5 : [];
@@ -4739,6 +4877,119 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-29　第八十五次：村民喜好扩到七作全线，生日排成一张全年表</h2>
+            <ul class="ul">
+                <li class="li"><b>这一页此前只有符文4／5</b>：两作靠解包表，带 FP 数值与四档清单，但另外五作（符文1／2／3／边境／海洋）在站内<b>根本没有「村民喜好」这一页</b>——查某个人喜欢什么，只能进他的人物档案，一个一个点。这次把这一页的适用范围接到七作，缺的是<b>页面</b>，不是数据。</li>
+                <li class="li"><b>数据一点没新增</b>：五作用的是「人物档案」同一份 <code>js/npcfull.js</code>（字段 <code>b</code> 最喜欢／<code>l</code> 喜欢／<code>h</code> 讨厌／<code>w</code> 最讨厌／<code>bg</code> 生日礼物／<code>pf</code> 喜欢的香水／<code>bd</code> 生日），源页还是 biligame 符文工厂 wiki 的各作人物页。<b>本页只是把同一份数据横过来看</b>，所以你在人物页和这里读到的清单必然一致，不存在两套口径。</li>
+                <li class="li"><b>各作档位本来就不齐，不硬凑成统一模板</b>：初代<b>没有「讨厌」档</b>（送错不掉好感，只是白送），符文2 <b>没有「最喜欢」档</b>（改用每人一件的生日礼物），边境与海洋<b>没有「最讨厌」档</b>。页面按该作实有的档位出列，缺的那一栏不摆空表头——并在开头单独说明一句，免得被当成漏收。</li>
+                <li class="li"><b>加了「全年生日表」</b>：原来只有按人查的速查卡，这次多一张按 春夏秋冬 → 日 排序的日历，一行一个人，后面跟着「那天该送什么」。生日当天送礼是这套系统里<b>唯一有明确倍数收益</b>的时刻，把日期先排出来比背清单有用。同日多人时不做任何合并，各占一行。</li>
+                <li class="li"><b>雷区按人数据实算，不写死结论</b>：符文3 的「垃圾」被 <b>22 / 24</b> 人讨厌、「杂草」13 人；边境的「枯草」「杂草」各 <b>25 / 26</b> 人、废铁与失败之作各 24 人——这两作的垃圾是真正的人人喊打。符文2 与海洋则相反，最多的一样也只被 3 个人点名，页面会直接说「没有公认垃圾，别凭经验推」。同一段文案，两种结论，全部由数据决定。</li>
+                <li class="li"><b>「最喜欢」的粒度各作差很多</b>：符文1／边境基本是一人一件、互不重复，所以没有通用礼物；符文3 有人列到 25 样、且「白水晶」「金刚花」这类有 4 人同时点名。页面对这两种情况给的是相反的建议——前者「只能按人查」，后者「这几样可以当常备」。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352（原 346，新增六作各一页）、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第八十四次：首页十张作品卡全部配上图，放弃抠 logo 改整图</h2>
+            <ul class="ul">
+                <li class="li"><b>先走错了一步</b>：起初的做法是把各作 logo 从标题画面里抠出来、透明背景贴在卡片上。做到符文1／2 时发现不对——这两代的标题画面本身就是「logo＋底纹＋日文副标题」一整套，抠掉底纹只留字，反而把原设计的层次拆散了；而且低分辨率的 NDS 标题图去掉底之后边缘全是锯齿。<b>改成每作只用一张整图</b>，不做抠图。</li>
+                <li class="li"><b>十作的图源</b>：符文1／2／边境／海洋取自本机解包（<code>title_bgC</code>、<code>rune2_titleA01</code>、Wii 官网 <code>main.swf</code> 里内嵌的 JPEG、PS3 版 <code>LUGTITLE</code> PSD 关掉汉化组文字层）；符文3／4 取当年日文官网与攻略站的页面背景画；符文3SP／4SP／5 与龙之天地取 Steam CDN 的 <code>capsule_616x353</code>／<code>library_hero</code>。——<b>Steam 商店页本身在本地网络下 000 不通</b>，但 <code>cdn.cloudflare.steamstatic.com</code> 的图片直链是通的，所以按已知 appid 直接取图。</li>
+                <li class="li"><b>统一成 2.95:1</b>：卡片图区是 195×66，比例正好 2.95。所有原图按这个比例裁切，输出 960×325 的 JPEG（质量 88），十张合计 659KB。构图用两种模式：能裁的用 <code>cover</code>（按比例裁，保留主体），构图不能动的用 <code>fill</code>（按高度铺满、左右用边缘色延伸并轻微模糊）。</li>
+                <li class="li"><b>海洋单独调了裁切位置</b>：它的标题画面是个圆窗构图，按默认居中裁会把圆窗两端切掉、横条里只剩中间一截。改成 <code>cover</code> 并把纵向锚点下移到 0.45，圆窗才完整落在框内。</li>
+                <li class="li"><b>构建可复现</b>：出图脚本 <code>_title_src/build_titles.py</code>、原图放在 <code>_title_src/src/</code>（已 gitignore，不进仓库），成品 <code>assets/title/*.jpg</code> 入库；<code>_inline.py</code> 同步把 <code>TITLE_DATA</code> 内联进 standalone，单文件版不会破图。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第八十三次：站点图标换成芜菁，favicon 全套</h2>
+            <ul class="ul">
+                <li class="li"><b>图标来自游戏内素材</b>：用的是一张 23×24 的芜菁（かぶ）RGBA 透明图标，1.1KB，来自 biligame wiki 的图片直链。尺寸远小于常规 favicon，所以按档位分别出图，不让工具统一重采样。</li>
+                <li class="li"><b>三档各塞自己的 PNG</b>：<code>favicon.ico</code> 内嵌 16／32／48 三档，每档单独从原图缩放，而不是放大一份再让 PIL 统一采样——小图统一重采样会糊。另出 192 与 180（apple-touch）两张，分别给桌面与 iOS 主屏。</li>
+                <li class="li"><b>体积</b>：<code>assets/icon/</code> 从 364KB 压到 130KB。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第八十二次：龙之天地头像补齐 21 张，全站八作 214 张缺 0</h2>
+            <ul class="ul">
+                <li class="li"><b>此前 azuma 一张头像都没有</b>：<code>faces.js</code> 里连段都没有，居民列表全靠首字色块。这次分两批补齐，都是官方素材。</li>
+                <li class="li"><b>主角／候补／神 17 张</b>：取自官方 web manual（marv.jp）的角色卡 <code>ch01_tn</code>–<code>ch17_tn</code>，文件名带 <code>_tn</code> 但实际是 490×560 的头肩像，分辨率够。手册页按钮顺序即角色顺序，逐张核对外观。背景是统一米色，用边缘 floodfill 抠透明。</li>
+                <li class="li"><b>水平居中不能用 alpha 质心</b>：肩膀、武器、马尾会把 alpha 质心拽偏——「凯」的鬼面、「斑鸠」的白帽最明显。改用<b>肤色质心</b>定位，才把人脸放到正中。</li>
+                <li class="li"><b>里の住人 4 张保留原背景</b>：「榊／拓海／铃／翡翠」只有带樱花背景的合成立绘，同路径的透明版全 404；树影与人物边缘交错，抠不干净，所以只裁头、不抠底。这一条在脚本与源图说明里都写明了。</li>
+                <li class="li"><b>踩到的坑</b>：<code>jp.runefactory.com</code> 走系统代理会 502，curl 必须加 <code>--noproxy '*'</code>。</li>
+                <li class="li"><b>另记</b>：官方「里の住人」页还有燕／草津／八千代／小太郎／座座／绵柾 6 位，站内名册未收录，故未做头像；将来补名册可直接沿用同页 <code>sato_05</code>–<code>10</code>。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第八十一次：符文3 最后两位头像补齐，七作零缺</h2>
+            <ul class="ul">
+                <li class="li"><b>卡在反爬上</b>：neoseeker 的 RF3 角色表主站有 Cloudflare 人机校验，curl 与抓取工具拿到的都是校验页。改用内置浏览器打开，从页面 DOM 里取到图片落在 <code>cdn.staticneo.com</code> 的直链，再直接抓 CDN（不受校验），拿到两张 240×380 的官方半身像。</li>
+                <li class="li"><b>不用猜编号</b>：页面明写 Japanese Name = <b>Ondolfa／Zeze</b>（英文版作 Ondorus／Zaid），身份描述也对得上——恩德珐是温维尔聚落的长老、爱读书，泽杰是住在那里的矮人、爱吹牛。</li>
+                <li class="li"><b>为什么一直空着</b>：这两位新旧官网都没放（旧官网镇民页只有 11 张、新官网只宣传花嫁），此前一直等 RF3S 游戏内图标段。现在新建 <code>_build_rf3_extra.py</code>，160×160、取景与其余 rf3 头像一致（头顶贴边）。</li>
+                <li class="li"><b>结果</b>：全站头像 7 作 193 张（原 191），七个正传 <b>零缺</b>。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第八十次：边境头像编号整段错位，8 张重出</h2>
+            <ul class="ul">
+                <li class="li"><b>是读者先看出来的</b>：「卢特、克罗斯画风偏女性」。核查后确认不是画风问题，是<b>编号对错人</b>——原来那句推法「FACE 编号 = 站内名册序号 + 1」在居民前段（14–23）成立，从 FACE24 起整段错位，因为站内名册把「砾」排在居民靠后、把「杰尔文」排最后，与游戏内真实顺序不同。</li>
+                <li class="li"><b>不再靠文字描述猜</b>：改用 ranchstory wiki 的官方立绘逐张对印，重排 FACE14 起的真实顺序（14 特纳 → 31 雷欧娜），共订正 15 个编号、重出 8 张。</li>
+                <li class="li"><b>几个认错的点</b>：原先判给 FACE28 的白须老者其实是<b>罗兰德</b>（美乐蒂祖父、抱黑猫）；<b>砾</b>是小妖精（红蝴蝶结帽＋白须＋细长四肢），「自称武蔵大和守」正是这个小东西的玩笑；<b>米涅鲁巴</b>是尖耳精灵女（塔芭莎之妹）。</li>
+                <li class="li"><b>卢特那张本来就对</b>：红长发＋紫宽檐帽，官方设定就是「容易被误认为女性」（TVTropes 上有专门条目 Dude Looks Like a Lady），不动。</li>
+                <li class="li"><b>顺带核实海洋 L36／L37</b>：阿涅多（金发＋红色飞行护目镜＋邮包）与糖糖（红兜帽斗篷＋紫眼）与官方立绘一一对应，两张都对，不改。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十九次：头像大补齐 58 张，边境／海洋两作整批接上</h2>
+            <ul class="ul">
+                <li class="li"><b>边境 31 键</b>：源为游戏内对话立绘 FACE00–31。认人靠四条角色描述交叉核对（「拉碧丝是教会修女→F03」「斯黛拉是老妇→F19」「米涅鲁巴是小妖精→F24」等）。双胞胎艾莉丝 白／黑 两张 alpha 包围盒一致、md5 不同，分 <code>iris_white</code>／<code>iris_black</code> 两键。</li>
+                <li class="li"><b>海洋 23 键，走了不少弯路</b>：真图在 PS3 原档 <code>RFF2.dat</code> 的 TFAp 块 1526 里，是 72×72 的 CI8，共 51 张。必须用 <code>read_tfap()</code> 取块内成员——按纹理索引表的绝对偏移直读主 dat，解出来<b>全黑</b>。编号是两段式（10–18 九女主／20–22 三男主／30–38 九居民／01·02 主角／40·41 孩子），与文件里「相遇标记」字符串池的顺序一一对应，另做画面对印确认。</li>
+                <li class="li"><b>推翻一个旧结论</b>：此前记的「海洋没有 2D 立绘」是错的——导出包里那些 <code>*_FACE</code> 其实是 512×256 的 DXT1 3D UV 贴脸图，难怪看着不像立绘。</li>
+                <li class="li"><b>符文3 补克璐璐法</b>：官网完全没有她的立绘（隐藏花嫁不做宣传），改用 RF3S 游戏内 <code>another_charaicon</code>（172px）。</li>
+                <li class="li"><b>同一批还上了 azuma BOSS 页</b>：可捕 18 个 + 主线 6 个，中文名与人物名册一致；三个暂无中文译名的按音译处理并附英文原名，等待核实。</li>
+                <li class="li"><b>可重建</b>：新建 <code>_face_src/{rff,rfo,rf5_pc}/</code> 存源图 6.9MB 与证据链 md，克隆仓库后不需要游戏原档也能重出。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十八次：构建脚本收进仓库，路径全部相对化</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：几个脚本一直躺在仓库外（<code>_fish_src</code> 6 件含 <code>rfo_fishing_raw.txt</code> 源数据、<code>_azuma_src</code> 1 件），而且里面写死 <code>C:/Users/...</code> 的绝对路径——换台机器就跑不起来，等于数据只存在这一台上。</li>
+                <li class="li"><b>改法</b>：全部收进仓库，硬编码路径改成 <code>__dirname</code>／<code>__file__</code> 相对定位，与已入库的 <code>_build_boss.py</code> 保持一致。目标是「克隆下来就能重跑、重跑结果逐字节一致」。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十七次：符文1 钓鱼最后 4 个译名定案</h2>
+            <ul class="ul">
+                <li class="li"><b>4 种没有汉化对照的，定为站点通译</b>：基贝里奥（Gibelio，系列原创鱼）、秋比目鱼（Fall Flounder）、狗鱼（Pike）、真鳟（Masu Trout）。此前一直挂着「待核实」，这次拍板为定名并去掉标记——<b>说明里保留「本站定名」的出处</b>，不冒充官方。</li>
+                <li class="li"><b>顺带修两处旧注释</b>：<code>fish_old.js</code> 里的旧洞窟名「迷雾花洞窟」统一成站内定稿「密丝特布鲁姆」，钓点名措辞一并理顺。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十六次：龙之天地魔物喜好表 122 种</h2>
+            <ul class="ul">
+                <li class="li"><b>为什么单独建页</b>：这一作是动作 RPG 取向，没有前七作那套数值抗性图鉴，套模板会误导读者，所以另开 <code>azuma_mon</code> 页、只挂 azuma。</li>
+                <li class="li"><b>122 种魔物</b>：字段为 名称／能否骑乘／出现区域／最爱／喜欢／讨厌，源是中文攻略站的《魔物喜好表》（2025-06-20），<b>纯中文，不需要译名拍板</b>。骑乘分布 99 不可、23 可骑乘。</li>
+                <li class="li"><b>8 个 BOSS／精英源里没有区域与喜好</b>，只列名，不硬填。</li>
+                <li class="li"><b>顺带更正一处漏看</b>：azuma 的人物名册其实早已在 <code>data.js</code> 里（17 名），不是缺项。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十五次：龙之天地数据可得性评估</h2>
+            <ul class="ul">
+                <li class="li"><b>结论先行</b>：这一作的系统与前七作<b>根本不同</b>，不能直接套现有页面模板——动作 RPG 取向，取消「王子点数」改为村长界面管理村庄，新增守护者系统，无传统「钓点×鱼×概率」表，也无逐小时村民行程。</li>
+                <li class="li"><b>可做</b>：人物名册（14–16 名主要角色，中英文源齐全）、魔物喜好表。<b>有限做</b>：BOSS 只有英文源给 Lv 与弱点元素，没有 HP／攻防数值。<b>无源</b>：钓鱼、每日行程、数值抗性。</li>
+                <li class="li"><b>译名要先拍板</b>：中文译名多源不一致（昴／昴流、辉夜／辉夜姬、希娜／妃那、玛罗拉／玛罗、乌拉拉卡／丽日、松里／祭…），所以建议先定译名框架再落库。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十四次：缺口清单 v2 复核，改掉三处误判</h2>
+            <ul class="ul">
+                <li class="li"><b>初版用 grep 扫常量名，漏看了整批文件</b>（<code>rf2cal.js</code>／<code>rf5cal.js</code>／<code>fish_old.js</code> 等），导致「节日」「钓点／鱼」「料理」三行整行误判。改成逐文件核对文件头注释 + 页面实际引用。</li>
+                <li class="li"><b>属性抗性其实七作全覆盖</b>：各作早已通过魔物图鉴页、BOSS 页、战斗页三处落地，只是量纲不同（一代点数、二代克制、三代倍率、四五代百分比）——<b>跨作直接比数值没有意义</b>，现有分工本来就是合理形态，不必重复建设。</li>
+                <li class="li"><b>每日行程只有初代有源</b>：其余六作的中文源都没有集中行程表，英文 fandom 仅有零星角色页，逐角色翻译工作量大且易错，按「没核实的不写」暂不落库。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十三次：符文5 主线 BOSS 21 位</h2>
+            <ul class="ul">
+                <li class="li"><b>数据</b>：21 位主线 BOSS 的 Lv／HP／双攻／双防／狂暴线／弱点／抵抗，源为主线流程页。</li>
+                <li class="li"><b>缺的照留空</b>：第二章后半段约 11 位（骨龙、利维坦、赫克顿盖尔、死亡树・改、蕾瓦迪亚、美杜莎、衔尾蛇、树魔人、阿莉耶丝、奥德姆拉、芬布尔境界 BOSS）原表没有攻防数值，<b>一律留空不推算</b>。</li>
+                <li class="li"><b>rf4／rff 暂缺并写明理由</b>：RF4 只有普通魔物数据表，没有集中的剧情 BOSS 数值页，中文攻略全是打法／捕获向；边境只有 BOSS 名单没有数值。两作都标注待补，不硬凑。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十二次：符文1 钓鱼译名用汉化对照表校准</h2>
+            <ul class="ul">
+                <li class="li"><b>对齐 7 种</b>：珠星鱼、黑毛鱼、西太公鱼、螯龙虾、斑乌贼、伊富鱼、心动鲷鱼，改用汉化版《RF1 文本翻译对照表（校对 7）》的写法。</li>
+                <li class="li"><b>说清这张表是什么</b>：这是<b>汉化组的译法，不是官方简中</b>，不同汉化组可能不同——页面上照实标注，别让读者以为是官方名。</li>
+                <li class="li"><b>钓点名统一</b>：全部采用站内洞窟定稿（密丝特布鲁姆／卡麦特／特罗斯／癸干忒／达努／格力德），避免同一处地名三种写法。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十一次：符文1 钓点与鱼接入（12 钓点／32 种／70 条）</h2>
+            <ul class="ul">
+                <li class="li"><b>两向都做</b>：钓点 × 鱼的正向表（这个钓点能钓到什么），加鱼种 → 钓点的反向表（这条鱼去哪钓）。查的时候两个方向都有人需要。</li>
+                <li class="li"><b>译名分两层</b>：21 种用站内既有的官方名，11 种与钓点名当时挂「通译、待拍板」，后一次提交里收尾定案。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第七十次：符文3 钓点与鱼接入（36 条 + 度假村 9 条）</h2>
+            <ul class="ul">
+                <li class="li"><b>按钓点列鱼</b>：36 条常规钓点记录，另有卡尔洛斯度假村的<b>付费钓场 9 条</b>单独成段——那是花钱才能进的场子，混在普通钓点里会误导。</li>
+                <li class="li"><b>鱼影四档</b>：源表给了鱼影大小分档，一并保留，比只给名字有用。</li>
+            </ul>
+            <h2 class="h2">2026-10-29　第六十九次：海洋钓点与鱼接入（28 钓点／30 种／172 条）</h2>
+            <ul class="ul">
+                <li class="li"><b>换了数据形态</b>：海洋的源是「地点 × 区域 × 季节 × 时段 × 四种鱼的概率」，与前几作的「鱼 × 钓点」不是一张表，所以单独建 <code>SPOT_RFO</code>，页面做正反两向渲染。</li>
+                <li class="li"><b>钓鱼页只留引导</b>：海洋在「鱼」这一页不再硬塞表格，改成一段引导——这一作的鱼随季节与时段变，去钓点页查才准。</li>
+            </ul>
             <h2 class="h2">2026-10-29　第六十八次：符文4 头像补齐 27 位，全站五作 133 张接满</h2>
             <ul class="ul">
                 <li class="li"><b>两批来源拼齐 27 人</b>：主角与婚配候补 14 人用 RF4SP 旧官网（marv.jp/special/game/runefactory4SP）的全身彩图——每张图的文件名是流水号 <code>chara-img-01..14</code>，但人名图片的 <code>alt</code> 属性直接写着日文名，认人不用猜；镇民 13 人官网没放，用 biligame wiki 解包出的游戏内立绘，靠 MediaWiki 的 <code>imageusage</code> 反查归属。连主角之子诺艾尔、之女露娜都有，五作里头一回把居民头像<b>整批接满</b>。</li>
