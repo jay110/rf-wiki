@@ -59,3 +59,13 @@ _zoom_*.png
 _cmp_*.png
 _sheet_*.png
 _preview_face_*.png
+
+# 作品卡取图：只留 _title_src/src/ 下的原图与脚本，候选图/预览图不入库
+_title_src/*.jpg
+_title_src/*.png
+_title_src/*.gif
+_title_src/*.swf
+
+# logo 解包中间件（成品在 assets/logo/）
+_logo_src/**
+!_logo_src/SOURCES.md

@@ -41,7 +41,21 @@ html = re.sub(r'<link rel="stylesheet" href="([^"]+)"\s*/?>', css_repl, html)
 html = re.sub(r'<script src="([^"]+)"\s*>\s*</script>', js_repl, html)
 
 # 站点图标（assets/icon/*）在单文件版里没有同目录可读，一并转成 data URI
-MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml"}
+MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+
+
+def title_block():
+    """作品卡配图是 JS 里拼出来的，HTML 正则够不到，单独转成 TITLE_DATA。"""
+    arts = {}
+    d = ROOT / "assets" / "title"
+    for p in sorted(d.glob("*.jpg")):
+        rel = p.relative_to(ROOT).as_posix()
+        arts[rel] = "data:image/jpeg;base64," + base64.b64encode(p.read_bytes()).decode("ascii")
+    if not arts:
+        return ""
+    print(f"内联作品图 {len(arts)} 张，{sum(len(v) for v in arts.values()) // 1024} KB")
+    return "<script>var TITLE_DATA=" + json.dumps(arts, separators=(",", ":")) + ";</script>"
 
 
 def asset_repl(m):
@@ -57,8 +71,9 @@ html = re.sub(r'(?P<pre>(?:src|href)=)"(?P<path>assets/[^"]+\.(?:png|ico|svg))"'
 
 # 放在 </head> 前：一定早于 body 里的 app.js，faceSrc 调用时 FACE_DATA 已就绪
 fb = face_block()
-if fb:
-    html = html.replace("</head>", fb + "\n</head>", 1)
+tb = title_block()
+if fb or tb:
+    html = html.replace("</head>", fb + tb + "\n</head>", 1)
 
 assert 'src="js/' not in html, "仍有未内联的脚本引用"
 assert 'href="css/' not in html, "仍有未内联的样式引用"

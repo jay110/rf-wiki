@@ -4,6 +4,20 @@
 
 const LSKEY = 'rf_wiki_v1';
 
+/* 作品卡配图。统一预构图成 2.95:1（卡片图区比例），CSS 直接 cover 即可 */
+const TITLE_ART = {
+    rf1:   { src: 'assets/title/rf1.jpg' },
+    rf2:   { src: 'assets/title/rf2.jpg' },
+    rf3:   { src: 'assets/title/rf3.jpg' },
+    rf3sp: { src: 'assets/title/rf3sp.jpg' },
+    rf4:   { src: 'assets/title/rf4.jpg' },
+    rf4sp: { src: 'assets/title/rf4sp.jpg' },
+    rf5:   { src: 'assets/title/rf5.jpg' },
+    rff:   { src: 'assets/title/rff.jpg' },
+    rfo:   { src: 'assets/title/rfo.jpg' },
+    azuma: { src: 'assets/title/azuma.jpg' },
+};
+
 const S = {
     game: 'rf4',
     nick: '',
@@ -89,6 +103,13 @@ function latestUpdates(n) {
 
 /* 站点主页（#/）：站点层面的介绍与入口，不是某一部作品的攻略目录。
    攻略目录在 #/wiki，两者分开，跟版式参考站的结构一致。 */
+/* 作品卡配图地址。单文件版没有外部文件可加载，_inline.py 会转成 TITLE_DATA */
+function titleSrc(art) {
+    if (!art) return '';
+    if (typeof TITLE_DATA !== 'undefined' && TITLE_DATA[art.src]) return TITLE_DATA[art.src];
+    return art.src;
+}
+
 function viewWelcome() {
     const g = cur();
     /* 用人物档案的总数（199 人），不是 data.js 里那份只收候补的旧名单 */
@@ -112,14 +133,17 @@ function viewWelcome() {
 
     <div class="section-title"><span>选择作品</span><span class="en">TITLES</span></div>
     <div class="wgrid">
-        ${GAMES.map(x => `
-            <a class="wcard${x.id === g.id ? ' cur' : ''}" href="#/switch/${x.id}"
+        ${GAMES.map(x => {
+            const art = TITLE_ART[x.id];
+            return `
+            <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
+                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.fit === 'contain' ? ' style="object-fit:contain"' : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
                 <div class="wcard-meta">${x.date.slice(0, 4)}　${platShort(x.plat)}</div>
-            </a>`).join('')}
+            </a>`;}).join('')}
     </div>
 
     ${ups.length ? `
