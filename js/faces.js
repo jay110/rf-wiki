@@ -247,6 +247,40 @@ var FACE = {
         'アネット': 'anette',
         'キャンディ': 'candy',
         'タバサ': 'tabatha'
+    },
+
+    /* 符文工房 龙之天地（azuma）：两批源，由 _build_azuma_faces.py 统一出 160px 方图。
+       ① 主角／花嫁花婿／神 17 张 —— 官方 web manual（marv.jp/onlinemnl/ryu）的角色卡，
+          490×560 头肩像，米色底从边缘 floodfill 抠成透明，再按肤色定位「脸」居中裁切。
+          手册页 cbtn01–17 的顺序即 ch01–17：スバル カグヤ モコロン いろは ムラサメ ひな
+          マウロ うららか マツリ クラマ フブキ カナタ カイ クラリス イカルガ ピリカ ツイラン。
+       ② 里の住人 4 张 —— 官方站「里の住人」页（jp.runefactory.com/ryu-no-kuni/characters/
+          others1），950×950 立绘＋樱花背景的合成图，树影与人物边缘交错、纯色键抠不干净，
+          本机也没有 AI 抠图环境，故保留原背景只裁头（裁切框逐张实测，见脚本 JOBS_SATO）。
+       注意：站内 azuma 名册仍是原名单 21 人；官方「里の住人」页还有 ツバメ／クサツ／ヤチヨ／
+       コタロウ／ザザ／ワタラセ 6 位居民不在名册里，将来补名册时头像可沿用同一页素材。 */
+    azuma: {
+        'スバル': 'subaru',
+        'カグヤ': 'kaguya',
+        'モコロン': 'mokoron',
+        'マウロ': 'mauro',
+        'ムラサメ': 'murasame',
+        'クラマ': 'kurama',
+        'フブキ': 'fubuki',
+        'カイ': 'kai',
+        'イカルガ': 'ikaruga',
+        'ツイラン': 'tsuiran',
+        'ひな': 'hina',
+        'いろは': 'iroha',
+        'うららか': 'uraraka',
+        'マツリ': 'matsuri',
+        'カナタ': 'kanata',
+        'クラリス': 'clarisse',
+        'ピリカ': 'pirika',
+        'サカキ': 'sakaki',
+        'タクミ': 'takumi',
+        'すず': 'suzu',
+        'ヒスイ': 'hisui'
     }
 };
 
