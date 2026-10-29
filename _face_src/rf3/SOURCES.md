@@ -16,10 +16,21 @@
 1 マイス / 2 シア / 3 トゥーナ / 4 カリン / 5 ショコラ / 6 マリオン / 7 ソフィア /
 8 ペルシャ / 9 さくや / 10 イオン / 11 ダリア
 
-## 没有立绘的三位
+## 官网没有立绘的三位（均已另找出路，现已补齐）
 
 - **クルルファ（克璐璐法）**：通关才解锁的隐藏花嫁，两处官网的角色页都不宣传她。
+  → 改用 RF3S 游戏内 `another_charaicon`（172px）。
 - **オンドルファ（恩德珐）、ゼゼ（泽杰）**：旧官网镇民页只放了 11 张，不含这两位；新官网只有花嫁。
+  → 改用 neoseeker 攻略 wiki（Rune Factory 3 Special · Character List 页）的官方 PerfectPortrait：
+
+  | 角色 | 页面标注 | 源图 | 出处 |
+  | --- | --- | --- | --- |
+  | オンドルファ | Japanese Name: Ondolfa；Unvir 聚落的长老、爱读书 | `ondolfa_neoseeker.png` 240×380 | `cdn.staticneo.com/ew/b/b6/OndorusPerfectPortraitRF3.png` |
+  | ゼゼ | Japanese Name: Zeze；住在 Unvir 聚落的矮人，爱吹牛 | `zeze_neoseeker.png` 240×380 | `cdn.staticneo.com/ew/6/67/ZaidPerfectPortraitRF3V.png` |
+
+  英文名是 Ondorus / Zaid，**日文名是页面上明确标注的**，所以按名字直接用、不需要猜编号。
+  出图脚本 `_build_rf3_extra.py`（各自一个 140 见方的裁切框，输出 160×160）。
+  注意：neoseeker 主站有 Cloudflare 人机校验，脚本一律直取 `cdn.staticneo.com` 的图，别抓页面。
 
 ## 试过但不能用
 

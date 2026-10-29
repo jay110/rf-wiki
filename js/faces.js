@@ -80,7 +80,8 @@ var FACE = {
        都是官方透明底全身立绘，按身高比例定裁切带（_build_faces.py 的 band_scale）。
        隐藏花嫁 クルルファ 官网没有立绘（通关才解锁、官方不做宣传），
        改用 RF3S（Switch 豪华版）游戏内的 another_charaicon 头像（172px，官方画、换表情）。
-       オンドルファ 与 ゼゼ 两张名单页里也没有，仍空着等村里的 charaicon 段。 */
+       オンドルファ 与 ゼゼ 两处官网也没放，改用 neoseeker 攻略 wiki 的官方 PerfectPortrait
+       （240x380 透明底半身像，页面明写 Japanese Name = Ondolfa / Zeze），_build_rf3_extra.py 出图。 */
     rf3: {
         'マイス': 'mais',
         'シア': 'sia',
@@ -104,7 +105,9 @@ var FACE = {
         'ドンチャコス': 'donchacos',
         'エリザ': 'elisa',
         'カルロス': 'carlos',
-        'クルルファ': 'kururfa'
+        'クルルファ': 'kururfa',
+        'オンドルファ': 'ondolfa',
+        'ゼゼ': 'zeze'
     },
     /* 符文5：源是 PC 版（Unity）的 FaceIconSpriteAtlas，游戏内 HUD 头像，约 62px。
        由 _build_face_rf5.py 从 Addressables 的 bundle 里取出，ch 编号与人的对应
