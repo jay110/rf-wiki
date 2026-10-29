@@ -4877,14 +4877,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
-            <h2 class="h2">2026-10-30　第八十九次：符文1 作品卡改用 ROM 里自己的素材合成</h2>
+            <h2 class="h2">2026-10-30　第八十九次：符文1 作品卡改成实机标题画面（蓝天 + 飞龙 + 金色 logo）</h2>
             <ul class="ul">
-                <li class="li"><b>起因</b>：符文1 原本那张卡是官方标题截图，白底蓝纹，跟旁边几作的整图放一起发灰；干脆直接从 NDS ROM 里取素材重做一张。</li>
-                <li class="li"><b>解包</b>：ndspy 装不上（默认源和清华源都没有），改成手写 FNT/FAT 解析——5220 个文件全在 <code>/res/</code>，NCGR / NCLR / NSCR 三件套齐全。渲染器收在 <code>_nds_nitro.py</code>，<code>_build_rf1card.py</code> 负责合成。</li>
-                <li class="li"><b>踩坑：图块起点</b>。RAHC 头里声明的块数（宽×高）在 4bpp 文件上跟实际对不上，按它反推起点会算出负数。正确做法是读 <code>+0x18</code> 的 tileDataSize 和 <code>+0x1C</code> 的偏移（相对 +0x18），用字节数反推块数。</li>
-                <li class="li"><b>踩坑：标题背景的横条</b>。<code>title_bgA</code> 之类是逐行滚动的视差层，静态拼一定出周期性横条——按行做偏移校正反而更碎，属于实机靠滚动"滚"掉的效果，修不了。只能取画面下部（视差影响小的区域）再模糊 3.5px 压下去。<code>camp_bg</code>、<code>paint_bg</code> 这类不带滚动的才是干净的。</li>
-                <li class="li"><b>三层合成</b>：背景取 <code>title_bgA</code> 的天空海崖（取景 0.70 避开顶部横条）；图案用 <code>camp_bg02</code> 的深蓝菱格纹，2 倍放大平铺、按 0.46 混合；logo 用官方标题字压在最上层，底下垫一层深蓝投影让它立得住。</li>
-                <li class="li"><b>logo 位置</b>：卡片是 cover 裁切，960×325 的图在卡上只看得到中间约 52% 那一条，logo 居中放会被切掉下缘。所以竖直中心放在 42% 高度，跟 <code>object-position: center 42%</code> 对齐。</li>
+                <li class="li"><b>起因</b>：上一版用 ROM 里的菱格纹 + 天空拼了一张，能看但"不像游戏画面"。符文1 真正的标题画面是蓝天白云 + 一条蓝色飞龙环绕金色 <code>Rune Factory</code> logo，那就照这个来做。</li>
+                <li class="li"><b>素材</b>：ROM 里的 <code>title_bgA/B</code> 是逐行滚动的视差层，静态拼一定出周期横条，出不来这个组合；改用 DeSmuME 实机截图（上屏 582×442），存 <code>_title_src/src/rf1_desmume_title.png</code>。</li>
+                <li class="li"><b>关键几何</b>：卡片图框实测只有 <b>284×66</b>，<code>object-fit:cover</code> + <code>object-position:50% 42%</code>，960×325 的图被裁到只剩 <code>y≈43~266</code> 这 223px（69%）。之前按 410px 宽估算成"只看到 47%"，logo 位置全算错。</li>
+                <li class="li"><b>做法</b>：不塞整屏（4:3 塞进去 logo 必被切掉），只取源图 <code>y=130~265</code> 这条横带——刚好把金色 logo（165~250）框全，上方还能带出龙身——拉到满宽 960，再提一档饱和/对比（原图偏灰）让龙纹和金字立起来。</li>
+                <li class="li"><b>踩坑</b>：模拟器截图左右各有约 3px 灰色窗口边，直接镜像延伸会在卡片右缘留一条黑线。改成按"蓝远大于红"自动找画面边界裁掉。</li>
                 <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
             </ul>
 

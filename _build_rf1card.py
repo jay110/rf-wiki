@@ -1,87 +1,63 @@
 # -*- coding: utf-8 -*-
-"""作品卡配图：符文工房1 用 NDS ROM 里自己的素材合成（背景 + 图案 + logo）。
+"""作品卡配图：符文工房1 —— 蓝天 + 蓝色飞龙 + 金色 logo。
 
-三层从 ROM 里取：
-  背景  title_bgA  —— 标题画面的天空/海崖，取画面下部避开逐行滚动的横条
-  图案  camp_bg02  —— 游戏 UI 的深蓝菱格纹，平铺 2x 当纹理
-  logo  assets/logo/rf1.png —— 官方标题字（带蓝冰裂底纹）
+源头是 DeSmuME 里截下来的真机标题画面（上屏），存
+_title_src/src/rf1_desmume_title.png（582x442，已切掉模拟器窗口边）。
 
-产到 assets/title/rf1.jpg（960x325，与其余九作同规格）。
-用法：python _build_rf1card.py [rom路径]
+关键几何：卡片图框实测 284x66，object-fit:cover + object-position:50% 42%，
+960x325 的图被裁到只剩 y≈43~266 这 223px 一条（占 69%）。标题画面是 4:3，
+整屏塞进去 logo 会被切掉，所以只取「logo + 环绕的龙」那条横带、拉到满宽。
+
+本来想用 ROM 素材（_nds_nitro.py 已能解 NCGR/NSCR），但 title_bg 是逐行滚动视差层，
+静态拼必出周期横条，出不来这个组合，改用实机截图。
 """
 import os, sys
-from PIL import Image, ImageFilter, ImageEnhance, ImageDraw
+from PIL import Image, ImageFilter, ImageEnhance
 
-from _nds_nitro import extract, render
-
-ROM = sys.argv[1] if len(sys.argv) > 1 else r"F:\符文工房1.nds"
 ROOT = os.path.dirname(os.path.abspath(__file__))
-TMP = os.path.join(ROOT, "_rf1_card")
+SRC = os.path.join(ROOT, "_title_src", "src", "rf1_desmume_title.png")
 OUT = os.path.join(ROOT, "assets", "title", "rf1.jpg")
 W, H = 960, 325
 
-# 反复比对定下来的参数：取景 0.70（避开顶部横条）、模糊 4、花纹 0.35
-# logo 竖直中心放在 0.42H：卡片是 cover 裁切（object-position: center 42%），
-# 960x325 的图在卡上只看得到中间约 52% 那一条，logo 居中放会被切掉下缘。
-BG_POS, BG_BLUR, PAT_ALPHA = 0.70, 3.5, 0.46
-LOGO_SCALE, LOGO_CY = 1.55, 0.42
+# 卡片可视带（按 284x66 的图框 + 42% 定位算出来的），改 CSS 就得重算
+VIS_Y0, VIS_Y1 = 43, 266
+BAND_H = VIS_Y1 - VIS_Y0                     # 223
+# 源图横带：130~265 正好把金色 logo（165~250）框全，上方还能带出龙身和天空
+SRC_Y0, SRC_Y1 = 130, 265
+# 原图偏灰，提一档饱和/对比让龙纹和金字立起来；锐化别过，会有光晕
+COLOR, CONTRAST, BRIGHT, SHARP = 1.45, 1.12, 1.03, 75
 
 
-def cover(im, pos=0.5):
-    s = max(W / im.width, H / im.height)
-    i2 = im.resize((max(int(im.width * s) + 1, W), max(int(im.height * s) + 1, H)), Image.LANCZOS)
-    x = (i2.width - W) // 2
-    y = int((i2.height - H) * pos)
-    return i2.crop((x, y, x + W, y + H))
-
-
-def tile(im, scale=1):
-    i2 = im.resize((im.width * scale, im.height * scale), Image.LANCZOS) if scale != 1 else im
-    sh = Image.new("RGB", (W, H))
-    for y in range(0, H, i2.height):
-        for x in range(0, W, i2.width):
-            sh.paste(i2, (x, y))
-    return sh
+def trim_border(im):
+    """切掉模拟器窗口的灰边：按「蓝远大于红」找画面的真实左右边界"""
+    import numpy as np
+    a = np.asarray(im).astype(int)
+    cols = np.where((a[:, :, 2] - a[:, :, 0]).mean(axis=0) > 25)[0]
+    if len(cols) == 0:
+        return im
+    return im.crop((int(cols.min()), 0, int(cols.max()) + 1, im.height))
 
 
 def main():
-    print("从 ROM 取素材:", ROM)
-    got = extract(ROM, [
-        "title_bgA.NCGR", "title_bgA01.NCLR", "title_bgA01.NSCR",
-        "camp_bg02.NCGR", "camp_bg02.NCLR", "camp_bg02.NSCR",
-    ], TMP)
-    need = ("title_bgA.NCGR", "camp_bg02.NCGR")
-    if any(n not in got for n in need):
-        sys.exit("素材没取齐，停")
+    if not os.path.exists(SRC):
+        sys.exit("缺源图 %s" % SRC)
+    top = trim_border(Image.open(SRC).convert("RGB"))
 
-    sky = render(got["title_bgA.NCGR"], got["title_bgA01.NCLR"], got["title_bgA01.NSCR"])
-    pat = render(got["camp_bg02.NCGR"], got["camp_bg02.NCLR"], got["camp_bg02.NSCR"])
-    sky.save(os.path.join(TMP, "src_sky.png"))
-    pat.save(os.path.join(TMP, "src_pattern.png"))
+    core = top.crop((0, SRC_Y0, top.width, SRC_Y1)).resize((W, BAND_H), Image.LANCZOS)
+    core = ImageEnhance.Color(core).enhance(COLOR)
+    core = ImageEnhance.Contrast(core).enhance(CONTRAST)
+    core = ImageEnhance.Brightness(core).enhance(BRIGHT)
+    core = core.filter(ImageFilter.UnsharpMask(radius=2, percent=SHARP, threshold=3))
 
-    b = cover(sky, BG_POS).filter(ImageFilter.GaussianBlur(BG_BLUR))
-    b = Image.blend(b, tile(pat, 2), PAT_ALPHA)
-    b = ImageEnhance.Color(b).enhance(1.12)
-    b = ImageEnhance.Contrast(b).enhance(1.06)
+    # 可视带外面那截（上下）用天空补，正常看不见，只是别让边缘露黑
+    sky = top.crop((0, 0, top.width, 150)).resize((W, H), Image.LANCZOS)
+    sky = sky.filter(ImageFilter.GaussianBlur(1.2))
 
-    # 底部压暗，接住卡片下半部的作品色渐变
-    grad = Image.new("L", (W, H))
-    for y in range(H):
-        grad.paste(Image.new("L", (W, 1), 255 - int(70 * max(0.0, (y - H * 0.62) / (H * 0.38)))), (0, y))
-    b = Image.composite(b, ImageEnhance.Brightness(b).enhance(0.55), grad)
-
-    logo = Image.open(os.path.join(ROOT, "assets", "logo", "rf1.png")).convert("RGBA")
-    lw, lh = int(logo.width * LOGO_SCALE), int(logo.height * LOGO_SCALE)
-    l = logo.resize((lw, lh), Image.LANCZOS)
-    lx, ly = (W - lw) // 2, int(H * LOGO_CY - lh / 2)
-    sh = Image.new("RGBA", b.size, (0, 0, 0, 0))
-    sh.paste((10, 25, 45, 200), (lx - 2, ly + 4),
-             l.split()[3].filter(ImageFilter.GaussianBlur(7)))
-    out = Image.alpha_composite(b.convert("RGBA"), sh)
-    out.paste(l, (lx, ly), l)
-
-    out.convert("RGB").save(OUT, quality=90)
-    print("出图", OUT, out.size, os.path.getsize(OUT) // 1024, "KB")
+    cv = Image.new("RGB", (W, H))
+    cv.paste(sky, (0, 0))
+    cv.paste(core, (0, VIS_Y0))
+    cv.save(OUT, quality=93)
+    print("出图", OUT, cv.size, os.path.getsize(OUT) // 1024, "KB")
 
 
 if __name__ == "__main__":
