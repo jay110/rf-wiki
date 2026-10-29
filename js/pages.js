@@ -242,7 +242,7 @@ function fishRf1Html() {
             ['7rem', '4.5rem', '4rem', '20rem'],
             fishRows, { ph: '输入鱼名筛选' })}
 
-        <div class="note">中文名取自汉化版《RF1文本翻译对照表（校对7）》的日文→中文映射（<b>非 SE 官方</b>，汉化组译法，不同汉化组可能有出入），例如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot、珠星鱼=Chub、黑毛鱼=Girella、西太公鱼=Pond Smelt、螯龙虾=Lobster、斑乌贼=Jamasquid、伊富鱼=Taimen、心动鲷鱼=Lover Snapper。事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信。仍有 4 种暂无可靠中文对应、作通译并<b>待核实</b>：基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder)、狗鱼(Pike)、真鳟(Masu Trout)。<b>钓点名</b>多数采用本站洞窟定稿（卡麦特／特罗斯／克莱门斯／癸干忒／密丝特布鲁姆／卡西米尔／达努／格力德），海边、农场与河流、密丝特布鲁姆洞窟外 为该表无存盘点记录者，用通译。</div>
+        <div class="note">中文名取自汉化版《RF1文本翻译对照表（校对7）》的日文→中文映射（<b>非 SE 官方</b>，汉化组译法，不同汉化组可能有出入），例如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot、珠星鱼=Chub、黑毛鱼=Girella、西太公鱼=Pond Smelt、螯龙虾=Lobster、斑乌贼=Jamasquid、伊富鱼=Taimen、心动鲷鱼=Lover Snapper。事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信。以下 4 种暂无汉化对照表直接对应，采用通用水产译名或系列原创名音译，作为本站定名（如有更准汉化对应可再替换）：基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder·秋生比目鱼)、狗鱼(Pike·狗鱼 Esox lucius)、真鳟(Masu Trout·马苏鲑类)。<b>钓点名</b>多数采用本站洞窟定稿（卡麦特／特罗斯／克莱门斯／癸干忒／密丝特布鲁姆／卡西米尔／达努／格力德），海边、农场与河流、密丝特布鲁姆洞窟外 为该表无存盘点记录者，用通译。</div>
     `;
 }
 
