@@ -105,6 +105,8 @@ def build(src):
 
     out = ImageEnhance.Color(out).enhance(SAT)
     out = ImageEnhance.Contrast(out).enhance(CON)
+    # ROM 源图只有 256 宽，放大 3.7 倍后金 logo 和龙纹发糊，补一刀锐化
+    out = out.filter(ImageFilter.UnsharpMask(radius=2, percent=85, threshold=3))
 
     # 两侧罩卡片主题蓝，中间给 logo 留暖调
     tint = Image.new("RGB", (1, H))

@@ -4877,6 +4877,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十一次：符文1 卡片 logo 下缘被切——重算横带；符文2 补锐化</h2>
+            <ul class="ul">
+                <li class="li"><b>先说发现的问题</b>：把卡片真正看得见的那条带（<code>y≈43~266</code>）单独裁出来看，符文1 的金色 logo <b>下缘被切掉一截</b>。原因是横带取的是源图 <code>y=130~265</code>，而金色 logo 实测在源图 <code>y=184~275</code>（按金色像素统计，不靠眼睛估），底部 10 行落在带子外面。</li>
+                <li class="li"><b>改法</b>：横带改成源图 <code>y=140~330</code>（190 行），logo 落到卡片 <code>y≈95~201</code>，上下都留得住，副标题也进来了；锐化从 75 提到 90。脚本 <code>_build_rf1card.py</code>。</li>
+                <li class="li"><b>符文2</b>：ROM 源图只有 256 宽，放大 3.7 倍后金 logo 和龙纹发糊，补一刀 <code>UnsharpMask(radius=2, percent=85)</code>，其余几何（块高 285、留白 26、羽化 18、两侧罩蓝 72%）不动。</li>
+                <li class="li"><b>飞龙还是没解开，这轮又试了一遍</b>：<code>obj_title_bgA</code> 的 NCER 是 extended(1) 型——cell 描述 16 字节（<code>numOAM / attr / oamOffset / maxX,maxY,minX,minY</code>），28 个 OAM 各 6 字节跟在描述数组后面。单个精灵确实能看出鳞羽云纹，<b>但整条拼出来仍是两块分离的斑块，中间空一块</b>：按无符号 y 摆是上下两团、按带符号 y 摆是一团碎块。又把图块映射穷举了一遍（1D、行列转置、2D 宽 4/8/12/16/20/24/32/48/64、固定行跨距 1~64），<b>没有任何一种能做到「图块不重叠」</b>，最少也要重叠 72 块——说明图块本来就是复用的，不是映射错。结论不变：<b>静态拼不出这条龙</b>（很可能靠代码逐帧挪 OAM，NANR 里只有 1 帧没有轨迹），符文1 卡片继续用实机截图。</li>
+                <li class="li"><b>顺手记一笔</b>：<code>title_bgA.NCGR</code> 其实是 <b>8bpp / 1024 块</b> 的，不是 4bpp；三个 NSCR 都是 32×32 块（256×256），<b>只有上 192 行是真画面，下面全是洋红占位色</b>，别当成内容。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第九十次：修掉 Nitro 图块的偏移 bug，符文2 作品卡改用 ROM 标题画面</h2>
             <ul class="ul">
                 <li class="li"><b>先修一个真 bug</b>：NCGR 的 RAHC 头里，图块数据偏移是相对 <code>section+0x08</code> 的，之前写成 <code>base+0x18+off</code>，整体<b>偏后 16 字节</b>。8bpp 图块因此错开 1/4 块，画面出现周期性横条——<b>上一轮把它误判成「逐行滚动视差，静态拼不出来」，其实是纯偏移算错</b>。改回 <code>base+0x08+off</code> 之后，符文1 的天空、角色田野、金色 logo 全部干净无条纹。4bpp 文件因为图案规则，错 16 字节看不出来，所以才一直没被发现。</li>

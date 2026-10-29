@@ -3,7 +3,7 @@ _p_*.html
 _dump_*.txt
 _probe_*.js
 # 截别的作品用的临时首页（从 ?g=xxx 写 localStorage，截完即删）
-_shot.html
+_shot*
 
 # Python
 __pycache__/
