@@ -112,6 +112,7 @@ img {
     display: none;
 }
 
+/* 右上角胶囊：显示当前作品序号（Ⅴ / Ⅲ SP …），首页显示 WIKI，内容由 app.js 写入 */
 .titlebar .mark {
     position: absolute;
     right: 0.9rem;
@@ -1722,6 +1723,22 @@ img {
     font-size: 0.7rem;
     letter-spacing: 0.2em;
     opacity: 0.8;
+}
+
+/* 站点图标（芜菁）站在题头：芜菁本身发白，垫一块奶白圆角板才不会被绿底吃掉 */
+.wcover-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.8rem;
+}
+
+.wcover-logo img {
+    width: 2.7rem;
+    height: 2.7rem;
+    padding: 0.44rem;
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.93);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
 }
 
 .wcover-name {

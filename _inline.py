@@ -40,6 +40,21 @@ def face_block():
 html = re.sub(r'<link rel="stylesheet" href="([^"]+)"\s*/?>', css_repl, html)
 html = re.sub(r'<script src="([^"]+)"\s*>\s*</script>', js_repl, html)
 
+# 站点图标（assets/icon/*）在单文件版里没有同目录可读，一并转成 data URI
+MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml"}
+
+
+def asset_repl(m):
+    rel = m.group("path")
+    p = ROOT / rel
+    if not p.exists():
+        return m.group(0)
+    b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+    return f'{m.group("pre")}"data:{MIME.get(p.suffix, "application/octet-stream")};base64,{b64}"'
+
+
+html = re.sub(r'(?P<pre>(?:src|href)=)"(?P<path>assets/[^"]+\.(?:png|ico|svg))"', asset_repl, html)
+
 # 放在 </head> 前：一定早于 body 里的 app.js，faceSrc 调用时 FACE_DATA 已就绪
 fb = face_block()
 if fb:

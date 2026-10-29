@@ -97,6 +97,7 @@ function viewWelcome() {
 
     return `
     <div class="wcover">
+        <div class="wcover-logo"><img src="assets/icon/icon-192.png" alt="" width="42" height="42"></div>
         <div class="wcover-jp">ルーンファクトリー</div>
         <div class="wcover-name">符文工房攻略百科</div>
         <div class="wcover-en">RUNE FACTORY WIKI</div>
