@@ -4877,6 +4877,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十次：修掉 Nitro 图块的偏移 bug，符文2 作品卡改用 ROM 标题画面</h2>
+            <ul class="ul">
+                <li class="li"><b>先修一个真 bug</b>：NCGR 的 RAHC 头里，图块数据偏移是相对 <code>section+0x08</code> 的，之前写成 <code>base+0x18+off</code>，整体<b>偏后 16 字节</b>。8bpp 图块因此错开 1/4 块，画面出现周期性横条——<b>上一轮把它误判成「逐行滚动视差，静态拼不出来」，其实是纯偏移算错</b>。改回 <code>base+0x08+off</code> 之后，符文1 的天空、角色田野、金色 logo 全部干净无条纹。4bpp 文件因为图案规则，错 16 字节看不出来，所以才一直没被发现。</li>
+                <li class="li"><b>符文1 的图层清单</b>（<code>title_bgA/B/C</code> 各 256×256，都是干净的）：<code>A+NSCR01</code>=蓝天白云；<code>A+NSCR02</code>=金色 <code>Rune Factory</code> logo 带日文副标题、透明底；<code>A+NSCR03</code>=天空+日文标题；<code>B+NSCR01</code>=男女主角与草原；<code>B+NSCR02</code>=菜单按钮；<code>B+NSCR03</code>=菜单文字与版权；<code>C</code>=金色华丽大 logo。</li>
+                <li class="li"><b>飞龙没解开</b>：那一圈蓝色飞龙是 <code>obj_title_bgA</code> 精灵（384 块 4bpp、28 个 OAM、带 NANR 动画）。OAM 表能解出来（图块号 0→88 单调递增、坐标落在 32 像素栅格上），单个精灵也能看出鳞羽纹理，但整条拼出来对不上实机画面，试过 1D / 2D(8/16/32/64) 映射、图块基址扫描、按行偏移校正，都不成。<b>先按「没核实就不写」放着</b>，符文1 的卡片继续用实机截图——那份是 582×442，比 ROM 原生的 256×256 还清楚。</li>
+                <li class="li"><b>符文2 换图</b>：原来的 <code>rf2.jpg</code> 是白底 logo 图，压在蓝渐变上像贴纸。改成 ROM 里的 <code>/res/obj/rune2_titleA01</code>——真正的标题画面：彩虹渐变底 + 金色龙形纹章 + <code>Rune Factory 2</code> + 日文副标题 + 中文「符文工厂」。合成脚本 <code>_build_rf2card.py</code>。</li>
+                <li class="li"><b>三个合成要点</b>：① 背景用源图左边缘按行取色铺成渐变（logo 从 x=10 才开始，左边 3px 是纯背景）；② 背景和 logo 块必须按<b>同一个缩放比</b>放大，否则底图在 logo 块的位置显示的是源图别的行，接缝会非常扎眼；③ logo 块先用边缘行列复制补一圈留白再羽化，被吃掉的是留白而不是 <code>Rune Factory</code> 的字。</li>
+                <li class="li"><b>浅底的处理</b>：这张标题画面本身是奶油浅底，直接铺开会发白发灰。所以两侧用卡片主题蓝（<code>#86bcd8 → #2f6f93</code>）罩染 72%，中间给 logo 留暖调，过渡用遮罩高斯模糊 60px 做——金 logo 不被压暗，画面又有层次，也和卡片下半部的蓝渐变接得上。</li>
+                <li class="li"><b>符文3 取不了</b>：<code>符文工厂3nds（官中导入版）v1.5.3.nds</code> 的 FNT 只有 125 字节、FAT 只有 24 项，文件系统是被精简过的，素材拿不出来。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第八十九次：符文1 作品卡改成实机标题画面（蓝天 + 飞龙 + 金色 logo）</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：上一版用 ROM 里的菱格纹 + 天空拼了一张，能看但"不像游戏画面"。符文1 真正的标题画面是蓝天白云 + 一条蓝色飞龙环绕金色 <code>Rune Factory</code> logo，那就照这个来做。</li>

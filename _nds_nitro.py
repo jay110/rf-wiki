@@ -90,16 +90,27 @@ def load_nclr(p):
     off = struct.unpack_from("<I", d, base + 0x14)[0]
     start = base + 0x08 + off
     n = size // 2
-    return [bgr555(struct.unpack_from("<H", d, start + i * 2)[0]) for i in range(max(n, 256))]
+    # 有些 NCLR 声明的字节数超过文件实际长度（精灵调色板常见），按可用长度夹一下，
+    # 否则 struct.unpack 会越界报错；不足 256 的部分补黑即可。
+    n = min(max(n, 256), (len(d) - start) // 2)
+    out = []
+    for i in range(n):
+        if start + i * 2 + 2 > len(d):
+            out.append((0, 0, 0))
+        else:
+            out.append(bgr555(struct.unpack_from("<H", d, start + i * 2)[0]))
+    return out
 
 
 def load_ncgr(p):
     """返回 (tiles, bpp, nx, ny)。
 
-    RAHC 头部：+0x08 u16 高(块) / +0x0A u16 宽(块) / +0x0C u32 色深(3=4bpp, 4=8bpp)
-              +0x18 u32 图块数据字节数 / +0x1C u32 数据偏移（相对 +0x18）
-    头里声明的块数未必等于实际块数（4bpp 尤其常见），一律按 tileDataSize 反推块数，
-    用 nx*ny 会把起点算成负数。"""
+    RAHC 头部共 0x20 字节：+0x08 u16 高(块) / +0x0A u16 宽(块) / +0x0C u32 色深(3=4bpp, 4=8bpp)
+              +0x18 u32 图块数据字节数 / +0x1C u32 数据偏移（相对 +0x08，正常为 0x18，
+              于是数据正好接在 0x20 字节头之后）
+    曾经写成 base+0x18+doff，整体偏后 16 字节：8bpp 图块错开 1/4 块，画面出现周期性横条，
+    当时还被误判成"逐行滚动视差"，其实纯属偏移算错。块数一律用 tileDataSize 反推，
+    别信头里的宽×高——精灵类文件常填 0xFFFF。"""
     d = open(p, "rb").read()
     base = d.find(b"RAHC")
     if base < 0:
@@ -109,7 +120,7 @@ def load_ncgr(p):
     tsz = 64 if bpp == 8 else 32
     dsz = struct.unpack_from("<I", d, base + 0x18)[0]
     doff = struct.unpack_from("<I", d, base + 0x1C)[0]
-    start = base + 0x18 + doff
+    start = base + 0x08 + doff
     if dsz <= 0 or start + dsz > len(d):       # 头部不可信就退回文件尾
         dsz = len(d) - start
     n = dsz // tsz
