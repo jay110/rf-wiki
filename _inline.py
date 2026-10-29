@@ -47,9 +47,10 @@ MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml",
 
 def title_block():
     """作品卡配图是 JS 里拼出来的，HTML 正则够不到，单独转成 TITLE_DATA。
-    现在主力是 assets/logo/*.png（透明 logo），assets/title/*.jpg 只剩 rf4 一张过渡用。"""
+    现在用的是 assets/title/*.jpg（整张官方标题图）；assets/logo/*.png 那批透明 logo
+    暂时没被引用，先不内联，省 700 多 KB。"""
     arts = {}
-    for sub, pat, mime in (("logo", "*.png", "image/png"), ("title", "*.jpg", "image/jpeg")):
+    for sub, pat, mime in (("title", "*.jpg", "image/jpeg"),):
         d = ROOT / "assets" / sub
         if not d.is_dir():
             continue

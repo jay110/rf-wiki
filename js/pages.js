@@ -4877,13 +4877,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
-            <h2 class="h2">2026-10-30　第八十八次：作品卡补上主视觉底图，不再是纯色块</h2>
+            <h2 class="h2">2026-10-30　第八十八次：作品卡试过一版模糊底图，看完撤回整图</h2>
             <ul class="ul">
-                <li class="li"><b>上一版的观感是「色块上贴了张 logo」</b>：十张卡里只有符文4 当时用云海整图垫着，反而是最有画面感的一张；其余九张就是渐变 + 透明 logo，排在一起像一排色卡。</li>
-                <li class="li"><b>做法</b>：每作取自己的标题画面当底图，模糊 7px 后铺在卡片渐变上，logo 清晰浮在上面。底图只显上半张、往下淡出到纯渐变——文字区保持干净底色，白字才压得住，不用再额外压暗角。</li>
-                <li class="li"><b>混合模式用正片叠底（multiply）</b>：符文2、符文5、符文3特别版、4豪华版的标题图是白底，正常叠加会把整张卡糊成一片白雾、logo 边缘发虚。正片叠底时白色等于不改变底色，只有画面里的深色部分变成暗纹，十张卡的作品色相才保得住。</li>
-                <li class="li"><b>踩了个 CSS 坑</b>：本来用 <code>::before</code> 加 <code>--art:url(...)</code> 传图，结果 CSS 变量里的相对路径是按样式表位置解析的，指向 <code>css/assets/...</code> 直接 404，卡面一点没变、截图哈希都和改之前一模一样。改成真实元素 <code>&lt;i class="wcard-bg"&gt;</code> 内联 <code>background-image</code>，路径以文档为基准，单文件版换成 data URI 也照样成立。</li>
-                <li class="li"><b>顺带</b>：原本打算删的 <code>assets/title/</code> 九张旧截图又有了用处，现在被引用为底图，单文件版体积从 11.9MB 涨到 12.9MB。</li>
+                <li class="li"><b>起因</b>：十张卡里只有符文4 用整图垫着，其余九张是渐变 + 透明 logo，排在一起像一排色卡，于是给每张卡补了一层主视觉底图。</li>
+                <li class="li"><b>试的做法</b>：各作取自己的标题画面模糊 7px 铺底，logo 清晰浮在上面，底图只显上半张、往下淡出到纯渐变。混合模式必须用正片叠底——符文2、5、3特别版、4豪华版的标题图是白底，正常叠加会把整张卡糊成一片白雾。</li>
+                <li class="li"><b>撤掉的原因</b>：模糊之后画面信息全糊掉了，卡片只剩「一团色块 + 一个小 logo」，辨识度反而不如整张官方图。配图的目的是一眼认出是哪一作，不是做氛围，所以整图铺满更直接。</li>
+                <li class="li"><b>现在的样子</b>：卡片顶部整张官方标题图 cover 铺满（<code>object-position: center 42%</code>，把 logo 主体留在可视区），底部叠一层暗角过渡到作品色渐变，再往下是名称与发售信息。也就是回到第八十五次「10 部全部配上官方图」的版式。</li>
+                <li class="li"><b>留个坑</b>：CSS 变量里的 <code>url()</code> 是按样式表位置解析的，写进 <code>style</code> 属性会指向 <code>css/assets/...</code> 直接 404；以后要把图塞进自定义属性，得用真实元素内联 <code>background-image</code>。</li>
                 <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
             </ul>
 

@@ -5,22 +5,19 @@
 const LSKEY = 'rf_wiki_v1';
 
 /* 作品卡配图。统一预构图成 2.95:1（卡片图区比例），CSS 直接 cover 即可 */
-/* 各作标题 logo：assets/logo/<id>.png，透明底，由 _logo_src/build_logos.py 统一出图
-   （裁到内容边界 + 等面积归一化，10 张的高矮视觉重量对齐）。
-   bg 是该作的主视觉/标题画面，作卡片模糊底图（assets/title/<id>.jpg）。
-   例外 rf4：原版 3DS 没有公开的透明 logo 源，暂用 title 整图，见 _GAP_LIST。
-   单文件版没有外部文件可加载，_inline.py 会把这两类图转成 TITLE_DATA */
+/* 作品卡配图：直接用官方标题画面整图，铺满卡片顶部（不抠 logo、不做模糊底）。
+   单文件版没有外部文件可加载，_inline.py 会把 assets/title/*.jpg 转成 TITLE_DATA */
 const TITLE_ART = {
-    rf1:   { src: 'assets/logo/rf1.png',   bg: 'assets/title/rf1.jpg' },
-    rf2:   { src: 'assets/logo/rf2.png',   bg: 'assets/title/rf2.jpg' },
-    rf3:   { src: 'assets/logo/rf3.png',   bg: 'assets/title/rf3.jpg' },
-    rf3sp: { src: 'assets/logo/rf3sp.png', bg: 'assets/title/rf3sp.jpg' },
-    rf4:   { src: 'assets/title/rf4.jpg', fit: 'cover', bg: 'assets/title/rf4.jpg' },
-    rf4sp: { src: 'assets/logo/rf4sp.png', bg: 'assets/title/rf4sp.jpg' },
-    rf5:   { src: 'assets/logo/rf5.png',   bg: 'assets/title/rf5.jpg' },
-    rff:   { src: 'assets/logo/rff.png',   bg: 'assets/title/rff.jpg' },
-    rfo:   { src: 'assets/logo/rfo.png',   bg: 'assets/title/rfo.jpg' },
-    azuma: { src: 'assets/logo/azuma.png', bg: 'assets/title/azuma.jpg' },
+    rf1:   { src: 'assets/title/rf1.jpg' },
+    rf2:   { src: 'assets/title/rf2.jpg' },
+    rf3:   { src: 'assets/title/rf3.jpg' },
+    rf3sp: { src: 'assets/title/rf3sp.jpg' },
+    rf4:   { src: 'assets/title/rf4.jpg' },
+    rf4sp: { src: 'assets/title/rf4sp.jpg' },
+    rf5:   { src: 'assets/title/rf5.jpg' },
+    rff:   { src: 'assets/title/rff.jpg' },
+    rfo:   { src: 'assets/title/rfo.jpg' },
+    azuma: { src: 'assets/title/azuma.jpg' },
 };
 
 const S = {
@@ -115,12 +112,6 @@ function titleSrc(art) {
     return art.src;
 }
 
-/* 卡片模糊底图地址，同上。写成 background-image 走内联，路径以文档为基准 */
-function artBg(art) {
-    if (!art || !art.bg) return '';
-    const u = titleSrc({ src: art.bg }).replace(/[\r\n]/g, '');
-    return ` style="background-image:url('${u}')"`;
-}
 
 function viewWelcome() {
     const g = cur();
@@ -150,8 +141,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art && art.bg ? `<i class="wcard-bg" aria-hidden="true"${artBg(art)}></i>` : ''}
-                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.fit ? ` style="object-fit:${art.fit}"` : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
