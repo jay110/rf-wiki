@@ -228,7 +228,7 @@ function fishRf1Html() {
     return `
         <p class="p">本页是<b>《符文工房1》</b>的钓鱼数据：全 ${totalSpot} 个钓点、${totalFish} 种可钓物（含空罐、高筒靴等杂物）。RF1 <b>没有季节与昼夜机制</b>，所以只按钓点列；表格给出每处的<b>出现率（Catch Rate）</b>与<b>卖价</b>。</p>
         ${stat([['鱼种', totalFish + ' 种'], ['钓点', totalSpot + ' 处'], ['字段', '出现率·卖价·钓点']])}
-        <div class="key">最值钱的是<b>${best.map(x => x + '（卖 ' + money(priceOf[x]) + '）').join('、')}</b>。海边、农场与河流是起点；各洞窟（卡迈特／托罗斯／克莱门斯／吉甘特／迷雾花／卡西米尔／达南／贪婪）与遗迹外则出高阶鱼和 Boss 级鲷鱼。</div>
+        <div class="key">最值钱的是<b>${best.map(x => x + '（卖 ' + money(priceOf[x]) + '）').join('、')}</b>。海边、农场与河流是起点；各洞窟（卡麦特／特罗斯／克莱门斯／癸干忒／密丝特布鲁姆／卡西米尔／达努／格力德）与遗迹外则出高阶鱼和 Boss 级鲷鱼。</div>
 
         <h2 class="h2">钓点 × 鱼（出现率 · 卖价）</h2>
         <p class="p">每行是「某钓点里能钓到的某条鱼」。出现率来自 Fandom 的 Fishing_(RF)，卖价来自 Fish_(RF)。</p>
@@ -242,7 +242,7 @@ function fishRf1Html() {
             ['7rem', '4.5rem', '4rem', '20rem'],
             fishRows, { ph: '输入鱼名筛选' })}
 
-        <div class="note">中文名优先采用 rf1data.js 的 ITEM_RF1 官方名（如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot）。以下 11 种为通用水产译名，<b>非正式汉化，待拍板</b>：雅罗鱼(Chub)、基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder)、瓜子鲷(Girella)、公鱼(Pond Smelt)、真鳟(Masu Trout)、狗鱼(Pike)、龙虾(Lobster)、邪魔乌贼(Jamasquid·系列原创名)、哲罗鱼(Taimen)、恋鲷(Lover Snapper)。<b>钓点名</b>（海边／卡西米尔遗迹外／各洞窟等）为通译，同样非官方、待拍板。数据事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信；仅译名待你确认。</div>
+        <div class="note">中文名取自汉化版《RF1文本翻译对照表（校对7）》的日文→中文映射（<b>非 SE 官方</b>，汉化组译法，不同汉化组可能有出入），例如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot、珠星鱼=Chub、黑毛鱼=Girella、西太公鱼=Pond Smelt、螯龙虾=Lobster、斑乌贼=Jamasquid、伊富鱼=Taimen、心动鲷鱼=Lover Snapper。事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信。仍有 4 种暂无可靠中文对应、作通译并<b>待核实</b>：基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder)、狗鱼(Pike)、真鳟(Masu Trout)。<b>钓点名</b>多数采用本站洞窟定稿（卡麦特／特罗斯／克莱门斯／癸干忒／密丝特布鲁姆／卡西米尔／达努／格力德），海边、农场与河流、密丝特布鲁姆洞窟外 为该表无存盘点记录者，用通译。</div>
     `;
 }
 
