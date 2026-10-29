@@ -1364,7 +1364,7 @@ const PAGES = [
     /* ================= BOSS 战 ================= */
     {
         key: 'boss', group: 'basic', title: 'BOSS 战', icon: 'skull',
-        gms: ['rf1', 'rf2', 'rf3', 'rfo'],
+        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf5'],
         body: g => {
             const B = (typeof BOSS !== 'undefined') ? BOSS : null;
             if (!B) return '<p class="p">BOSS 数据未加载。</p>';
@@ -1375,7 +1375,7 @@ const PAGES = [
             const intro = `
             <h2 class="h2">这一页收的是什么</h2>
             <p class="p">「魔物图鉴」按种类收全表，这一页只收<b>剧情与迷宫里的 BOSS</b>：它们不进牧场，掉落也不按普通素材走，混在图鉴里反而最难查。</p>
-            <p class="p">四作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no} 条</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）。四代、五代与边境在 wiki 上没有独立的 BOSS 数值页，那几代的抗性明细统一放在「战斗与弱点」页里看。</p>
+            <p class="p">五作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no + B.rf5.length} 位</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）、五代 ${B.rf5.length} 位。四代与边境在 wiki 上没有独立的 BOSS 数值页，那两代的抗性明细统一放在「战斗与弱点」页里看。</p>
             <div class="note">数值全部取自 biligame 符文工厂 wiki 各作 BOSS 页（RF3 取自魔物抗性表），<b>表里没有的列本页不填、不推算</b>。四作对「属性」的记录方式根本不是一套量纲——一代是点数、二代是克制、三代是等级——跨作比数值没有意义，最后一节单独讲这件事。</div>`;
 
             /* ---------- RF1 ---------- */
@@ -1494,6 +1494,34 @@ const PAGES = [
             <div class="note">原表给这十二只的 LV 全写「1」，但攻击与防御明显不在 1 级的水准，<b>等级那一格不能当强度读</b>。另外这张表里没有属性一列——海洋的属性倍率是记在武器上、不在魔物身上的，所以无法从 BOSS 表判断弱点，得看手上那把武器。</div>`;
             };
 
+            /* ---------- RF5 ---------- */
+            const blk5 = () => {
+                const H = ['BOSS', 'Lv', 'HP', '攻击', '魔攻', '防御', '魔防', '狂暴', '弱点', '抵抗'];
+                const dash = v => (v === null || v === undefined) ? '<span class="mon-no">—</span>' : String(v);
+                const wr = s => (s && s.trim()) ? s.trim() : '<span class="mon-no">—</span>';
+                const rows = B.rf5.map(x => [x[0], x[1], x[2], dash(x[3]), dash(x[4]),
+                    dash(x[5]), dash(x[6]), 'HP' + x[7] + '%以下', wr(x[8]), wr(x[9])]);
+                const hpMin = Math.min.apply(null, B.rf5.map(x => x[2]));
+                const hpMax = Math.max.apply(null, B.rf5.map(x => x[2]));
+                const lvMin = Math.min.apply(null, B.rf5.map(x => x[1]));
+                const lvMax = Math.max.apply(null, B.rf5.map(x => x[1]));
+                const enrage = B.rf5.filter(x => x[7] >= 70).length;
+                const top = B.rf5.slice().sort((a, b) => b[2] - a[2])[0];
+                return `
+            <h2 class="h2">符文工房5：${B.rf5.length} 位主线 BOSS</h2>
+            <p class="p">五代的 BOSS 表是这一页字段最齐的一张：Lv、HP、攻击、魔攻、防御、魔防六项基础数值全给，还带<b>狂暴线</b>（HP 掉到某百分比以下进二阶段）和<b>弱点／抵抗</b>。数据来自 biligame 的 RF5 主线流程页（注明来源电玩巴士），全 ${B.rf5.length} 场主线按出场顺序排。</p>
+            ${stat([['收录', B.rf5.length + ' 位'], ['Lv 区间', lvMin + ' ～ ' + lvMax], ['HP 区间', hpMin.toLocaleString() + ' ～ ' + hpMax.toLocaleString()], ['狂暴线 ≥70%', enrage + ' 位']])}
+            ${tbl(H, rows, { leftFirst: true, cls: 'boss', colw: ['8rem'] })}
+            <p class="p">数值最高的是<b>${top[0]}</b>（Lv ${top[1]}、HP ${top[2].toLocaleString()}），作为最终 BOSS 镇守奥迪亚。</p>
+            <h3 class="h3">看这张表的三件事</h3>
+            <ul class="ul">
+                <li class="li"><b>弱点／抵抗是「百分比系数」体系</b>：负数弱（原表叫「较弱抗性」）、正数抗（「较强抗性」），绝对值越大越极端。例如九尾弱水·爱、抗火·地——水属性武器打它更疼，火属性被减伤。</li>
+                <li class="li"><b>狂暴线是真二阶段</b>。前期 BOSS（九尾到石魔龙）在 HP 40% 触发；骨龙之后多 50%；最终 BOSS 黑暗来客要到 70% 才狂暴，意味着它大半血条是正常状态，最后三成才变脸。</li>
+                <li class="li"><b>第二章后半段部分 BOSS 缺攻防</b>（骨龙、利维坦、赫克顿盖尔、死亡树・改、蕾瓦迪亚、美杜莎、衔尾蛇、树魔人、阿莉耶丝、奥德姆拉、芬布尔境界 BOSS）原表只给了 Lv／HP／双防／狂暴／弱抗，攻击与魔攻列留空，本页照实不推算。</li>
+            </ul>
+            <div class="note">五代八项属性的<b>具体百分比数值</b>（火水地风光暗爱各 +/- 多少）在「战斗与弱点」页 RF5 一节，与本表同源、口径一致——本表只收「哪几个属性弱、哪几个抗」的结论与基础数值。芬布尔境界的最终 BOSS 在原流程页未给专名，暂以「芬布尔境界 BOSS」指代。</div>`;
+            };
+
             /* ---------- 收尾：三套量纲 ---------- */
             const tail = `
             <h2 class="h2">四套量纲，别混着比</h2>
@@ -1517,7 +1545,7 @@ const PAGES = [
                 </a>
             </div>`;
 
-            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR };
+            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR, rf5: blk5 };
             const mid = (per[id] || blk1)();
             return intro + mid + tail;
         }
