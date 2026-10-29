@@ -144,6 +144,56 @@ function fishOldHtml(g) {
 }
 
 /* ------------------------------------------------------------
+   RF3 鱼类图鉴（fish 页的 RF3 段）
+   源：biligame wiki RF3fishing
+   FISH_RF3 : [名, 买价, Lv1卖价, 鱼影, 钓点]
+   FISH_RF3_RESORT : [鱼, Lv1卖价, 好感度总和门槛]
+   ------------------------------------------------------------ */
+function fishRf3Html() {
+    const A = (typeof FISH_RF3 !== 'undefined') ? FISH_RF3 : [];
+    const RES = (typeof FISH_RF3_RESORT !== 'undefined') ? FISH_RF3_RESORT : [];
+    if (!A.length) return '';
+    const money = v => (v === '—' || v === '') ? '<span class="mon-no">—</span>' : v + 'G';
+
+    const locs = [];
+    const byLoc = {};
+    A.forEach(r => {
+        const loc = r[4];
+        if (!byLoc[loc]) { byLoc[loc] = []; locs.push(loc); }
+        byLoc[loc].push(r);
+    });
+    const rows = A.map(r => [r[0] + ' ' + r[4], [r[0], r[4], r[3], money(r[1]), money(r[2])]]);
+    const best = A.slice().sort((a, b) => parseInt(b[2]) - parseInt(a[2])).slice(0, 5);
+    return `
+        <p class="p">本页是<b>《符文工房3》</b>的 ${A.length} 种鱼，按钓点列出。RF3 的钓鱼没有 RF4／RF5 那种「鱼影尺寸＋金杯线」的精确数值，只有<b>鱼影大小的四档（最小／小／中／大）</b>；价格则是买价与 Lv1 卖价（卖价会随钓鱼等级上升而浮动）。</p>
+        ${stat([['鱼种', A.length + ' 种'], ['钓点', locs.length + ' 处'], ['字段', '鱼影·买卖价·钓点']])}
+        <div class="key">最值钱的是<b>${best.map(x => x[0] + '（卖 ' + x[2] + 'G）').join('、')}</b>。钓点分两类：<b>常驻钓点</b>（普利贝拉森林、索尔·提拉诺沙漠、奥德华山谷、茵瓦艾尔河、阿克娜湖）和<b>全地图通用</b>的乌贼／心动鲷鱼／三类空罐靴子——后者任何水面都能钓到。</div>
+
+        <h2 class="h2">全鱼种（按钓点）</h2>
+        <p class="p">「所有地点」那几行是任何水域都出的通用鱼／杂物；阿克娜湖的<b>百鱼王的鳞片</b>是稀有钓物，不是普通鱼。石池小道、阿克娜湖（普通）标注「当前季节的所有鱼」，龙玄洞标注「没有鱼」，都不计入下表。</p>
+        ${ftableOwn(['鱼种', '钓点', '鱼影', '买价', 'Lv1卖价'],
+            ['7rem', '8.5rem', '4.2rem', '4.2rem', '4.8rem'],
+            rows, { ph: '输入鱼名或钓点筛选' })}
+        <div class="note">鱼影栏「最小／小／中／大」是源表原样，对应鱼影的粗略尺寸档，没有 RF4／RF5 那种精确厘米数。买价与 Lv1 卖价取自 biligame wiki；实际卖价随钓鱼等级上升。部分鱼（如沙比目鱼、剧毒虹鳟）在 biligame 为红链页面，中文名以源表为准。</div>
+
+        <h2 class="h2">卡尔洛斯度假村（付费钓场）</h2>
+        <p class="p">向卡门或卡洛斯付 <b>入场费 1200G</b> 才能进的私人钓场，鱼种和好感度挂钩——伊奥与卡洛斯的好感度总和达到门槛才放对应的鱼。</p>
+        ${tbl(['鱼', 'Lv1卖价', '解锁条件（好感度总和）'],
+            RES.map(r => [r[0], money(r[1]), r[2]]),
+            { leftFirst: true, colw: ['7rem', '5.5rem'] })}
+        <div class="jump">
+            <a href="#/page/cook">
+                <div class="jp-t">料理</div>
+                <div class="jp-s">高级鱼决定能做什么等级的料理</div>
+            </a>
+            <a href="#/page/mine">
+                <div class="jp-t">采矿与钓鱼</div>
+                <div class="jp-s">体力在锤子和鱼竿之间怎么分</div>
+            </a>
+        </div>`;
+}
+
+/* ------------------------------------------------------------
    RF4 钓点与季节（fishspot 页的 RF4 段）
    表结构：[鱼名, 春,春·雨,夏,夏·雨,秋,秋·雨,冬,冬·雨,
              沙池, 伊德拉B2, 伊德拉B1, 约克米尔瀑布, 约克米尔池,
@@ -4227,6 +4277,7 @@ const PAGES = [
             /* RF2 / 边境 有自身的鱼表，走专用分支，不套用 RF4／RF5 数据 */
             const oldFish = fishOldHtml(g || {});
             if (oldFish) return oldFish;
+            if (g.id === 'rf3') return fishRf3Html();
             const f4 = (typeof FISH_RF4 !== 'undefined') ? FISH_RF4 : [];
             const f5 = (typeof FISH_RF5 !== 'undefined') ? FISH_RF5 : [];
             const CATS = ['稀有鱼', '大型鱼', '中型鱼', '小型鱼', '钓物'];
@@ -4257,7 +4308,7 @@ const PAGES = [
             const rfoFishNote = (g && g.id === 'rfo')
                 ? `<div class="note"><b>海洋（RFO）</b>的鱼类尺寸与金杯线暂缺可靠来源，本页下方 RF4／RF5 鱼表仅作通用机制参考。但海洋的<b>钓点 × 鱼种 × 概率</b>分布已在 <a href="#/page/fishspot">钓点与季节</a> 页完整收录（共 28 处钓点、30 种鱼），要查「哪片海出什么鱼、概率多少」请直接去那页。</div>`
                 : '';
-            const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5' && g.id !== 'rfo')
+            const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5' && g.id !== 'rfo' && g.id !== 'rf3')
                 ? `<div class="note"><b>${g.name}</b> 的鱼类专项数据暂缺可靠来源。本页鱼种全表是系列最完整的 <b>RF4／RF5</b> 数据，供横向参考；钓鱼机制（鱼影、四种状态、金杯线）全系列通用，可直接用在本作。</div>`
                 : '';
             return `

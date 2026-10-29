@@ -12,7 +12,7 @@
 | 武器数值 | △old | △old | ✓ | ✓ | △old | ✓ | ✓ | ✗ |
 | 魔物图鉴 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 作物 | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ |
-| 钓点/鱼 | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| 钓点/鱼 | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 料理/烹饪 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 属性抗性 | ✗ | ✗ | BOSS含 | ✗ | ✗ | ✓ | ✓ | ✗ |
 | BOSS战 | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ |
@@ -23,15 +23,16 @@
 ## 关键修正（相对 v1）
 - **节日**：v1 写成"只有 rff/rfo"——**实际七作全覆盖**（RF4/RF1/RF3 内联或解包表、RF2 `rf2cal.js`、RF5 `rf5cal.js`、RFF/RFO `festmore.js`），仅 azuma 只有名称。
 - **料理/烹饪**：v1 写对——七作全有（`rf1cook`～`rfocook` 七文件 + recipes/recipes4 合成表）。
-- **钓点/鱼**：v1 写成"只有 rf4/rf5"——实际 **rf2/rf4/rf5/rff 已有**（`fish.js`+`fish_old.js`+`fishspot.js`/`fishspot4.js` 已加载并渲染），只缺 **rf1/rf3/rfo**。→ **rfo 已于 2026-10-29 补齐**（`SPOT_RFO` 172 条 / 28 钓点 / 30 鱼，源 biligame RFOfishing），现仅缺 **rf1/rf3**。
+- **钓点/鱼**：v1 写成"只有 rf4/rf5"——实际 **rf2/rf4/rf5/rff 已有**（`fish.js`+`fish_old.js`+`fishspot.js`/`fishspot4.js` 已加载并渲染），只缺 **rf1/rf3/rfo**。→ **rfo 已于 2026-10-29 补齐**（`SPOT_RFO`）；**rf3 已于 2026-10-29 补齐**（`FISH_RF3` 36 条 + `FISH_RF3_RESORT` 9 条，源 biligame RF3fishing，接入 fish 页 `fishRf3Html()`）。现仅缺 **rf1**。
 
 ## 真实缺口（按性价比排优先级，排除无源项）
 
-### ① 钓点/鱼（缺 rf1 / rf3）
-- 页面框架已支持按作新增（RF2/RFF 段即范例：`FISH_RFx : [名,买价,卖价,概率/等级,钓点]`）；RFO 用自建 `SPOT_RFO`（地点×区域×季节×时段×4鱼概率）。
-- 源：biligame 符文工厂 wiki 各作钓鱼页（RF1fishing / RF3钓鱼）。
-- 工作量：每作约 10–40 种鱼录入 + 钓点说明。
-- ✅ **rfo 已于 2026-10-29 补齐**：`SPOT_RFO` 172 条 / 28 钓点 / 30 鱼，接入 `fishspot` 页（gms 加 `rfo`，`fishspotRfoHtml()` 渲染正反向表）；`fish` 页（鱼类图鉴）对 rfo 走 `rfoFishNote` 引导到钓点与季节页。
+### ① 钓点/鱼（缺 rf1）
+- 页面框架已支持按作新增（RF2/RFF 段即范例：`FISH_RFx : [名,买价,卖价,概率/等级,钓点]`）；RFO 用自建 `SPOT_RFO`（地点×区域×季节×时段×4鱼概率）；RF3 用 `FISH_RF3`/`FISH_RF3_RESORT`（地点×鱼×鱼影×买卖价）。
+- 源：biligame 符文工厂 wiki 各作钓鱼页。
+- ✅ **rfo 已于 2026-10-29 补齐**：`SPOT_RFO` 172 条 / 28 钓点 / 30 鱼，接入 `fishspot` 页（gms 加 `rfo`，`fishspotRfoHtml()` 渲染正反向表）；`fish` 页对 rfo 走 `rfoFishNote` 引导到钓点与季节页。
+- ✅ **rf3 已于 2026-10-29 补齐**：`FISH_RF3` 36 条 + `FISH_RF3_RESORT` 9 条（卡尔洛斯度假村付费钓场），接入 `fish` 页（`fishRf3Html()`，按钓点列鱼＋鱼影四档＋买卖价）；biligame `RF3fishing` 为干净中文源。
+- ⏸ **rf1 暂缺、待核对**：biligame 的 `RF1fish`/`RF1钓鱼` 两页均为空，无中文源；唯一结构化数据是英文 fandom（钓点×鱼×出现率），但中文译名有数处不确定（Gibelio/Girella/Jamasquid/Chub/Masu Trout/Yellowtail 等），且 fandom 与 `rf1data.js` 均无价格。按"没核实的宁可不写"，暂不落库，待拿到可靠中文钓点/价格源或逐条核对后再做。
 
 ### ② BOSS战（缺 rff / rf4 / rf5）
 - `boss.js` 已建，源 biligame wiki；现有 rf1/rf2/rf3/rfo 四作。
@@ -56,8 +57,9 @@
 
 ## 待办
 - [x] 纠正 v1 误判（已完成本文件）
-- [x] 推进 ① 钓点/鱼 rfo（2026-10-29 已补齐；剩 rf1/rf3）
-- [ ] 推进 ① 钓点/鱼 rf1/rf3
+- [x] 推进 ① 钓点/鱼 rfo（2026-10-29 已补齐）
+- [x] 推进 ① 钓点/鱼 rf3（2026-10-29 已补齐，源 biligame RF3fishing）
+- [ ] 推进 ① 钓点/鱼 rf1（源待核对，暂不落库）
 - [ ] 推进 ② BOSS rff/rf4/rf5
 - [ ] 视源可得性推进 ③ 抗性 / ④ 行程
 - [ ] 评估 ⑤ azuma 数据可得性
