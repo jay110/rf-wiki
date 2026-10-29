@@ -15,7 +15,7 @@
 | 钓点/鱼 | ✓△ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 料理/烹饪 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 属性抗性 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
-| BOSS战 | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✓ | ✗ |
+| BOSS战 | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✓ | △ |
 | 节日 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 名称 |
 | 每日行程 | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | 喜好专页 | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✗ |
@@ -67,6 +67,7 @@
 - **结论**：若启动 azuma，应**单独建 azuma 专属轻量模块**（名册 + 魔物喜好 + Boss 名单/弱点），不混入七作模板；**先定译名与框架方向再落库**。
 - **2026-10-29 已接入魔物喜好表（B 选项落地）**：新增 `js/azuma.js`（`AZUMA_MON` 122 种魔物：名称 / 骑乘 / 出现区域 / 最爱 / 喜欢 / 讨厌；源 gametoeasy.com 中文攻略《魔物喜好表》2025-06-20，纯中文无需译名拍板）+ `pages.js` 的 `azuma_mon` 页（`gms:['azuma']`，表格复用站点 `table mon-table` 风格）。骑乘分布 99 不可 + 23 可骑乘；8 个 BOSS/精英（阵笠众、空乃、妖魔天晴、黑龙的残渣、豪雪狼、轰雷兽、支配之大树、前异国士兵）源无区域/喜好，仅列名。矩阵「魔物图鉴」azuma 由 ✗ 改 △（有魔物喜好但非传统数值抗性图鉴）。校验：`node _verify.js` 345 实例 0 异常；`_quick_check_azuma.js` 122 条无重复、无脏串。
 - **人物名册 azuma 实为已做（此前漏看）**：`data.js` 的 `azuma.chars` 早已填 17 名花婿/花嫁候补 + 居民（含声优/简介），经现有角色/名册页渲染；矩阵「人物名册」azuma 由 ✗ 改 ✓
+    - **2026-10-29 已接入 BOSS 战（名单 + 弱点元素）**：新增 `js/azuma.js` 的 `AZUMA_BOSS_CAP`（18 个可捕 Boss：biligame 中文 wiki《RRFmainstory》与 gametoeasy《BOSS 抓捕攻略》交叉核对，含武器弱点/属性弱点/骑乘/大小/喜好，纯中文且与 `data.js` 译名一致——祭=Matsuri、村雨=Murasame、克拉丽丝=Clarice 等）+ `AZUMA_BOSS_MAIN`（6 个主线 Boss：biligame 未含或仅标不可捕者用英文 game8/neoseeker 补 Lv 与定位）。`pages.js` 新增 `azuma_boss` 页（`gms:['azuma']`，含可捕表 + 主线表 + 元素克制说明）。**暂译待拍板**：乌拉(Lord Ura)/卡慕罗崎(Kamurosaki, 猎犬真身)/美星 羽爆(Mihoshi Habaki) 三名为本站音译，附英文原名，待用户核实。矩阵「BOSS战」azuma 由 ✗ 改 △（有名单+弱点元素，但非数值抗性型）。校验：`node _verify.js` 346 实例 0 异常。
 <arg_key:6124c78e>replace_all</arg_key:6124c78e>
 <arg_value:6124c78e>false
 

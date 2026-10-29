@@ -5193,6 +5193,11 @@ const PAGES = [
         gms: ['azuma'],
         body: () => azumaMonHtml(),
     },
+    {
+        key: 'azuma_boss', group: 'life', title: 'BOSS 战', icon: 'boss',
+        gms: ['azuma'],
+        body: () => azumaBossHtml(),
+    },
 ];
 
 /* 龙之天地（azuma）专属：魔物喜好表（不混入七作模板，gms 仅 azuma） */
@@ -5213,6 +5218,41 @@ function azumaMonHtml() {
     return `
         <div class="note">数据来自中文攻略站 gametoeasy.com《符文工房:龙之天地 魔物喜好表》（2025-06-20）。「骑乘」列：<b>可骑乘</b>表示可收服为坐骑／宠物，<b>不可</b>表示不能，BOSS／精英为「—」。出现区域与物品为原文中文列举，未作改写。本作系统是动作 RPG + 村庄建设，没有传统数值抗性表，故仅收录喜好与区域。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>骑乘</th><th>出现区域</th><th>最爱物品</th><th>喜欢物品</th><th>讨厌物品</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* 龙之天地（azuma）专属：BOSS 战（不混入七作 boss.js 模板，gms 仅 azuma） */
+function azumaBossHtml() {
+    const CAP = (typeof AZUMA_BOSS_CAP !== 'undefined') ? AZUMA_BOSS_CAP : [];
+    const MAIN = (typeof AZUMA_BOSS_MAIN !== 'undefined') ? AZUMA_BOSS_MAIN : [];
+    const cell = s => (s && String(s).trim() && String(s).trim() !== '×') ? s : '<span class="mon-no">—</span>';
+    const ride = r => r === '可' ? '可骑乘' : '<span class="mon-no">不可</span>';
+    const capRows = CAP.map(b => `
+        <tr>
+            <td class="td left mon-n">${b[0]}</td>
+            <td class="td">${cell(b[1])}</td>
+            <td class="td">${cell(b[2])}</td>
+            <td class="td">${ride(b[3])}</td>
+            <td class="td">${cell(b[4])}</td>
+            <td class="td">${cell(b[5])}</td>
+            <td class="td">${cell(b[6])}</td>
+        </tr>`).join('');
+    const mainRows = MAIN.map(b => `
+        <tr>
+            <td class="td left mon-n">${b[0]}</td>
+            <td class="td">${cell(b[1])}</td>
+            <td class="td">${cell(b[2])}</td>
+            <td class="td">${cell(b[3])}</td>
+            <td class="td">${cell(b[4])}</td>
+            <td class="td">${b[5]}</td>
+        </tr>`).join('');
+    return `
+        <div class="note">龙之天地（azuma）无 RF4/RF5 式数值抗性表，本页仅收录 <b>武器弱点 + 属性弱点（地／火／风／水／光／暗）</b> 与可捕 Boss 的体型、喜好。属性克制为「同元素互克」：火↔水、风↔地、光↔暗（以相同元素攻击时伤害降低、显示为灰色数字）。</div>
+        <h3>可捕获 BOSS（魔物 Boss）</h3>
+        <div class="note">来源：biligame 中文 wiki《RRFmainstory》与 gametoeasy《BOSS 抓捕攻略》交叉核对（纯中文，与本站 data.js 译名一致）。「骑乘」可收服为坐骑／宠物者标「可骑乘」，其余为不可捕 Boss。「大小」为源标注体型档（数字 2/4）。</div>
+        <div class="table mon-table"><table><thead><tr><th>名称</th><th>武器弱点</th><th>属性弱点</th><th>骑乘</th><th>大小</th><th>最喜欢</th><th>喜欢</th></tr></thead><tbody>${capRows}</tbody></table></div>
+        <h3>主线剧情 BOSS</h3>
+        <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站暂译（附英文原名），待核实拍板。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
+        <div class="table mon-table"><table><thead><tr><th>名称</th><th>英文名</th><th>Lv</th><th>武器弱点</th><th>属性弱点</th><th>定位／备注</th></tr></thead><tbody>${mainRows}</tbody></table></div>`;
 }
 
 /* 物品道具：分类页在前，本作物品一览在后 */

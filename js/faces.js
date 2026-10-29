@@ -79,7 +79,8 @@ var FACE = {
        花嫁候补用 15 周年站的 560x940 立绘，镇民用发售时旧官网（marv.jp 2009）的 220x360，
        都是官方透明底全身立绘，按身高比例定裁切带（_build_faces.py 的 band_scale）。
        隐藏花嫁 クルルファ 官网没有立绘（通关才解锁、官方不做宣传），
-       オンドルファ 与 ゼゼ 两张名单页里也没有，这三位宁可空着。 */
+       改用 RF3S（Switch 豪华版）游戏内的 another_charaicon 头像（172px，官方画、换表情）。
+       オンドルファ 与 ゼゼ 两张名单页里也没有，仍空着等村里的 charaicon 段。 */
     rf3: {
         'マイス': 'mais',
         'シア': 'sia',
@@ -102,7 +103,8 @@ var FACE = {
         'ヘーゼル': 'hazel',
         'ドンチャコス': 'donchacos',
         'エリザ': 'elisa',
-        'カルロス': 'carlos'
+        'カルロス': 'carlos',
+        'クルルファ': 'kururfa'
     },
     /* 符文5：源是 PC 版（Unity）的 FaceIconSpriteAtlas，游戏内 HUD 头像，约 62px。
        由 _build_face_rf5.py 从 Addressables 的 bundle 里取出，ch 编号与人的对应
@@ -135,7 +137,10 @@ var FACE = {
         'ドグ': 'doug',
         'ジュリアン': 'julian',
         'ヒナ': 'hina',
-        'オズワルド': 'oswald'
+        'オズワルド': 'oswald',
+        'パルモ': 'palmo',
+        'ダグ': 'dag',
+        'マーガレット': 'margaret'
     },
     /* 符文4：14 位主角与婚配候补用 RF4SP 旧官网（marv.jp/special/game/runefactory4SP）
        的 540x1098 全身彩图；镇民 13 人官网没放，用 wiki 解包出的游戏内立绘。
@@ -170,6 +175,73 @@ var FACE = {
         'トゥーナ': 'raven',
         'ノエル': 'noel',
         'ルーナ': 'luna'
+    },
+    /* 符文工房 边境（Wii）：源是游戏内对话立绘 FACE00–FACE31（480 高半身像，多表情），
+       由 _build_rff_faces.py 从「边境图片导出」里按 FACE 编号裁头部成 160px 方图。
+       FACE00 = 主角，FACE01–13 = 花嫁候补（エリス 白/黑 各一张），FACE14–31 = 居民。
+       编号与人名的对应依据是站内名册顺序 +1，并用「ラピス＝教会修女(F03)」
+       「ステラ＝老妇(F19)」「ミネルバ＝小妖精(F24)」「つぶて＝自称武蔵大和守(F28)」
+       四条角色描述交叉核对过，详见 _face_src/rff_map.md。 */
+    rff: {
+        'ラグナ': 'ragna',
+        'ミスト': 'mist',
+        'ロゼッタ': 'rosetta',
+        'ラピス': 'lapis',
+        'メロディ': 'melody',
+        'ビアンカ': 'bianca',
+        'タバサ': 'tabatha',
+        'ユーニ': 'yuni',
+        'ドロップ': 'drop',
+        'アネット': 'anette',
+        'セルフィ': 'selphy',
+        'うづき': 'uzuki',
+        'エリス': 'iris_white',
+        'ターナー': 'turner',
+        'リタ': 'rita',
+        'エリック': 'erik',
+        'カンロ': 'kanro',
+        'キャンディ': 'candy',
+        'ステラ': 'stella',
+        'ガネーシャ': 'ganesha',
+        'マルコ': 'marco',
+        'ダニー': 'danny',
+        'ルート': 'lute',
+        'ミネルバ': 'minerva',
+        'クロス': 'cross',
+        'ワーグナー': 'wagner',
+        'ローランド': 'roland',
+        'つぶて': 'tsubute',
+        'ルシア': 'lucia',
+        'レオナ': 'leona',
+        'ジェルバイン': 'geruvain'
+    },
+    rfo: {
+        /* 源：PS3 日版 RFF2.dat 块 1526 的 LUfaceNL_XX.hvt（72x72 游戏内头像），
+           编号由游戏内「相遇标记」字符串表顺序反推：01/02 主角、10-18 女主、
+           20-22 男主、30-38 居民。优米尔(ユミル)是巨人，无人物头像，留空。 */
+        'アゼル': 'azel',
+        'ソニア': 'sonia',
+        'リリ': 'lily',
+        'オデット': 'odette',
+        'アイリス': 'iris',
+        'エレクトラ': 'electra',
+        'メルプリン': 'merupur',
+        'エレナ': 'elena',
+        'サラ': 'serra',
+        'メイ': 'mikoto',
+        'パンドラ': 'pandora',
+        'ジョー': 'joel',
+        'ジェームス': 'james',
+        'ビスマルク': 'bismarc',
+        'ボナパルト': 'bonapar',
+        'バッカス': 'bacchus',
+        'キルト': 'kilt',
+        'ニット': 'nitte',
+        'グレイ': 'gray',
+        'ジャスリン': 'jaslyn',
+        'アネット': 'anette',
+        'キャンディ': 'candy',
+        'タバサ': 'tabatha'
     }
 };
 
