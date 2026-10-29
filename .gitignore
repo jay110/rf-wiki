@@ -68,6 +68,7 @@ _title_src/*.png
 _title_src/*.gif
 _title_src/*.swf
 
-# logo 解包中间件（成品在 assets/logo/）
+# logo 解包中间件（成品在 assets/logo/；脚本入库，源图按 SOURCES.md 的地址重下）
 _logo_src/**
 !_logo_src/SOURCES.md
+!_logo_src/*.py

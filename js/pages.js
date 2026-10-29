@@ -4877,6 +4877,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第八十七次：作品卡从截图改成透明 logo，九作统一</h2>
+            <ul class="ul">
+                <li class="li"><b>上一版的问题不是图不好，是不统一</b>：十张卡各用各的素材——符文3 和符文4 是纯背景画（压根没有 logo），符文3特别版、5 是从 Steam 胶囊图裁的，符文4豪华版只截到 logo 顶部一点，符文海洋那张圆窗两侧还压着白条。</li>
+                <li class="li"><b>做法改成「透明 logo 浮在卡片渐变上」</b>：卡片的渐变本来就是每作主题色，logo 直接坐上去，不再铺底色、不再压暗角——那层暗角会把 logo 的白色外发光吃掉。</li>
+                <li class="li"><b>图源</b>：符文3 取自 marv.jp 官方站的 <code>img/title.png</code>（616x176，干净透明）；符文3特别版、4豪华版、5、龙之天地取自 Steam 商店页的 <code>logo.png</code>（640 宽 RGBA，这条 CDN 直链在本机通，商店页本身仍是 000）；符文1、2、边境、海洋沿用之前从游戏本体解出来的四张。</li>
+                <li class="li"><b>尺寸做了等面积归一</b>：十作 logo 的宽高比从 1.55（海洋，方形带棕榈）到 3.5（符文3，细长条）差一倍多。只按宽度归一，细长条会占满而方形显得小；只按高度归一，细长条又超出卡片被 contain 缩小。改用 <code>sqrt(w*h)</code> 做基准，视觉重量最接近。构建脚本 <code>_logo_src/build_logos.py</code>，只缩不放，免得 DS 原尺寸的 logo 被插糊。</li>
+                <li class="li"><b>符文4 还是空白</b>：原版是 2012 年 3DS 独占，不在 Steam，官方站也只剩一个跳转页。试着从本机的 <code>符文工房4 汉化版.cci</code> 里解包，<code>ctrtool -p -n 0 --romfsdir</code> 能完整导出 1.4GB 的 romfs，里面确实有 <code>effect/tex/logo_rune4.bctex</code>（CGFX 容器，ETC1A4，512x256，左右眼各一张）。但 3DS 的 ETC1 块排布和标准 ETC1 不同，解出来颜色和形状都对、块是错位的，暂时没攻下来，先留着云海背景图过渡。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-29　第八十六次：符文4 的 27 张头像重新标框，脸的大小对齐了</h2>
             <ul class="ul">
                 <li class="li"><b>起因是「同一个页面里头像大小不一」</b>：符文4 的立绘有两种来源——官网那批 540x1098 的全身彩图，和 wiki 上解包的 200x255 半身图。前一批是手工标框的，后一批走自动测量，两边标准不同，裁出来边长从 92 到 224 都有；脸占框的比例更乱，从 45% 到 80%。列表里 2.1rem 的圆形头像排下来，有的人脸撑满圆圈，有的人一张小脸浮在中间。</li>

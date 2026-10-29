@@ -1,7 +1,39 @@
 # 各作官方标题 logo · 图源与处理记录
 
-站点用图：`assets/logo/<作id>.png`（透明底 PNG，PNG-24/32）。
-中间产物：本目录下 `_logo_src/`、各作子目录。
+站点用图：`assets/logo/<作id>.png`（透明底 PNG）。
+构建：`build_logos.py`（裁到内容边界 → 等面积归一化 → 出图），预览：`preview_cards.py`。
+源图放 `_logo_src/src/`（不入库），按下面各条给的地址重下即可。
+
+## 归一化规格（2026-10-30）
+
+十作 logo 宽高比从 1.55（海洋，方形带棕榈）到 3.5（符文3，细长条）差一倍多。
+只按宽度归一，细长条占满、方形显得小；只按高度归一，细长条又超出卡片被 contain 缩小。
+所以用 `sqrt(w*h)` 做基准（`BASE=268`），再夹 `MAX_W=420 / MAX_H=220`，**只缩不放**，
+免得 DS 原尺寸（符文1 只有 256×88）被插值糊掉。
+
+## Steam 透明 logo（2026-10-30 新增）
+
+商店页 `store.steampowered.com` 在本机 000 不通，但 CDN 直链 **通**：
+
+```
+https://cdn.cloudflare.steamstatic.com/steam/apps/<appid>/logo.png
+```
+
+| 作 | appid | 源尺寸 |
+|---|---|---|
+| rf3sp（符文3 特别版） | 2243710 | 640×295 |
+| rf4sp（符文4 豪华版） | 1580240 | 640×324 |
+| rf5 | 1702330 | 640×219 |
+| azuma（龙之天地） | 2864560 | 640×360 |
+
+四张都是 RGBA、alpha 完整，直接可用。注意 `library_hero` 不带 logo，别拿错。
+
+## 符文3（marv.jp 官方站）
+
+`https://www.marv.jp/special/game/ds/runefactory3/img/title.png` → 616×176 RGBA，干净透明。
+（同站的 `img/top/bg1.jpg` 只是背景画，没有 logo——上一版作品卡误用了它。）
+
+⚠ marv.jp 必须 `curl --noproxy '*'`，走本机代理会 502。
 
 ## 已完成
 
@@ -48,8 +80,37 @@
      与 rff 的处理口径一致（同为纯英文 logo）。
 - 产出：243×140。相比首版（白底未除、彩纸残留）已彻底干净。
 
-## 未开始
-- rf3、rf4、rf5、azuma（龙之天地）
+## 卡住的：rf4（符文工房4，2012 3DS）
+
+原版不在 Steam，日版官网（marv.jp/special/game/3ds/runefactory4/）已缩成一个跳转页，
+任天堂的 `nintendo.co.jp/3ds/arfj/` 也 302 到软件总览。公开渠道没有干净透明 logo。
+
+**已走通到一半的本体提取**（下次接着做）：
+
+```bash
+# 本机有零售卡带镜像：G:/BaiduNetdiskDownload/符文工房4 汉化版.cci（1.4GB）
+ctrtool -p -n 0 --listromfs  "<cci>"          # 列清单，19927 个文件
+ctrtool -p -n 0 --romfsdir=romfs "<cci>"      # 全量导出（约 1.4GB）
+```
+
+目标文件：`romfs/effect/tex/logo_rune4.bctex`
+
+- 扩展名骗人，实际是 **CGFX 容器**（magic `CGFX`），不是 BCTEX
+- `IMAG` 块在 **0x1F8**，头 8 字节之后是 131072 字节 = **512×256×1**
+- TXOB 段实测：`0xE0=0x200`(宽 512)、`0xE4=0x100`(高 256)、`0xFC=13`
+  → 3DS 纹理格式码 **0x0D = ETC1A4**；纹理名 `logo_rune4_00`
+- **是左右眼两张图**：512 宽里左右各一条同形龙，做立体用的，取一半即可
+- 每 16 字节 = 前 8 字节 alpha（4bit/px）＋ 后 8 字节 ETC1；
+  **后 8 字节整体反转（`[::-1]`）颜色才对**（能出绿龙＋金色字），
+  套 8×8 tile 重排（tile 内 TL/TR/BL/BR）后轮廓完整，但**块仍是错位的**。
+  说明 3DS 的 ETC1 块内像素序或块间距与标准 ETC1 不同，`texture2ddecoder.decode_etc1`
+  只能解出「颜色对、位置错」的结果。
+
+排查中踩过的坑：
+- `decode_etc1` 返回的是 **RGBA（4 字节/像素）**，不是 RGB。按 RGB 解会整张错位成噪点。
+- 别指望 `roughness`（相邻像素差）能挑对解：块级错位不影响块内相邻关系，
+  linear 和 tile 两种排布会给出**完全相同**的 roughness，但图完全不同（md5 不同）。
+- 判对错只认「肉眼看图」，不认指标。
 
 ## 通用教训
 - **NDS/DS 图形优先按调色板索引抠图，不要按 RGB 距离**。索引 0 通常就是透明键色，

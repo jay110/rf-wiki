@@ -46,12 +46,16 @@ MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml",
 
 
 def title_block():
-    """作品卡配图是 JS 里拼出来的，HTML 正则够不到，单独转成 TITLE_DATA。"""
+    """作品卡配图是 JS 里拼出来的，HTML 正则够不到，单独转成 TITLE_DATA。
+    现在主力是 assets/logo/*.png（透明 logo），assets/title/*.jpg 只剩 rf4 一张过渡用。"""
     arts = {}
-    d = ROOT / "assets" / "title"
-    for p in sorted(d.glob("*.jpg")):
-        rel = p.relative_to(ROOT).as_posix()
-        arts[rel] = "data:image/jpeg;base64," + base64.b64encode(p.read_bytes()).decode("ascii")
+    for sub, pat, mime in (("logo", "*.png", "image/png"), ("title", "*.jpg", "image/jpeg")):
+        d = ROOT / "assets" / sub
+        if not d.is_dir():
+            continue
+        for p in sorted(d.glob(pat)):
+            rel = p.relative_to(ROOT).as_posix()
+            arts[rel] = "data:%s;base64,%s" % (mime, base64.b64encode(p.read_bytes()).decode("ascii"))
     if not arts:
         return ""
     print(f"内联作品图 {len(arts)} 张，{sum(len(v) for v in arts.values()) // 1024} KB")

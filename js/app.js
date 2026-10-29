@@ -5,17 +5,21 @@
 const LSKEY = 'rf_wiki_v1';
 
 /* 作品卡配图。统一预构图成 2.95:1（卡片图区比例），CSS 直接 cover 即可 */
+/* 各作标题 logo：assets/logo/<id>.png，透明底，由 _logo_src/build_logos.py 统一出图
+   （裁到内容边界 + 等面积归一化，10 张的高矮视觉重量对齐）。
+   例外 rf4：原版 3DS 没有公开的透明 logo 源，暂用 title 整图，见 _GAP_LIST。
+   单文件版没有外部文件可加载，_inline.py 会把这两类图转成 TITLE_DATA */
 const TITLE_ART = {
-    rf1:   { src: 'assets/title/rf1.jpg' },
-    rf2:   { src: 'assets/title/rf2.jpg' },
-    rf3:   { src: 'assets/title/rf3.jpg' },
-    rf3sp: { src: 'assets/title/rf3sp.jpg' },
-    rf4:   { src: 'assets/title/rf4.jpg' },
-    rf4sp: { src: 'assets/title/rf4sp.jpg' },
-    rf5:   { src: 'assets/title/rf5.jpg' },
-    rff:   { src: 'assets/title/rff.jpg' },
-    rfo:   { src: 'assets/title/rfo.jpg' },
-    azuma: { src: 'assets/title/azuma.jpg' },
+    rf1:   { src: 'assets/logo/rf1.png' },
+    rf2:   { src: 'assets/logo/rf2.png' },
+    rf3:   { src: 'assets/logo/rf3.png' },
+    rf3sp: { src: 'assets/logo/rf3sp.png' },
+    rf4:   { src: 'assets/title/rf4.jpg', fit: 'cover' },
+    rf4sp: { src: 'assets/logo/rf4sp.png' },
+    rf5:   { src: 'assets/logo/rf5.png' },
+    rff:   { src: 'assets/logo/rff.png' },
+    rfo:   { src: 'assets/logo/rfo.png' },
+    azuma: { src: 'assets/logo/azuma.png' },
 };
 
 const S = {
@@ -138,7 +142,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.fit === 'contain' ? ' style="object-fit:contain"' : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.fit ? ` style="object-fit:${art.fit}"` : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
