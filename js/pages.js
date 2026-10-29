@@ -4877,6 +4877,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第八十八次：作品卡补上主视觉底图，不再是纯色块</h2>
+            <ul class="ul">
+                <li class="li"><b>上一版的观感是「色块上贴了张 logo」</b>：十张卡里只有符文4 当时用云海整图垫着，反而是最有画面感的一张；其余九张就是渐变 + 透明 logo，排在一起像一排色卡。</li>
+                <li class="li"><b>做法</b>：每作取自己的标题画面当底图，模糊 7px 后铺在卡片渐变上，logo 清晰浮在上面。底图只显上半张、往下淡出到纯渐变——文字区保持干净底色，白字才压得住，不用再额外压暗角。</li>
+                <li class="li"><b>混合模式用正片叠底（multiply）</b>：符文2、符文5、符文3特别版、4豪华版的标题图是白底，正常叠加会把整张卡糊成一片白雾、logo 边缘发虚。正片叠底时白色等于不改变底色，只有画面里的深色部分变成暗纹，十张卡的作品色相才保得住。</li>
+                <li class="li"><b>踩了个 CSS 坑</b>：本来用 <code>::before</code> 加 <code>--art:url(...)</code> 传图，结果 CSS 变量里的相对路径是按样式表位置解析的，指向 <code>css/assets/...</code> 直接 404，卡面一点没变、截图哈希都和改之前一模一样。改成真实元素 <code>&lt;i class="wcard-bg"&gt;</code> 内联 <code>background-image</code>，路径以文档为基准，单文件版换成 data URI 也照样成立。</li>
+                <li class="li"><b>顺带</b>：原本打算删的 <code>assets/title/</code> 九张旧截图又有了用处，现在被引用为底图，单文件版体积从 11.9MB 涨到 12.9MB。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第八十七次：作品卡从截图改成透明 logo，九作统一</h2>
             <ul class="ul">
                 <li class="li"><b>上一版的问题不是图不好，是不统一</b>：十张卡各用各的素材——符文3 和符文4 是纯背景画（压根没有 logo），符文3特别版、5 是从 Steam 胶囊图裁的，符文4豪华版只截到 logo 顶部一点，符文海洋那张圆窗两侧还压着白条。</li>
