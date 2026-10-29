@@ -4877,6 +4877,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第八十九次：符文1 作品卡改用 ROM 里自己的素材合成</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：符文1 原本那张卡是官方标题截图，白底蓝纹，跟旁边几作的整图放一起发灰；干脆直接从 NDS ROM 里取素材重做一张。</li>
+                <li class="li"><b>解包</b>：ndspy 装不上（默认源和清华源都没有），改成手写 FNT/FAT 解析——5220 个文件全在 <code>/res/</code>，NCGR / NCLR / NSCR 三件套齐全。渲染器收在 <code>_nds_nitro.py</code>，<code>_build_rf1card.py</code> 负责合成。</li>
+                <li class="li"><b>踩坑：图块起点</b>。RAHC 头里声明的块数（宽×高）在 4bpp 文件上跟实际对不上，按它反推起点会算出负数。正确做法是读 <code>+0x18</code> 的 tileDataSize 和 <code>+0x1C</code> 的偏移（相对 +0x18），用字节数反推块数。</li>
+                <li class="li"><b>踩坑：标题背景的横条</b>。<code>title_bgA</code> 之类是逐行滚动的视差层，静态拼一定出周期性横条——按行做偏移校正反而更碎，属于实机靠滚动"滚"掉的效果，修不了。只能取画面下部（视差影响小的区域）再模糊 3.5px 压下去。<code>camp_bg</code>、<code>paint_bg</code> 这类不带滚动的才是干净的。</li>
+                <li class="li"><b>三层合成</b>：背景取 <code>title_bgA</code> 的天空海崖（取景 0.70 避开顶部横条）；图案用 <code>camp_bg02</code> 的深蓝菱格纹，2 倍放大平铺、按 0.46 混合；logo 用官方标题字压在最上层，底下垫一层深蓝投影让它立得住。</li>
+                <li class="li"><b>logo 位置</b>：卡片是 cover 裁切，960×325 的图在卡上只看得到中间约 52% 那一条，logo 居中放会被切掉下缘。所以竖直中心放在 42% 高度，跟 <code>object-position: center 42%</code> 对齐。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第八十八次：作品卡试过一版模糊底图，看完撤回整图</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：十张卡里只有符文4 用整图垫着，其余九张是渐变 + 透明 logo，排在一起像一排色卡，于是给每张卡补了一层主视觉底图。</li>

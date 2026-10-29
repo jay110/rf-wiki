@@ -72,3 +72,6 @@ _title_src/*.swf
 _logo_src/**
 !_logo_src/SOURCES.md
 !_logo_src/*.py
+
+# 符文1 卡片合成中间件（ROM 解出的源图与调试图；成品在 assets/title/rf1.jpg，脚本入库）
+_rf1_card/**
