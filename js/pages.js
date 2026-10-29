@@ -5188,7 +5188,32 @@ const PAGES = [
             <div class="note">本站在浏览器本地运行，数据全部内嵌，不联网、不上传任何信息。资料整理性质，仅供查阅。</div>
         `
     },
+    {
+        key: 'azuma_mon', group: 'life', title: '魔物与喜好', icon: 'monster',
+        gms: ['azuma'],
+        body: () => azumaMonHtml(),
+    },
 ];
+
+/* 龙之天地（azuma）专属：魔物喜好表（不混入七作模板，gms 仅 azuma） */
+function azumaMonHtml() {
+    const M = (typeof AZUMA_MON !== 'undefined') ? AZUMA_MON : [];
+    if (!M.length) return '';
+    const cell = s => (s && s.trim()) ? s : '<span class="mon-no">—</span>';
+    const ride = r => r === '能' ? '可骑乘' : '<span class="mon-no">' + (r === '×' ? '不可' : '—') + '</span>';
+    const rows = M.map(m => `
+        <tr>
+            <td class="td left mon-n">${m[0]}</td>
+            <td class="td">${ride(m[1])}</td>
+            <td class="td">${cell(m[2])}</td>
+            <td class="td">${cell(m[3])}</td>
+            <td class="td">${cell(m[4])}</td>
+            <td class="td">${cell(m[5])}</td>
+        </tr>`).join('');
+    return `
+        <div class="note">数据来自中文攻略站 gametoeasy.com《符文工房:龙之天地 魔物喜好表》（2025-06-20）。「骑乘」列：<b>可骑乘</b>表示可收服为坐骑／宠物，<b>不可</b>表示不能，BOSS／精英为「—」。出现区域与物品为原文中文列举，未作改写。本作系统是动作 RPG + 村庄建设，没有传统数值抗性表，故仅收录喜好与区域。</div>
+        <div class="table mon-table"><table><thead><tr><th>名称</th><th>骑乘</th><th>出现区域</th><th>最爱物品</th><th>喜欢物品</th><th>讨厌物品</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 
 /* 物品道具：分类页在前，本作物品一览在后 */
 (function () {
