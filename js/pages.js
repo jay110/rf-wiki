@@ -194,6 +194,59 @@ function fishRf3Html() {
 }
 
 /* ------------------------------------------------------------
+   RF1 钓鱼（fish 页的 RF1 段）
+   数据：FISH_RF1 = [钓点中文名, 钓点备注, [[鱼中文名, 出现率, 卖价], ...]]
+   出现率取自 Fandom Fishing_(RF)，卖价取自 Fish_(RF)。
+   ------------------------------------------------------------ */
+function fishRf1Html() {
+    const S = (typeof FISH_RF1 !== 'undefined') ? FISH_RF1 : [];
+    if (!S.length) return '';
+    const money = v => (v === '—' || v === '' || v == null) ? '<span class="mon-no">—</span>' : v + 'G';
+
+    const rows = [];
+    const byFish = {};
+    const priceOf = {};
+    S.forEach(([spot, , fishes]) => {
+        fishes.forEach(([name, rate, price]) => {
+            rows.push([name + ' ' + spot, [name, spot, rate, money(price)]]);
+            (byFish[name] = byFish[name] || []).push([spot, rate]);
+            if (priceOf[name] === undefined) priceOf[name] = price;
+        });
+    });
+
+    const fishNames = Object.keys(byFish).sort((a, b) => a.localeCompare(b, 'zh'));
+    const fishRows = fishNames.map(n => {
+        const spots = byFish[n].slice().sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+        const detail = spots.map(s => s[0] + ' ' + s[1]).join('、');
+        return [n, [n, money(priceOf[n]), spots.length + ' 处', detail]];
+    });
+
+    const totalFish = fishNames.length;
+    const totalSpot = S.length;
+    const best = fishNames.slice().sort((a, b) => parseInt(priceOf[b] || '0') - parseInt(priceOf[a] || '0')).slice(0, 5);
+
+    return `
+        <p class="p">本页是<b>《符文工房1》</b>的钓鱼数据：全 ${totalSpot} 个钓点、${totalFish} 种可钓物（含空罐、高筒靴等杂物）。RF1 <b>没有季节与昼夜机制</b>，所以只按钓点列；表格给出每处的<b>出现率（Catch Rate）</b>与<b>卖价</b>。</p>
+        ${stat([['鱼种', totalFish + ' 种'], ['钓点', totalSpot + ' 处'], ['字段', '出现率·卖价·钓点']])}
+        <div class="key">最值钱的是<b>${best.map(x => x + '（卖 ' + money(priceOf[x]) + '）').join('、')}</b>。海边、农场与河流是起点；各洞窟（卡迈特／托罗斯／克莱门斯／吉甘特／迷雾花／卡西米尔／达南／贪婪）与遗迹外则出高阶鱼和 Boss 级鲷鱼。</div>
+
+        <h2 class="h2">钓点 × 鱼（出现率 · 卖价）</h2>
+        <p class="p">每行是「某钓点里能钓到的某条鱼」。出现率来自 Fandom 的 Fishing_(RF)，卖价来自 Fish_(RF)。</p>
+        ${ftableOwn(['鱼种', '钓点', '出现率', '卖价'],
+            ['7rem', '9rem', '4.5rem', '4.5rem'],
+            rows, { ph: '输入鱼名或钓点筛选' })}
+
+        <h2 class="h2">鱼种 → 出没钓点</h2>
+        <p class="p">倒过来查：某种鱼在哪些钓点出没、各处的出现率是多少。</p>
+        ${ftableOwn(['鱼种', '卖价', '出没', '各钓点出现率'],
+            ['7rem', '4.5rem', '4rem', '20rem'],
+            fishRows, { ph: '输入鱼名筛选' })}
+
+        <div class="note">中文名优先采用 rf1data.js 的 ITEM_RF1 官方名（如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot）。以下 11 种为通用水产译名，<b>非正式汉化，待拍板</b>：雅罗鱼(Chub)、基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder)、瓜子鲷(Girella)、公鱼(Pond Smelt)、真鳟(Masu Trout)、狗鱼(Pike)、龙虾(Lobster)、邪魔乌贼(Jamasquid·系列原创名)、哲罗鱼(Taimen)、恋鲷(Lover Snapper)。<b>钓点名</b>（海边／卡西米尔遗迹外／各洞窟等）为通译，同样非官方、待拍板。数据事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信；仅译名待你确认。</div>
+    `;
+}
+
+/* ------------------------------------------------------------
    RF4 钓点与季节（fishspot 页的 RF4 段）
    表结构：[鱼名, 春,春·雨,夏,夏·雨,秋,秋·雨,冬,冬·雨,
              沙池, 伊德拉B2, 伊德拉B1, 约克米尔瀑布, 约克米尔池,
@@ -4278,6 +4331,7 @@ const PAGES = [
             const oldFish = fishOldHtml(g || {});
             if (oldFish) return oldFish;
             if (g.id === 'rf3') return fishRf3Html();
+            if (g.id === 'rf1') return fishRf1Html();
             const f4 = (typeof FISH_RF4 !== 'undefined') ? FISH_RF4 : [];
             const f5 = (typeof FISH_RF5 !== 'undefined') ? FISH_RF5 : [];
             const CATS = ['稀有鱼', '大型鱼', '中型鱼', '小型鱼', '钓物'];

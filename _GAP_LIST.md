@@ -12,7 +12,7 @@
 | 武器数值 | △old | △old | ✓ | ✓ | △old | ✓ | ✓ | ✗ |
 | 魔物图鉴 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 作物 | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ | ✗ |
-| 钓点/鱼 | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| 钓点/鱼 | ✓△ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 料理/烹饪 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 属性抗性 | ✗ | ✗ | BOSS含 | ✗ | ✗ | ✓ | ✓ | ✗ |
 | BOSS战 | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ |
@@ -23,7 +23,7 @@
 ## 关键修正（相对 v1）
 - **节日**：v1 写成"只有 rff/rfo"——**实际七作全覆盖**（RF4/RF1/RF3 内联或解包表、RF2 `rf2cal.js`、RF5 `rf5cal.js`、RFF/RFO `festmore.js`），仅 azuma 只有名称。
 - **料理/烹饪**：v1 写对——七作全有（`rf1cook`～`rfocook` 七文件 + recipes/recipes4 合成表）。
-- **钓点/鱼**：v1 写成"只有 rf4/rf5"——实际 **rf2/rf4/rf5/rff 已有**（`fish.js`+`fish_old.js`+`fishspot.js`/`fishspot4.js` 已加载并渲染），只缺 **rf1/rf3/rfo**。→ **rfo 已于 2026-10-29 补齐**（`SPOT_RFO`）；**rf3 已于 2026-10-29 补齐**（`FISH_RF3` 36 条 + `FISH_RF3_RESORT` 9 条，源 biligame RF3fishing，接入 fish 页 `fishRf3Html()`）。现仅缺 **rf1**。
+- **钓点/鱼**：v1 写成"只有 rf4/rf5"——实际 **rf2/rf4/rf5/rff 已有**（`fish.js`+`fish_old.js`+`fishspot.js`/`fishspot4.js` 已加载并渲染），只缺 **rf1/rf3/rfo**。→ **rfo 已于 2026-10-29 补齐**（`SPOT_RFO`）；**rf3 已于 2026-10-29 补齐**（`FISH_RF3` 36 条 + `FISH_RF3_RESORT` 9 条，源 biligame RF3fishing，接入 fish 页 `fishRf3Html()`）。现 rf1 已于 2026-10-29 补齐（详见下）。
 
 ## 真实缺口（按性价比排优先级，排除无源项）
 
@@ -32,7 +32,7 @@
 - 源：biligame 符文工厂 wiki 各作钓鱼页。
 - ✅ **rfo 已于 2026-10-29 补齐**：`SPOT_RFO` 172 条 / 28 钓点 / 30 鱼，接入 `fishspot` 页（gms 加 `rfo`，`fishspotRfoHtml()` 渲染正反向表）；`fish` 页对 rfo 走 `rfoFishNote` 引导到钓点与季节页。
 - ✅ **rf3 已于 2026-10-29 补齐**：`FISH_RF3` 36 条 + `FISH_RF3_RESORT` 9 条（卡尔洛斯度假村付费钓场），接入 `fish` 页（`fishRf3Html()`，按钓点列鱼＋鱼影四档＋买卖价）；biligame `RF3fishing` 为干净中文源。
-- ⏸ **rf1 暂缺、待核对**：biligame 的 `RF1fish`/`RF1钓鱼` 两页均为空，无中文源；唯一结构化数据是英文 fandom（钓点×鱼×出现率），但中文译名有数处不确定（Gibelio/Girella/Jamasquid/Chub/Masu Trout/Yellowtail 等），且 fandom 与 `rf1data.js` 均无价格。按"没核实的宁可不写"，暂不落库，待拿到可靠中文钓点/价格源或逐条核对后再做。
+- ✅ **rf1 已于 2026-10-29 补齐**：`FISH_RF1`（12 钓点 / 32 鱼种 / 70 条记录，源 fandom `Fishing_(RF)` 出现率 + `Fish_(RF)` 卖价交叉核对），接入 `fish` 页（`fishRf1Html()`，钓点×鱼正向表 + 鱼种→钓点反向表）。**译名分层**：21 种直接用 `rf1data.js` 官方名（鳟鱼/鲭鱼/鰤鱼/银鲫鱼/鲽鱼等）；其余 **11 种为通用水产译名、非正式汉化，待拍板**（雅罗鱼·基贝里奥·秋比目鱼·瓜子鲷·公鱼·真鳟·狗鱼·龙虾·邪魔乌贼·哲罗鱼·恋鲷），**钓点名**亦为通译待拍板。数据事实层（出现率/卖价/钓点分布）可信，仅译名待用户确认。
 
 ### ② BOSS战（缺 rff / rf4 / rf5）
 - `boss.js` 已建，源 biligame wiki；现有 rf1/rf2/rf3/rfo 四作。
@@ -59,7 +59,7 @@
 - [x] 纠正 v1 误判（已完成本文件）
 - [x] 推进 ① 钓点/鱼 rfo（2026-10-29 已补齐）
 - [x] 推进 ① 钓点/鱼 rf3（2026-10-29 已补齐，源 biligame RF3fishing）
-- [ ] 推进 ① 钓点/鱼 rf1（源待核对，暂不落库）
+- [x] 推进 ① 钓点/鱼 rf1（2026-10-29 已补齐，11 译名+钓点名通译待拍板）
 - [ ] 推进 ② BOSS rff/rf4/rf5
 - [ ] 视源可得性推进 ③ 抗性 / ④ 行程
 - [ ] 评估 ⑤ azuma 数据可得性
