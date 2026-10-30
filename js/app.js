@@ -6,9 +6,11 @@ const LSKEY = 'rf_wiki_v1';
 
 /* 作品卡配图。统一预构图成 2.95:1（卡片图区比例），CSS 直接 cover 即可 */
 /* 作品卡配图：直接用官方标题画面整图，铺满卡片顶部（不抠 logo、不做模糊底）。
-   单文件版没有外部文件可加载，_inline.py 会把 assets/title/*.jpg 转成 TITLE_DATA */
+   符文1 用 ROM 原生 256x192 无损 PNG（零修图：无拼接、无补边、无缩放、无插值），
+   其余作仍是 960x325 的 JPG。单文件版没有外部文件可加载，
+   _inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
 const TITLE_ART = {
-    rf1:   { src: 'assets/title/rf1.jpg' },
+    rf1:   { src: 'assets/title/rf1.png' },
     rf2:   { src: 'assets/title/rf2.jpg' },
     rf3:   { src: 'assets/title/rf3.jpg' },
     rf3sp: { src: 'assets/title/rf3sp.jpg' },

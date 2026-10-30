@@ -47,10 +47,11 @@ MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml",
 
 def title_block():
     """作品卡配图是 JS 里拼出来的，HTML 正则够不到，单独转成 TITLE_DATA。
-    现在用的是 assets/title/*.jpg（整张官方标题图）；assets/logo/*.png 那批透明 logo
-    暂时没被引用，先不内联，省 700 多 KB。"""
+    jpg 是 960x325 的整张官方标题图；png 目前只有 rf1 的 ROM 原生 256x192 无损图。
+    assets/logo/*.png 那批透明 logo 暂时没被引用，先不内联，省 700 多 KB。"""
     arts = {}
-    for sub, pat, mime in (("title", "*.jpg", "image/jpeg"),):
+    for sub, pat, mime in (("title", "*.jpg", "image/jpeg"),
+                           ("title", "*.png", "image/png")):
         d = ROOT / "assets" / sub
         if not d.is_dir():
             continue

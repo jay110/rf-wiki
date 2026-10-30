@@ -1829,10 +1829,14 @@ img {
 }
 
 /* 作品图直接用官方整图铺满顶部，不抠 logo、不加模糊底 */
+/* 高度 6rem = 96px：与 assets/title/*.jpg 的 960x325（2.95:1）同比例，
+   旧值 4.1rem（66px，4.30:1）会把每张图上下各切掉约 31%。
+   按 96px 算，NDS 原生 256x192 在 284 宽的卡里可见高度 86.5px，
+   正好装下符文1 标题块（RuneFactory 62→147，共 86px）。 */
 .wcard-fig {
     position: relative;
     margin: 0 -0.8rem 0.5rem;
-    height: 4.1rem;
+    height: 6rem;
     background: rgba(0, 0, 0, 0.16);
 }
 
@@ -1841,7 +1845,10 @@ img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 42%;
+    /* 58%：原生 256x192 的可见带落在 y≈61..148，刚好框住三行标题
+       （42% 会只显示到 y≈131，切掉「— 新牧場物語 —」）。
+       960x325 的图在这个高度下几乎不裁，此值对它们无影响。 */
+    object-position: center 58%;
 }
 
 .wcard-fig::after {

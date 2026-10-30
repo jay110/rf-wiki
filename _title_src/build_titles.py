@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""统一生成 10 部作品的卡片横幅图（assets/title/<gid>.jpg）
+"""统一生成 10 部作品的卡片横幅图（assets/title/<gid>.jpg|png）
 
-站上卡片图区是 195x66（CSS 4.1rem 高），比例约 2.95:1。
+站上卡片图区是 284x96 CSS（.wcard-fig 的 6rem 高），比例 2.96:1，
+与输出图 960x325（2.95:1）基本同比例，所以 cover 几乎不裁。
 每张源图按自身比例选择处理方式：
   cover      —— 全幅画面，直接按 2.95:1 居中裁切
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
-输出 960px 宽 JPEG（显示宽度只有 195px，够 2 倍屏）。
+  native     —— rf1 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
+输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1 例外，是 256x192 PNG。
 """
 import os
 from PIL import Image, ImageFilter, ImageDraw
@@ -83,70 +85,29 @@ def card_band(W, H):
     return top, int(round(top + vis))
 
 
-def rf1_banner(y0=151, y1=325, strip=18, vs=1):
-    """RF1 横幅：标题块等比缩到卡片可见带内，两侧用「纯天空窄条的逐行镜像」补齐。
+def rf1_native():
+    """RF1 横幅：直接用 ROM 原生 256x192 无损图，零修图。
 
-    参数 y0/y1 是源图（582x442）里标题块的上下界：
-      RUNE FACTORY 顶 ≈155 / ルーンファクトリー ≈240..275 / — 新牧場物語 — ≈290..320
+    为什么不再合成：
+      卡片图框已从 284x66（4.30:1）改成 284x96（2.96:1），与 960x325 同比例。
+      在这个框里，256x192 的原生图按宽 cover 后可见高度 = 96 / (284/256) = 86.5px，
+      而符文1 标题块（RuneFactory 顶 y=62 → 「— 新牧場物語 —」底 y=147）正好 86px，
+      配 object-position: center 58% 刚好整块落入可见带。
 
-    为什么不是模糊延展：卡片可见带折算回源图只有约 135px，而标题块要 165px，
-    所以必须先等比缩小（缩到占宽约 78%），左右各留约 11% 需要补。
-    补法有三种，只有「镜像纯天空窄条」既清晰又无缝：
-      · 边缘纯色/插值 → 面板边缘本来就是亮白云，铺开成一条白带，见 P1/Q 实验；
-      · 高斯模糊     → 用户明确否掉（「不要模糊」）；
-      · 镜像窄条     → 接缝处像素与面板边缘完全相同（零色差），且是真实像素，不糊。
-    窄条取 18px（源图上 R 花饰约从 x≈25 起，18px 内是纯天空，不会镜像出花饰）。
-    侧区再沿 y 做 3 行均值（vs=1），压掉逐行镜像的纵向条纹 —— 只作用于侧区，面板不动。
+      旧做法（rf1_banner）是在 4.30:1 的框里硬塞 4:3 的画面：可见带折算回源图只有
+      约 135px，而标题块要 165px，只能等比缩小再把左右各 11% 的天空造出来 ——
+      无论换多少种补法（模糊 / 镜像 / 边缘色插值 / 去天空留 logo）都是修图。
+      改框之后这些都不需要了。
+
+    源图 src/rf1_native_256x192.png 的来历：
+      从 ROM 图层合成结果（金色花纹底板 + 金字 + 假名 + 副标）里按 256x192 原尺寸
+      裁出，未做任何缩放、插值、拼接、补边。是纯原生的屏幕像素。
     """
-    W = OUT_W
-    H = int(round(OUT_W / RATIO))
-    BT, BB = card_band(W, H)
-    src = Image.open(os.path.join(SRC, 'rf1_desmume_title.png')).convert('RGB')
-    art = src.crop((0, y0, src.size[0], y1))
-    aw, ah = art.size
-
-    s = (BB - BT) / ah                       # 等比缩到可见带高度
-    nw, nh = int(aw * s + .5), int(ah * s + .5)
-    art = art.resize((nw, nh), Image.LANCZOS)
-    x = (W - nw) // 2
-    y = BT + ((BB - BT) - nh) // 2
-
-    base = Image.new('RGB', (W, H), (208, 232, 250))
-    ap, bp = art.load(), base.load()
-    K = strip
-    for ry in range(nh):                     # 逐行镜像铺两侧（周期 2K，接缝处连续）
-        Y = y + ry
-        row = [ap[c, ry] for c in range(nw)]
-        for dx in range(x):
-            i = dx % (2 * K)
-            bp[x - 1 - dx, Y] = row[i if i < K else 2 * K - 1 - i]
-        for dx in range(W - (x + nw)):
-            i = dx % (2 * K)
-            bp[x + nw + dx, Y] = row[nw - 1 - (i if i < K else 2 * K - 1 - i)]
-        for c in range(nw):
-            bp[x + c, Y] = row[c]
-    for ry in range(nh):                     # 只对侧区做纵向 3 行均值，去条纹
-        if not vs:
-            break
-        Y = y + ry
-        lo, hi = max(0, ry - vs), min(nh - 1, ry + vs)
-        for bx in list(range(x)) + list(range(x + nw, W)):
-            acc = [0, 0, 0]
-            for k in range(lo, hi + 1):
-                c = bp[bx, y + k]
-                acc[0] += c[0]; acc[1] += c[1]; acc[2] += c[2]
-            n = hi - lo + 1
-            bp[bx, Y] = (acc[0] // n, acc[1] // n, acc[2] // n)
-    for Y in range(0, y):                    # 上下补满（卡片上看不到，只为整图完整）
-        for c in range(W):
-            bp[c, Y] = bp[c, y]
-    for Y in range(y + nh, H):
-        for c in range(W):
-            bp[c, Y] = bp[c, y + nh - 1]
-
-    base.paste(art, (x, y))
-    p = os.path.join(OUT, 'rf1.jpg')
-    base.save(p, quality=94, optimize=True, progressive=True)
+    src = Image.open(os.path.join(SRC, 'rf1_native_256x192.png')).convert('RGB')
+    if src.size != (256, 192):
+        raise SystemExit('rf1 原生图尺寸不对：%s（应为 256x192）' % (src.size,))
+    p = os.path.join(OUT, 'rf1.png')
+    src.save(p, optimize=True)          # 无损 PNG，不重采样
     return p
 
 
@@ -164,13 +125,10 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     made = []
 
-    # RF1：DeSmuME 实机标题（蓝天+蓝飞龙+金字+「— 新牧場物語 —」副标）。
-    # 关键约束：卡片图框实为 284x66（4.30:1）+ object-position 50% 42%，
-    # 960x325 里只有 y≈43..266 这 223px 在卡上可见（源图仅约 135px 折算高度）。
-    # 而标题块（RUNE FACTORY 顶 155 → 新牧場物語 底 320）要 165px，
-    # 所以直接 cover 必然切掉副标题 —— 必须先按可见带等比缩小，再用
-    # 「按行左右边缘色插值」补出两侧天空、面板大羽化，避免出现贴片接缝。
-    p = rf1_banner()
+    # RF1：ROM 原生 256x192 无损图，零修图（不拼接、不补边、不缩放、不插值）。
+    # 卡片图框已改为 284x96（2.96:1），与 960x325 同比例；在这个框里原生 4:3 的
+    # 可见高度 86.5px 刚好装下标题块 86px（RuneFactory 62 → 新牧場物語 147）。
+    p = rf1_native()
     made.append((p, Image.open(p).size))
 
     # RF2：ROM 原生透明 logo（龙形纹章 Rune Factory 2）贴蓝色渐变，与卡片蓝调一致。
