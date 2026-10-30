@@ -5564,7 +5564,7 @@ function azumaBossHtml() {
         <div class="note">来源：biligame 中文 wiki《RRFmainstory》与 gametoeasy《BOSS 抓捕攻略》交叉核对（纯中文，与本站 data.js 译名一致）。「骑乘」可收服为坐骑／宠物者标「可骑乘」，其余为不可捕 Boss。「大小」为源标注体型档（数字 2/4）。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>武器弱点</th><th>属性弱点</th><th>骑乘</th><th>大小</th><th>最喜欢</th><th>喜欢</th></tr></thead><tbody>${capRows}</tbody></table></div>
         <h3>主线剧情 BOSS</h3>
-        <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站暂译（附英文原名），待核实拍板。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
+        <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站音译定名（中文攻略站无权威译名，保留英文名对照）。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>英文名</th><th>Lv</th><th>武器弱点</th><th>属性弱点</th><th>定位／备注</th></tr></thead><tbody>${mainRows}</tbody></table></div>`;
 }
 
