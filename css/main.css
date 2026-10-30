@@ -1840,6 +1840,17 @@ img {
     background: rgba(0, 0, 0, 0.16);
 }
 
+/* 少数作的原生标题屏信息密度高（符文2：龙翼尖 y=0 → 装饰三角底 y=134，
+   共 134px 原生高），96px 的框按宽 cover 只能露出 86.5px 原生高，翼尖必被切。
+   这类卡单独加高到 16:9：可见原生高 = 160 / (284/256) = 144px，整个 logo 块
+   全装下，只让出最底部 48px 的云/地插画（纯背景，不承载信息）。
+   用 aspect-ratio 而不是固定高度：任何列宽下 16:9 恒等于「可见 144px 原生高」，
+   手机单列加宽也不会反过来切到 logo 底部。 */
+.wcard-fig.is-tall {
+    height: auto;
+    aspect-ratio: 16 / 9;
+}
+
 .wcard-fig img {
     display: block;
     width: 100%;

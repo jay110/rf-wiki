@@ -4967,6 +4967,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第一百零一次：符文2 图框单独加高到 16:9，龙翼尖不再被切（仍是零修图，改的是框不是图）</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：第一百次把符文2 换成日版原生图后，只能用 <code>object-position: center 43%</code> 框住字标与假名，<b>龙翼上半被切</b>。用户说「你可以想象边缘是什么」——意思是<b>被切的部分应该挑「能靠想象补全的」，不要切主体</b>。</li>
+                <li class="li"><b>先试了镜像补全，否决</b>：把整块 logo 缩到 71.6%（256→183 宽）以便 134px 内容装进 96px 框，再把两侧各约 50px 用边缘镜像补出。结果<b>镜像把字标末尾的 R 和蓝色大 2 原样复制了一份</b>，一眼假。任何「缩小 + 造侧边」的路线都会撞上同一堵墙：画面左右边缘本身就是内容，不可能凭空延伸。</li>
+                <li class="li"><b>换思路：动框，不动图</b>。符文2 的 logo 块是<b>龙翼尖 y=0 → 底部装饰三角 y=134，共 134px 原生高</b>；而 96px 框按宽 cover 只露 86.5px。<b>把这张卡的图框单独加高</b>即可，图仍然一个像素都不改。</li>
+                <li class="li"><b>为什么是 16:9</b>：<code>284 宽 / (284/256) = 144px</code> 原生可见高 &gt; 134px，整个 logo 块一次装下，只让出最底部 <b>48px 的云与地色插画</b>——那正是「可以想象」的纯背景。选 4:3 全显（284×213）也能零裁切，但卡高翻倍、栅格直接塌，16:9（284×160）是兼顾下限。</li>
+                <li class="li"><b>用 aspect-ratio 而不是固定高度</b>：<code>.wcard-fig.is-tall { height:auto; aspect-ratio:16/9 }</code>。16:9 是比例，可见原生高<b>恒等于 144px</b>，与列宽无关——实测 284/340/400 宽列下都是 144px；若写死 160px，手机单列卡变宽后反而会把 logo 底部切回去。</li>
+                <li class="li"><b>渲染侧</b>：<code>TITLE_ART</code> 增加可选 <code>tall</code> 字段，渲染时给图框加 <code>is-tall</code>；<code>rf2</code> 的 <code>pos</code> 由 <code>43%</code> 改为 <code>0%</code>（顶对齐，可见带 y=0..144）。其余九张卡不受影响。</li>
+                <li class="li"><b>代价（需知）</b>：这张卡比同排其他卡高 64px。栅格是 <code>stretch</code>，同一行仍等高，视觉上是「符文2 图更大、其余卡文字区留白多一点」，实测三列与手机双列均不塌。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第一百次：符文2 也改用日版 ROM 原生 256x192 无损图，零修图</h2>
             <ul class="ul">
                 <li class="li"><b>问题</b>：第九十九次把符文1 改成零修图后留了个尾巴——符文2 仍走「ROM 透明 logo 贴蓝色渐变」。用户指出「符文2 也有一样的图」，并给出本机压缩包 <code>F:\BaiduNetdiskDownload\符文工房123.rar</code>。</li>

@@ -11,7 +11,7 @@ const LSKEY = 'rf_wiki_v1';
    _inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
 const TITLE_ART = {
     rf1:   { src: 'assets/title/rf1.png' },
-    rf2:   { src: 'assets/title/rf2.png', pos: '43%' },
+    rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
     rf3:   { src: 'assets/title/rf3.jpg' },
     rf3sp: { src: 'assets/title/rf3sp.jpg' },
     rf4:   { src: 'assets/title/rf4.jpg' },
@@ -143,7 +143,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art ? `<div class="wcard-fig"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig${art.tall ? ' is-tall' : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
