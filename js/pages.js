@@ -4967,6 +4967,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十六次：重做「符文工房1」「符文工房2」作品卡横幅（标题 logo），修掉符文2 的整幅横条纹</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：作品卡横幅（<code>assets/title/rf1.jpg</code>、<code>rf2.jpg</code>）上一版出图有缺陷——符文2 用「按行取左边缘色横向拉伸」铺底，出现满幅横条纹、小图块偏置；符文1 金字发虚、带光晕。</li>
+                <li class="li"><b>做法</b>：符文1 改用 DeSmuME 实机标题截图（蓝天＋蓝飞龙＋金字全幅），按卡片真实可见带（图框 284×66、<code>object-fit:cover</code>＋<code>object-position:50% 42%</code> → 源图 y≈43..266 才可见）裁横带后轻锐化；符文2 改用 ROM 原生<b>透明</b> logo（龙形纹章 Rune Factory 2）贴卡片同色蓝渐变（#2f6f93→#86bcd8），因为 NDS 标题屏是 4:3，直接裁 2.95:1 会上下劈断龙翼。</li>
+                <li class="li"><b>构建</b>：<code>_title_src/build_titles.py</code> 的 rf1/rf2 两处已改用上述源与方法（原先走桌面单层 <code>NCGR.BMP</code>、以及 <code>_build_rf2card.py</code> 的横向拉伸都会复现横条，已不再作为出图路径）；成品 <code>assets/title/rf1.jpg</code>/<code>rf2.jpg</code> 入库，standalone 同步内联，其余 8 张未动。</li>
+                <li class="li"><b>核验</b>：按真实卡面 284×66 可见带出图确认——两作标题 logo 完整居中、无横条纹/错位；主品牌字「Runefactory」「Rune Factory 2」均完整可见。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第九十五次：补 BOSS 战「符文工房4（RF4）」14 位主线 BOSS，boss 页由六作扩到七作</h2>
             <ul class="ul">
                 <li class="li"><b>数据源</b>：fandom「therunefactory」怪物数值表（每只 BOSS 给完整 HP/ATK/DEF/M.ATK/M.DEF + 七项百分比抗性）、GameFAQs 主线流程攻略（弗雷克火龙/普罗戴地龙弱点）、biligame RF4 主线页（出场顺序与 3DS 汉化版官方译名）。</li>

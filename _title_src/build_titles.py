@@ -59,6 +59,22 @@ def fill(im, bg_rgb=(18, 18, 20)):
     return base
 
 
+def diag_grad(w, h, c0, c1):
+    """对角线渐变（用于把透明 logo 贴成横幅底）。"""
+    a = tuple(int(c0.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4))
+    b = tuple(int(c1.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4))
+    im = Image.new('RGB', (w, h))
+    px = im.load()
+    for y in range(h):
+        for x in range(0, w, 4):
+            t = x / max(1, w - 1) * 0.5 + y / max(1, h - 1) * 0.5
+            c = tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+            for k in range(4):
+                if x + k < w:
+                    px[x + k, y] = c
+    return im
+
+
 def emit(im, gid, wy=0.5, mode='cover'):
     im = cover(im, wy) if mode == 'cover' else fill(im)
     im = im.convert('RGB')
@@ -73,10 +89,37 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     made = []
 
-    # RF1 / RF2：NDS 原生标题画面（全幅设计，直接裁）
-    for gid, f in [('rf1', '1/title_bgC.NCGR.BMP'), ('rf2', '2/rune2_titleA01.NCGR.BMP')]:
-        im = Image.open(os.path.join(SRC_LOCAL, f)).convert('RGB')
-        made.append(emit(im, gid, 0.45))
+    # RF1：DeSmuME 实机标题（蓝天+蓝飞龙+金字全幅），按 2.95:1 裁横带后轻锐化。
+    # 不用桌面单层 NCGR.BMP —— 那批是单层渲染，裁切+放大后出横条纹/劈开龙翼。
+    im = Image.open(os.path.join(SRC, 'rf1_desmume_title.png')).convert('RGB')
+    im = cover(im, 0.45).resize((OUT_W, int(round(OUT_W / RATIO))), Image.LANCZOS)
+    im = im.filter(ImageFilter.UnsharpMask(radius=1.2, percent=40, threshold=3))
+    p = os.path.join(OUT, 'rf1.jpg')
+    im.convert('RGB').save(p, quality=90, optimize=True, progressive=True)
+    made.append((p, im.size))
+
+    # RF2：ROM 原生透明 logo（龙形纹章 Rune Factory 2）贴蓝色渐变，与卡片蓝调一致。
+    # NDS 标题屏是 4:3，直接裁 2.95:1 会把龙翼上下劈断，所以走「logo + 渐变底」。
+    THE_H = int(round(OUT_W / RATIO))
+    bg = diag_grad(OUT_W, THE_H, '#2f6f93', '#86bcd8').convert('RGBA')
+    glow = Image.new('L', bg.size, 0)
+    gw, gh = bg.size
+    ImageDraw.Draw(glow).ellipse([gw * 0.16, -gh * 0.4, gw * 0.84, gh * 1.4], fill=70)
+    glow = glow.filter(ImageFilter.GaussianBlur(80))
+    wl = Image.new('RGBA', bg.size, (255, 255, 255, 255))
+    wl.putalpha(glow)
+    bg.alpha_composite(wl)
+    lg = Image.open(os.path.join(WIKI, 'assets', 'logo', 'rf2.png')).convert('RGBA')
+    tw = int(gw * 0.70)
+    th = int(round(lg.size[1] * tw / lg.size[0]))
+    if th > gh * 0.9:
+        th = int(gh * 0.9)
+        tw = int(round(lg.size[0] * th / lg.size[1]))
+    lg = lg.resize((tw, th), Image.LANCZOS)
+    bg.alpha_composite(lg, ((gw - tw) // 2, (gh - th) // 2))
+    p = os.path.join(OUT, 'rf2.jpg')
+    bg.convert('RGB').save(p, quality=90, optimize=True, progressive=True)
+    made.append((p, bg.size))
 
     # RFF：官网标题天空底（右侧有画框，先切掉）+ 官方透明 logo
     sky = Image.open(os.path.join(SRC, 'rff_swf_01.jpg')).convert('RGB').crop((0, 0, 500, 523))
