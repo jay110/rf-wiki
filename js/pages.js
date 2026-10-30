@@ -1430,6 +1430,163 @@ function sourceRfoHtml() {
             </div>`;
 }
 
+/* ------------------------------------------------------------
+   素材出处与掉落：RF3 / RF3 特别版（MAT_RF3）
+   源：js/mat_rf3.js 的第 14 列「入手」。
+   与边境／海洋两节的关键差别：这一列只写「从哪来」，**没有概率**。
+   原表没给概率，页面也就一个数字都不补。
+   ------------------------------------------------------------ */
+function sourceRf3Html() {
+    const A = (typeof MAT_RF3 !== 'undefined') ? MAT_RF3 : [];
+    if (!A.length) return '';
+    const num = v => (v === '—' || v === '' || v == null) ? null : parseInt(v, 10);
+    const money = v => (v == null ? '<span class="mon-no">—</span>' : v + 'G');
+    const dash = v => (v == null ? '<span class="mon-no">—</span>' : v);
+    const srcOf = r => (!r[13] || r[13] === '—') ? null : r[13];
+
+    const N = A.length;
+    const noSrc = A.filter(r => !srcOf(r));
+    const mine = A.filter(r => srcOf(r) && /挖矿/.test(r[13]));
+    const synth = A.filter(r => srcOf(r) && /合成/.test(r[13]));
+    const lvTier = A.filter(r => srcOf(r) && /Lv/.test(r[13]));
+
+    /* 魔物来源：按怪名聚合，去掉「Lv1~10」这类后缀 */
+    const byMon = {};
+    A.forEach(r => {
+        const s = srcOf(r); if (!s) return;
+        if (/^(挖矿|合成)$/.test(s)) return;
+        s.split('、').forEach(x => {
+            const k = x.replace(/Lv.*$/, '').trim(); if (!k) return;
+            (byMon[k] = byMon[k] || []).push(r[0]);
+        });
+    });
+    const monNames = Object.keys(byMon);
+    const oneKind = monNames.filter(k => byMon[k].length === 1).length;
+    const monTop = monNames.slice().sort((a, b) => byMon[b].length - byMon[a].length || a.localeCompare(b)).slice(0, 12);
+    const dropCount = A.filter(r => srcOf(r) && !/^(挖矿|合成)$/.test(r[13])).length;
+
+    /* 单一出处：来源串里没有顿号 */
+    const solo = A.filter(r => { const s = srcOf(r); return s && s.indexOf('、') < 0; });
+    const soloSell = solo.map(r => num(r[2])).filter(v => v != null).sort((a, b) => a - b);
+    const soloMed = soloSell[Math.floor(soloSell.length / 2)];
+    const multi = A.filter(r => { const s = srcOf(r); return s && s.indexOf('、') >= 0; });
+    const multiSell = multi.map(r => num(r[2])).filter(v => v != null).sort((a, b) => a - b);
+    const multiMed = multiSell[Math.floor(multiSell.length / 2)];
+
+    /* 负属性：作为强化材料时会倒扣 */
+    const NEG = [['攻', 3], ['魔攻', 4], ['防', 5], ['魔防', 6], ['力', 7], ['智', 8], ['体', 9]];
+    const negOf = r => NEG.filter(([k, i]) => (num(r[i]) || 0) < 0).map(([k, i]) => k + num(r[i])).join(' ');
+    const negAll = A.filter(r => negOf(r));
+    const negSolo = negAll.filter(r => negOf(r) && srcOf(r) && r[13].indexOf('、') < 0).length;
+
+    /* 卖价 × 强化难度 */
+    const both = A.filter(r => num(r[12]) != null && num(r[2]) != null);
+    const corr = (() => {
+        const xs = both.map(r => num(r[12])), ys = both.map(r => num(r[2]));
+        const mx = xs.reduce((a, b) => a + b, 0) / xs.length, my = ys.reduce((a, b) => a + b, 0) / ys.length;
+        let n = 0, dx = 0, dy = 0;
+        xs.forEach((x, i) => { n += (x - mx) * (ys[i] - my); dx += (x - mx) * (x - mx); dy += (ys[i] - my) * (ys[i] - my); });
+        return dx && dy ? n / Math.sqrt(dx * dy) : 0;
+    })();
+    const top10 = A.slice().sort((a, b) => (num(b[2]) || 0) - (num(a[2]) || 0)).slice(0, 10);
+    const topNeg = top10.filter(r => negOf(r)).length;
+
+    /* ---- 各表 ---- */
+    const kindRows = [
+        ['魔物掉落', dropCount + ' 件', '占绝大多数'],
+        ['挖矿', mine.length + ' 件', mine.map(r => r[0]).join('、') || '—'],
+        ['合成', synth.length + ' 件', synth.map(r => r[0]).join('、') || '—'],
+        ['原表未标', noSrc.length + ' 件', noSrc.map(r => r[0]).join('、') || '—'],
+    ];
+
+    const soloRows = solo.slice().sort((a, b) => (num(b[2]) || 0) - (num(a[2]) || 0)).map(r => [
+        r[0] + ' ' + r[13], [r[0], r[13].replace(/Lv.*$/, '') + (/Lv/.test(r[13]) ? '<span class="mon-no">（' + r[13].replace(/^.*?(Lv.*)$/, '$1') + '）</span>' : ''),
+        money(num(r[2])), dash(r[12])]
+    ]);
+
+    const tierRows = lvTier.map(r => [
+        r[0], r[13].replace(/^.*?(Lv.*)$/, '$1'), money(num(r[2])), dash(r[12])
+    ]);
+
+    const monRows = monTop.map(k => [
+        k + ' ' + byMon[k].join(' '),
+        [k, byMon[k].length + ' 件', Array.from(new Set(byMon[k])).join('、')]
+    ]);
+
+    const topRows = top10.map(r => [
+        r[0], '<b>' + money(num(r[2])) + '</b>', dash(r[12]), r[13], negOf(r) ? '<b>' + negOf(r) + '</b>' : '<span class="txc">无</span>'
+    ]);
+
+    const negRows = negAll.map(r => [
+        r[0] + ' ' + (r[13] || ''),
+        [r[0], '<b>' + negOf(r) + '</b>', money(num(r[2])), dash(r[12]), srcOf(r) ? r[13] : '<span class="mon-no">原表未标</span>']
+    ]);
+
+    const allRows = A.slice().sort((a, b) => (num(b[2]) || 0) - (num(a[2]) || 0)).map(r => [
+        r[0] + ' ' + (r[13] || '') + ' ' + negOf(r),
+        [r[0], srcOf(r) ? r[13] : '<span class="mon-no">原表未标</span>', money(num(r[1])), money(num(r[2])), dash(r[12]), negOf(r) ? '<b>' + negOf(r) + '</b>' : '<span class="txc">无</span>']
+    ]);
+
+    return `
+        <p class="p">先说清楚这一节跟前面几作<b>不是同一种表</b>：边境与海洋给的是「打这只怪，掉这件东西的概率」，RF3 的源表<b>只写了「从哪来」，一个概率都没有</b>。所以下面所有内容都只回答「去哪弄」，不回答「打几次能出」——原表没给的东西，本站不替它编。</p>
+        ${stat([['素材', N + ' 件'], ['标了来源', (N - noSrc.length) + ' 件'], ['魔物来源', monNames.length + ' 种'], ['只有一个出处', solo.length + ' 件']])}
+
+        <h2 class="h2">来源就这四类</h2>
+        <p class="p">${N} 件素材里 ${dropCount} 件靠打怪，<b>挖矿只出一件（废铁），合成只出一件（毛线球）</b>。剩下 ${noSrc.length} 件原表根本没写来源，页面显示「原表未标」。</p>
+        ${tbl(['来源类型', '件数', '都是什么'], kindRows, { leftFirst: true, cls: 'txt', colw: ['5rem', '3.4rem', 'auto'] })}
+        <div class="key">别指望靠挖矿凑强化材料——<b>全表只有废铁一件来自挖矿，而且它还扣攻扣防</b>。要凑素材就是刷怪，没有第二条路。</div>
+
+        <h2 class="h2">${solo.length} 件素材，全作只有这一个出处</h2>
+        <p class="p">这是这一页最该先看的一张表：${N} 件里有 ${solo.length} 件的来源栏<b>没有顿号</b>，也就是说——<b>缺了它就必须去打那一只怪，没有替代品</b>。按卖价从高到低排：</p>
+        ${ftableOwn(['素材', '唯一出处', '卖价', '强化难度'],
+            ['7rem', 'auto', '4.4rem', '4.4rem'], soloRows, { ph: '输入素材名或魔物名筛选' })}
+        <div class="key">这张表基本就是<b>一份 BOSS 清单</b>：排在前面的是火龙鳞片←弗雷克扎伊德、地龙鳞片←普罗戴格力德、水龙羽鳍←阿克娜比特、克里莫亚的鳞片←克里莫亚、冰壁的碎片←死亡之墙——<b>卖价越靠前，出处越像主线必经的那几场硬仗</b>。而且单源素材的卖价中位 ${money(soloMed)}，是 ${multi.length} 件多源素材（中位 ${money(multiMed)}）的 ${Math.round(soloMed / multiMed)} 倍：能随手刷到的都不值钱，值钱的都得专门去打。</div>
+
+        <h2 class="h2">摩可摩可：同一只怪按等级给三种不同的毛</h2>
+        <p class="p">全表<b>唯一一组按怪物等级分档</b>的素材。同一只摩可摩可，等级不同掉的东西完全不同：</p>
+        ${tbl(['素材', '掉落条件', '卖价', '强化难度'], tierRows, { leftFirst: true, cls: 'txt', colw: ['7.4rem', 'auto', '4.4rem', '4.4rem'] })}
+        <div class="key">想要最值钱的那件<b>毛茸茸的软软毛（${money(700)}）</b>，得把牧场里的摩可摩可<b>练到 21 级以上</b>；Lv1~10 只掉软软毛（${money(120)}），Lv11~20 掉软绒毛（${money(500)}）。同一只怪、同一个掉落位，等级差一档收入差 ${Math.round(700 / 120)} 倍。</div>
+
+        <h2 class="h2">掉最多素材的 ${monTop.length} 只</h2>
+        <p class="p">${monNames.length} 种魔物来源里，有 ${oneKind} 只<b>只掉一种素材</b>；掉得最多的是这几只：</p>
+        ${ftableOwn(['魔物', '件数', '能掉出什么'],
+            ['6.4rem', '3.2rem', 'auto'], monRows, { ph: '输入魔物名或素材名筛选' })}
+        <div class="key">摩可摩可虽然挂着 4 件，但其中 3 件是<b>同一种毛的三个等级档</b>，去重后只剩 2 种。真要说「一只怪能凑齐一套」的，是<b>迷你石魔人</b>（银／金／白金／钻石，全是矿石类）和<b>沙漠蝎／死亡蝎</b>（虫皮、漂亮的虫皮、蝎子的尾巴、蝎子的钳子）。</div>
+
+        <h2 class="h2">越贵越难打进去，而且多半带减益</h2>
+        <p class="p">${both.length} 件同时标了卖价与强化难度，两者的相关系数是 <b>${corr.toFixed(2)}</b>——卖得越贵，想把它打进装备越难。卖价前十里<b>有 ${topNeg} 件带负属性</b>，也就是说最贵那批几乎都是「加一大截、扣一小截」。</p>
+        ${tbl(['素材', '卖价', '强化难度', '出处', '倒扣'], topRows,
+            { leftFirst: true, cls: 'txt', colw: ['7rem', '4.4rem', '4.4rem', 'auto', '4rem'] })}
+        <div class="key">卖价最高的<b>火龙鳞片</b>（${money(10000)}，难度 87）扣 4 点防御；<b>地龙鳞片</b>扣 3 点攻击却加 26 防御。<b>别只看卖价决定用不用</b>——差的那一两点可能正好抵消你堆了半天的方向。</div>
+
+        <h2 class="h2">${negAll.length} 件素材会倒扣属性</h2>
+        <p class="p">RF3 的素材当强化材料时会把数值<b>直接加到装备上，负数就是减</b>。全表 ${negAll.length} 件带负值，其中 <b>${negSolo} 件是单一来源</b>——好东西几乎都带减益，这是这一作强化系统的基本脾气。</p>
+        <details class="mon-fold">
+            <summary>展开全部 ${negAll.length} 件（点一下）</summary>
+            ${ftableOwn(['素材', '倒扣', '卖价', '强化难度', '出处'],
+                ['6.6rem', '4.6rem', '4rem', '4.4rem', 'auto'], negRows, { ph: '输入素材名或魔物名筛选' })}
+        </details>
+
+        <h2 class="h2">${noSrc.length} 件原表没写来源</h2>
+        <p class="p">${noSrc.map(r => '<b>' + r[0] + '</b>').join('、')}——这 ${noSrc.length} 件的「入手」栏在源表里就是空的。石头、树枝、木材属于随手捡的基础材料，但<b>牧草、紫水晶、地之结晶</b>原表同样空着，本站不替它补。</p>
+
+        <h2 class="h2">全 ${N} 件（可搜索）</h2>
+        ${ftableOwn(['素材', '出处', '买价', '卖价', '强化难度', '倒扣'],
+            ['6.6rem', 'auto', '3.6rem', '3.6rem', '4.4rem', '4rem'], allRows, { ph: '输入素材名、魔物名或「挖矿」筛选' })}
+        <div class="note">「出处」一栏照抄源表原样，<b>包括它自己的笔误</b>——比如「龙牙」把克里莫亚列了两遍、「优质毛皮」把究极恶魔列了两遍，本站不去重也不改写。买价为空的只有<b>火之结晶</b>一件（原表未标）。</div>
+        <div class="note">本页数据适用于 <b>RF3 与 RF3 特别版</b>：特别版沿用原作主线与素材体系，未收录特别版可能新增的部分。</div>
+        <div class="jump">
+            <a href="#/page/material">
+                <div class="jp-t">素材与矿石</div>
+                <div class="jp-s">这些素材加的是什么属性、强化难度怎么用</div>
+            </a>
+            <a href="#/page/mbook">
+                <div class="jp-t">魔物图鉴</div>
+                <div class="jp-s">上面那些怪在哪出没、数值多少</div>
+            </a>
+        </div>`;
+}
+
 /* 分节模式的搜索栏（id 与 app.js 约定一致） */
 function eqbar(n, ph) {
     return `<div class="rec-filter">
@@ -5179,10 +5336,11 @@ const PAGES = [
     },
     {
         key: 'source', group: 'item', title: '素材出处与掉落', icon: 'gem',
-        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
+        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5'],
         body: g => {
             if (g.id === 'rff') return sourceRffHtml();
             if (g.id === 'rfo') return sourceRfoHtml();
+            if (g.id === 'rf3' || g.id === 'rf3sp') return sourceRf3Html();
             const is5 = g.id === 'rf5';
             const S4 = (typeof SRC_RF4 !== 'undefined') ? SRC_RF4 : [];
             const M4 = (typeof MDROP_RF4 !== 'undefined') ? MDROP_RF4 : [];
@@ -5805,6 +5963,20 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百一十六次：「素材出处与掉落」补上 RF3／RF3 特别版，这一作的表没有概率</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「素材出处与掉落」原覆盖边境／海洋／RF4／RF4S／RF5，<b>独缺 RF3 与 RF3 特别版</b>。这次补上，数据源是站内一直在用、但从没拿来分析过的一列——<code>MAT_RF3</code> 的第 14 列「<b>入手</b>」（biligame《RF3item》）。新增顶层函数 <code>sourceRf3Html()</code>，<code>gms</code> 加上 <code>rf3</code>／<code>rf3sp</code>。</li>
+                <li class="li"><b>先说清楚它跟另外两作不是同一种表</b>：边境与海洋给的是「打这只怪，掉这件东西的概率」，而 <b>RF3 的源表只写「从哪来」，一个概率都没有</b>。所以这一页只回答「去哪弄」，不回答「打几次能出」——原表没给的，本站不替它编。页面开头就把这句写明了。</li>
+                <li class="li"><b>90 件素材里，35 件全作只有一个出处</b>——这是这一页最该先看的一张表。来源栏<b>没有顿号</b>就意味着缺了它非打那只怪不可。卖价最高的几件几乎就是一张 BOSS 清单：<b>火龙鳞片←弗雷克扎伊德（10,000G）、地龙鳞片←普罗戴格力德（9,000G）、水龙羽鳍←阿克娜比特（8,400G）、克里莫亚的鳞片（7,000G）、冰壁的碎片←死亡之墙（6,000G）</b>。</li>
+                <li class="li"><b>单一出处＝值钱</b>：35 件单源素材的卖价中位 <b>2,500G</b>，是 49 件多源素材（中位 260G）的 <b>10 倍</b>。能随手刷到的都不值钱，值钱的都得专门去打。</li>
+                <li class="li"><b>全表唯一一组按等级分档</b>：<b>摩可摩可</b>按自身的等级给三种毛——Lv1~10 掉软软毛（120G）、Lv11~20 掉软绒毛（500G）、<b>Lv21 以上才给毛茸茸的软软毛（700G）</b>。同一个掉落位，等级差一档收入差 6 倍。</li>
+                <li class="li"><b>别指望挖矿凑强化材料</b>：90 件里 <b>82 件靠打怪，挖矿只出一件（废铁，还扣攻扣防）、合成只出一件（毛线球）</b>。剩下 6 件（牧草、紫水晶、地之结晶、石头、树枝、木材）<b>原表就没写来源，显示「原表未标」不猜</b>。</li>
+                <li class="li"><b>越贵越难打进去，而且多半带减益</b>：85 件同时有卖价与强化难度，两者相关系数 <b>0.60</b>；卖价前十里 <b>7 件带负属性</b>。最贵的<b>火龙鳞片</b>（10,000G／难度 87）<b>扣 4 点防御</b>，<b>地龙鳞片</b>扣 3 点攻击却加 26 防御——别只看卖价决定用不用。全表 19 件带负值，其中 15 件是单一来源。</li>
+                <li class="li"><b>原表的笔误照录</b>：出处栏里「龙牙」把<b>克里莫亚列了两遍</b>、「优质毛皮」把<b>究极恶魔列了两遍</b>，本站不去重也不改写，已在页尾注明。买价为空的只有<b>火之结晶</b>一件。</li>
+                <li class="li"><b>踩坑（第二次栽在同一个地方）</b>：<code>tbl()</code> 的行是<b>纯单元格数组</b>，而 <code>ftableOwn()</code> 的行是 <code>[搜索串, 单元格数组]</code>——两种格式不通用。我把两张 <code>tbl</code> 的行写成了 <code>ftableOwn</code> 的格式，结果<b>搜索串被当成第一列渲染出来</b>（表里出现「软软毛,Lv1~10,120G,4」这种整行挤在一格里的怪东西）。已改成纯数组。</li>
+                <li class="li"><b>校验</b>：<b>366 个页面实例</b>（新增 2）／0 异常／头像 214 张缺 0；7 张表在 520px 与 1100px 下<b>零溢出、逐格零裁切</b>。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百一十五次：配方大全补上边境与海洋，顺手推翻了自己一句判断</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「配方大全」原只覆盖 RF4／RF4S／RF5。这次把<b>边境（228 条）与海洋（181 道料理 ＋ 16 条药学）</b>也做进来——两作的配方数据站内本来就有（<code>RFF_COOK</code>、<code>RFO_COOK</code>／<code>RFO_MED</code>），都出自 biligame 符文工厂 wiki。新增两个顶层函数 <code>recipeRffHtml()</code> / <code>recipeRfoHtml()</code>，按 <code>g.id</code> 分流。</li>
