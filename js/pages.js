@@ -4967,6 +4967,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第一百次：符文2 也改用日版 ROM 原生 256x192 无损图，零修图</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：第九十九次把符文1 改成零修图后留了个尾巴——符文2 仍走「ROM 透明 logo 贴蓝色渐变」。用户指出「符文2 也有一样的图」，并给出本机压缩包 <code>F:\BaiduNetdiskDownload\符文工房123.rar</code>。</li>
+                <li class="li"><b>旧图的两个硬伤</b>：原来的 <code>rf2.jpg</code> 取自<b>旧汉化版</b> ROM，底部 y≈165..190 带「家在矿石镇汉化组汉化」水印；日文副标 <code>ルーンファクトリー</code> 还被改成了金色中文「符文工厂」。无论怎么裁都躲不开水印，只能保留合成方案。</li>
+                <li class="li"><b>找到干净源</b>：压缩包内是三个官方日版 ROM（各 128MB，2009 年日期）。<code>符文工房2.nds</code> 的 <code>/res/obj/rune2_titleA01.{NCGR,NCLR,NSCR}</code> 解出来是<b>干净的官方标题画面</b>——没有水印、没有中文副标、没有金色「符文工厂」。用 <code>_nds_nitro.extract()</code> + <code>render()</code> 渲染成 256×256，裁掉下半留白（游戏只用上屏 256×192）。</li>
+                <li class="li"><b>与符文1 的几何差异</b>：符文1 标题块只有 86px 高，正好等于可见带 86.5px；符文2 的 logo 块从龙翼 y=4 到副标底 y=133 约 <b>130px</b>，<b>放不下全部</b>。实测取 <code>object-position: center 43%</code>（可见带 y≈45..131）时，<code>RuneFactory 2</code> 字标、假名 <code>ルーンファクトリー</code>、龙身都完整，只有龙翼上半被切——这是 2.96:1 卡框装 4:3 画面的必然取舍，不是修图。</li>
+                <li class="li"><b>改法</b>：<code>assets/title/rf2.png</code> = ROM 原生 256x192 无损 PNG（不缩放/不插值/不拼接/不补边）；<code>rf2.jpg</code> 删除；<code>app.js</code> 的 <code>TITLE_ART.rf2</code> 改指 <code>.png</code>，并给 <code>TITLE_ART</code> 加了可选的 <code>pos</code> 字段（渲染时写成内联 <code>object-position</code>），让 rf1(58%) 与 rf2(43%) 各用各的可见带；<code>build_titles.py</code> 增 <code>rf2_native()</code>，删掉整段「渐变底 + 透明 logo」合成代码。</li>
+                <li class="li"><b>清理</b>：<code>_build_rf1card.py</code>、<code>_build_rf2card.py</code> 两个已被 <code>build_titles.py</code> 完全取代的旧构卡脚本一并删除（它们生成的正是 <code>rf1.jpg</code>/<code>rf2.jpg</code>，且引用的源图已不存在）。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第九十九次：作品卡图框比例修正（4.30:1 → 2.96:1），符文1 改用 ROM 原生 256x192 无损图，零修图</h2>
             <ul class="ul">
                 <li class="li"><b>问题</b>：用户追问「能不能做到原始分辨率、不做任何 P 图」。查下来发现根因不在图，<b>而在卡片图框的高宽比做错了</b>：<code>.wcard-fig</code> 高度是 <code>4.1rem</code>（66px），卡宽 284px → <b>4.30:1</b>；而所有配图都是 960x325（<b>2.95:1</b>）。两者差太多，<code>object-fit:cover</code> 的结果是<b>每张图都被上下各切掉约 31%</b>——不只是符文1，rf2 的龙翼顶部、rf3 的构图、rf4/rf5 的 logo 全都被切。</li>
@@ -4975,7 +4984,7 @@ const PAGES = [
                 <li class="li"><b>符文1 成品改为零修图</b>：<code>assets/title/rf1.png</code> 就是 ROM 图层合成结果的<b>原生 256x192 裁切</b>——不缩放、不插值、不拼接、不补边、去天空、不加模糊。<code>rf1.jpg</code> 已删除，<code>app.js</code> 的 <code>TITLE_ART.rf1</code> 改指 <code>.png</code>，<code>_inline.py</code> 的 <code>title_block()</code> 增补 <code>*.png</code> 扫描（MIME 用 image/png，保持无损）。</li>
                 <li class="li"><b>附带收益</b>：另外 9 张 960x325 的图在新框下可见 <b>324.5/325 px</b>（几乎零裁切），全部比以前完整——rf2 龙翼不再切顶、rf3 绿树构图完整、rf4/rf5 的 "Rune Factory 4/5" 字不再只剩一半。</li>
                 <li class="li"><b>说明（物理上限）</b>：原生像素只有 256px 宽，卡片在 2 倍屏上要 568 物理像素，浏览器必须放大 2.22 倍，理论上会比「用 582px 截图另做一张」略柔。这是「用原始像素」的必然代价；实测在 1x 真实卡面下三行标题均清晰可读，看不出柔化。</li>
-                <li class="li"><b>未做</b>：符文2 走不了这条路——它的 logo 在原生图上占 y≈5..145（高 140px，要框高 ≥155px 才装得下），且原生图底部 y≈165..190 带「家在矿石镇汉化组汉化」水印。故 rf2 仍保持「ROM 透明 logo 贴同色渐变」。</li>
+                <li class="li"><b>未做（第一百次已补上）</b>：符文2 这次走不了这条路——当时的源图取自旧汉化版 ROM，logo 占 y≈5..145（要框高 ≥155px），且底部 y≈165..190 带「家在矿石镇汉化组汉化」水印。第一百次改用日版 ROM 的干净原生图后，rf2 也已换成零修图。<b>本条保留原貌，作为当时的决策记录</b>。</li>
             </ul>
             <h2 class="h2">2026-10-30　第九十八次：rf1 横幅去掉两侧模糊，改用「纯天空窄条逐行镜像」补齐（清晰、零色差接缝）</h2>
             <ul class="ul">

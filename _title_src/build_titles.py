@@ -6,8 +6,8 @@
 每张源图按自身比例选择处理方式：
   cover      —— 全幅画面，直接按 2.95:1 居中裁切
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
-  native     —— rf1 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
-输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1 例外，是 256x192 PNG。
+  native     —— rf1/rf2 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
+输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1/rf2 例外，是 256x192 PNG。
 """
 import os
 from PIL import Image, ImageFilter, ImageDraw
@@ -111,6 +111,31 @@ def rf1_native():
     return p
 
 
+def rf2_native():
+    """RF2 横幅：ROM 原生 256x192 无损图，零修图（做法同 rf1）。
+
+    源图 src/rf2_native_256x192.png 的来历：
+      从日版 ROM「符文工房123.rar」里的 符文工房2.nds 解出
+      /res/obj/rune2_titleA01.{NCGR,NCLR,NSCR}，用 _nds_nitro.render() 渲染成
+      256x256 后裁掉下半留白得到 256x192。未做任何缩放、插值、拼接、补边。
+
+      为什么换掉旧图：旧 rf2.jpg 是从旧汉化版 ROM 解出的图（底部有「家在矿石镇
+      汉化组汉化」水印、副标被改成了金色「符文工厂」），再叠蓝色渐变合成；
+      日版原生图这两样都没有，是干净的官方画面。
+
+    与 rf1 的差别：rf2 的 logo 块更高（龙翼 y=4 → 副标底 y=133，约 130px），
+      在 86.5px 的可见带里放不下全部，只能框住主体（字标 + 假名 + 龙身）。
+      实测 object-position: center 43% 时可见带落在 y≈45..131，
+      RuneFactory 字标与 ルーンファクトリー 完整，龙翼上半被切。
+    """
+    src = Image.open(os.path.join(SRC, 'rf2_native_256x192.png')).convert('RGB')
+    if src.size != (256, 192):
+        raise SystemExit('rf2 原生图尺寸不对：%s（应为 256x192）' % (src.size,))
+    p = os.path.join(OUT, 'rf2.png')
+    src.save(p, optimize=True)          # 无损 PNG，不重采样
+    return p
+
+
 def emit(im, gid, wy=0.5, mode='cover'):
     im = cover(im, wy) if mode == 'cover' else fill(im)
     im = im.convert('RGB')
@@ -131,28 +156,10 @@ def build():
     p = rf1_native()
     made.append((p, Image.open(p).size))
 
-    # RF2：ROM 原生透明 logo（龙形纹章 Rune Factory 2）贴蓝色渐变，与卡片蓝调一致。
-    # NDS 标题屏是 4:3，直接裁 2.95:1 会把龙翼上下劈断，所以走「logo + 渐变底」。
-    THE_H = int(round(OUT_W / RATIO))
-    bg = diag_grad(OUT_W, THE_H, '#2f6f93', '#86bcd8').convert('RGBA')
-    glow = Image.new('L', bg.size, 0)
-    gw, gh = bg.size
-    ImageDraw.Draw(glow).ellipse([gw * 0.16, -gh * 0.4, gw * 0.84, gh * 1.4], fill=70)
-    glow = glow.filter(ImageFilter.GaussianBlur(80))
-    wl = Image.new('RGBA', bg.size, (255, 255, 255, 255))
-    wl.putalpha(glow)
-    bg.alpha_composite(wl)
-    lg = Image.open(os.path.join(WIKI, 'assets', 'logo', 'rf2.png')).convert('RGBA')
-    tw = int(gw * 0.70)
-    th = int(round(lg.size[1] * tw / lg.size[0]))
-    if th > gh * 0.9:
-        th = int(gh * 0.9)
-        tw = int(round(lg.size[0] * th / lg.size[1]))
-    lg = lg.resize((tw, th), Image.LANCZOS)
-    bg.alpha_composite(lg, ((gw - tw) // 2, (gh - th) // 2))
-    p = os.path.join(OUT, 'rf2.jpg')
-    bg.convert('RGB').save(p, quality=90, optimize=True, progressive=True)
-    made.append((p, bg.size))
+    # RF2：ROM 原生 256x192 无损图，零修图（同 rf1）。
+    # 旧做法是「透明 logo + 蓝色渐变底」，既有汉化组水印又被改过副标，已弃用。
+    p = rf2_native()
+    made.append((p, Image.open(p).size))
 
     # RFF：官网标题天空底（右侧有画框，先切掉）+ 官方透明 logo
     sky = Image.open(os.path.join(SRC, 'rff_swf_01.jpg')).convert('RGB').crop((0, 0, 500, 523))

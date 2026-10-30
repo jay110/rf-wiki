@@ -1,15 +1,16 @@
-# 作品卡配图来源（assets/title/*.jpg）
+# 作品卡配图来源（assets/title/*.jpg|png）
 
-卡片图区在站上是 195×66（CSS `.wcard-fig` 4.1rem 高），比例约 **2.95:1**。
-所有图统一预构图成 960×325 JPEG(q88)，上线后 CSS `object-fit:cover` 几乎不再裁切。
+卡片图区在站上是 284×96（CSS `.wcard-fig` 6rem 高），比例约 **2.96:1**。
+9 张图统一预构图成 960×325 JPEG(q88)，上线后 CSS `object-fit:cover` 几乎不再裁切；
+RF1/RF2 例外，是 ROM 原生 256×192 无损 PNG（零修图），靠 `object-position` 选可见带。
 
 重新生成：`G:/wit_tools/tmp/sw/venv/Scripts/python.exe _title_src/build_titles.py`
 （脚本末尾会输出按卡片真实尺寸 2 倍的对照图 `_cards_preview.png`）
 
 | 作 | 源 | 原始尺寸 | 处理 |
 |---|---|---|---|
-| RF1 | 本机 NDS 解包 `符文工房/1/title_bgC.NCGR.BMP` | 256×192 | 完整标题画面（金框+logo），裁 2.95:1 |
-| RF2 | 本机 NDS 解包 `符文工房/2/rune2_titleA01.NCGR.BMP` | 256×192 | 完整标题画面，裁 2.95:1 |
+| RF1 | NDS ROM `符文工房/1/` 图层合成 → `src/rf1_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；`object-position: 58%` |
+| RF2 | 日版 NDS ROM `符文工房2.nds` 的 `/res/obj/rune2_titleA01.{NCGR,NCLR,NSCR}` → `src/rf2_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；`object-position: 43%` |
 | RF3 | marv.jp 官网 `special/game/ds/runefactory3/img/top/bg1.jpg` | 981×590 | 大树村场景画，裁 2.95:1 |
 | RF3SP | Steam appid 2243710 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |
 | RF4 | biligame wiki `Rune_Factory_4` 页官方背景画 | 756×425 | 浮空船场景，裁 2.95:1 |
@@ -35,6 +36,10 @@
   RF4 的官方 LOGO 透明图在 `Rune_Factory_4` 页内（568×258），本次没用上，留在 `_title_src/rf4w_13.png`。
 - Steam 的 `logo.png`（640 宽、带 alpha）四个 appid 都能下，也留在 `_title_src/*_logo.png`，
   将来若想「纯 logo on 渐变」风格可直接用。
+- **RF1/RF2 用日版 ROM 原生画面，不用汉化版**：旧图取自旧汉化版 ROM，底部有「家在矿石镇汉化组汉化」
+  水印、RF2 的日文副标还被改成金色「符文工厂」。日版 ROM（`F:\BaiduNetdiskDownload\符文工房123.rar`
+  解出的 `符文工房2.nds`，2009-12-29）里 `/res/obj/rune2_titleA01.*` 是干净的官方画面，两样都没有。
+  提取用 `_nds_nitro.extract()` + `render()`，渲染为 256×256 后裁掉下半留白（游戏只用上屏 256×192）。
 
 ## 版权
 
