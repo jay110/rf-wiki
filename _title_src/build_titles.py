@@ -13,7 +13,7 @@
 输出宽度统一 960px（显示宽度只有 284px，够 3 倍屏）。
 """
 import os
-from PIL import Image, ImageFilter, ImageDraw, ImageEnhance
+from PIL import Image, ImageFilter, ImageDraw, ImageEnhance, ImageChops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'src')
@@ -239,6 +239,29 @@ def pair_rf4():
 # ---- 龙之天地：官方 key visual + 官方透明 logo ----
 AZUMA_LOGO_W = 460          # logo 在 960 宽画布里占的宽度（约 48%）
 AZUMA_LOGO_POS = (30, 20)   # 左上角：那里是樱枝 + 金屏风，画面最静（避开卡片圆角）
+AZUMA_DARK = 0.26           # logo 背后椭圆暗场的中心深度；0 = 不加暗场
+
+
+def _azuma_plate(canvas):
+    """在 logo 位置压一层柔和椭圆暗场，让标题「有落点」。
+
+    为什么需要它：官方这张 key visual 是纯画、左上角一片亮金箔横条，纯黑字直接压上去时
+    字与背景之间没有任何明暗过渡，看着像是后期贴的一张字（其余六张卡的 logo 都是原画
+    构图的一部分，唯有这张要叠）。暗场是官方 KV 里最常见的做法——为标题让出一块暗区，
+    字的边缘就落在渐变里而不是硬压在亮金上。
+    """
+    W, H = canvas.size
+    lw = AZUMA_LOGO_W
+    lh = int(round(600 * lw / 1000))
+    cx = AZUMA_LOGO_POS[0] + lw / 2
+    cy = AZUMA_LOGO_POS[1] + lh / 2
+    rx, ry = lw / 2 + 110, lh / 2 + 80
+    g = Image.radial_gradient('L').resize((int(rx * 2), int(ry * 2)), Image.BILINEAR)
+    a = g.point(lambda v: int((255 - v) * AZUMA_DARK))      # 中心最暗、边缘归零
+    m = Image.new('L', (W, H), 0)
+    m.paste(a, (int(cx - rx), int(cy - ry)))
+    m = m.point(lambda v: 255 - v)                           # 转成「亮度系数」
+    return ImageChops.multiply(canvas.convert('RGB'), Image.merge('RGB', (m, m, m)))
 
 
 def azuma_tall():
@@ -247,28 +270,57 @@ def azuma_tall():
     两件素材都来自官方：
       src/azuma_kv_2000x1123.jpg —— jp.runefactory.com/ryu-no-kuni 官网顶部的 key visual
         （2000x1123 = 1.781:1，与 16:9 只差 0.3%，按宽铺满后左右各裁约 5px）
-      src/azuma_logo_1000x600.png —— 官方 fan kit 的「龍の国」透明 logo（黑字 + 米白描边），
-        已去掉官网版顶部那行「「ルーンファクトリー」シリーズ最新作」宣传语
+      src/azuma_logo_1000x600.png —— 官方 fan kit 的「龍の国」透明 logo
+        （纯黑字 + 全透明底：不透明像素只有 (0,0,0)，没有描边、没有白底；
+         官网顶部另有一版多带一行「「ルーンファクトリー」シリーズ最新作」宣传语，没用）
 
     为什么要自己叠 logo：这张画本身不带字标——Steam 的 library_hero、官网 kv、
-    fan kit 的主视觉全是纯画，不带 logo；而卡上图区只有 284x160，没有字标就认不出是哪一作。
-    （官方带 logo 的图只有 Steam 竖版 library_600x900 300x450 和 header 460x215，尺寸不够。）
+    fan kit 的 1920x1080 主视觉（已确认也是纯画）全都不带 logo；而卡上图区只有
+    284x160，没有字标就认不出是哪一作。
+
+    三步让叠加不留「贴纸感」：
+      1) 底板先压一层椭圆暗场（_azuma_plate），字落在渐变里；
+      2) 字芯不是纯黑，而是「暖墨 + 背景自身的纸纹」——从 logo 所在区域取高频细节
+         叠进字色里，字内部会带上金箔的颗粒，和插画同源；
+      3) 边缘 0.45px 柔化 + 10% 落影，最后整图统一过一次轻微柔化/补锐，
+         让矢量字与手绘笔触的「锐度」一致。
 
     logo 位置：左上。画面里两人在中央对刀、白龙占左、蓝龙占右，只有左上角那片
-    樱枝 + 金屏风最静；logo 400px 宽（卡上显示约 118px），「龍の国」三个字仍然清楚，
-    下方 RuneFactory 花体与假名会糊成一团——但别的卡在 284px 下同样如此，不影响辨识。
+    樱枝 + 金屏风最静；460px 宽（卡上显示约 136px）是上限，再大「国」字右侧会压到白龙头。
     """
     base = Image.open(os.path.join(SRC, 'azuma_kv_2000x1123.jpg')).convert('RGB')
     if base.size != (2000, 1123):
         raise SystemExit('azuma key visual 尺寸不对：%s（应为 2000x1123）' % (base.size,))
-    canvas = cover(base, 0.5, TALL).convert('RGBA')
     logo = Image.open(os.path.join(SRC, 'azuma_logo_1000x600.png')).convert('RGBA')
     if logo.size != (1000, 600):
         raise SystemExit('azuma logo 尺寸不对：%s（应为 1000x600）' % (logo.size,))
+
     lw = AZUMA_LOGO_W
-    lg = logo.resize((lw, int(round(logo.size[1] * lw / logo.size[0]))), Image.LANCZOS)
-    canvas.alpha_composite(lg, AZUMA_LOGO_POS)
-    return emit_tall(canvas.convert('RGB'), 'azuma', 0.5)
+    lh = int(round(logo.size[1] * lw / logo.size[0]))
+    pos = AZUMA_LOGO_POS
+    plate = _azuma_plate(cover(base, 0.5, TALL)).convert('RGBA')
+    mask = logo.resize((lw, lh), Image.LANCZOS).split()[3]
+
+    # 字芯 = 暖墨 + 该处背景的高频纸纹（只取细节，不含整体明暗）
+    region = plate.convert('RGB').crop((pos[0], pos[1], pos[0] + lw, pos[1] + lh))
+    detail = ImageChops.difference(region, region.filter(ImageFilter.GaussianBlur(4))).convert('L')
+    l = detail.point(lambda v: max(0, min(255, 15 + int(v * 1.2))))
+    ink = Image.merge('RGB', (l, l.point(lambda v: int(v * 0.80)), l.point(lambda v: int(v * 0.62))))
+
+    # 落影：让字「贴住」纸面，而不是浮在上面
+    sh = Image.new('RGBA', plate.size, (0, 0, 0, 0))
+    sh.paste(Image.new('RGB', (lw, lh), (0, 0, 0)), (pos[0] + 2, pos[1] + 3),
+             mask.filter(ImageFilter.GaussianBlur(6)).point(lambda v: int(v * 0.10)))
+    out = Image.alpha_composite(plate, sh)
+
+    txt = Image.new('RGBA', plate.size, (0, 0, 0, 0))
+    txt.paste(ink, pos, mask.filter(ImageFilter.GaussianBlur(0.45)))
+    out = Image.alpha_composite(out, txt).convert('RGB')
+
+    # 统一质感：全图同一次柔化 + 补锐，抹平「矢量字 / 手绘笔触」的锐度差
+    out = out.filter(ImageFilter.GaussianBlur(0.35))
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.0, percent=40, threshold=2))
+    return emit_tall(out, 'azuma', 0.5)
 
 
 def emit(im, gid, wy=0.5, mode='cover', ratio=None):
