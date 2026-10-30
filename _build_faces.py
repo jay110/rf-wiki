@@ -171,6 +171,14 @@ CONF = {
         'merge_case': True,      # 这套解包里同一人物有大写单帧与小写多帧两份
         'groups': RF1_GROUPS,
         'over': {},
+        # 2026-10-30 统一规格：与符文4 口径一致——脸高约占框 65%，输出一律 160×160。
+        # 之前只走 head_anchor + side=hw*1.7 且没开 exact_side，尺寸在 83~216px 乱跳、
+        # 小图在 2x 屏发虚。开 face_ratio 后按「头高/0.65」反推源框（比脸大一圈，
+        # 采样自 512 宽高分辨率源），再缩到 160，比把 83px 硬拉大锐得多。
+        # 帽子/宽肩的个别角色若被压扁或裁掉，在 over 里微调（dx/dy/side）。
+        'face_ratio': 0.65,
+        'exact_side': True,
+        'max_side': 160,
     },
     'rf2': {
         'src': r'G:/BaiduNetdiskDownload/A6NJ_NCER_extract',
@@ -359,7 +367,7 @@ def head_anchor(im, band=None, robust=False):
     return y0, cx, hw
 
 
-def cut(im, y0, cx, hw, over=None, check=40, box=None):
+def cut(im, y0, cx, hw, over=None, check=40, box=None, ratio=None):
     """按头宽定裁框，保证每张头像里「头占多大」是一致的。
 
     一开始用固定边长 112，列表里的圆形头像只有 33px，脸缩得太小、五官糊成一片。
@@ -368,9 +376,47 @@ def cut(im, y0, cx, hw, over=None, check=40, box=None):
     放大到 128 就看得出来了）。输出尺寸因此不齐，交给 CSS 的 object-fit 处理。
 
     box 给的是 (left, top, side)：图太难自动定位时（符文4 官网那批）直接按标好的框裁。
+
+    ratio 给的是「脸高占框的比例」目标（如 0.65）：按头高 / ratio 反推源框边长，
+    让脸在 160 框里稳定占这个比例；同时源框比脸大一圈，采样自高分辨率源、缩到
+    160 比把小图硬拉大更锐。符文1 这轮用这个模式统一规格（与符文4 的 face_box
+    口径一致，但自动算框、帽子/宽肩的几位再用 over 微调）。
     """
     if box:
         left, top, side = box
+        tile = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+        tile.alpha_composite(im.crop((left, top, left + side, top + side)))
+        return tile
+    if ratio:
+        a = np.array(im)[:, :, 3] > 8
+        ys, xs = np.nonzero(a)
+        ytop = int(ys.min())
+        y1b = int(ys.max())
+        full_h = y1b - ytop + 1
+        # 只取内容框上半部（约 0~62%）算「头部」紧致包围盒，剔除肩膀把框撑大的问题，
+        # 让每个头的较长边都≈框的 ratio 比例，排在一起脸大小才一致。
+        cut = ytop + int(full_h * 0.62)
+        sub = a[ytop:cut]
+        sy, sx = np.nonzero(sub)
+        if len(sx) == 0:                  # 极端情况退回整框
+            sy, sx = np.nonzero(a[ytop:cut + (y1b - cut)])
+        hx0, hx1 = int(sx.min()), int(sx.max())
+        hy0, hy1 = int(sy.min()), int(sy.max())
+        hw_r = hx1 - hx0 + 1
+        hh_r = hy1 - hy0 + 1
+        side = max(hw_r, hh_r) / (ratio * 0.90)   # 留约 10% 余量，头不贴边
+        side = int(round(side))
+        side = max(84, min(248, side))
+        if over:                          # 个别角色按帽子/宽肩覆盖
+            side = over.get('side', side)
+            cx = cx + over.get('dx', 0)
+            ytop = ytop + over.get('dy', 0)
+        hcx = (hx0 + hx1) // 2
+        cx = cx if over and 'dx' in over else hcx
+        left = cx - side // 2
+        top = max(0, ytop - int(round(side * 0.12)))   # 头顶留约 12% 额头
+        left = max(0, min(left, im.width - side))
+        top = max(0, min(top, im.height - side))
         tile = Image.new('RGBA', (side, side), (0, 0, 0, 0))
         tile.alpha_composite(im.crop((left, top, left + side, top + side)))
         return tile
@@ -435,6 +481,7 @@ def main():
         chk = (bd[1] - bd[0]) if bd else 40
         # 标了绝对框的几位：直接用标好的框裁，不再走「头宽 × 1.7」那套
         box = conf.get('face_box', {}).get(gname)
+        ratio = conf.get('face_ratio')
         for pos, (idx, p) in enumerate(lst):
             if pos > 0 and not want_all:
                 continue
@@ -443,7 +490,7 @@ def main():
             else:
                 im = Image.open(p).convert('RGBA')
                 y, c, w = head_anchor(im, bd)
-            tile = cut(im, y, c, w, over, chk, box if pos == 0 else None)
+            tile = cut(im, y, c, w, over, chk, box if pos == 0 else None, ratio)
             # 符文3 官网立绘裁出来有 224px，比符号1／2 的（92~224）大一圈，
             # 列表里 33px、详情页 64px 都用不到这么多像素，压到 160 省一半体积
             # 符文4 用 exact_side：源图两种规格（官网 540x1098 全身、解包 200x255

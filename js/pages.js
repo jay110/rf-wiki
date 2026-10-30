@@ -4877,6 +4877,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十二次：符文1 头像统一 160×160（脸占框≈65%）</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：符文4 已统一 160×160，但符文1 头像还在 83～216px 乱跳（camus/white 83、anne 107、jacolnus 216…），且没开 <code>exact_side</code>，小图在 2x 屏列表（2.1rem）/ 详情（5.4rem）下发虚。</li>
+                <li class="li"><b>改法</b>：给 <code>_build_faces.py</code> 的 rf1 分支加 <code>face_ratio: 0.65</code> + <code>exact_side / max_side: 160</code>。新逻辑按「内容框上半部（剔除肩膀）的紧致头框较长边 ÷ (0.65×0.9)」定<b>源框</b>，再缩到 160——比把 83px 硬拉大到 160（约 2 倍插值必糊）锐得多，因为采样自 512 宽的高分辨率源。</li>
+                <li class="li"><b>实测</b>：32 张全 160×160；头<b>高度</b>占比 0.44～0.55（均值 0.53）高度一致；头宽度 0.34～0.68 的差异主要是角色脸型本就不同（mist/ragna/rosetta 是真·瘦脸，leo 0.68 偏高是其自带大锤占左下角）。无空白、无裁脸事故。</li>
+                <li class="li"><b>两处非事故说明</b>：<code>xt_baby</code> 是 Q 版斜躺豆荚（脸完整、举小手）；<code>leo</code> 扛大锤，头在右上、锤在左下，按头中心居中裁，脸完整——均属原画构图，不是裁切错误。</li>
+                <li class="li"><b>待续</b>：rf2（105～116px）、rf3（5 张非 160）、rf5（64/128px 混排）仍待统一，等符文1 确认后逐作推进。改完已重建 standalone（<code>_inline.py</code> 把新头像内联进 FACE_DATA，218 张头像共 8.6MB）。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第九十一次：符文1 卡片 logo 下缘被切——重算横带；符文2 补锐化</h2>
             <ul class="ul">
                 <li class="li"><b>先说发现的问题</b>：把卡片真正看得见的那条带（<code>y≈43~266</code>）单独裁出来看，符文1 的金色 logo <b>下缘被切掉一截</b>。原因是横带取的是源图 <code>y=130~265</code>，而金色 logo 实测在源图 <code>y=184~275</code>（按金色像素统计，不靠眼睛估），底部 10 行落在带子外面。</li>
