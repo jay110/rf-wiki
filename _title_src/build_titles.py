@@ -75,6 +75,69 @@ def diag_grad(w, h, c0, c1):
     return im
 
 
+def card_band(W, H):
+    """卡片图框 284x66 + object-position 50% 42% → 返回 (top, bottom) 可见带"""
+    s = 284.0 / W
+    vis = 66.0 / s
+    top = int(round((H - vis) * 0.42))
+    return top, int(round(top + vis))
+
+
+def rf1_banner(y0=151, y1=325, feather=56):
+    """RF1 横幅：标题块等比缩到卡片可见带内，两侧用「按行边缘色插值」补天空。
+
+    参数 y0/y1 是源图（582x442）里标题块的上下界：
+      RUNE FACTORY 顶 ≈155 / ルーンファクトリー ≈240..275 / — 新牧場物語 — ≈290..320
+    """
+    W = OUT_W
+    H = int(round(OUT_W / RATIO))
+    BT, BB = card_band(W, H)
+    src = Image.open(os.path.join(SRC, 'rf1_desmume_title.png')).convert('RGB')
+    art = src.crop((0, y0, src.size[0], y1))
+    aw, ah = art.size
+
+    s = (BB - BT) / ah                       # 等比缩到可见带高度
+    nw, nh = int(aw * s + .5), int(ah * s + .5)
+    art = art.resize((nw, nh), Image.LANCZOS)
+    x = (W - nw) // 2
+    y = BT + ((BB - BT) - nh) // 2
+
+    base = Image.new('RGB', (W, H))
+    ap, bp = art.load(), base.load()
+    for ry in range(nh):                     # 每行左右边界色 → 向外插值到画布两端
+        cl, cr = ap[0, ry], ap[nw - 1, ry]
+        Y = y + ry
+        lt = tuple(min(255, int(c * 1.03 + 12)) for c in cl)
+        for bx in range(x):
+            t = bx / max(1, x - 1)
+            bp[bx, Y] = tuple(int(lt[i] + (cl[i] - lt[i]) * t) for i in range(3))
+        rt = tuple(min(255, int(c * 1.03 + 12)) for c in cr)
+        for bx in range(x + nw, W):
+            t = (bx - (x + nw)) / max(1, W - (x + nw) - 1)
+            bp[bx, Y] = tuple(int(cr[i] + (rt[i] - cr[i]) * t) for i in range(3))
+        for bx in range(x, x + nw):
+            bp[bx, Y] = ap[bx - x, ry]
+    for Y in range(0, y):                    # 上下同理
+        t = Y / max(1, y - 1)
+        for bx in range(W):
+            c = bp[bx, y]
+            top = tuple(min(255, int(v * 1.05 + 18)) for v in c)
+            bp[bx, Y] = tuple(int(top[i] + (c[i] - top[i]) * (1 - t)) for i in range(3))
+    for Y in range(y + nh, H):
+        t = (Y - (y + nh)) / max(1, H - (y + nh) - 1)
+        for bx in range(W):
+            c = bp[bx, y + nh - 1]
+            bot = tuple(min(255, int(v * 1.05 + 18)) for v in c)
+            bp[bx, Y] = tuple(int(c[i] + (bot[i] - c[i]) * t) for i in range(3))
+    base = base.filter(ImageFilter.GaussianBlur(16))
+
+    base.paste(art, (x, y), Image.new('L', (nw, nh), 255).filter(
+        ImageFilter.GaussianBlur(feather)))
+    p = os.path.join(OUT, 'rf1.jpg')
+    base.convert('RGB').save(p, quality=93, optimize=True, progressive=True)
+    return p
+
+
 def emit(im, gid, wy=0.5, mode='cover'):
     im = cover(im, wy) if mode == 'cover' else fill(im)
     im = im.convert('RGB')
@@ -89,14 +152,14 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     made = []
 
-    # RF1：DeSmuME 实机标题（蓝天+蓝飞龙+金字全幅），按 2.95:1 裁横带后轻锐化。
-    # 不用桌面单层 NCGR.BMP —— 那批是单层渲染，裁切+放大后出横条纹/劈开龙翼。
-    im = Image.open(os.path.join(SRC, 'rf1_desmume_title.png')).convert('RGB')
-    im = cover(im, 0.45).resize((OUT_W, int(round(OUT_W / RATIO))), Image.LANCZOS)
-    im = im.filter(ImageFilter.UnsharpMask(radius=1.2, percent=40, threshold=3))
-    p = os.path.join(OUT, 'rf1.jpg')
-    im.convert('RGB').save(p, quality=90, optimize=True, progressive=True)
-    made.append((p, im.size))
+    # RF1：DeSmuME 实机标题（蓝天+蓝飞龙+金字+「— 新牧場物語 —」副标）。
+    # 关键约束：卡片图框实为 284x66（4.30:1）+ object-position 50% 42%，
+    # 960x325 里只有 y≈43..266 这 223px 在卡上可见（源图仅约 135px 折算高度）。
+    # 而标题块（RUNE FACTORY 顶 155 → 新牧場物語 底 320）要 165px，
+    # 所以直接 cover 必然切掉副标题 —— 必须先按可见带等比缩小，再用
+    # 「按行左右边缘色插值」补出两侧天空、面板大羽化，避免出现贴片接缝。
+    p = rf1_banner()
+    made.append((p, Image.open(p).size))
 
     # RF2：ROM 原生透明 logo（龙形纹章 Rune Factory 2）贴蓝色渐变，与卡片蓝调一致。
     # NDS 标题屏是 4:3，直接裁 2.95:1 会把龙翼上下劈断，所以走「logo + 渐变底」。
