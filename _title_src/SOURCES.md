@@ -1,30 +1,39 @@
 # 作品卡配图来源（assets/title/*.jpg|png）
 
-卡片图区默认 284×96（CSS `.wcard-fig` 6rem 高），比例约 **2.96:1**。
-7 张图统一预构图成 960×325 JPEG(q88)，上线后 CSS `object-fit:cover` 几乎不再裁切；
-RF1/RF2/RF3 例外，是 ROM 原生 256×192 无损 PNG（零修图），靠 `object-position` 选可见带。
+卡片图区有两种高度：
+- 默认 `.wcard-fig` = 284×96（6rem 高），比例约 **2.96:1** → 图 960×325
+- `.wcard-fig.is-tall`（或 `.is-tall-lg`，仅 ≥560px 三列生效）= `aspect-ratio:16/9`（284×160）→ 图 960×540
 
-**第一行三张（RF1/RF2/RF3）另加 `.wcard-fig.is-tall` 或 `.is-tall-lg`（aspect-ratio 16/9，284×160）**：
-RF1 标题块 86px、RF2 logo 块 134px、RF3 logo 块 54px，96px 框按宽 cover 只露 86.5px 原生高。
-16:9 框可见原生高 144px，三张都能完整装下。RF3 用 `.is-tall-lg`（仅三列生效）是为了
-和第一行的 RF1/RF2 对齐：双列时它的同行是窄条的 RF3SP，跟着变高会让 RF3SP 空一截。
-**其余 7 张不能同法**：它们是按 2.96:1 构图的横图，改 16:9 要裁掉左右各约 20%，
+走 16:9 的有 5 张：RF1 / RF2 / RF3（`.is-tall-lg`）/ RF3SP（`.is-tall-lg`）/ RFF / RFO。
+走默认 2.96:1 的有 4 张：RF4 / RF4SP / RF5 / 龙之天地。
+
+**为什么按行分组**（同排等高，否则 grid stretch 会在矮卡文字区留一大块空色）：
+
+| 行 | 3 列布局 | 2 列布局 |
+|---|---|---|
+| 1 | RF1 / RF2 / RF3 → 都 16:9 | RF1 / RF2 → 都 16:9 |
+| 2 | RF3SP / RFF / RFO → 都 16:9 | RF3 / RF3SP → 都 16:9（`.is-tall-lg`，<560px 时两张一起回到 96px） |
+| 3 | RF4 / RF4SP / RF5 → 都 2.96:1 | RFF / RFO → 都 16:9 |
+| 4 | 龙之天地 → 2.96:1 | RF4 / RF4SP → 都 2.96:1；RF5 / 龙之天地 → 都 2.96:1 |
+
+RF4/RF4SP/RF5/龙之天地不能改 16:9：它们是按 2.96:1 构图的横图，改 16:9 要裁掉左右各约 20%，
 RF4SP/RF5 的群像会被切人。
 
-重新生成：`G:/wit_tools/tmp/sw/venv/Scripts/python.exe _title_src/build_titles.py`
-（脚本末尾会输出按卡片真实尺寸 2 倍的对照图 `_cards_preview.png`）
+重新生成：`C:/Users/10257/.workbuddy/binaries/python/envs/default/Scripts/python.exe _title_src/build_titles.py`
+（脚本末尾会输出按卡片真实尺寸 2 倍的对照图 `_cards_preview.png`；
+若只想重做某一张，`import build_titles as B; B.rf3sp_tall()` 这样单独调，避免整批重跑漂移）
 
 | 作 | 源 | 原始尺寸 | 处理 |
 |---|---|---|---|
 | RF1 | NDS ROM `符文工房/1/` 图层合成 → `src/rf1_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；`.is-tall` 16:9 框，可见 144px 原生高，标题块 86px 居中（`object-position: 69%`） |
 | RF2 | 日版 NDS ROM `符文工房2.nds` 的 `/res/obj/rune2_titleA01.{NCGR,NCLR,NSCR}` → `src/rf2_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；图框单独加高到 16:9（`.wcard-fig.is-tall`），可见 144px 原生高，logo 块 134px 全装下 |
 | RF3 | 本机 NDS 提取 `G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP`（源自 `符文工房3.nds` 的 `/res/obj/rf3Archive.arc` 第 8027 号 NCGR） | 256×192 | **原生 PNG 无损直出**，零修图；`.is-tall-lg`（仅三列 16:9）+ `object-position: 35%`，logo 块 y=58..112 在 16:9 与 96px 两档下都完整 |
-| RF3SP | Steam appid 2243710 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |
+| RF3SP | Steam appid 2243710 `capsule_616x353.jpg` | 616×353（1.745:1） | 16:9 只切纵向 10px，几乎零裁切；`.is-tall-lg` |
 | RF4 | biligame wiki `Rune_Factory_4` 页官方背景画 | 756×425 | 浮空船场景，裁 2.95:1 |
 | RF4SP | Steam appid 1580240 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |
 | RF5 | Steam appid 1702330 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |
-| RFF | marv.jp Wii 官网 `img/top/main.swf` 内嵌天空底（CWS 解压后抽 JPEG）＋ `assets/logo/rff.png` | 550×523 + 371×204 | 天空底裁 2.95:1 后居中叠官方透明 logo |
-| RFO | `Desktop/海洋PS3版PSD/02207_LUGTITLE_00_960x720_RGBA8.psd` | 960×720 | 关掉「家在矿石镇汉化组」文字层与图标层，圆形构图裁 2.95:1 |
+| RFF | marv.jp Wii 官网 `img/top/main.swf` 内嵌天空底（CWS 解压后抽 JPEG）＋ `assets/logo/rff.png` | 550×523 + 371×204 | 16:9（按宽铺满后保留 54% 高度，比旧 2.95:1 版的 36% 反而少裁），居中叠官方透明 logo；`.is-tall` |
+| RFO | PS3 版贴图 PSD 三层合成 → `src/rfo_title_1280x720.png`：`02207_LUGTITLE_00_960x720_RGBA8`（岛+海底图，去水印文字层/图标层）＋`02896_LUGTITLE_01_1280x720_CI8`（藤蔓前景框，去左上水印层）＋`02202_LLGTITLEJP_568x400_RGBA8`（原版日文 logo 层，含假名行） | 960×720 + 1280×720 + 568×400 | **三层 1:1 合成，零缩放零插值**：底图水平居中 (1280−960)/2=160，藤蔓 (0,0) 压其上，logo 居中 x=356、y=150；1280×720 正好 16:9 → 卡上整屏零裁切；存 JPEG q92 |
 | 龙之天地 | Steam appid 2864560 `library_hero.jpg` | 1920×620 | 原比例≈3.1:1，几乎不裁 |
 
 ## 取图时的坑

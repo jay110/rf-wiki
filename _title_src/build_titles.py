@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """统一生成 10 部作品的卡片横幅图（assets/title/<gid>.jpg|png）
 
-站上卡片图区是 284x96 CSS（.wcard-fig 的 6rem 高），比例 2.96:1，
-与输出图 960x325（2.95:1）基本同比例，所以 cover 几乎不裁。
+卡片图区有两种高度：
+  · 默认 .wcard-fig —— 284x96 CSS（6rem），比例 2.96:1 → 图 960x325
+  · .wcard-fig.is-tall —— aspect-ratio 16:9（284x160）→ 图 960x540
 每张源图按自身比例选择处理方式：
-  cover      —— 全幅画面，直接按 2.95:1 居中裁切
+  cover      —— 全幅画面，直接居中裁切到目标比例
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
-  native     —— rf1/rf2/rf3 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
-输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1/rf2/rf3 例外，是 256x192 PNG。
+  native     —— rf1/rf2/rf3/rfo 专用：游戏自己的标题画面原样输出（无损 PNG，零修图）
+输出宽度统一 960px（显示宽度只有 284px，够 3 倍屏）。
 """
 import os
 from PIL import Image, ImageFilter, ImageDraw
@@ -19,6 +20,7 @@ OUT = os.path.join(WIKI, 'assets', 'title')
 SRC_LOCAL = 'G:/10257/Desktop/符文工房/符文工房'
 RATIO = 2.95
 OUT_W = 960
+TALL = 16 / 9          # .wcard-fig.is-tall 的比例，输出 960x540
 
 
 def crop_ratio(im, ratio, wy=0.5):
@@ -32,8 +34,8 @@ def crop_ratio(im, ratio, wy=0.5):
     return im.crop((0, y, w, y + nh))
 
 
-def cover(im, wy=0.5):
-    return crop_ratio(im, RATIO, wy)
+def cover(im, wy=0.5, ratio=None):
+    return crop_ratio(im, ratio or RATIO, wy)
 
 
 def fill(im, bg_rgb=(18, 18, 20)):
@@ -157,14 +159,84 @@ def rf3_native():
     return p
 
 
-def emit(im, gid, wy=0.5, mode='cover'):
-    im = cover(im, wy) if mode == 'cover' else fill(im)
+def rff_tall():
+    """RFF（边境）：官网标题天空底（右侧有画框，先切掉）+ 官方透明 logo，16:9。
+
+    卡上走 .wcard-fig.is-tall：双列时它的同行是 RFO（16:9 原生标题屏），
+    三列时同一行是 RF3SP（同走 16:9）与 RFO，三张等高才不会出现空色块。
+    天空源图 500x523 是竖构图，16:9 下按宽铺满后保留 540/1004 ≈ 54% 的高度
+    （旧的 2.96:1 版只保留 36%，天空反而被压掉更多）。
+    """
+    sky = Image.open(os.path.join(SRC, 'rff_swf_01.jpg')).convert('RGB').crop((0, 0, 500, 523))
+    logo = Image.open(os.path.join(WIKI, 'assets', 'logo', 'rff.png')).convert('RGBA')
+    canvas = cover(sky, 0.5, TALL).convert('RGBA')
+    cw, ch = canvas.size
+    lw = int(cw * 0.54)
+    lg = logo.resize((lw, int(round(logo.size[1] * lw / logo.size[0]))), Image.LANCZOS)
+    canvas.paste(lg, ((cw - lg.size[0]) // 2, (ch - lg.size[1]) // 2), lg)
+    return emit_tall(canvas.convert('RGB'), 'rff')
+
+
+def rf3sp_tall():
+    """RF3SP：Steam 官方 capsule 616x353（1.745:1）→ 16:9，纵向只切 10px。
+
+    加高只为对齐：三列布局里它和 RFF、RFO 同一行；双列布局里它和 RF3 同一行，
+    而 RF3 是 is-tall-lg（≥560px 才变高），所以 RF3SP 也用 is-tall-lg，两者同进退。
+    """
+    im = Image.open(os.path.join(SRC, 'rf3sp_capsule_616x353.jpg')).convert('RGB')
+    return emit_tall(im, 'rf3sp', 0.5)
+
+
+def rfo_native():
+    """RFO（海洋）横幅：PS3 标题画面的原生三层合成，1280x720 原样输出。
+
+    源图 src/rfo_title_1280x720.png 的来历（PS3 版贴图 PSD 里的三层，各自取底图图层、
+    关掉汉化组后来加的水印层/图标层，再按游戏自己的叠放次序与位置合一次）：
+
+      1. 02207_LUGTITLE_00_960x720_RGBA8 → 标题底图（岛 + 海，圆形构图）
+         图层 1，去掉「家在矿石镇汉化组」文字层与 icon_white_64 图标层
+      2. 02896_LUGTITLE_01_1280x720_CI8  → 藤蔓前景框（圆形遮罩）
+         图层 1，去掉左上角「…汉化ROM免费…」文字层
+      3. 02202_LLGTITLEJP_568x400_RGBA8  → 原版日文 logo
+         「原版PS3贴图」层（含 ルーンファクトリー／オーシャンズ 假名行）
+
+    合成路径（全为 1:1 放置，无缩放、无插值、无补边）：
+      底图 → 水平居中 (1280-960)/2 = 160, y=0
+      藤蔓 → (0,0)，压在底图上（游戏里也是前景遮罩）
+      logo → 水平居中 (1280-568)/2 = 356，y=150（圆形画框垂直居中）
+
+    尺寸说明：PS3 标题画面原生 1280x720 = 16:9，与 .wcard-fig.is-tall 完全同比例，
+      所以卡上是整屏零裁切显示（不是裁出来的构图）。这也顺带解决了旧图的问题：
+      旧 rfo.jpg 是把 960x720 的圆形构图硬裁成 2.96:1，圆的左右被切。
+
+    留白：藤蔓框那一层是 CI8 调色板贴图、不带 alpha，本身就是「白底 + 一圈叶子」，
+      所以圆形画框外面那圈白是游戏自己的底色，不是我们填的——原样保留，不填色、
+      不模糊、不拉伸。输出 JPEG q92（1280x720 平滑插画，PNG 要 776KB，JPEG 190KB）。
+    """
+    src = Image.open(os.path.join(SRC, 'rfo_title_1280x720.png')).convert('RGBA')
+    if src.size != (1280, 720):
+        raise SystemExit('rfo 标题图尺寸不对：%s（应为 1280x720）' % (src.size,))
+    flat = Image.new('RGBA', src.size, (255, 255, 255, 255))
+    flat.alpha_composite(src)
+    p = os.path.join(OUT, 'rfo.jpg')
+    flat.convert('RGB').save(p, quality=92, optimize=True, progressive=True)
+    return p
+
+
+def emit(im, gid, wy=0.5, mode='cover', ratio=None):
+    r = ratio or RATIO
+    im = cover(im, wy, r) if mode == 'cover' else fill(im)
     im = im.convert('RGB')
     if im.size[0] != OUT_W:
-        im = im.resize((OUT_W, int(round(OUT_W / RATIO))), Image.LANCZOS)
+        im = im.resize((OUT_W, int(round(OUT_W / r))), Image.LANCZOS)
     p = os.path.join(OUT, gid + '.jpg')
     im.save(p, quality=88, optimize=True, progressive=True)
     return p, im.size
+
+
+def emit_tall(im, gid, wy=0.35):
+    """16:9（960x540）版，供 .wcard-fig.is-tall 的卡用。"""
+    return emit(im, gid, wy, 'cover', TALL)
 
 
 def build():
@@ -182,21 +254,12 @@ def build():
     p = rf2_native()
     made.append((p, Image.open(p).size))
 
-    # RFF：官网标题天空底（右侧有画框，先切掉）+ 官方透明 logo
-    sky = Image.open(os.path.join(SRC, 'rff_swf_01.jpg')).convert('RGB').crop((0, 0, 500, 523))
-    logo = Image.open(os.path.join(WIKI, 'assets', 'logo', 'rff.png')).convert('RGBA')
-    canvas = cover(sky, 0.5).convert('RGBA')
-    cw, ch = canvas.size
-    lw = int(cw * 0.54)
-    lg = logo.resize((lw, int(round(logo.size[1] * lw / logo.size[0]))), Image.LANCZOS)
-    canvas.paste(lg, ((cw - lg.size[0]) // 2, (ch - lg.size[1]) // 2), lg)
-    made.append(emit(canvas.convert('RGB'), 'rff'))
+    # RFF：官网标题天空底 + 官方透明 logo（卡上走 is-tall，与同排 RFO 等高）
+    made.append(rff_tall())
 
-    # RFO：PS3 标题背景（已去汉化组水印），圆形构图 → 不切，模糊延伸
-    im = Image.open(os.path.join(SRC, 'rfo_title_clean.png')).convert('RGBA')
-    bg = Image.new('RGBA', im.size, (26, 40, 62, 255))
-    bg.alpha_composite(im)
-    made.append(emit(bg.convert('RGB'), 'rfo', 0.45))
+    # RFO：PS3 标题画面原生三层合成，1280x720 原样输出（零裁切、零修图）
+    p = rfo_native()
+    made.append((p, Image.open(p).size))
 
     # RF3：ROM 原生 256x192 标题屏，零修图（同 rf1/rf2）。
     # 旧图是 marv.jp 的大树村场景画，只有树没有 logo，卡上认不出是哪一作。
@@ -207,8 +270,11 @@ def build():
     im = Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB')
     made.append(emit(im, 'rf4', 0.35))
 
-    # RF3SP / RF4SP / RF5：Steam 官方 capsule（含 logo，构图不能切）
-    for gid in ('rf3sp', 'rf4sp', 'rf5'):
+    # RF3SP：Steam 官方 capsule 616x353（1.745:1）→ 16:9，几乎零裁切
+    made.append(rf3sp_tall())
+
+    # RF4SP / RF5：Steam 官方 capsule（含 logo，构图不能切）→ 默认 2.96:1
+    for gid in ('rf4sp', 'rf5'):
         im = Image.open(os.path.join(SRC, gid + '_capsule_616x353.jpg')).convert('RGB')
         made.append(emit(im, gid, mode='fill'))
 

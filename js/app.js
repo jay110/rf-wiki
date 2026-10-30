@@ -13,12 +13,12 @@ const TITLE_ART = {
     rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
     rf3:   { src: 'assets/title/rf3.png', pos: '35%', tall: 'lg' },
-    rf3sp: { src: 'assets/title/rf3sp.jpg' },
+    rf3sp: { src: 'assets/title/rf3sp.jpg', tall: 'lg' },
     rf4:   { src: 'assets/title/rf4.jpg' },
     rf4sp: { src: 'assets/title/rf4sp.jpg' },
     rf5:   { src: 'assets/title/rf5.jpg' },
-    rff:   { src: 'assets/title/rff.jpg' },
-    rfo:   { src: 'assets/title/rfo.jpg' },
+    rff:   { src: 'assets/title/rff.jpg', tall: true },
+    rfo:   { src: 'assets/title/rfo.jpg', tall: true },
     azuma: { src: 'assets/title/azuma.jpg' },
 };
 
