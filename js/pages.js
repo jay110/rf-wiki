@@ -947,6 +947,217 @@ function eqblock(IT, opt) {
     return { CATS, cnt, nav, secs };
 }
 
+/* ============================================================
+   配方大全 · 边境（RFF）
+   RFF_COOK [厨具, 名字, 配方lv, [材料], 全效果, 配方书, 买价, 卖价, 入手]
+   全部统计在页面内现算，不另存衍生表。
+   ============================================================ */
+function recipeRffHtml() {
+    const C = (typeof RFF_COOK !== 'undefined') ? RFF_COOK : [];
+    if (!C.length) return '<p class="p">边境的配方数据未加载。</p>';
+    const money = v => (v == null || v === '' || v === '—') ? '<span class="mon-no">—</span>' : Number(v).toLocaleString() + 'G';
+    const cell = v => (v == null || v === '' || v === '—') ? '<span class="mon-no">—</span>' : v;
+    const dash = v => (v == null || v === '') ? '—' : v;
+    const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+
+    /* 厨具分组 */
+    const tools = [];
+    C.forEach(r => { if (tools.indexOf(r[0]) < 0) tools.push(r[0]); });
+    const toolRows = tools.map(t => {
+        const g = C.filter(r => r[0] === t);
+        const lv = g.map(r => r[2]).filter(v => typeof v === 'number');
+        return [t, g.length + ' 条',
+        'Lv' + Math.min.apply(null, lv) + ' ～ ' + Math.max.apply(null, lv),
+        money(med(g.map(r => r[7]).filter(v => typeof v === 'number')))];
+    });
+
+    /* 配方书：条数 + 覆盖的等级段 + 专属哪件厨具（边境同样是严格一一对应） */
+    const bks = [];
+    C.forEach(r => { if (r[5] && bks.indexOf(r[5]) < 0) bks.push(r[5]); });
+    const bkMap = {};
+    C.forEach(r => { (bkMap[r[5]] = bkMap[r[5]] || []).push(r[0]); });
+    const own = b => { const s = new Set(bkMap[b] || []); return s.size === 1 ? bkMap[b][0] : [...s].join('、'); };
+    /* 按厨具分组、组内按最低等级排，让「一套书 = 一件厨具」的阶梯露出来 */
+    const bkRows = [];
+    tools.forEach(t => {
+        const g = bks.filter(b => own(b) === t).sort((a, b) => {
+            const la = Math.min.apply(null, C.filter(r => r[5] === a).map(r => r[2]).filter(v => typeof v === 'number'));
+            const lb = Math.min.apply(null, C.filter(r => r[5] === b).map(r => r[2]).filter(v => typeof v === 'number'));
+            return la - lb;
+        });
+        g.forEach(b => {
+            const gg = C.filter(r => r[5] === b);
+            const lv = gg.map(r => r[2]).filter(v => typeof v === 'number');
+            bkRows.push([b, t, gg.length + ' 条', 'Lv' + Math.min.apply(null, lv) + ' ～ ' + Math.max.apply(null, lv)]);
+        });
+    });
+
+    /* 食材复用次数 */
+    const mat = {};
+    C.forEach(r => (r[3] || []).forEach(m => { mat[m] = (mat[m] || 0) + 1; }));
+    const ms = Object.keys(mat).sort((a, b) => mat[b] - mat[a]);
+    const BASE = ['小麦粉', '牛奶', '蛋', '油', '黄油', '米'];
+    const onlyBase = C.filter(r => (r[3] || []).length && (r[3] || []).every(m => BASE.indexOf(m) >= 0));
+    const anyBase = C.filter(r => (r[3] || []).some(m => BASE.indexOf(m) >= 0));
+    const once = ms.filter(m => mat[m] === 1);
+    /* 单材料配方 */
+    const one = C.filter(r => (r[3] || []).length === 1);
+    /* 能买到的：买价 vs 卖价 */
+    const buy = C.filter(r => typeof r[6] === 'number' && typeof r[7] === 'number');
+    const buyRows = buy.map(r => [r[1], money(r[6]), money(r[7]),
+        Math.round(r[7] / r[6] * 100) + '%', dash(r[8])]);
+    /* 卖价最高 */
+    const top = C.slice().filter(r => typeof r[7] === 'number').sort((a, b) => b[7] - a[7]).slice(0, 6);
+
+    return `
+    <h2 class="h2">${C.length} 条配方：七件厨具，${bks.length} 本配方书</h2>
+    <p class="p">边境的配方表结构很直白：<b>每件厨具对应一批配方，每本配方书教一批做法</b>。${tools.length} 件厨具里<b>平底锅最多（${C.filter(r => r[0] === '平底锅').length} 条）</b>。配方等级从 <b>Lv1 一路排到 Lv99</b>，跨度比后期作品大得多——这意味着「按等级顺序做」在这作是可行的，不会中途断档。</p>
+    ${stat([['配方', C.length + ' 条'], ['食材', ms.length + ' 种'], ['配方书', bks.length + ' 本'], ['单材料配方', one.length + ' 条']])}
+    <h2 class="h2">先决定练哪件厨具</h2>
+    <p class="p">七件厨具的条数、等级跨度与成品售价中位数如下。<b>「卖价中位」是该厨具所有成品售价的中位数</b>，用来判断练它划不划算：</p>
+    ${tbl(['厨具', '配方数', '等级跨度', '卖价中位'], toolRows,
+            { leftFirst: true, cls: 'txt', colw: ['4.6rem', 'auto', 'auto', 'auto'] })}
+    <div class="key"><b>烤箱只有 ${C.filter(r => r[0] === '烤箱').length} 条，卖价中位却最高（${money(med(C.filter(r => r[0] === '烤箱').map(r => r[7]).filter(v => typeof v === 'number')))}）</b>——条数少、单价高，是「练得慢但赚得快」的那类。<b>料理台条数多（${C.filter(r => r[0] === '料理台').length}）而卖价中位最低</b>，适合前期冲等级。想赚钱就走烤箱，想冲级就走料理台。</div>
+    <h2 class="h2">${bks.length} 本配方书：每本只教一件厨具，但书名没告诉你</h2>
+    <p class="p">这一列是重点。<b>${bks.length} 本配方书，每本都只属于某一件厨具</b>——没有一本是混着教的。问题是<b>边境的书名完全不透露这一点</b>：「明日的配菜」听不出是平底锅书，「今夜下点功夫」也听不出是锅子书。所以买书之前先看这张表：</p>
+    ${tbl(['配方书', '实际教的是', '收录', '等级跨度'], bkRows,
+            { leftFirst: true, cls: 'txt', colw: ['auto', '4.4rem', '3.2rem', 'auto'] })}
+    <div class="key"><b>看第二列：每一件厨具的书加起来，条数正好等于那件厨具的全部配方</b>——料理台三本 ${C.filter(r => r[0] === '料理台').length} 条、平底锅三本 ${C.filter(r => r[0] === '平底锅').length} 条、锅子三本 ${C.filter(r => r[0] === '锅子').length} 条、烤箱三本 ${C.filter(r => r[0] === '烤箱').length} 条，一件不差。<b>平底锅那三卷还是首尾相接的台阶</b>：第 1 卷 Lv2～32 → 第 2 卷 Lv25～62 → 最终卷 Lv65～95，按这个顺序练不会断档。<b>收得最多的「厨师之路」有 ${C.filter(r => r[5] === '厨师之路').length} 条，但它是料理台书</b>——只想练平底锅的话，买了它没用。</div>
+    <h2 class="h2">囤什么食材：${ms.length} 种里只有六样值得常备</h2>
+    <p class="p">${C.length} 条配方一共用到 <b>${ms.length} 种食材</b>，但复用率极不平均。用得最多的六样是：</p>
+    ${tbl(['食材', '被几条配方用到'], ms.slice(0, 8).map(m => [m, mat[m] + ' 条']),
+            { leftFirst: true, cls: 'txt', colw: ['auto', 'auto'] })}
+    <div class="key"><b>小麦粉 ${mat['小麦粉']} 条、牛奶 ${mat['牛奶']} 条、蛋 ${mat['蛋']} 条、油 ${mat['油']} 条、黄油 ${mat['黄油']} 条、米 ${mat['米']} 条</b>——这六样出现在 <b>${anyBase.length} 条</b>配方里（占 ${Math.round(anyBase.length / C.length * 100)}%），其中 <b>${onlyBase.length} 条只靠这六样就能做出来</b>。前期把小麦粉与牛奶囤住，等于提前解锁了四成配方。<b>另有 ${one.length} 条配方只要一种材料</b>（石川鲑鱼、鲷鱼、芜菁这些直接下锅），是冲等级最省事的取巧路径。</div>
+    <details class="mon-fold">
+        <summary>展开 ${once.length} 种「只用一次」的食材（点一下）</summary>
+        <p class="p">${once.join('、')}</p>
+        <p class="p">这批分四类：<b>宝石与结晶</b>（红宝石、海蓝宝石、绿宝石、紫水晶、绿／青／红水晶、地之结晶、水之结晶）、<b>拿成品再加工</b>（饭团、曲奇饼干、三种果酱、中和剂、感冒药、营养剂 α／β／γ）、<b>稀有鱼</b>（珠星三块鱼、高身鲫、鲋鱼、青花鱼）、<b>金作物</b>（金南瓜、金芜菁）。<b>看到配方里出现这些，说明它是那种只做一次就够了的东西</b>——不用为它专门囤货。</p>
+    </details>
+    <h2 class="h2">别买成品：${buy.length} 条能买到的全是亏</h2>
+    <p class="p">${C.length} 条里只有 <b>${buy.length} 条能在店里直接买到</b>（酒馆 ${C.filter(r => r[8] === '酒馆').length} 条、教会医务室 ${C.filter(r => r[8] === '教会医务室购买').length} 条、杂货店『原质』 ${C.filter(r => r[8] === '杂货店『原质』').length} 条）。把它们的买价与卖价并排看，结论很干脆：</p>
+    ${tbl(['成品', '买入', '卖出', '卖价／买价', '在哪买'], buyRows,
+            { leftFirst: true, cls: 'txt', colw: ['auto', '3.6rem', '3.6rem', 'auto', 'auto'] })}
+    <div class="key"><b>${buy.length} 条里没有一条是赚的</b>——卖出价普遍只有买入价的 <b>40%～50%</b>，最夸张的<b>「速速绿」买 ${money(9200)} 只能卖 ${money(1840)}（20%）</b>。所以成品只能自己做、自己用或自己送，<b>指望「店里买了转手卖」必亏一半</b>。真正值钱的是做出来卖：卖价最高的是<b>${top.slice(0, 3).map(r => r[1] + '（' + money(r[7]) + '）').join('、')}</b>。</div>
+    <h2 class="h2">全部 ${C.length} 条，可按名字／材料／配方书筛选</h2>
+    ${ftableOwn(['配方', '厨具', 'Lv', '材料', '配方书', '卖价'],
+            ['auto', '4.2rem', '2.6rem', 'auto', 'auto', '3.6rem'],
+            C.map(r => [r[1] + ' ' + r[0] + ' ' + (r[5] || '') + ' ' + (r[3] || []).join(' '),
+                [r[1], r[0], dash(r[2]), (r[3] || []).length ? (r[3] || []).join('、') : '—', dash(r[5]),
+                    typeof r[7] === 'number' ? money(r[7]) : '—']]),
+            { ph: '输入配方名、材料或配方书筛选' })}
+    <div class="note">取自 biligame 符文工厂 wiki 的「RFF 料理与药学配方」表 ${C.length} 行，物品译名优先采用汉化版定稿（<code>js/rffterm.js</code> 的 <code>CN_RFF_ITEM</code>）。<b>「全效果」一列原表部分留空</b>，本页不补；配方等级为原表的「配方 lv」，不是做出成品后的物品等级。<b>「只用一次」是按本表统计的复用次数</b>，不代表游戏内产出量。</div>
+    <div class="jump">
+        <a href="#/page/cook"><div class="jp-t">料理</div><div class="jp-s">烹饪机制与料理等级怎么刷</div></a>
+        <a href="#/page/source"><div class="jp-t">素材出处与掉落</div><div class="jp-s">小麦粉、牛奶这些去哪打</div></a>
+    </div>`;
+}
+
+/* ============================================================
+   配方大全 · 海洋（RFO）
+   RFO_COOK [厨具, 名字, 料理lv, 配方书, [材料], 持续时间, HP, RP, 特殊效果, 买价, 入手, 卖价]
+   RFO_MED  [类别, 名字, 技能lv, 配方书, [材料], 效果时间, HP, RP, 特殊效果, 买价, 卖价, 入手]
+   注意：两张表的「买价／卖价」列位不同（料理 9/11，药学 9/10）
+   ============================================================ */
+function recipeRfoHtml() {
+    const C = (typeof RFO_COOK !== 'undefined') ? RFO_COOK : [];
+    const M = (typeof RFO_MED !== 'undefined') ? RFO_MED : [];
+    if (!C.length) return '<p class="p">海洋的配方数据未加载。</p>';
+    const money = v => (v == null || v === '' || v === '—') ? '<span class="mon-no">—</span>' : Number(v).toLocaleString() + 'G';
+    const dash = v => (v == null || v === '') ? '—' : v;
+    const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+
+    const tools = [];
+    C.forEach(r => { if (tools.indexOf(r[0]) < 0) tools.push(r[0]); });
+    const toolRows = tools.map(t => {
+        const g = C.filter(r => r[0] === t);
+        const lv = g.map(r => r[2]).filter(v => typeof v === 'number');
+        return [t, g.length + ' 条',
+        'Lv' + Math.min.apply(null, lv) + ' ～ ' + Math.max.apply(null, lv),
+        money(med(g.map(r => r[11]).filter(v => typeof v === 'number')))];
+    });
+
+    /* 配方书：这本属于哪件厨具 —— 海洋是严格一一对应的 */
+    const bks = [];
+    C.forEach(r => { if (r[3] && bks.indexOf(r[3]) < 0) bks.push(r[3]); });
+    const bkMap = {};
+    C.forEach(r => { (bkMap[r[3]] = bkMap[r[3]] || []).push(r[0]); });
+    const oneTool = bks.filter(b => new Set(bkMap[b]).size === 1).length;
+    const bkRows = bks.map(b => {
+        const g = C.filter(r => r[3] === b);
+        const lv = g.map(r => r[2]).filter(v => typeof v === 'number');
+        return [b, new Set(bkMap[b]).size === 1 ? bkMap[b][0] : bkMap[b].join('、'),
+        g.length + ' 条', 'Lv' + Math.min.apply(null, lv) + ' ～ ' + Math.max.apply(null, lv)];
+    });
+
+    const mat = {};
+    C.forEach(r => (r[4] || []).forEach(m => { mat[m] = (mat[m] || 0) + 1; }));
+    const ms = Object.keys(mat).sort((a, b) => mat[b] - mat[a]);
+    const BASE = ['小麦粉', '牛奶', '蛋', '油', '黄油', '米'];
+    const onlyBase = C.filter(r => (r[4] || []).length && (r[4] || []).every(m => BASE.indexOf(m) >= 0));
+    const anyBase = C.filter(r => (r[4] || []).some(m => BASE.indexOf(m) >= 0));
+
+    /* 持续时间分档 */
+    const dur = {};
+    C.forEach(r => { const k = r[5] == null ? '—' : r[5] + ' 秒'; dur[k] = (dur[k] || 0) + 1; });
+    const durRows = Object.keys(dur).sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
+        .map(k => [k, dur[k] + ' 条']);
+
+    const buy = C.filter(r => typeof r[9] === 'number' && typeof r[11] === 'number');
+    const buyRows = buy.slice().sort((a, b) => b[11] - a[11]).slice(0, 12)
+        .map(r => [r[1], money(r[9]), money(r[11]), Math.round(r[11] / r[9] * 100) + '%']);
+    const top = C.slice().filter(r => typeof r[11] === 'number').sort((a, b) => b[11] - a[11]).slice(0, 5);
+    const noLv = M.filter(r => typeof r[2] !== 'number');
+
+    return `
+    <h2 class="h2">${C.length} 道料理 ＋ ${M.length} 条药学，${bks.length} 本配方书</h2>
+    <p class="p">海洋把料理与药学分开记账：<b>${C.length} 道料理分属 ${tools.length} 件厨具</b>，另有 <b>${M.length} 条药学</b>单独一套。料理等级同样是 Lv1～99。和边境比，这一作最大的区别在<b>配方书的组织方式</b>——下面第二节会说。</p>
+    ${stat([['料理', C.length + ' 道'], ['药学', M.length + ' 条'], ['食材', ms.length + ' 种'], ['配方书', bks.length + ' 本']])}
+    <h2 class="h2">六件厨具，条数与单价差得很开</h2>
+    ${tbl(['厨具', '配方数', '等级跨度', '卖价中位'], toolRows,
+            { leftFirst: true, cls: 'txt', colw: ['4.6rem', 'auto', 'auto', 'auto'] })}
+    <div class="key">和边境同一个规律：<b>烤箱条数最少（${C.filter(r => r[0] === '烤箱').length}）而卖价中位最高（${money(med(C.filter(r => r[0] === '烤箱').map(r => r[11]).filter(v => typeof v === 'number')))}）</b>，<b>厨房条数最多（${C.filter(r => r[0] === '厨房').length}）而中位最低</b>。<b>蒸笼只有 ${C.filter(r => r[0] === '蒸笼').length} 条</b>，是六件里最冷门的——想凑齐图鉴别忘了它。</div>
+    <h2 class="h2">${bks.length} 本配方书：每本只教一件厨具</h2>
+    <p class="p">这一作和边境其实是<b>同一个规矩：一本配方书只教一件厨具，两边都是 ${bks.length} 本对 ${oneTool} 本、一件不差</b>。真正的差别在<b>命名</b>——海洋直接把厨具写进书名（「平底锅行家・初级」），买之前就知道它教什么；边境则藏进了「明日的配菜 第1卷」这类书名里，不查表根本看不出那是平底锅书。所以海洋是这套设计<b>被写明</b>的版本：</p>
+    ${tbl(['配方书', '专属厨具', '收录', '等级跨度'], bkRows,
+            { leftFirst: true, cls: 'txt', colw: ['auto', '4.4rem', '3.2rem', 'auto'] })}
+    <div class="key">于是有一个很好用的推论：<b>想精通某件厨具，就把它的「初级＋中级＋上级＋奥义」四本买齐，条数正好等于那件厨具的全部配方</b>。比如<b>平底锅 ${C.filter(r => r[0] === '平底锅').length} 条 ＝ 初级 ${C.filter(r => r[3] === '平底锅行家・初级').length} ＋ 中级 ${C.filter(r => r[3] === '平底锅行家・中级').length} ＋ 上级 ${C.filter(r => r[3] === '平底锅行家・上级').length} ＋ 奥义 ${C.filter(r => r[3] === '平底锅的奥义').length}</b>，一分不差。反过来说，<b>「初级」那六本（${bks.filter(b => /初级$/.test(b)).length} 本）加起来 ${C.filter(r => /初级$/.test(r[3] || '')).length} 条，是前期最划算的一笔投资</b>。</div>
+    <h2 class="h2">囤什么：和边境是同一份清单</h2>
+    <p class="p">${C.length} 道料理用到 <b>${ms.length} 种食材</b>，用得最多的六样：</p>
+    ${tbl(['食材', '被几道料理用到'], ms.slice(0, 8).map(m => [m, mat[m] + ' 道']),
+            { leftFirst: true, cls: 'txt', colw: ['auto', 'auto'] })}
+    <div class="key"><b>小麦粉、牛奶、蛋、油、黄油、米</b>——<b>和边境的前六名一字不差</b>，只是次数略少（小麦粉 ${mat['小麦粉']} 道）。这六样出现在 <b>${anyBase.length} 道</b>料理里（占 ${Math.round(anyBase.length / C.length * 100)}%），<b>${onlyBase.length} 道只靠它们就能做</b>。跨作结论很稳：<b>这两作都先把面粉和乳制品囤起来</b>。海洋的食材复用率还更高——只用一次的只有 <b>${ms.filter(m => mat[m] === 1).length} 种</b>，而边境有 34 种。</div>
+    <h2 class="h2">效果持续多久：四档</h2>
+    <p class="p">海洋的料理明确标了<b>持续时间</b>，而且只有四个值。这一列决定「这道菜是随手吃还是留着打 BOSS」：</p>
+    ${tbl(['持续时间', '道数'], durRows, { leftFirst: true, cls: 'txt', colw: ['auto', 'auto'] })}
+    <div class="key"><b>30 秒（${dur['30 秒'] || 0} 道）与 60 秒（${dur['60 秒'] || 0} 道）占了将近九成</b>，属于日常随手吃。<b>120 秒只有 ${dur['120 秒'] || 0} 道</b>，是真正的长效料理——打长时间的迷宫或 BOSS 就该带这几道。</div>
+    <h2 class="h2">${buy.length} 道能在「三姐妹旅馆」买到，照样是亏的</h2>
+    <p class="p">${C.length} 道里 <b>${buy.length} 道可以直接买</b>（全部出自三姐妹旅馆），其余 ${C.length - buy.length} 道只能自己做。按卖价从高到低列出前 12 道：</p>
+    ${tbl(['成品', '买入', '卖出', '卖价／买价'], buyRows,
+            { leftFirst: true, cls: 'txt', colw: ['auto', '3.6rem', '3.6rem', 'auto'] })}
+    <div class="key">和边境一样：<b>卖价普遍是买价的 40%</b>（少数 50%，橘子汁是唯一的例外、57%）。<b>买现成的再卖掉必亏，成品只该自己做</b>。真要赚钱是做出来卖——卖价最高的是<b>${top.slice(0, 3).map(r => r[1] + '（' + money(r[11]) + '）').join('、')}</b>。</div>
+    <h2 class="h2">药学 ${M.length} 条：另一套逻辑</h2>
+    <p class="p">药学单独记账，靠「药品行家・初级／上级」两本书。<b>${M.length} 条里有 ${noLv.length} 条没有技能等级</b>（${noLv.map(r => r[1]).join('、')}）——这些不走「技能等级」这条路，原表就没给等级。</p>
+    ${ftableOwn(['药品', '技能 Lv', '材料', '配方书', '卖价'],
+            ['auto', '3.4rem', 'auto', 'auto', '3.4rem'],
+            M.map(r => [r[1] + ' ' + (r[3] || '') + ' ' + (r[4] || []).join(' '),
+                [r[1], dash(r[2]), (r[4] || []).length ? (r[4] || []).join('、') : '—',
+                    dash(r[3]), typeof r[10] === 'number' ? money(r[10]) : '—']]),
+            { ph: '输入药名或材料筛选' })}
+    <h2 class="h2">全部 ${C.length} 道料理，可按名字／材料／配方书筛选</h2>
+    ${ftableOwn(['料理', '厨具', 'Lv', '材料', '配方书', '持续', '卖价'],
+            ['auto', '3.8rem', '2.4rem', 'auto', 'auto', '2.8rem', '3.4rem'],
+            C.map(r => [r[1] + ' ' + r[0] + ' ' + (r[3] || '') + ' ' + (r[4] || []).join(' '),
+                [r[1], r[0], r[2], (r[4] || []).length ? (r[4] || []).join('、') : '—',
+                    dash(r[3]), r[5] == null ? '—' : r[5] + ' 秒',
+                    typeof r[11] === 'number' ? money(r[11]) : '—']]),
+            { ph: '输入料理名、材料或配方书筛选' })}
+    <div class="note">取自 biligame 符文工房 wiki 的「RFO 料理与药学配方」表（料理 ${C.length} 行、药学 ${M.length} 行）。<b>料理表的「卖价」在第 11 列、药学表在第 10 列</b>，两表列位不同，本页按各自列位取值。<b>「处方书」指的不是同一件物品</b>：料理靠厨具行家系列、药学靠药品行家系列，两者不通用。未标等级的药学条目原表即为空，本页显示「—」，不补数。</div>
+    <div class="jump">
+        <a href="#/page/cook"><div class="jp-t">料理</div><div class="jp-s">烹饪机制与料理等级怎么刷</div></a>
+        <a href="#/page/source"><div class="jp-t">素材出处与掉落</div><div class="jp-s">小麦粉、牛奶这些去哪打</div></a>
+    </div>`;
+}
+
 /* ------------------------------------------------------------
    素材出处与掉落：边境（RFF）
    源：js/rffmon.js 的 RFF_MON[8]「总掉落物」，每段形如「白金Lv1 100%」。
@@ -5126,8 +5337,10 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
         body: g => {
+            if (g.id === 'rff') return recipeRffHtml();
+            if (g.id === 'rfo') return recipeRfoHtml();
             if (g.id.indexOf('rf4') === 0) return recipe4Html();
             const rec = (typeof RECIPE !== 'undefined') ? RECIPE : [];
             const cats = (typeof RECIPE_CATS !== 'undefined') ? RECIPE_CATS : [];
@@ -5592,6 +5805,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百一十五次：配方大全补上边境与海洋，顺手推翻了自己一句判断</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「配方大全」原只覆盖 RF4／RF4S／RF5。这次把<b>边境（228 条）与海洋（181 道料理 ＋ 16 条药学）</b>也做进来——两作的配方数据站内本来就有（<code>RFF_COOK</code>、<code>RFO_COOK</code>／<code>RFO_MED</code>），都出自 biligame 符文工厂 wiki。新增两个顶层函数 <code>recipeRffHtml()</code> / <code>recipeRfoHtml()</code>，按 <code>g.id</code> 分流。</li>
+                <li class="li"><b>这一轮最该记的一条：我第一版写错了，已改</b>。我原先按「边境的书混着教、海洋的书一一对应」来写对照，渲染出来发现边境那张表的「跨几件厨具」列<b>全是 1 件</b>——回头逐本核对，<b>边境同样是严格的一书一厨具</b>：料理台三本（9＋25＋9）＝ 44 条、平底锅三卷（19＋17＋16）＝ 52 条、锅子三本（14＋14＋12）＝ 40 条、烤箱三本（10＋14＋12）＝ 36 条，一件不差。已改正为「<b>两作是同一个规矩，差别只在命名</b>」。</li>
+                <li class="li"><b>改正后的对照反而更有用</b>：海洋把厨具写进书名（「平底锅行家・初级」），买之前就知道教什么；<b>边境把这件事藏起来了</b>——「明日的配菜」听不出是平底锅书、「今夜下点功夫」听不出是锅子书。所以边境页那张配方书表<b>专门加了「实际教的是」一列</b>，并点明收得最多的<b>「厨师之路」（25 条）其实是料理台书</b>，只想练平底锅的话买了没用。</li>
+                <li class="li"><b>两作共通的规律</b>：① <b>烤箱条数最少而卖价中位最高</b>（边境 36 条／590G、海洋 28 条／590G），<b>料理台（厨房）条数最多而中位最低</b>——想赚钱走烤箱、想冲级走料理台；② <b>前六大食材两作一字不差</b>：小麦粉、牛奶、蛋、油、黄油、米，覆盖边境 97 条（43%）／海洋 87 道（48%）；③ <b>成品一律别买</b>——边境 14 条、海洋 31 条能买到的全是亏，卖价普遍只有买价的 <b>40%</b>（边境「速速绿」买 9,200G 只卖 1,840G，20%）。</li>
+                <li class="li"><b>各自独有的一条</b>：边境有 <b>88 条只消一种材料</b>的配方，是冲等级最省事的路径；另有 <b>34 种食材全表只用一次</b>（宝石与结晶、拿成品再加工、稀有鱼、金作物四类），已折进折叠块。海洋则标了<b>效果持续时间，且只有 30／60／90／120 秒四档</b>，前两档占近九成，<b>120 秒的只有 4 道</b>——打长时间迷宫该带的就是那 4 道。</li>
+                <li class="li"><b>照旧不臆造</b>：药学 16 条里有 9 条<b>原表就没给技能等级</b>（七种元素、生命果冻、蛋・白・质、智力补品），显示「—」不补数；<b>料理表与药学表的「买价／卖价」列位不同</b>（料理第 9／11 列、药学第 9／10 列），本页按各自列位取值，已写进页尾说明。</li>
+                <li class="li"><b>踩坑</b>：<code>money()</code> 是各页面函数<b>内部的局部 const、不是全局函数</b>，新写的顶层函数里直接用会报 <code>ReferenceError: money is not defined</code>（<code>_verify.js</code> 直接崩掉），需在每个新函数里各自定义一遍。</li>
+                <li class="li"><b>校验</b>：<b>364 个页面实例</b>（新增 2）／0 异常／头像 214 张缺 0；两作在 520px 与 1100px 下<b>零溢出、逐格检查零裁切</b>（边境 5 张表、海洋 7 张表）。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百一十四次：战斗与弱点补上 RF1 与海洋，两套抗性的读法都得反过来</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「战斗与弱点」这一页原本只讲 RF5／RF4／RF3 三作，用的是解包出来的抗性系数。这次把<b>初代与海洋</b>也算了进来——它们的数据站内本来就有（<code>RF1_MON</code> 的物理／火／风／水／地与六项硬直异常、<code>RFO_RES</code> 的 102 行抗性块），只是此前只躺在魔物图鉴里，没做成能横向比较的分析。</li>
