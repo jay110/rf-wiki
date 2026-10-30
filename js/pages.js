@@ -1967,6 +1967,124 @@ const PAGES = [
             <div class="note">取自《符文工厂译名查询粗略表》的「RF3 魔物 boss 抗性」19 行，去掉表头后 ${B.length} 只。原表表头还列了 lv／HP／攻击／防御等列，但<b>数据行只填到「无抗性」为止</b>，属性面板是空的，所以本页只呈现抗性，不补数值。原表的「地抗性」在各作里也叫「土」，本页按原表写「地」。`;
                 })()}
 
+            <h2 class="h2">RF1：${(typeof RF1_MON !== 'undefined') ? RF1_MON.length : 0} 只，抗性的读法和上面三作正好相反</h2>
+            ${(() => {
+                    const M1 = (typeof RF1_MON !== 'undefined') ? RF1_MON : [];
+                    if (!M1.length) return '<p class="p">RF1 的数据未加载。</p>';
+                    const AX = [[5, '物理'], [6, '火'], [7, '风'], [8, '水'], [9, '地']];
+                    const col = i => M1.map(x => x[i]).filter(v => typeof v === 'number');
+                    const avg = a => Math.round(a.reduce((p, q) => p + q, 0) / a.length * 10) / 10;
+                    /* 每只最脆的那一项：这套数越小越脆，不是「负数＝弱点」 */
+                    const soft = {};
+                    M1.forEach(x => {
+                        let mn = Infinity;
+                        AX.forEach(a => { if (x[a[0]] < mn) mn = x[a[0]]; });
+                        AX.forEach(a => { if (x[a[0]] === mn) soft[a[1]] = (soft[a[1]] || 0) + 1; });
+                    });
+                    /* 四属性数值完全一样 = 对火风水地一视同仁 */
+                    const flat = M1.filter(x => new Set([x[6], x[7], x[8], x[9]]).size === 1);
+                    const attrRows = AX.map(a => {
+                        const v = col(a[0]);
+                        const full = M1.filter(x => x[a[0]] === 100);
+                        return [a[1], Math.min.apply(null, v), avg(v), Math.max.apply(null, v),
+                            full.length ? full.length + ' 只（' + full.map(x => x[0]).join('、') + '）' : '0 只',
+                        (soft[a[1]] || 0) + ' 只'];
+                    });
+                    const SX = [[10, '吹飞'], [11, '倒地'], [12, '毒'], [13, '封印'], [14, '麻痹'], [15, '吸收']];
+                    const stRows = SX.map(a => {
+                        const v = col(a[0]);
+                        const lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+                        const lw = M1.filter(x => x[a[0]] === lo), hw = M1.filter(x => x[a[0]] === hi);
+                        return [a[1],
+                            v.filter(x => x === 0).length + ' 只',
+                            avg(v),
+                            lo + '（' + lw.slice(0, 3).map(x => x[0]).join('、') + (lw.length > 3 ? ' 等 ' + lw.length + ' 只' : '') + '）',
+                            hi + '（' + hw.slice(0, 3).map(x => x[0]).join('、') + (hw.length > 3 ? ' 等 ' + hw.length + ' 只' : '') + '）'];
+                    });
+                    const immune3 = M1.filter(x => x[12] === 0 && x[13] === 0 && x[14] === 0);
+                    return `
+            <p class="p">这一节的数字<b>不能按上面的读法看</b>。RF5／RF4／RF3 给的是系数，负数＝弱点；RF1 给的是<b>减伤值，而且全是正数，一个负数都没有</b>——所以这里的规矩正好反过来：<b>数字越小越脆、越大越抗</b>。照搬「找负数」的读法会得出「RF1 没有弱点」的错结论，实际是「要找最小值」。</p>
+            ${stat([['收录', M1.length + ' 只'], ['最脆是物理', (soft['物理'] || 0) + ' 只'], ['四属性等值', flat.length + ' 只'], ['毒封麻全吃', immune3.length + ' 只']])}
+            <h3 class="h3">五列抗性：物理是通解</h3>
+            <p class="p">五列里<b>物理的平均值最低（${avg(col(5))}），火的平均值最高（${avg(col(6))}）</b>。换句话说，拿无属性的物理武器打，平均而言比任何属性武器都疼。最后一列是「这只魔物身上数值最小的那一项」的统计：</p>
+            ${tbl(['抗性项', '最低', '平均', '最高', '满值 100', '成为最脆项'], attrRows,
+                    { leftFirst: true, cls: 'txt', colw: ['4.4rem', '3rem', '3rem', '3rem', 'auto'] })}
+            <div class="key">两个数字合起来就是结论：<b>${soft['物理'] || 0} 只魔物最脆的那一栏是物理</b>，而且 <b>${M1.filter(x => x[5] < Math.min(x[6], x[7], x[8], x[9])).length} 只的物理抗性比它最脆的属性还要低</b>。再叠上 ${flat.length} 只四属性数值完全相同（${flat.slice(0, 4).map(x => x[0]).join('、')} 等等，对火风水地一视同仁），真正值得为它换属性武器的只剩 <b>${M1.length - flat.length} 只</b>。</div>
+            <p class="p">满值 100 的格子全表只有三处：火幽灵的火、鬼火与冰幽灵的水。原表没有给出这套数值与最终伤害的换算公式，本站只呈现数值本身，<b>不把 100 直接说成免疫</b>。</p>
+            <h3 class="h3">硬直与异常：能打断，也很好上状态</h3>
+            <p class="p">后六项里，<b>吹飞与倒地是硬直</b>（打中后它僵一下），毒／封印／麻痹是异常，吸收是它对这类效果的承受上限。<b>为 0 表示完全不抵抗</b>——想上状态就看这一列：</p>
+            ${tbl(['项目', '为 0', '平均', '最低', '最高'], stRows,
+                    { leftFirst: true, cls: 'txt', colw: ['3.6rem', '2.8rem', '2.8rem', 'auto', 'auto'] })}
+            <div class="key"><b>${immune3.length} 只（占 ${Math.round(immune3.length / M1.length * 100)}%）对毒／封印／麻痹三项全是 0</b>——三种异常随便上，没有任何抵抗。其中<b>封印最宽松</b>（${col(13).filter(x => x === 0).length} 只为 0），<b>毒最难上</b>（为 0 的只有 ${col(12).filter(x => x === 0).length} 只）。这和 RF4／RF5 完全是两个世界：那边两成到一半的敌人直接免疫眩晕，这边四成多的怪三种异常全吃。</div>
+            <p class="p">硬直则相反，<b>倒地平均 ${avg(col(11))} 比吹飞 ${avg(col(10))} 难得多</b>：${M1.filter(x => x[11] === 100).length} 只的倒地抗性顶到 100，全是飞行系与幽灵系（浮士德、哈迪斯、风鸟、咕咕鸡、女王蜂、黄蜂、鬼火、鬼魂、火幽灵、冰幽灵…）。吹飞顶到 100 的只有<b>陆龟与小石魔人</b>两只——重量级，推不动。</p>
+            <details class="mon-fold">
+                <summary>展开 ${M1.length} 只的全部抗性（点一下）</summary>
+                <div class="table mon-table"><table><thead><tr>
+                    <th class="th left">魔物</th>${AX.concat(SX).map(a => `<th class="th">${a[1]}</th>`).join('')}
+                </tr></thead><tbody>${M1.map(x => '<tr>' +
+                            '<td class="td left r-n">' + x[0] + '</td>' +
+                            AX.concat(SX).map(a => '<td class="td">' + (x[a[0]] == null ? '—' : x[a[0]]) + '</td>').join('') +
+                            '</tr>').join('')}</tbody></table></div>
+            </details>
+            <div class="note">取自 biligame 符文工厂 wiki「符文工厂1魔物数据表」${M1.length} 行，字段为物理／火／风／水／地抗性，加吹飞、倒地、毒、封印、麻痹、吸收六项。<b>译名沿用该 wiki</b>，与魔物图鉴里的汉化定稿名是两套体系（这里的「兽人」＝图鉴里的「野猪战士」），因此不做强行合并。<b>本页呈现的是抗性排序与分布，不是伤害公式</b>——原表没给换算方式，本站不推算实际减伤百分比。</div>`;
+                })()}
+
+            <h2 class="h2">海洋：${(typeof RFO_RES !== 'undefined') ? RFO_RES.length : 0} 只，抗性只有「〇／×／空」三档</h2>
+            ${(() => {
+                    const RS1 = (typeof RFO_RES !== 'undefined') ? RFO_RES : [];
+                    if (!RS1.length) return '<p class="p">海洋的抗性数据未加载。</p>';
+                    const AK = [['火', 1], ['水', 2], ['地', 3], ['风', 4], ['光', 5], ['暗', 6]];
+                    const DF = [['火', 7], ['水', 8], ['地', 9], ['风', 10], ['光', 11], ['暗', 12]];
+                    const SB = [['毒', 13], ['麻痹', 14], ['封印', 15], ['眩晕', 16], ['睡眠', 17], ['疲劳', 18], ['感冒', 19], ['吸血', 20], ['即死', 21]];
+                    const cO = i => RS1.filter(r => r[i] === '〇').length;
+                    const cX = i => RS1.filter(r => r[i] === '×').length;
+                    const defIdx = DF.map(a => a[1]), sbIdx = SB.map(a => a[1]), akIdx = AK.map(a => a[1]);
+                    /* 防御侧有 × 的就是有属性弱点的 */
+                    const weak1 = RS1.filter(r => defIdx.some(i => r[i] === '×'));
+                    const defRows = DF.map(a => [a[0], cO(a[1]) + ' 只', cX(a[1]) + ' 只']);
+                    /* 异常：九项里 〇 的个数 */
+                    const nOf = r => sbIdx.filter(i => r[i] === '〇').length;
+                    const all9 = RS1.filter(r => nOf(r) === 9);
+                    const none9 = RS1.filter(r => nOf(r) === 0);
+                    const mid = RS1.filter(r => nOf(r) > 0 && nOf(r) < 9);
+                    const sbRows = SB.map(a => [a[0], cO(a[1]) + ' 只']);
+                    const mkW = v => v === '〇' ? '<span class="mon-yes">〇</span>'
+                        : (v === '×' ? '<span class="mon-no">×</span>' : '<span class="mon-f">·</span>');
+                    return `
+            <p class="p">海洋这份表和前几作<b>不是一个体系</b>：没有数值，只有三种记号——<b>〇＝有这一项、×＝这一项的弱点、空＝原表未标注</b>。它分三块：<b>前六列是它打你带什么属性</b>（决定你穿什么抗性装），<b>中六列是它扛什么属性</b>（决定你拿什么武器），<b>后九列是它会不会中异常</b>。</p>
+            ${stat([['收录', RS1.length + ' 只'], ['有属性弱点', weak1.length + ' 只'], ['九种异常全中', all9.length + ' 只'], ['异常全无', none9.length + ' 只']])}
+            <h3 class="h3">先说结论：属性武器在这里基本派不上用场</h3>
+            <p class="p">${RS1.length} 只里<b>只有 ${weak1.length} 只存在属性弱点</b>，其余 ${RS1.length - weak1.length} 只一个 × 都没有。更关键的是——<b>这 ${weak1.length} 只每只都只有恰好一个弱点，没有一只能被两种属性同时克</b>：</p>
+            ${tbl(['防御属性', '〇 有抗性', '× 是弱点'], defRows,
+                    { leftFirst: true, cls: 'txt', colw: ['4.4rem', 'auto', 'auto'] })}
+            <div class="key">真要挑一把属性武器，只有<b>火（${cX(7)} 只）与水（${cX(8)} 只）</b>值得做，<b>暗是 0</b>——没有一只魔物怕暗。完整名单：${weak1.map(r => r[0] + '（' + DF.filter(a => r[a[1]] === '×').map(a => a[0]).join('') + '）').join('、')}。<b>挑不出来的时候就用无属性</b>，这一作不存在「带对属性就翻倍」的通用解。</div>
+            <p class="p">攻击侧的分布也一样扁平：${RS1.filter(r => akIdx.every(i => !r[i])).length} 只<b>不带任何属性</b>（纯物理），${RS1.filter(r => akIdx.filter(i => r[i]).length === 1).length} 只只带一种，带满五种的只有<b>${RS1.filter(r => akIdx.filter(i => r[i]).length === 5).map(r => r[0]).join(' 与 ')}</b>——这两只也是全表攻击手段最杂的，抗性装要按它们配。</p>
+            <h3 class="h3">异常是二分设计：要么全吃，要么全免</h3>
+            <p class="p">后九列最能说明问题。<b>${all9.length} 只九种异常全中，${none9.length} 只一种都不中，夹在中间的只有 ${mid.length} 只</b>（${mid.filter(r => nOf(r) === 1).length} 只中 1 种、${mid.filter(r => nOf(r) === 2).length} 只中 2 种）。这不是随机分布，是刻意的两分设计：</p>
+            ${tbl(['异常', '〇 有效'], sbRows, { leftFirst: true, cls: 'txt', colw: ['4.4rem', 'auto'] })}
+            <div class="key">九项各自的「〇」只数都在 ${Math.min.apply(null, SB.map(a => cO(a[1])))}～${Math.max.apply(null, SB.map(a => cO(a[1])))} 之间，<b>差别极小</b>——因为只要能上状态，就是九种一起生效，不存在「只免疫其中两种」的设计。<b>能全上的 ${all9.length} 只名单</b>：${all9.map(r => r[0]).join('、')}。<b>「王」类（哥布林王、摩可摩可王、巨人王、松鼠王、狼王、独角兽王、哥布林队长、大师恶魔）与四只精灵（黄／红／蓝／绿）几乎全在这一档</b>——越像头目，越吃状态。</div>
+            <p class="p">中间那 ${mid.length} 只反而是特例，值得单独记：<b>牛头人与牛头人王只中眩晕、三种史莱姆只中睡眠、螳武士与螳护卫只中即死、三只幽灵只中麻痹</b>；小魔术师、小巫术师、女王蜂、黄蜂各中两种。这些是「只有特定打法才成立」的对手。</p>
+            <details class="mon-fold">
+                <summary>展开 ${RS1.length} 只的属性抗性（攻 6 列 ＋ 防 6 列，点一下）</summary>
+                <div class="table mon-table"><table><thead><tr>
+                    <th class="th left">魔物</th>${AK.map(a => '<th class="th">攻' + a[0] + '</th>').join('')}${DF.map(a => '<th class="th">防' + a[0] + '</th>').join('')}
+                </tr></thead><tbody>${RS1.map(r => '<tr>' +
+                            '<td class="td left r-n">' + r[0] + '</td>' +
+                            akIdx.concat(defIdx).map(i => '<td class="td">' + mkW(r[i]) + '</td>').join('') +
+                            '</tr>').join('')}</tbody></table></div>
+            </details>
+            <details class="mon-fold">
+                <summary>展开 ${RS1.length} 只的九种异常抗性（点一下）</summary>
+                <div class="table mon-table"><table><thead><tr>
+                    <th class="th left">魔物</th>${SB.map(a => `<th class="th">${a[0]}</th>`).join('')}
+                </tr></thead><tbody>${RS1.map(r => '<tr>' +
+                            '<td class="td left r-n">' + r[0] + '</td>' +
+                            sbIdx.map(i => '<td class="td">' + mkW(r[i]) + '</td>').join('') +
+                            '</tr>').join('')}</tbody></table></div>
+            </details>
+            <div class="note">取自 biligame 符文工厂 wiki「RFOmonster」页的抗性块，${RS1.length} 行。<b>空着的格子是原表未标注</b>，不是本站漏填——本页按「无此抗性或未收录」显示成「·」，<b>不擅自解读为免疫</b>。属性与异常的实际效果强度（减伤多少／持续几秒）这份表完全没有，本站不补。</div>`;
+                })()}
+
 
             <h2 class="h2">这和毕业套是同一套逻辑</h2>
             <p class="p">看完这张表就明白装备打造页里那些选择为什么那么排：</p>
@@ -5474,6 +5592,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百一十四次：战斗与弱点补上 RF1 与海洋，两套抗性的读法都得反过来</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「战斗与弱点」这一页原本只讲 RF5／RF4／RF3 三作，用的是解包出来的抗性系数。这次把<b>初代与海洋</b>也算了进来——它们的数据站内本来就有（<code>RF1_MON</code> 的物理／火／风／水／地与六项硬直异常、<code>RFO_RES</code> 的 102 行抗性块），只是此前只躺在魔物图鉴里，没做成能横向比较的分析。</li>
+                <li class="li"><b>RF1 的读法和前三作正好相反，这是最要紧的一条</b>：RF5／RF4／RF3 给的是系数，<b>负数＝弱点</b>；RF1 给的<b>全是正数、一个负数都没有</b>。照搬「找负数」的读法会得出「RF1 没有弱点」的错误结论。正确读法是<b>数字越小越脆</b>——这是减伤值，不是系数。页面在两节之间专门写了一段做这个对照。</li>
+                <li class="li"><b>RF1 的结论：物理是通解</b>。63 只里 <b>39 只最脆的那一栏是物理</b>，38 只的物理抗性比它最脆的属性还要低；而且 <b>40 只的四属性数值完全相同</b>（兽人领主、死亡蝎、兽人猎手…），对火风水地一视同仁。真正值得为它换属性武器的只剩 23 只。五列里物理平均 16.9 最低、火平均 29.1 最高。</li>
+                <li class="li"><b>RF1 的异常非常好上</b>：<b>27 只（43%）对毒／封印／麻痹三项全是 0</b>，三种异常随便上。封印最宽松（46 只为 0），毒最难（38 只）。硬直则相反——<b>倒地平均 57.3 比吹飞 36.8 难得多</b>，14 只的倒地顶到 100，全是飞行系与幽灵系；吹飞顶到 100 的只有<b>陆龟与小石魔人</b>两只。这和 RF4／RF5「两成到一半的敌人免疫眩晕」完全是两个世界。</li>
+                <li class="li"><b>海洋的结论：属性武器基本派不上用场</b>。102 只里<b>只有 21 只存在属性弱点</b>，其余 81 只一个 × 都没有，而且<b>这 21 只每只都只有恰好一个弱点，没有一只能被两种属性同时克</b>。真要做属性武器只有<b>火（7 只）与水（7 只）</b>值得，<b>暗是 0</b>。</li>
+                <li class="li"><b>海洋的异常是二分设计</b>：<b>26 只九种全中、62 只一种都不中</b>，夹在中间的只有 14 只（10 只中 1 种、4 只中 2 种）。九项各自的「〇」只数都在 26～31 之间、差别极小，说明<b>能上就是九种一起生效</b>，不存在「只免疫其中两种」的设计。<b>「王」类与四只精灵几乎全在能吃异常那一档</b>——越像头目越吃状态。中间态反而值得单独记：牛头人与牛头人王只中眩晕、三种史莱姆只中睡眠、螳武士与螳护卫只中即死、三只幽灵只中麻痹。</li>
+                <li class="li"><b>照旧不臆造</b>：海洋源表的空格子是<b>原表未标注</b>，本页显示成「·」并明说<b>不擅自解读为免疫</b>；RF1 满值 100 的只有三格（火幽灵的火、鬼火与冰幽灵的水），原表没给换算公式，本页<b>不把 100 直接说成免疫</b>。两份数据都是现解现算，没有另存衍生表。</li>
+                <li class="li"><b>一处排版调整</b>：海洋的全表起初做成一张 21 列，520px 下每列被压到 31px、魔物名竖成一行一个字。改成<b>拆成「属性（攻 6 ＋ 防 6）」与「九种异常」两张折叠表</b>，之后 520px 与 1100px 下全页 <b>零溢出</b>。</li>
+                <li class="li"><b>校验</b>：<b>362 个页面实例</b> / 0 异常 / 头像 214 张缺 0；1100px 与 520px 下 <code>scrollWidth 482 &lt; 视口 490</code>，六张表逐格检查<b>零裁切</b>。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百一十三次：「素材出处与掉落」补上边境与海洋，两份掉落表各自拆出一条主线</h2>
             <ul class="ul">
                 <li class="li"><b>为什么先做这两作</b>：这个条目原只覆盖 RF4／RF5。而边境与海洋的掉落数据<b>站内本来就有</b>——边境在 <code>RFF_MON[8]</code>（总掉落物），海洋在 <code>RFO_DROP</code>——只是没做成能反查的页面。这两份都是从 biligame 符文工厂 wiki 抄下来的，不用去别处补数，正好符合「不臆造」这条规矩。</li>
