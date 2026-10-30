@@ -14,13 +14,19 @@ const TITLE_ART = {
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
     rf3:   { src: 'assets/title/rf3.png', pos: '35%', tall: 'lg' },
     rf3sp: { src: 'assets/title/rf3sp.jpg', tall: 'lg' },
-    rf4:   { src: 'assets/title/rf4.jpg' },
-    rf4sp: { src: 'assets/title/rf4sp.jpg' },
-    rf5:   { src: 'assets/title/rf5.jpg' },
     rff:   { src: 'assets/title/rff.jpg', tall: true },
     rfo:   { src: 'assets/title/rfo.jpg', tall: true },
-    azuma: { src: 'assets/title/azuma.jpg' },
 };
+
+/* 双作合并卡：RF4/RF4SP/RF5/龙之天地这四张官方横幅是 960x325（2.95:1），
+   塞进 16:9 的卡里必定上下被切掉约三成，单独成卡时又矮一截、同排对不齐。
+   干脆两两并成一张 16:9：上下各一条，每条都不裁切，卡片总数也从 10 降到 8。
+   键 = 排在前面的那部，mate = 并进去的第二部，src = 预先拼好的 960x540。 */
+const WPAIR = {
+    rf4: { mate: 'rf4sp', src: 'assets/title/pair-rf4.jpg' },
+    rf5: { mate: 'azuma', src: 'assets/title/pair-rf5.jpg' },
+};
+const WPAIR_MATE = new Set(Object.keys(WPAIR).map(k => WPAIR[k].mate));
 
 const S = {
     game: 'rf4',
@@ -114,6 +120,32 @@ function titleSrc(art) {
     return art.src;
 }
 
+/* 双作合并卡：整张卡不是链接，上半条 / 下半条各是一个 a，
+   点哪一条进哪一部；文字区再把两部作品名摆成两行，小屏也点得中。 */
+function wcardPair(x, g) {
+    const p = WPAIR[x.id];
+    const b = GAMES.find(y => y.id === p.mate);
+    if (!b) return '';
+    const two = [x, b];
+    const on = two.some(y => y.id === g.id);
+    const row = (y) => `
+                <a class="pair-row${y.id === g.id ? ' on' : ''}" href="#/switch/${y.id}">
+                    <span class="pair-row-name"><span class="wpre">符文工房</span>${y.name.replace(/^符文工房\s*/, '')}</span>
+                    <span class="pair-row-meta">${y.date.slice(0, 4)}<span class="pr-plat">　${platShort(y.plat)}</span></span>
+                </a>`;
+    return `
+            <div class="wcard wcard-pair has-fig${on ? ' cur' : ''}"
+                 style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
+                <div class="wcard-fig is-tall">
+                    <img src="${titleSrc({ src: p.src })}" alt="" loading="lazy">
+                    <a class="pair-hit" href="#/switch/${x.id}" aria-label="${x.name}"></a>
+                    <a class="pair-hit pair-hit-2" href="#/switch/${b.id}" aria-label="${b.name}"></a>
+                </div>
+                <div class="wcard-no">${x.no}／${b.no}</div>
+                <div class="pair-rows">${two.map(row).join('')}</div>
+            </div>`;
+}
+
 
 function viewWelcome() {
     const g = cur();
@@ -138,7 +170,8 @@ function viewWelcome() {
 
     <div class="section-title"><span>选择作品</span><span class="en">TITLES</span></div>
     <div class="wgrid">
-        ${GAMES.map(x => {
+        ${GAMES.filter(x => !WPAIR_MATE.has(x.id)).map(x => {
+            if (WPAIR[x.id]) return wcardPair(x, g);
             const art = TITLE_ART[x.id];
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"

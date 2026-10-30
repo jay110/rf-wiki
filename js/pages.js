@@ -4967,6 +4967,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第一百零五次：四部作品两两并卡（10 张变 8 张），RF4+RF4SP、RF5+龙之天地 各占一条</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：上一版末尾留着四张 2.96:1 的卡（RF4 / RF4SP / RF5 / 龙之天地）。它们单独放进 16:9 的框要切掉约三成高度（RF4SP、RF5 是群像，一切就切到人），留在矮框里又比同排的卡矮一截、被栅格拉出空白。用户给出的解法是「四个作品可以合成两个」。</li>
+                <li class="li"><b>做法</b>：两部一张卡，配图上下各一条，整体 960×540（正好 16:9）。上条 / 下条各压一个透明链接，点哪半条进哪一部；文字区并排两行「作品名 … 年份 平台」，当前所在的那一部前面加一个 <code>›</code>。</li>
+                <li class="li"><b>关键发现：这四张图有一半是虚的</b>。RF4SP / RF5 的 Steam capsule 是「中间一块清晰方图 + 两侧官方做的模糊延伸」，用逐列高频能量一量，清晰区只有 <b>x=192..766（574px）</b>，其余 386px 全是拉伸模糊。所以不能整张缩——那样会把官方的模糊再糊一遍。改成：只取清晰区等比缩到条高（636×270），两侧另用这块清晰区重度模糊 + 压暗补齐，清晰区一点不切。RF4（浮空船）与龙之天地是全幅画，直接按宽铺满、上下居中各切 27px。</li>
+                <li class="li"><b>布局影响</b>：10 张卡变 8 张。三列布局从「3/3/3/1」（末行只剩一张、右边空两格）变成「3/3/2」；两列布局正好 4 行，不再有落单的那一张。</li>
+                <li class="li"><b>旧的单卡图</b>：<code>assets/title/rf4.jpg</code>、<code>rf4sp.jpg</code>、<code>rf5.jpg</code>、<code>azuma.jpg</code> 已删除（两张新图里就是它们的内容，留着会让单文件版多内联 400KB 死图）。<code>_title_src/build_titles.py</code> 里原来生成这四张的代码换成 <code>wpair()</code>，源图仍从 <code>src/rf4w_1.jpg</code>、<code>src/rf4sp_capsule_616x353.jpg</code>、<code>src/rf5_capsule_616x353.jpg</code>、<code>src/azuma_library_hero.jpg</code> 现做，可复现。</li>
+                <li class="li"><b>体积</b>：两张合并图 122KB / 125KB（960×540 q88）。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第一百零四次：海洋 换成 PS3 标题画面三层合成的原生 1280x720（logo + 藤蔓框 + 岛海图），第二行三张一起加高</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：海洋的卡一直是<b>只有景、没有 logo</b>——那张 960×720 的圆形插画（岛 + 海底）单独看认不出是哪一作，而且旧图是把圆构图硬裁成 2.96:1，圆的左右被切掉。用户说「海洋也重新弄」「可以两张合在一起 logo加背景」。</li>

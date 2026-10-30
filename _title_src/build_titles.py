@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""统一生成 10 部作品的卡片横幅图（assets/title/<gid>.jpg|png）
+"""统一生成作品卡片横幅图（assets/title/）
 
 卡片图区有两种高度：
   · 默认 .wcard-fig —— 284x96 CSS（6rem），比例 2.96:1 → 图 960x325
@@ -8,10 +8,11 @@
   cover      —— 全幅画面，直接居中裁切到目标比例
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
   native     —— rf1/rf2/rf3/rfo 专用：游戏自己的标题画面原样输出（无损 PNG，零修图）
+  wpair      —— RF4+RF4SP、RF5+龙之天地：两部一张卡，上下各一条 16:9（960x540）
 输出宽度统一 960px（显示宽度只有 284px，够 3 倍屏）。
 """
 import os
-from PIL import Image, ImageFilter, ImageDraw
+from PIL import Image, ImageFilter, ImageDraw, ImageEnhance
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'src')
@@ -223,6 +224,52 @@ def rfo_native():
     return p
 
 
+# ---- 双作合并卡（RF4+RF4SP、RF5+龙之天地）----
+# 这两组四张官方图都是 960x325（2.95:1）。单独成卡时塞进 16:9 的框要切掉三成高度，
+# 留在 2.96:1 的矮框里又和同排的 16:9 卡对不齐；两两并成一张 16:9 后，每条都零裁切，
+# 作品卡总数也从 10 降到 8（两列布局正好 4 行，不再出现落单的一张）。
+PAIR_H = 540                  # 960x540 = 16:9，与 .wcard-fig.is-tall 完全同比例
+PAIR_BAND = PAIR_H // 2       # 上下各一条，270px
+PAIR_CLEAN = {'rf4sp': (192, 766), 'rf5': (192, 766)}
+
+
+def _fit296(im, wy=0.5, mode='cover'):
+    """先在内存里做出与旧版单卡完全相同的 960x325 成品，供拼接复用。"""
+    im = cover(im, wy, RATIO) if mode == 'cover' else fill(im)
+    im = im.convert('RGB')
+    w, h = OUT_W, int(round(OUT_W / RATIO))
+    return im if im.size == (w, h) else im.resize((w, h), Image.LANCZOS)
+
+
+def _band(gid, im296):
+    """把一张 960x325 压成 960x270 的一条。
+    · 有清晰区的（rf4sp / rf5 两侧是官方做的模糊延伸）→ 只取清晰区等比缩到条高，
+      两侧用同一块清晰区重度模糊 + 压暗补齐，清晰区一点不切。
+    · 全幅画（rf4 云海 / 龙之天地）→ 按宽铺满，上下居中各切 27px。"""
+    W = OUT_W
+    if gid in PAIR_CLEAN:
+        x0, x1 = PAIR_CLEAN[gid]
+        sq = im296.crop((x0, 0, x1, im296.size[1]))
+        s = sq.resize((int(round(sq.size[0] * PAIR_BAND / sq.size[1])), PAIR_BAND), Image.LANCZOS)
+        base = sq.resize((W, PAIR_BAND), Image.LANCZOS).filter(ImageFilter.GaussianBlur(24))
+        base = ImageEnhance.Brightness(base).enhance(0.9)
+        base.paste(s, ((W - s.size[0]) // 2, 0))
+        return base
+    s = im296.resize((W, int(round(im296.size[1] * W / im296.size[0]))), Image.LANCZOS)
+    y = (s.size[1] - PAIR_BAND) // 2
+    return s.crop((0, y, W, y + PAIR_BAND))
+
+
+def wpair(name, gid_a, im_a, gid_b, im_b):
+    """上下两条拼成 960x540。im_a / im_b 传 _fit296 的产物，也就是旧单卡的画面。"""
+    c = Image.new('RGB', (OUT_W, PAIR_H))
+    c.paste(_band(gid_a, im_a), (0, 0))
+    c.paste(_band(gid_b, im_b), (0, PAIR_BAND))
+    p = os.path.join(OUT, name + '.jpg')
+    c.save(p, quality=88, subsampling=2, optimize=True, progressive=True)
+    return p, c.size
+
+
 def emit(im, gid, wy=0.5, mode='cover', ratio=None):
     r = ratio or RATIO
     im = cover(im, wy, r) if mode == 'cover' else fill(im)
@@ -266,21 +313,20 @@ def build():
     p = rf3_native()
     made.append((p, Image.open(p).size))
 
-    # RF4：biligame 官方背景画（浮空船）
-    im = Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB')
-    made.append(emit(im, 'rf4', 0.35))
-
     # RF3SP：Steam 官方 capsule 616x353（1.745:1）→ 16:9，几乎零裁切
     made.append(rf3sp_tall())
 
-    # RF4SP / RF5：Steam 官方 capsule（含 logo，构图不能切）→ 默认 2.96:1
-    for gid in ('rf4sp', 'rf5'):
-        im = Image.open(os.path.join(SRC, gid + '_capsule_616x353.jpg')).convert('RGB')
-        made.append(emit(im, gid, mode='fill'))
+    # RF4 + RF4SP：并成一张 16:9 双作卡（上条浮空船、下条双子 + SPECIAL 字标）
+    rf4 = _fit296(Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB'), 0.35)
+    rf4sp = _fit296(Image.open(os.path.join(SRC, 'rf4sp_capsule_616x353.jpg')).convert('RGB'),
+                    mode='fill')
+    made.append(wpair('pair-rf4', 'rf4', rf4, 'rf4sp', rf4sp))
 
-    # 龙之天地：Steam 官方 hero（3.1:1，几乎不用裁）
-    im = Image.open(os.path.join(SRC, 'azuma_library_hero.jpg')).convert('RGB')
-    made.append(emit(im, 'azuma', 0.5))
+    # RF5 + 龙之天地：并成一张 16:9 双作卡（上条 RF5 群像、下条龙之天地主视觉）
+    rf5 = _fit296(Image.open(os.path.join(SRC, 'rf5_capsule_616x353.jpg')).convert('RGB'),
+                  mode='fill')
+    azuma = _fit296(Image.open(os.path.join(SRC, 'azuma_library_hero.jpg')).convert('RGB'), 0.5)
+    made.append(wpair('pair-rf5', 'rf5', rf5, 'azuma', azuma))
 
     for p, size in made:
         print('%-12s %s  %4d KB' % (os.path.basename(p), size,

@@ -1889,6 +1889,86 @@ img {
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
+/* 双作合并卡（RF4+RF4SP、RF5+龙之天地）：
+   卡本身是 div，图区上下各压一个透明链接，点上半条进第一部、下半条进第二部。
+   配图是预先拼好的 960x540，恰好 16:9，cover 时零裁切，两部的 logo 都完整。 */
+.wcard-pair {
+    display: block;
+    min-width: 0;
+}
+
+.wcard-pair .wcard-fig.is-tall {
+    aspect-ratio: 16 / 9;
+}
+
+.pair-hit {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 50%;
+    z-index: 2;
+    border-radius: 0;
+    transition: background 0.15s;
+}
+
+.pair-hit-2 {
+    top: auto;
+    bottom: 0;
+}
+
+.pair-hit:hover,
+.pair-hit:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.pair-rows {
+    display: block;
+}
+
+.pair-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.1rem 0;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+/* 名字允许压缩：两列布局下卡只有 160~195px 宽，「符文工房 4 豪华版」＋年份本来就顶到边，
+   不给 min-width:0 的话 grid 的自动最小宽度会把整列撑宽，右边那一列被挤出屏幕 */
+.pair-row-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pair-row.on .pair-row-name::before {
+    content: '›';
+    margin-right: 0.18rem;
+    opacity: 0.9;
+}
+
+.pair-row-meta {
+    flex: 0 0 auto;
+    font-size: 0.58rem;
+    font-weight: 400;
+    opacity: 0.72;
+    white-space: nowrap;
+}
+
+/* 手机宽度容不下「名字 + 年份 + 平台」，先舍平台（作品页里有） */
+@media (max-width: 559px) {
+    .pair-row-meta .pr-plat {
+        display: none;
+    }
+}
+
 .wcard-no {
     position: absolute;
     right: 0.55rem;
