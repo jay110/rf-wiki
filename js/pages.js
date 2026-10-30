@@ -4877,6 +4877,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十三次：rf2/rf3 头像统一 160×160（脸占框≈65%，与 rf1/rf4 一致）；rf5/rfo 因源是游戏内小图标（64/72px）统一/保持 128 而非 160</h2>
+            <ul class="ul">
+                <li class="li"><b>背景</b>：符文1（第九十二次）按 rf4 口径统一成 160×160 后，剩 rf2（105～116px 乱跳）、rf3（20 张 160 + 5 张不足 160）、rf5（64/128px 混排）、rfo（23 张 128）规格不齐。</li>
+            <li class="li"><b>rf2</b>：源是 A6NJ 512×256 立绘，与 rf1 同规格，直接套 <code>face_ratio: 0.65</code>+<code>exact_side</code>+<code>max_side: 160</code>，清空原 over（帽子/宽肩/大刀在头框外、不影响头框计算）。28 张全 160×160；头框高占比 0.48～0.55（均值 0.53），与 rf1 几乎逐张一致。</li>
+                <li class="li"><b>rf3</b>：原有 <code>max_side:160</code> 但缺 <code>exact_side</code>，导致 5 张不足 160 的（129/151/156/158）没放大。补 <code>exact_side:True</code>，保留 <code>head_anchor</code> 自动测量与 over 微调；连同之前缺源的两张（kururfa/ondolfa）也强制 resize 到 160。26 张全 160×160；头框高占比 0.46～0.62（均值 0.55），与 rf1/rf4 一致。</li>
+                <li class="li"><b>rf5 / rfo 源限制</b>：rf5 源是 PC 版 Unity HUD 图标（64/128px）、rfo 源是 PS3 72×72 游戏内小头像。这两作硬拉到 160 是负优化（小图插值放大比保持更糊）——故 rf5 把现有 30 张统一 resize 到 128（64 那批升级、128 保持），rfo 保持 128（已是 72→128 的合理上限）。如坚持 160 口径可再拉，代价是略糊。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 352、异常 0；头像 8 作 214 张、缺 0；重建 standalone（219 张头像内联，14.4MB）。</li>
+            </ul>
+
             <h2 class="h2">2026-10-30　第九十二次：符文1 头像统一 160×160（脸占框≈65%）</h2>
             <ul class="ul">
                 <li class="li"><b>问题</b>：符文4 已统一 160×160，但符文1 头像还在 83～216px 乱跳（camus/white 83、anne 107、jacolnus 216…），且没开 <code>exact_side</code>，小图在 2x 屏列表（2.1rem）/ 详情（5.4rem）下发虚。</li>
