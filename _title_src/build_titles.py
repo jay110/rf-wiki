@@ -7,8 +7,9 @@
 每张源图按自身比例选择处理方式：
   cover      —— 全幅画面，直接居中裁切到目标比例
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
-  native     —— rf1/rf2/rf3/rfo 专用：游戏自己的标题画面原样输出（无损 PNG，零修图）
-  wpair      —— RF4+RF4SP、RF5+龙之天地：两部一张卡，上下各一条 16:9（960x540）
+  native     —— rf1/rf2/rfo 专用：游戏自己的标题画面原样输出（无损 PNG，零修图）
+  pair       —— RF3+RF3SP、RF4+RF4SP：两部一张卡，图用的是强化版的**一张完整 16:9
+                标题画面**（不拼接、不裁条）
 输出宽度统一 960px（显示宽度只有 284px，够 3 倍屏）。
 """
 import os
@@ -133,27 +134,6 @@ def rf2_native():
     return p
 
 
-def rf3_native():
-    """RF3 的 ROM 原生 256x192 标题屏（不单独出卡，只作为 pair-rf3 的上条源）。
-
-    源图 src/rf3_native_256x192.png 的来历：
-      本机 NDS 提取目录 G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP
-      —— 从 符文工房3.nds 的 /res/obj/rf3Archive.arc 里解出的第 8027 号 NCGR
-      （8bpp 调色板，256x192，即 NDS 上屏原生分辨率）。
-      本脚本做的是「P 模式调色板图 → RGB → PNG」，像素值一一对应，无任何重采样。
-
-    画面：蓝天雪花 + 发光大树 + 金色 RuneFactory 3 + 假名 ルーンファクトリー3，
-    logo 的暖色像素集中在 y=58..112（中心 85）。
-
-    2026-10-30 起 RF3 与 RF3SP 并成一张双作卡，这张图不再单独出 assets/title/rf3.png，
-    改由 pair_rf3() 取来做上条（放大到 960 宽后纵向裁剪，让 logo 落在条带正中）。
-    """
-    src = Image.open(os.path.join(SRC, 'rf3_native_256x192.png')).convert('RGB')
-    if src.size != (256, 192):
-        raise SystemExit('rf3 原生图尺寸不对：%s（应为 256x192）' % (src.size,))
-    return src
-
-
 def rff_tall():
     """RFF（边境）：官网标题天空底（右侧有画框，先切掉）+ 官方透明 logo，16:9。
 
@@ -173,9 +153,14 @@ def rff_tall():
 
 
 def rf3sp_src():
-    """RF3SP 的 Steam 官方 capsule 616x353（不单独出卡，只作为 pair-rf3 的下条源）。
+    """RF3SP 的 Steam 官方 capsule 616x353，pair-rf3 的整张卡面源图。
 
-    2026-10-30 起 RF3SP 与 RF3 并成一张双作卡，这张图不再单独出 assets/title/rf3sp.jpg。
+    画面：左侧金色「RuneFactory 3 SPECIAL」字标 + 右侧全员角色群（五个人 + 两只魔物），
+    暖黄渐变底。比 16:9 只矮 0.033（1.745 vs 1.778），裁成 16:9 上下各切 3px。
+
+    另存 src/rf3_native_256x192.png（NDS 原生 256x192 标题屏，蓝天雪花 + 金字标）：
+    它是 4:3 的，铺满 16:9 卡要切掉约一半高度，只留得住 logo 或只留得住背景，
+    所以不再进卡，仅作素材存档。
     """
     return Image.open(os.path.join(SRC, 'rf3sp_capsule_616x353.jpg')).convert('RGB')
 
@@ -217,64 +202,38 @@ def rfo_native():
 
 
 # ---- 双作合并卡（RF3+RF3SP、RF4+RF4SP）----
-# 「本作 + 它的强化版」各并成一张 16:9：上下各一条，卡上图区一眼能看出是同一作的两个版本，
-# 作品卡总数也从 10 降到 8（三列 3/3/2、两列正好 4 行，不再出现落单的一张）。
-PAIR_H = 540                  # 960x540 = 16:9，与 .wcard-fig.is-tall 完全同比例
-PAIR_BAND = PAIR_H // 2       # 上下各一条，270px
-
-
-def _band_cover(im, posy=0.5):
-    """任意比例的源图 → 按宽铺满 960，纵向按 posy 取 PAIR_BAND 高（会裁上下）。
-    posy=0 取最上、1 取最下；比条带还矮的图居中留白（不会拉伸变形）。
-
-    为什么每条都满宽铺满、而不是「中间实图 + 两侧模糊延伸」：条带比例是 3.56:1，
-    4:3 的 RF3 若按高缩只占 360px 宽，1.75:1 的 RF3SP 占 471px，两者宽度差 111px，
-    上下叠在卡上像贴了两张不齐的画框；满宽后接缝只是一条直线，更像一张完整的双作横幅。
-    代价是每条都要裁掉约一半高度，所以每条单独标 posy，把最该露的部分框进来。"""
-    s = im.resize((OUT_W, int(round(im.size[1] * OUT_W / im.size[0]))), Image.LANCZOS)
-    if s.size[1] <= PAIR_BAND:
-        c = Image.new('RGB', (OUT_W, PAIR_BAND), (255, 255, 255))
-        c.paste(s, (0, (PAIR_BAND - s.size[1]) // 2))
-        return c
-    y = int(round((s.size[1] - PAIR_BAND) * posy))
-    return s.crop((0, y, OUT_W, y + PAIR_BAND))
-
-
-def wpair(name, im_a, posy_a, im_b, posy_b):
-    """上下两条满宽拼成 960x540。参数是原始源图和各自的纵向取景比例。"""
-    c = Image.new('RGB', (OUT_W, PAIR_H))
-    c.paste(_band_cover(im_a, posy_a), (0, 0))
-    c.paste(_band_cover(im_b, posy_b), (0, PAIR_BAND))
-    p = os.path.join(OUT, name + '.jpg')
-    c.save(p, quality=88, subsampling=2, optimize=True, progressive=True)
-    return p, c.size
+# 「本作 + 它的强化版」各并成一张卡，作品卡总数从 10 降到 8（三列 3/3/2、两列正好 4 行，
+# 不再出现落单的一张）。配图就是**一张完整的 16:9 官方标题画面**，不拼接、不裁条：
+#   上/下两条拼版只做过一版就弃用了——两条各自要裁掉一半高度，接缝再平也是两条画框；
+#   而两作本来就是「同一张标题画面 + 强化版字标」的关系，用强化版那一张整屏图即可。
 
 
 def pair_rf3():
-    """RF3 + RF3SP → 一张 960x540 双作卡（上条本作标题屏、下条特别版主视觉）。
+    """RF3 + RF3SP → assets/title/pair-rf3.jpg（960x540，一张整图）。
 
-    上条 RF3：256x192 放大到 960x720（3.75 倍）后取中间 270。
-      logo 暖色区在源 y=58..112（中心 85），缩放后中心落在 318.75，
-      要让它在 270 高的条带里居中 → 裁剪起点 183.75 / 可裁范围 450 = 0.408。
-    下条 RF3SP：616x353 放大到 960x550 后取 270。源图角色头在上、logo 在下，
-      posy=0.22（源 y≈40..213）同时保住头顶与「RuneFactory 3 SPECIAL」两行字。
+    源图 src/rf3sp_capsule_616x353.jpg —— RF3SP 的 Steam 官方 capsule 主视觉
+    （左侧「RuneFactory 3 SPECIAL」金色字标 + 右侧全员角色群，暖黄渐变底）。
+    616x353 是 1.745:1，比 16:9（1.778）略矮一点，裁成 16:9 只切掉上下各 3px，
+      logo 与五个人物的头脸全在框内，零损失。
+    放大到 960x540 是 1.56 倍（Lanczos）；卡上图区实际只显示 284x160 CSS px，
+      3 倍屏下也只需要 852px，这个放大倍率够用。
     """
-    return wpair('pair-rf3', rf3_native(), 0.408, rf3sp_src(), 0.22)
+    return emit_tall(rf3sp_src(), 'pair-rf3', 0.5)
 
 
 def pair_rf4():
-    """RF4 + RF4SP → 一张 960x540 双作卡（上条浮空船、下条豪华版标题 logo）。
+    """RF4 + RF4SP → assets/title/pair-rf4.jpg（960x540，一张整图）。
 
-    上条 RF4：官方背景画 756x425 铺满 960（539 高）后居中取 270，浮空船整体在位。
-    下条 RF4SP：**豪华版（PC 版）OP 视频第 675 帧**——官方 720p 的金色
-      「RuneFactory 4 SPECIAL」字标 + 绿龙 + 粉花，紫蓝天白云底，无水印无字幕。
-      1280x720 铺满 960（540 高）后 posy=0.49 取 270，logo 上下各留约 55px。
-      为什么不用 Steam capsule 的角色特写：那张图脸与 logo 分居上下两端，270 高的条
-      装不下两者，只能二选一；OP 这一帧本身就是「一整个标题画面」，横条一裁正好是字标。
+    源图 src/rf4sp_op_logo_1280x720.png —— **豪华版（PC 版）OP 视频第 675 帧**：
+    官方 720p 的金色「RuneFactory 4 SPECIAL」字标 + 绿龙 + 粉花，紫蓝天白云底，
+    无水印、无字幕、无 UI。1280x720 与 16:9 完全同比例，直接缩到 960x540，
+    零裁切零补边，logo 恰好落在画面中央偏下，四周留白全是云。
+    取帧方式见 SOURCES.md（mbundle 解包 → EBML 定界 → 数帧找 OP 段 → ffmpeg 抽帧）。
     """
-    return wpair('pair-rf4',
-                 Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB'), 0.5,
-                 Image.open(os.path.join(SRC, 'rf4sp_op_logo_1280x720.png')).convert('RGB'), 0.45)
+    src = Image.open(os.path.join(SRC, 'rf4sp_op_logo_1280x720.png')).convert('RGB')
+    if src.size != (1280, 720):
+        raise SystemExit('rf4 豪华版 OP 帧尺寸不对：%s（应为 1280x720）' % (src.size,))
+    return emit_tall(src, 'pair-rf4', 0.5)
 
 
 def emit(im, gid, wy=0.5, mode='cover', ratio=None):
@@ -315,10 +274,10 @@ def build():
     p = rfo_native()
     made.append((p, Image.open(p).size))
 
-    # RF3 + RF3SP：并成一张 16:9 双作卡（上条本作标题屏、下条特别版主视觉）
+    # RF3 + RF3SP：并成一张 16:9 双作卡，卡面用 RF3SP 官方主视觉整图
     made.append(pair_rf3())
 
-    # RF4 + RF4SP：并成一张 16:9 双作卡（上条浮空船、下条双子特写）
+    # RF4 + RF4SP：并成一张 16:9 双作卡，卡面用豪华版 OP 的标题帧整图
     made.append(pair_rf4())
 
     # RF5：Steam 官方 capsule 616x353（1.745:1）→ 16:9，纵向只切 3px

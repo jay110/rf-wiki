@@ -110,6 +110,19 @@ function latestUpdates(n) {
     } catch (e) { return []; }
 }
 
+/* 页头的「更新于」：直接读更新日志第一条的日期，不再各处手写。
+   以前是一串硬编码的 2026年10月27日，日志一天天往下加，这里却一直不动。 */
+let _siteUpdated = '';
+function siteUpdated() {
+    if (_siteUpdated) return _siteUpdated;
+    try {
+        const p = PAGE_MAP['changelog'];
+        const m = ((p && p.body()) || '').match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (m) _siteUpdated = `${m[1]}年${+m[2]}月${+m[3]}日`;
+    } catch (e) { }
+    return _siteUpdated || '2026年10月27日';
+}
+
 /* 站点主页（#/）：站点层面的介绍与入口，不是某一部作品的攻略目录。
    攻略目录在 #/wiki，两者分开，跟版式参考站的结构一致。 */
 /* 作品卡配图地址。单文件版没有外部文件可加载，_inline.py 会转成 TITLE_DATA */
@@ -318,7 +331,7 @@ function viewPage(key) {
     <div class="content">
         <div class="head">
             <div class="h1">${p.title}</div>
-            <div class="time">${grp.title}　·　更新于 2026年10月27日</div>
+            <div class="time">${grp.title}　·　更新于 ${siteUpdated()}</div>
         </div>
         ${p.body(g)}
         <div class="hr"></div>

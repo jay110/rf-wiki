@@ -4967,6 +4967,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百零七次：双作卡改用一张整图，不再上下拼两条</h2>
+            <ul class="ul">
+                <li class="li"><b>改了什么</b>：RF3+3特别版、RF4+4豪华版两张并卡的配图，从「上下各 270px 拼一条」改成<b>一张完整的 16:9 官方标题画面</b>（960×540 整图）。卡上不再有接缝，两个入口（上半区 / 下半区）照旧，两部作品靠下方两行文字区分，当前所在的那行前面有 <code>›</code>。</li>
+                <li class="li"><b>为什么拼版不好</b>：条带比例 3.56:1，4:3 的 RF3 标题屏要切掉约一半高度才塞得进 270px，1.75:1 的 RF3SP 也要切四成。接缝再平，本质仍是「两张画框叠一起」；而两作本来就是同一套标题画面的两个版本，没必要在一张卡里摆两次。</li>
+                <li class="li"><b>RF4 用哪张</b>：沿用上一版从豪华版 OP 取到的第 675 帧——金色「RuneFactory 4 SPECIAL」字标 + 绿龙 + 粉花，1280×720 与 16:9 完全同比例，缩到 960×540 是<b>零裁切零补边</b>，字标正好落在画面中央偏下，四周全是云。</li>
+                <li class="li"><b>RF3 用哪张</b>：RF3特别版的 Steam 官方主视觉（<code>capsule_616x353.jpg</code>：左侧金色字标 + 右侧全员角色群）。616×353 是 1.745:1，裁成 16:9 <b>只切上下各 3px</b>，字标与五个人脸全在框内。</li>
+                <li class="li"><b>清理</b>：<code>build_titles.py</code> 里的 <code>wpair()</code>、<code>_band_cover()</code>、<code>PAIR_H/PAIR_BAND</code> 与不再被调用的 <code>rf3_native()</code> 一并删除；<code>src/rf3_native_256x192.png</code>、<code>src/rf4w_1.jpg</code> 作为素材存档保留，<code>SOURCES.md</code> 新开「备而未用的素材」一节写明为什么不用。</li>
+                <li class="li"><b>体积</b>：<code>pair-rf3.jpg</code> 101KB → 94KB，<code>pair-rf4.jpg</code> 120KB → 86KB；单文件版一并瘦身。</li>
+                <li class="li"><b>顺带修掉一个一直没动的日期</b>：每个资料页页头的「更新于 2026年10月27日」是硬编码的，日志连续加了五次它也没变。改成 <code>siteUpdated()</code> 现场读更新日志第一条的日期（带缓存，取不到才退回旧字符串），现在显示的是 <b>2026年10月31日</b>。</li>
+                <li class="li"><b>校验</b>：354 个页面实例、0 异常；头像 8 作 214 张、缺 0；三列（1200px）与两列（520px）截图确认 8 张卡排布正常、并卡两行文字不溢出。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第一百零六次：并卡对象改对——RF3+3特别版、RF4+4豪华版，并从豪华版 OP 里取到 720p 金色字标</h2>
             <ul class="ul">
                 <li class="li"><b>上一版理解错了</b>。用户说的「四个作品合成两个」指的是<b>同一作的本作与强化版</b>：RF3 + RF3特别版、RF4 + RF4豪华版（特别版/豪华版本就是移植重制版）。上一版并的是 RF4+RF4SP、RF5+龙之天地，把两部不相干的作品拼在了一起。</li>
