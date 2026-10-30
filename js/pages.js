@@ -4967,6 +4967,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第一百零六次：并卡对象改对——RF3+3特别版、RF4+4豪华版，并从豪华版 OP 里取到 720p 金色字标</h2>
+            <ul class="ul">
+                <li class="li"><b>上一版理解错了</b>。用户说的「四个作品合成两个」指的是<b>同一作的本作与强化版</b>：RF3 + RF3特别版、RF4 + RF4豪华版（特别版/豪华版本就是移植重制版）。上一版并的是 RF4+RF4SP、RF5+龙之天地，把两部不相干的作品拼在了一起。</li>
+                <li class="li"><b>现在的分组</b>：双作卡 <b>RF3+3SP</b>、<b>RF4+4SP</b>；RF5 与龙之天地<b>恢复独立卡</b>。总数仍是 8 张，全部 16:9，三列 3/3/2、两列 4 行。RF5 与龙之天地能独立成 16:9 是因为实测裁切很干净——RF5 的 capsule 是 1.745:1，只切纵向 3px；龙之天地 3.1:1 居中切掉左右各 21%，两位角色与两条龙都在中间，切完构图反而更紧。</li>
+                <li class="li"><b>找到豪华版的视频了</b>。用户在 <code>E:/Rune.Factory.4.Special.Build.20220310.part3.rar/</code> 下的 PC 版里，<code>Bundle/bundleMain.mbundle</code>（4.78GB）是「bplist 索引 + 数据」的容器，内含 180 个 webm（VP9 + Vorbis，全部 1280×720）。文件名能从头部 bplist 里 grep 出来，但<b>文件名的顺序和数据块的顺序并不一致</b>，只能靠内容认。</li>
+                <li class="li"><b>怎么认出 OP</b>：数据块边界是下一个 <code>1A 45 DF A3</code>（EBML 头）的位置，但块大小完全不能作判据——117MB 的块可能只有 210 帧，多出来的空间是别处的数据。改用数帧：<code>ffprobe -count_packets</code> 把 180 块过一遍，只有两块帧数上千，<b>3300 帧（110 秒）与 3144 帧（105 秒）</b>，正好是 OP_A / OP_B。</li>
+                <li class="li"><b>取到的东西</b>：RF4S 的 OP 是重制的，第 22 秒有一帧完整的<b>金色「RuneFactory 4 SPECIAL」字标 + 绿龙 + 粉花</b>，紫蓝天白云底，无水印无字幕。<code>ffmpeg -vf "select=eq(n,675)"</code> 取第 675 帧（655 帧之后字标才完全实体化，675 最干净），1280×720 原样存进 <code>_title_src/src/rf4sp_op_logo_1280x720.png</code>。</li>
+                <li class="li"><b>双作卡的新拼法</b>：两条都改成「按宽铺满 960，纵向各取 270」，不再用「中间实图 + 两侧模糊」——4:3 的 RF3 按高缩只占 360px 宽、1.75:1 的 RF3SP 占 471px，宽度差 111px，上下叠着像贴了两张不齐的画框；满宽后接缝只是一条直线。RF4 那张卡因此变成「上条浮空船云海 + 下条金色字标」，两条都是云，接缝几乎看不出来，像一张完整的主视觉。</li>
+                <li class="li"><b>顺带修掉一个一直存在的横向溢出</b>：<code>.wgrid</code> 用的是 <code>repeat(2, 1fr)</code>，等价于 <code>minmax(auto, 1fr)</code>，列的最小宽度会被双作卡那两行「作品名 … 年份」撑大，窄屏下整个栅格向右溢出、右列被切。改成 <code>minmax(0, 1fr)</code> 后正常。这个问题在上一版就有，不是这次引入的。</li>
+                <li class="li"><b>死图清理</b>：<code>assets/title/rf3.png</code>、<code>rf3sp.jpg</code>、<code>pair-rf5.jpg</code> 删除；<code>rf5.jpg</code>、<code>azuma.jpg</code> 重新以 16:9 生成。<code>build_titles.py</code> 的 <code>_cards_preview.png</code> 预览框也从 2.96:1 改成 16:9（旧预览框会误导判断）。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第一百零五次：四部作品两两并卡（10 张变 8 张），RF4+RF4SP、RF5+龙之天地 各占一条</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：上一版末尾留着四张 2.96:1 的卡（RF4 / RF4SP / RF5 / 龙之天地）。它们单独放进 16:9 的框要切掉约三成高度（RF4SP、RF5 是群像，一切就切到人），留在矮框里又比同排的卡矮一截、被栅格拉出空白。用户给出的解法是「四个作品可以合成两个」。</li>

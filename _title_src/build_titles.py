@@ -134,7 +134,7 @@ def rf2_native():
 
 
 def rf3_native():
-    """RF3 横幅：ROM 原生 256x192 无损图，零修图（做法同 rf1/rf2）。
+    """RF3 的 ROM 原生 256x192 标题屏（不单独出卡，只作为 pair-rf3 的上条源）。
 
     源图 src/rf3_native_256x192.png 的来历：
       本机 NDS 提取目录 G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP
@@ -142,22 +142,16 @@ def rf3_native():
       （8bpp 调色板，256x192，即 NDS 上屏原生分辨率）。
       本脚本做的是「P 模式调色板图 → RGB → PNG」，像素值一一对应，无任何重采样。
 
-      为什么换掉旧的 rf3.jpg：那张是 marv.jp 官网的大树村场景画，画面里只有树、
-      没有 logo，卡片上根本认不出是哪一作。这张是游戏自己的标题屏：蓝天、发光树、
-      金色 RuneFactory 3 加假名 ルーンファクトリー，是唯一「零修图又带 logo」的选择。
+    画面：蓝天雪花 + 发光大树 + 金色 RuneFactory 3 + 假名 ルーンファクトリー3，
+    logo 的暖色像素集中在 y=58..112（中心 85）。
 
-    可见带：logo 的暖色像素集中在 y=58..112（中心 85）。
-      三列布局（.is-tall-lg → 16:9，可见 144px）配 object-position: center 35%
-      → 可见 y≈17..161，logo 上下留白约 42/48，基本居中；
-      双列布局（96px，可见 86.5px）→ 可见 y≈37..124，假名底 112 下方仍有 12px 余量，
-      不会贴边。同一个 35% 在两档下都安全，所以只设一个 pos。
+    2026-10-30 起 RF3 与 RF3SP 并成一张双作卡，这张图不再单独出 assets/title/rf3.png，
+    改由 pair_rf3() 取来做上条（放大到 960 宽后纵向裁剪，让 logo 落在条带正中）。
     """
     src = Image.open(os.path.join(SRC, 'rf3_native_256x192.png')).convert('RGB')
     if src.size != (256, 192):
         raise SystemExit('rf3 原生图尺寸不对：%s（应为 256x192）' % (src.size,))
-    p = os.path.join(OUT, 'rf3.png')
-    src.save(p, optimize=True)          # 无损 PNG，不重采样
-    return p
+    return src
 
 
 def rff_tall():
@@ -178,14 +172,12 @@ def rff_tall():
     return emit_tall(canvas.convert('RGB'), 'rff')
 
 
-def rf3sp_tall():
-    """RF3SP：Steam 官方 capsule 616x353（1.745:1）→ 16:9，纵向只切 10px。
+def rf3sp_src():
+    """RF3SP 的 Steam 官方 capsule 616x353（不单独出卡，只作为 pair-rf3 的下条源）。
 
-    加高只为对齐：三列布局里它和 RFF、RFO 同一行；双列布局里它和 RF3 同一行，
-    而 RF3 是 is-tall-lg（≥560px 才变高），所以 RF3SP 也用 is-tall-lg，两者同进退。
+    2026-10-30 起 RF3SP 与 RF3 并成一张双作卡，这张图不再单独出 assets/title/rf3sp.jpg。
     """
-    im = Image.open(os.path.join(SRC, 'rf3sp_capsule_616x353.jpg')).convert('RGB')
-    return emit_tall(im, 'rf3sp', 0.5)
+    return Image.open(os.path.join(SRC, 'rf3sp_capsule_616x353.jpg')).convert('RGB')
 
 
 def rfo_native():
@@ -224,50 +216,65 @@ def rfo_native():
     return p
 
 
-# ---- 双作合并卡（RF4+RF4SP、RF5+龙之天地）----
-# 这两组四张官方图都是 960x325（2.95:1）。单独成卡时塞进 16:9 的框要切掉三成高度，
-# 留在 2.96:1 的矮框里又和同排的 16:9 卡对不齐；两两并成一张 16:9 后，每条都零裁切，
-# 作品卡总数也从 10 降到 8（两列布局正好 4 行，不再出现落单的一张）。
+# ---- 双作合并卡（RF3+RF3SP、RF4+RF4SP）----
+# 「本作 + 它的强化版」各并成一张 16:9：上下各一条，卡上图区一眼能看出是同一作的两个版本，
+# 作品卡总数也从 10 降到 8（三列 3/3/2、两列正好 4 行，不再出现落单的一张）。
 PAIR_H = 540                  # 960x540 = 16:9，与 .wcard-fig.is-tall 完全同比例
 PAIR_BAND = PAIR_H // 2       # 上下各一条，270px
-PAIR_CLEAN = {'rf4sp': (192, 766), 'rf5': (192, 766)}
 
 
-def _fit296(im, wy=0.5, mode='cover'):
-    """先在内存里做出与旧版单卡完全相同的 960x325 成品，供拼接复用。"""
-    im = cover(im, wy, RATIO) if mode == 'cover' else fill(im)
-    im = im.convert('RGB')
-    w, h = OUT_W, int(round(OUT_W / RATIO))
-    return im if im.size == (w, h) else im.resize((w, h), Image.LANCZOS)
+def _band_cover(im, posy=0.5):
+    """任意比例的源图 → 按宽铺满 960，纵向按 posy 取 PAIR_BAND 高（会裁上下）。
+    posy=0 取最上、1 取最下；比条带还矮的图居中留白（不会拉伸变形）。
+
+    为什么每条都满宽铺满、而不是「中间实图 + 两侧模糊延伸」：条带比例是 3.56:1，
+    4:3 的 RF3 若按高缩只占 360px 宽，1.75:1 的 RF3SP 占 471px，两者宽度差 111px，
+    上下叠在卡上像贴了两张不齐的画框；满宽后接缝只是一条直线，更像一张完整的双作横幅。
+    代价是每条都要裁掉约一半高度，所以每条单独标 posy，把最该露的部分框进来。"""
+    s = im.resize((OUT_W, int(round(im.size[1] * OUT_W / im.size[0]))), Image.LANCZOS)
+    if s.size[1] <= PAIR_BAND:
+        c = Image.new('RGB', (OUT_W, PAIR_BAND), (255, 255, 255))
+        c.paste(s, (0, (PAIR_BAND - s.size[1]) // 2))
+        return c
+    y = int(round((s.size[1] - PAIR_BAND) * posy))
+    return s.crop((0, y, OUT_W, y + PAIR_BAND))
 
 
-def _band(gid, im296):
-    """把一张 960x325 压成 960x270 的一条。
-    · 有清晰区的（rf4sp / rf5 两侧是官方做的模糊延伸）→ 只取清晰区等比缩到条高，
-      两侧用同一块清晰区重度模糊 + 压暗补齐，清晰区一点不切。
-    · 全幅画（rf4 云海 / 龙之天地）→ 按宽铺满，上下居中各切 27px。"""
-    W = OUT_W
-    if gid in PAIR_CLEAN:
-        x0, x1 = PAIR_CLEAN[gid]
-        sq = im296.crop((x0, 0, x1, im296.size[1]))
-        s = sq.resize((int(round(sq.size[0] * PAIR_BAND / sq.size[1])), PAIR_BAND), Image.LANCZOS)
-        base = sq.resize((W, PAIR_BAND), Image.LANCZOS).filter(ImageFilter.GaussianBlur(24))
-        base = ImageEnhance.Brightness(base).enhance(0.9)
-        base.paste(s, ((W - s.size[0]) // 2, 0))
-        return base
-    s = im296.resize((W, int(round(im296.size[1] * W / im296.size[0]))), Image.LANCZOS)
-    y = (s.size[1] - PAIR_BAND) // 2
-    return s.crop((0, y, W, y + PAIR_BAND))
-
-
-def wpair(name, gid_a, im_a, gid_b, im_b):
-    """上下两条拼成 960x540。im_a / im_b 传 _fit296 的产物，也就是旧单卡的画面。"""
+def wpair(name, im_a, posy_a, im_b, posy_b):
+    """上下两条满宽拼成 960x540。参数是原始源图和各自的纵向取景比例。"""
     c = Image.new('RGB', (OUT_W, PAIR_H))
-    c.paste(_band(gid_a, im_a), (0, 0))
-    c.paste(_band(gid_b, im_b), (0, PAIR_BAND))
+    c.paste(_band_cover(im_a, posy_a), (0, 0))
+    c.paste(_band_cover(im_b, posy_b), (0, PAIR_BAND))
     p = os.path.join(OUT, name + '.jpg')
     c.save(p, quality=88, subsampling=2, optimize=True, progressive=True)
     return p, c.size
+
+
+def pair_rf3():
+    """RF3 + RF3SP → 一张 960x540 双作卡（上条本作标题屏、下条特别版主视觉）。
+
+    上条 RF3：256x192 放大到 960x720（3.75 倍）后取中间 270。
+      logo 暖色区在源 y=58..112（中心 85），缩放后中心落在 318.75，
+      要让它在 270 高的条带里居中 → 裁剪起点 183.75 / 可裁范围 450 = 0.408。
+    下条 RF3SP：616x353 放大到 960x550 后取 270。源图角色头在上、logo 在下，
+      posy=0.22（源 y≈40..213）同时保住头顶与「RuneFactory 3 SPECIAL」两行字。
+    """
+    return wpair('pair-rf3', rf3_native(), 0.408, rf3sp_src(), 0.22)
+
+
+def pair_rf4():
+    """RF4 + RF4SP → 一张 960x540 双作卡（上条浮空船、下条豪华版标题 logo）。
+
+    上条 RF4：官方背景画 756x425 铺满 960（539 高）后居中取 270，浮空船整体在位。
+    下条 RF4SP：**豪华版（PC 版）OP 视频第 675 帧**——官方 720p 的金色
+      「RuneFactory 4 SPECIAL」字标 + 绿龙 + 粉花，紫蓝天白云底，无水印无字幕。
+      1280x720 铺满 960（540 高）后 posy=0.49 取 270，logo 上下各留约 55px。
+      为什么不用 Steam capsule 的角色特写：那张图脸与 logo 分居上下两端，270 高的条
+      装不下两者，只能二选一；OP 这一帧本身就是「一整个标题画面」，横条一裁正好是字标。
+    """
+    return wpair('pair-rf4',
+                 Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB'), 0.5,
+                 Image.open(os.path.join(SRC, 'rf4sp_op_logo_1280x720.png')).convert('RGB'), 0.45)
 
 
 def emit(im, gid, wy=0.5, mode='cover', ratio=None):
@@ -308,25 +315,19 @@ def build():
     p = rfo_native()
     made.append((p, Image.open(p).size))
 
-    # RF3：ROM 原生 256x192 标题屏，零修图（同 rf1/rf2）。
-    # 旧图是 marv.jp 的大树村场景画，只有树没有 logo，卡上认不出是哪一作。
-    p = rf3_native()
-    made.append((p, Image.open(p).size))
+    # RF3 + RF3SP：并成一张 16:9 双作卡（上条本作标题屏、下条特别版主视觉）
+    made.append(pair_rf3())
 
-    # RF3SP：Steam 官方 capsule 616x353（1.745:1）→ 16:9，几乎零裁切
-    made.append(rf3sp_tall())
+    # RF4 + RF4SP：并成一张 16:9 双作卡（上条浮空船、下条双子特写）
+    made.append(pair_rf4())
 
-    # RF4 + RF4SP：并成一张 16:9 双作卡（上条浮空船、下条双子 + SPECIAL 字标）
-    rf4 = _fit296(Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB'), 0.35)
-    rf4sp = _fit296(Image.open(os.path.join(SRC, 'rf4sp_capsule_616x353.jpg')).convert('RGB'),
-                    mode='fill')
-    made.append(wpair('pair-rf4', 'rf4', rf4, 'rf4sp', rf4sp))
+    # RF5：Steam 官方 capsule 616x353（1.745:1）→ 16:9，纵向只切 3px
+    im = Image.open(os.path.join(SRC, 'rf5_capsule_616x353.jpg')).convert('RGB')
+    made.append(emit_tall(im, 'rf5', 0.5))
 
-    # RF5 + 龙之天地：并成一张 16:9 双作卡（上条 RF5 群像、下条龙之天地主视觉）
-    rf5 = _fit296(Image.open(os.path.join(SRC, 'rf5_capsule_616x353.jpg')).convert('RGB'),
-                  mode='fill')
-    azuma = _fit296(Image.open(os.path.join(SRC, 'azuma_library_hero.jpg')).convert('RGB'), 0.5)
-    made.append(wpair('pair-rf5', 'rf5', rf5, 'azuma', azuma))
+    # 龙之天地：Steam 官方 library hero 1920x620（3.1:1）→ 16:9 居中切掉左右各 21%
+    im = Image.open(os.path.join(SRC, 'azuma_library_hero.jpg')).convert('RGB')
+    made.append(emit_tall(im, 'azuma', 0.5))
 
     for p, size in made:
         print('%-12s %s  %4d KB' % (os.path.basename(p), size,
@@ -336,8 +337,8 @@ def build():
 
 
 def preview(made):
-    """按卡片真实显示尺寸的 2 倍出对照图"""
-    box = (394, 134)
+    """按卡片真实显示尺寸的 1.5 倍出对照图（284x160 的 16:9 图区）"""
+    box = (426, 240)
     cols, pad, lab = 2, 10, 18
     rows = (len(made) + cols - 1) // cols
     W = cols * box[0] + (cols + 1) * pad

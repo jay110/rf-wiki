@@ -1805,9 +1805,11 @@ img {
 }
 
 /* 作品卡 */
+/* minmax(0, 1fr) 而不是 1fr：1fr 等价于 minmax(auto, 1fr)，列的最小宽度会被内容
+   （双作卡那两行「作品名 … 年份」）撑大，窄屏下整个栅格向右溢出、右列被切。 */
 .wgrid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
     margin: 0 0.9rem;
 }
@@ -1829,10 +1831,8 @@ img {
 }
 
 /* 作品图直接用官方整图铺满顶部，不抠 logo、不加模糊底 */
-/* 高度 6rem = 96px：与 assets/title/*.jpg 的 960x325（2.95:1）同比例，
-   旧值 4.1rem（66px，4.30:1）会把每张图上下各切掉约 31%。
-   按 96px 算，NDS 原生 256x192 在 284 宽的卡里可见高度 86.5px，
-   正好装下符文1 标题块（RuneFactory 62→147，共 86px）。 */
+/* 高度 6rem = 96px 只是兜底：现在 8 张卡全部走 .is-tall（16:9），
+   没有任何一张还留在 2.96:1 的窄框里。 */
 .wcard-fig {
     position: relative;
     margin: 0 -0.8rem 0.5rem;
@@ -1840,28 +1840,17 @@ img {
     background: rgba(0, 0, 0, 0.16);
 }
 
-/* 走 16:9 的卡：RF1/RF2（.is-tall）+ RF3/RF3SP（.is-tall-lg）+ 边境/海洋（.is-tall）。
-   两种原因：① 原生标题屏信息密度高（符文2 龙翼尖 y=0 → 装饰三角底 y=134 共 134px、
-   符文1 标题块 86px），96px 框按宽 cover 只露 86.5px 原生高，必然被切；加高后可见
-   原生高 = 160/(284/256) = 144px，两者都能完整装下。② 图本身就是 16:9（海洋的 PS3
-   标题屏 1280x720、RF3SP 的 capsule 616x353），用 96px 的 2.96:1 框反而要切上下。
+/* 全部 8 张卡都走 16:9。两种原因：
+   ① 原生标题屏信息密度高（符文2 龙翼尖 y=0 → 装饰三角底 y=134 共 134px、
+      符文1 标题块 86px），96px 的 2.96:1 框按宽 cover 只露 86.5px 原生高，必然被切；
+      加高后可见原生高 = 160/(284/256) = 144px，两者都能完整装下。
+   ② 其余图本身就是 16:9（海洋的 PS3 标题屏 1280x720、RF5/RF3SP 的 capsule 近 16:9、
+      两张双作卡预拼成 960x540），塞进 2.96:1 反而要切上下。
    用 aspect-ratio 而不是固定高度：任何列宽下 16:9 恒等于「可见 144px 原生高」，
-   手机卡变宽也不会反过来切到 logo 底部。 */
+   手机卡变宽也不会反过来切到 logo 底部。三列 3/3/2、两列 4 行，每行内部自动等高。 */
 .wcard-fig.is-tall {
     height: auto;
     aspect-ratio: 16 / 9;
-}
-
-/* .is-tall-lg 只在 ≥560px（三列断点）生效，服务于「同排对齐」：
-   三列时第一行是 RF1/RF2/RF3、第二行是 RF3SP/边境/海洋，同排必须一起变高，
-   否则被 grid stretch 拉长的那几张文字区会空出一大块色块；
-   双列时 RF3 的同行是 RF3SP（两张都是 is-tall-lg，一起回到 96px 窄条），
-   若只有一张变高就会连累另一张空一截。 */
-@media (min-width: 560px) {
-    .wcard-fig.is-tall-lg {
-        height: auto;
-        aspect-ratio: 16 / 9;
-    }
 }
 
 .wcard-fig img {
@@ -1869,12 +1858,11 @@ img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* 58% 只对 960x325 的图有实际裁剪意义（几乎不裁）。
-       原生 256x192 的三张由 app.js 的 TITLE_ART.pos 内联覆盖：
+    /* 58% 只对 16:9 以外的图有裁剪意义（现在已无）。原生 256x192 的两张由
+       app.js 的 TITLE_ART.pos 内联覆盖：
        rf1 = center 69%（标题块 86px 居中于 144px 可见带），
-       rf2 = center 0%（顶对齐，logo 块 134px 全露），
-       rf3 = center 35%（16:9 与 96px 两档下 logo 都完整）。
-       16:9 的 rfo 是整屏零裁切，pos 无关。 */
+       rf2 = center 0%（顶对齐，logo 块 134px 全露）。
+       其余 16:9 的图（含两张双作卡）是整屏零裁切，pos 无关。 */
     object-position: center 58%;
 }
 
@@ -1889,16 +1877,12 @@ img {
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
-/* 双作合并卡（RF4+RF4SP、RF5+龙之天地）：
-   卡本身是 div，图区上下各压一个透明链接，点上半条进第一部、下半条进第二部。
-   配图是预先拼好的 960x540，恰好 16:9，cover 时零裁切，两部的 logo 都完整。 */
+/* 双作合并卡（RF3+RF3SP、RF4+RF4SP）：
+   卡本身是 div，图区上下各压一个透明链接，点上半条进本作、下半条进强化版。
+   配图是预先拼好的 960x540（上下各 270），恰好 16:9，cover 时零裁切。 */
 .wcard-pair {
     display: block;
     min-width: 0;
-}
-
-.wcard-pair .wcard-fig.is-tall {
-    aspect-ratio: 16 / 9;
 }
 
 .pair-hit {
@@ -2074,7 +2058,7 @@ img {
 
 @media (min-width: 560px) {
     .wgrid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 /* 攻略目录底部回站点主页 */

@@ -4,27 +4,26 @@
 
 const LSKEY = 'rf_wiki_v1';
 
-/* 作品卡配图。统一预构图成 2.95:1（卡片图区比例），CSS 直接 cover 即可 */
-/* 作品卡配图：直接用官方标题画面整图，铺满卡片顶部（不抠 logo、不做模糊底）。
-   符文1 用 ROM 原生 256x192 无损 PNG（零修图：无拼接、无补边、无缩放、无插值），
-   其余作仍是 960x325 的 JPG。单文件版没有外部文件可加载，
-   _inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
+/* 作品卡配图：全部 16:9，铺满卡片顶部（不抠 logo、不做模糊底）。
+   符文1/符文2 用 ROM 原生 256x192 无损 PNG（零修图：无拼接、无补边、无缩放、无插值），
+   其余作是 960x540 的 JPG，两张双作卡预拼成 960x540（上下各一条）。
+   单文件版没有外部文件可加载，_inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
 const TITLE_ART = {
     rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
-    rf3:   { src: 'assets/title/rf3.png', pos: '35%', tall: 'lg' },
-    rf3sp: { src: 'assets/title/rf3sp.jpg', tall: 'lg' },
+    rf5:   { src: 'assets/title/rf5.jpg', tall: true },
     rff:   { src: 'assets/title/rff.jpg', tall: true },
     rfo:   { src: 'assets/title/rfo.jpg', tall: true },
+    azuma: { src: 'assets/title/azuma.jpg', tall: true },
 };
 
-/* 双作合并卡：RF4/RF4SP/RF5/龙之天地这四张官方横幅是 960x325（2.95:1），
-   塞进 16:9 的卡里必定上下被切掉约三成，单独成卡时又矮一截、同排对不齐。
-   干脆两两并成一张 16:9：上下各一条，每条都不裁切，卡片总数也从 10 降到 8。
+/* 双作合并卡：「本作 + 它的强化版」并成一张，图上下各一条。
+   RF3+RF3SP、RF4+RF4SP 两组，每组两张官方图单独成卡都只有一半内容能进 16:9 的框，
+   并起来反而每条都能露完整，卡片总数也从 10 降到 8。
    键 = 排在前面的那部，mate = 并进去的第二部，src = 预先拼好的 960x540。 */
 const WPAIR = {
+    rf3: { mate: 'rf3sp', src: 'assets/title/pair-rf3.jpg' },
     rf4: { mate: 'rf4sp', src: 'assets/title/pair-rf4.jpg' },
-    rf5: { mate: 'azuma', src: 'assets/title/pair-rf5.jpg' },
 };
 const WPAIR_MATE = new Set(Object.keys(WPAIR).map(k => WPAIR[k].mate));
 
@@ -176,7 +175,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art ? `<div class="wcard-fig${art.tall ? (art.tall === 'lg' ? ' is-tall-lg' : ' is-tall') : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig${art.tall ? ' is-tall' : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
