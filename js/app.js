@@ -10,9 +10,9 @@ const LSKEY = 'rf_wiki_v1';
    其余作仍是 960x325 的 JPG。单文件版没有外部文件可加载，
    _inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
 const TITLE_ART = {
-    rf1:   { src: 'assets/title/rf1.png' },
+    rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
-    rf3:   { src: 'assets/title/rf3.jpg' },
+    rf3:   { src: 'assets/title/rf3.jpg', tall: 'lg' },
     rf3sp: { src: 'assets/title/rf3sp.jpg' },
     rf4:   { src: 'assets/title/rf4.jpg' },
     rf4sp: { src: 'assets/title/rf4sp.jpg' },
@@ -143,7 +143,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art ? `<div class="wcard-fig${art.tall ? ' is-tall' : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig${art.tall ? (art.tall === 'lg' ? ' is-tall-lg' : ' is-tall') : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
