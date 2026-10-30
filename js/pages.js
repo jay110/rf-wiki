@@ -1500,18 +1500,18 @@ const PAGES = [
     /* ================= BOSS 战 ================= */
     {
         key: 'boss', group: 'basic', title: 'BOSS 战', icon: 'skull',
-        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf5'],
+        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf5', 'rff'],
         body: g => {
             const B = (typeof BOSS !== 'undefined') ? BOSS : null;
             if (!B) return '<p class="p">BOSS 数据未加载。</p>';
             const id = (g && g.id) || 'rf1';
-            const n1 = B.rf1.length, n2 = B.rf2.length, n3 = B.rf3.length, no = B.rfo.length;
+            const n1 = B.rf1.length, n2 = B.rf2.length, n3 = B.rf3.length, no = B.rfo.length, nrff = B.rff.length;
 
             /* ---------- 共通开头 ---------- */
             const intro = `
             <h2 class="h2">这一页收的是什么</h2>
             <p class="p">「魔物图鉴」按种类收全表，这一页只收<b>剧情与迷宫里的 BOSS</b>：它们不进牧场，掉落也不按普通素材走，混在图鉴里反而最难查。</p>
-            <p class="p">五作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no + B.rf5.length} 位</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）、五代 ${B.rf5.length} 位。四代与边境在 wiki 上没有独立的 BOSS 数值页，那两代的抗性明细统一放在「战斗与弱点」页里看。</p>
+            <p class="p">六作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no + B.rf5.length + nrff} 位</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）、五代 ${B.rf5.length} 位、边境 ${nrff} 位。四代在 wiki 上没有独立的 BOSS 数值页，它的抗性明细统一放在「战斗与弱点」页里看。</p>
             <div class="note">数值全部取自 biligame 符文工厂 wiki 各作 BOSS 页（RF3 取自魔物抗性表），<b>表里没有的列本页不填、不推算</b>。四作对「属性」的记录方式根本不是一套量纲——一代是点数、二代是克制、三代是等级——跨作比数值没有意义，最后一节单独讲这件事。</div>`;
 
             /* ---------- RF1 ---------- */
@@ -1658,6 +1658,49 @@ const PAGES = [
             <div class="note">五代八项属性的<b>具体百分比数值</b>（火水地风光暗爱各 +/- 多少）在「战斗与弱点」页 RF5 一节，与本表同源、口径一致——本表只收「哪几个属性弱、哪几个抗」的结论与基础数值。芬布尔境界的最终 BOSS 在原流程页未给专名，暂以「芬布尔境界 BOSS」指代。</div>`;
             };
 
+            /* ---------- RFF（边境） ---------- */
+            const blkRff = () => {
+                const names = ['火', '水', '风', '地'];
+                const wkOf = s => {
+                    if (!s || s === '—') return '<span class="mon-no">无数据</span>';
+                    const m = s.match(/火(\d+)水(\d+)风(\d+)地(\d+)/);
+                    if (m) {
+                        const el = [+m[1], +m[2], +m[3], +m[4]];
+                        const mn = Math.min.apply(null, el);
+                        const low = el.map((v, i) => v === mn ? names[i] : null).filter(Boolean);
+                        if (low.length === el.length) return '<span class="mon-no">四属性均等</span>';
+                        return '<b class="wk">' + low.join('、') + '</b>';
+                    }
+                    if (s.indexOf('全属性') >= 0) return '<span class="mon-no">四属性均等</span>';
+                    return '<span class="mon-no">—</span>';
+                };
+                const H = ['BOSS', 'Lv', 'HP', '攻击', '防御', '魔攻', '抗性', '弱点', '出现点'];
+                const rows = B.rff.map(x => [x[0], x[1], x[2], x[3], x[4], x[5], x[6], wkOf(x[6]), x[7]]);
+                const tank = B.rff.filter(x => {
+                    const s = x[6];
+                    if (s.indexOf('全属性') >= 0) return true;
+                    const m = s.match(/火(\d+)水(\d+)风(\d+)地(\d+)/);
+                    if (m) { const el = [+m[1], +m[2], +m[3], +m[4]]; return el.every(v => v === el[0]); }
+                    return false;
+                }).length;
+                const lvMin = Math.min.apply(null, B.rff.map(x => x[1]));
+                const lvMax = Math.max.apply(null, B.rff.map(x => x[1]));
+                const hpMin = Math.min.apply(null, B.rff.map(x => x[2]));
+                const hpMax = Math.max.apply(null, B.rff.map(x => x[2]));
+                return `
+            <h2 class="h2">符文工房 边境：${B.rff.length} 位主线 BOSS</h2>
+            <p class="p">边境（RFF）的 BOSS 数据来自 biligame 的 RFFmonster 页，与本站「魔物图鉴」同源——这 ${B.rff.length} 位是主线推进里会硬碰的 BOSS：若草遗迹的鸡鹫兽打头，雪草遗迹地下三层连着艾莉丝与四台魔力驱动单元，最后是雪草遗迹地下七层的冰蛇。字段和一代一样是<b>四属性点数</b>：<b>数越大越抗，最小的那项才是弱点</b>。</p>
+            ${stat([['收录', B.rff.length + ' 位'], ['Lv 区间', lvMin + ' ～ ' + lvMax], ['HP 区间', hpMin.toLocaleString() + ' ～ ' + hpMax.toLocaleString()], ['四属性均等', tank + ' 位']])}
+            ${tbl(H, rows, { leftFirst: true, cls: 'boss', colw: ['8rem'] })}
+            <h3 class="h3">三件事先看</h3>
+            <ul class="ul">
+                <li class="li"><b>没有独立的魔防字段</b>。表的「魔攻」一列是魔物的魔法攻击力，防御力对物理与魔法通用——这一点和一代不同（一代魔防单列），别拿一代的直觉套过来。</li>
+                <li class="li"><b>${tank} 位四属性均等</b>（瓦格纳、魔法生物、杰尔文），属性对它们只剩「不减伤」的意义，靠面板、回复和走位硬啃。</li>
+                <li class="li"><b>瓦格纳「无视魔杖攻击」</b>——它不吃魔杖系的魔法攻击，得靠物理或剑技；魔力驱动单元 A～D 同场出现、数值各异，是一波多体战。</li>
+            </ul>
+            <div class="note">抗性一列原样保留 wiki 写法：「火10水30风10地15」是四属性点数，「全属性15」是四属性均等，「风20」只标注了风一项（其余按基准），「—」是原文未给。弱点列由本页从上述点数自动挑出最小值，双最小会并列标出（如冰蛇火、风同为 10）。</div>`;
+            };
+
             /* ---------- 收尾：三套量纲 ---------- */
             const tail = `
             <h2 class="h2">四套量纲，别混着比</h2>
@@ -1681,7 +1724,7 @@ const PAGES = [
                 </a>
             </div>`;
 
-            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR, rf5: blk5 };
+            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR, rf5: blk5, rff: blkRff };
             const mid = (per[id] || blk1)();
             return intro + mid + tail;
         }
@@ -4877,6 +4920,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十四次：补 BOSS 战「符文工房 边境（RFF）」12 位主线 BOSS，boss 页由五作扩到六作</h2>
+            <ul class="ul">
+                <li class="li"><b>数据源纠正</b>：此前清单把 rff 标为「无数值源」，实际 biligame <code>RFFmonster</code> 页含 9 组主线 BOSS（鸡鹫兽/拟态史莱姆/艾莉丝/魔力驱动单元A-D/瓦格纳/魔法生物/杰尔文/冰蛇/电力海月乌贼）且带 Lv/HP/攻/防/魔攻/四属性点数——与本站魔物图鉴 <code>rffmon.js</code> 同源，数据混在图鉴里被漏看。</li>
+                <li class="li"><b>接入</b>：<code>boss.js</code> 新增 <code>BOSS.rff</code>（12 条，按 Lv 升序，雪草遗迹地下3层同场的艾莉丝＋四台驱动单元合并列出）；<code>pages.js</code> 新增 <code>blkRff</code> 渲染（四属性点数弱点解析：双最小并列标红、全属性均等标无弱、单属性项与「—」照实不臆测）；boss 页 <code>gms</code> 加 <code>rff</code>、<code>intro</code> 文案五作改六作。</li>
+                <li class="li"><b>rf4 仍缺</b>：biligame 无集中剧情 BOSS 数值页，四代抗性明细在 <code>battle</code> 页（resist4.js），boss 页暂不实装，需用户拍板英文名译法或提供源。</li>
+                <li class="li"><b>校验</b>：node _verify 353 实例 0 异常；node --check 两文件 exit 0。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第九十三次：rf2/rf3 头像统一 160×160（脸占框≈65%，与 rf1/rf4 一致）；rf5/rfo 因源是游戏内小图标（64/72px）统一/保持 128 而非 160</h2>
             <ul class="ul">
                 <li class="li"><b>背景</b>：符文1（第九十二次）按 rf4 口径统一成 160×160 后，剩 rf2（105～116px 乱跳）、rf3（20 张 160 + 5 张不足 160）、rf5（64/128px 混排）、rfo（23 张 128）规格不齐。</li>
