@@ -947,6 +947,278 @@ function eqblock(IT, opt) {
     return { CATS, cnt, nav, secs };
 }
 
+/* ------------------------------------------------------------
+   素材出处与掉落：边境（RFF）
+   源：js/rffmon.js 的 RFF_MON[8]「总掉落物」，每段形如「白金Lv1 100%」。
+   中间那个 Lv 是<b>物品等级</b>，不是件数；同一素材常按等级分档各占一段，
+   所以下面的统计全部现解现算，不再另存一份衍生表。
+   ------------------------------------------------------------ */
+function sourceRffHtml() {
+    const R = (typeof RFF_MON !== 'undefined') ? RFF_MON : [];
+    const RE = /^(.+?)Lv(\d+)\s+(\d+)%$/;
+    const recs = [];
+    R.forEach(r => {
+        const s = r[8];
+        if (!s || s === '—') return;
+        String(s).split('、').forEach(seg => {
+            seg = seg.trim(); if (!seg) return;
+            const m = RE.exec(seg); if (!m) return;
+            recs.push({ mon: r[0], mlev: r[1], loc: r[7], item: m[1], lv: +m[2], p: +m[3] });
+        });
+    });
+    if (!recs.length) return '';
+
+    const byItem = {};
+    recs.forEach(x => { (byItem[x.item] = byItem[x.item] || []).push(x); });
+    const items = Object.keys(byItem).sort();
+    const withDrop = R.filter(r => r[8] && r[8] !== '—');
+
+    /* 物品等级档：这件素材有哪几档，每档的掉落者平均等级是多少 */
+    const tier = {};
+    items.forEach(n => {
+        const t = {};
+        byItem[n].forEach(x => { (t[x.lv] = t[x.lv] || []).push(x.mlev); });
+        const ks = Object.keys(t).map(Number).sort((a, b) => a - b);
+        const avg = ks.map(k => Math.round(t[k].reduce((a, b) => a + b, 0) / t[k].length));
+        let mono = true;
+        for (let i = 1; i < avg.length; i++) if (avg[i] <= avg[i - 1]) mono = false;
+        tier[n] = { ks, avg, mono };
+    });
+    const multi = items.filter(n => tier[n].ks.length > 1);
+    const three = items.filter(n => tier[n].ks.length >= 3);
+    const monoN = three.filter(n => tier[n].mono).length;
+
+    const full = recs.filter(x => x.p === 100);
+    const fullItem = {};
+    full.forEach(x => { fullItem[x.item] = (fullItem[x.item] || 0) + 1; });
+    const fullTop = Object.keys(fullItem).map(n => [n, fullItem[n]])
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
+
+    const solo = items.filter(n => new Set(byItem[n].map(x => x.mon)).size === 1);
+    const lowAll = items.filter(n => byItem[n].every(x => x.p <= 10));
+
+    /* 表一：素材 → 谁掉 */
+    const itemRows = items.map(n => {
+        const arr = byItem[n];
+        const ms = Array.from(new Set(arr.map(x => x.mon)));
+        const hi = Math.max.apply(null, arr.map(x => x.p));
+        return [n + ' ' + ms.join(' '), [
+            n,
+            ms.length + ' 只',
+            '<b>' + hi + '%</b>',
+            tier[n].ks.map(k => 'Lv' + k).join('／'),
+            ms.slice(0, 3).join('、') + (ms.length > 3 ? '…' : ''),
+        ]];
+    });
+
+    /* 表二：怪 → 掉什么 */
+    const monRows = withDrop.map(r => {
+        const hits = recs.filter(x => x.mon === r[0]);
+        return [r[0] + ' ' + r[7] + ' ' + hits.map(x => x.item).join(' '), [
+            r[0],
+            String(r[1]),
+            r[7] || '<span class="mon-no">—</span>',
+            hits.map(x => x.item + ' Lv' + x.lv + ' <b>' + x.p + '%</b>').join('　'),
+        ]];
+    });
+
+    const tierRows = three.map(n => {
+        const t = tier[n];
+        return [n, [
+            n,
+            t.ks.map((k, i) => 'Lv' + k + '→' + t.avg[i]).join('　'),
+            t.mono ? '<span class="txc">单调</span>' : '<b>倒挂</b>',
+        ]];
+    });
+
+    const claw = tier['锐利的爪子'];
+
+    return `
+            <h2 class="h2">中间那个 Lv 是物品等级，不是件数</h2>
+            <p class="p">边境的掉落书写成<b>「素材 Lv8 50%」</b>，很多人把中间的 Lv 读成了数量。它是<b>物品等级</b>——决定这件素材的成色，跟一次给几件无关。同一件素材常以两三个等级各占一段：<b>冰蛇的舌头就是 Lv8 50% 与 Lv10 50% 两段并列</b>，看上去像重复记录，其实是同一件东西的两种成色。<b>这两段是一次只出其中一个、还是各判各的，原表没写</b>，本页不猜——只保证表里每个百分比都是原样抄下来的。</p>
+            ${stat([['收录魔物', R.length + ' 条'], ['有掉落记录', withDrop.length + ' 只'], ['掉落记录', recs.length + ' 条'], ['素材种类', items.length + ' 种']])}
+            <div class="key">所以「怎么刷高等级素材」这个问题，答案不是<b>多打几只</b>，而是<b>打对哪一只</b>。往下第二张表就是把这件事算清楚的。</div>
+
+            <h2 class="h2">物品等级基本就是「怪的等级档次」：${three.length} 件里有 ${monoN} 件对得上</h2>
+            <p class="p">把每件素材的等级档摊开，算每个档位掉落者的<b>平均等级</b>，再看这个平均值是不是随物品等级往上走。${items.length} 种素材里有 ${multi.length} 种存在多个等级档，其中 <b>${three.length} 种有三个档以上</b>——这 ${three.length} 种里 <b>${monoN} 种是严格单调的</b>，物品等级越高，掉它的怪平均越高级。</p>
+            ${ftableOwn(['素材', '物品等级 → 掉落者平均等级', '单调'],
+                ['6.2rem', 'auto', '3.6rem'], tierRows, { ph: '输入素材名筛选' })}
+            <div class="note">读法：<code>Lv8→50</code> 表示「物品等级 8 这一档，掉它的怪平均 50 级」。平均等级是把该档所有掉落者的等级取算术平均后四舍五入，<b>只用来判断趋势，不是游戏内数值</b>；一档只有一只怪时，那个数就是那只怪的等级。</div>
+            <div class="key">唯一的例外是<b>锐利的爪子</b>：物品 Lv1 档平均 ${claw.avg[0]} 级、Lv${claw.ks[1]} 档平均 ${claw.avg[1]} 级、Lv${claw.ks[2]} 档平均 ${claw.avg[2]} 级，前两档倒挂。原因很具体——<b>鸡鹫兽的 ED 后形态是 95 级，却只给 Lv1 的爪子、而且 100% 必给</b>，一个高等级样本把 Lv1 档的平均值硬拉了回来。所以「高等级怪给高等级素材」是<b>大致规律而不是定律</b>，遇到 ED 后与再战形态要单独看。</div>
+
+            <h2 class="h2">${full.length} 条是 100% 必给，基础补给几乎不用刷</h2>
+            <p class="p">${recs.length} 条记录里 ${full.length} 条写着 100%。这些不是「概率很高」，是<b>打就必给</b>——集中在米、小麦粉、油、白金、巧克力这类补给与食材，以及几只剧情 BOSS 身上。只按「有多少只怪必给这件东西」排，前 ${fullTop.length} 名是：</p>
+            ${tbl(['素材', '必给它的怪'], fullTop.map(([n, c]) => [n, c + ' 只']), { leftFirst: true, cls: 'txt', colw: ['8rem', '6rem'] })}
+            <div class="key">反过来说，<b>缺米、缺小麦粉的时候应该去刷这几种怪，而不是回田里种</b>——它们打就必给，不用赌概率。</div>
+
+            <h2 class="h2">只有 ${solo.length} 件素材是全作独一份</h2>
+            <p class="p">把每件素材的来源数一遍，${solo.length} 件<b>只出一种怪身上</b>：</p>
+            ${tbl(['素材', '唯一的来源', '等级档', '概率'], solo.map(n => {
+                const x = byItem[n][0];
+                return [n, x.mon, 'Lv' + x.lv, x.p + '%'];
+            }), { leftFirst: true, cls: 'txt', colw: ['6rem', 'auto', '4.4rem', '4rem'] })}
+            <div class="key">三件里有两件是矿石线（<b>铁、银</b>），而且同出<b>迷你石魔人</b>——想同时囤这两样，打它一只就够，不必分开跑。第三件是<b>龟壳</b>，只出陆龟，概率 10%，属于典型要专门刷的东西。</div>
+
+            <h2 class="h2">${lowAll.length} 件素材，所有来源都在 10% 以下</h2>
+            <p class="p">这批是真正需要「刷」的：没有一处来源能一次给到两位数以上，只能靠次数堆。</p>
+            ${tbl(['素材', '来源', '最高概率'], lowAll.map(n => {
+                const arr = byItem[n];
+                const ms = Array.from(new Set(arr.map(x => x.mon)));
+                return [n, ms.slice(0, 4).join('、') + (ms.length > 4 ? '…' : ''), Math.max.apply(null, arr.map(x => x.p)) + '%'];
+            }), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto', '5rem'] })}
+
+            <h2 class="h2">反向查：${items.length} 种素材各从哪来</h2>
+            <p class="p">按素材名或魔物名搜索。「等级档」一列说明这件素材有几个物品等级、分别是多少；「主要来源」只给前三个，完整名单在下一张表里。</p>
+            ${ftableOwn(['素材', '来源数', '最高概率', '等级档', '主要来源'],
+                ['7.4rem', '4.2rem', '4.6rem', '6.4rem', 'auto'], itemRows, { ph: '输入素材名或魔物名' })}
+
+            <h2 class="h2">正向查：${withDrop.length} 只怪各掉什么</h2>
+            <p class="p">每件素材后面跟的是<b>它的物品等级</b>与概率。同名的读作「同一件东西的不同成色」，不是重复条目。</p>
+            ${ftableOwn(['魔物', '等级', '出现地点', '掉落（物品等级／概率）'],
+                ['6.6rem', '3.8rem', '8rem', 'auto'], monRows, { ph: '输入魔物、地点或素材' })}
+
+            <div class="note">数据源：biligame 符文工厂 wiki 的「RFFmonster」页，与站内「魔物图鉴」的边境段同源。原表 ${R.length} 条魔物里 ${withDrop.length} 只带掉落记录，其余 ${R.length - withDrop.length} 只原表就写「—」，本页照录不补。掉落的 <code>物品LvN 概率%</code> 由页面现解，共解析出 ${recs.length} 条、${items.length} 种素材；<b>没有任何一条是推算或补写的</b>。</div>
+
+            <div class="jump">
+                <a href="#/page/mbook">
+                    <div class="jp-t">魔物图鉴</div>
+                    <div class="jp-s">边境全魔物的数值、抗性与出没地点</div>
+                </a>
+                <a href="#/page/material">
+                    <div class="jp-t">素材与矿石</div>
+                    <div class="jp-s">这些素材最后进了哪种装备</div>
+                </a>
+            </div>`;
+}
+
+/* ------------------------------------------------------------
+   素材出处与掉落：海洋（RFO）
+   源：js/rfomon.js 的 RFO_DROP，格式 [名, [[物, 普通%, 高级%], …], 出现点]。
+   「高级」是带「高级」称号时的掉率（与「魔物图鉴」海洋段同一口径）。
+   ------------------------------------------------------------ */
+function sourceRfoHtml() {
+    const D = (typeof RFO_DROP !== 'undefined') ? RFO_DROP : [];
+    if (!D.length) return '';
+    const recs = [];
+    D.forEach(r => (r[1] || []).forEach(t => recs.push({ mon: r[0], loc: r[2], item: t[0], a: t[1], b: t[2] })));
+    if (!recs.length) return '';
+
+    const byItem = {};
+    recs.forEach(x => { (byItem[x.item] = byItem[x.item] || []).push(x); });
+    const items = Object.keys(byItem).sort();
+    const empty = D.filter(r => !r[1] || !r[1].length);
+
+    const pc = v => (v == null || v === '') ? '<span class="mon-no">—</span>' : v + '%';
+    const num = v => (typeof v === 'number');
+
+    const up = recs.filter(x => num(x.a) && num(x.b) && x.b > x.a);
+    const eq = recs.filter(x => num(x.a) && num(x.b) && x.b === x.a);
+    const down = recs.filter(x => num(x.a) && num(x.b) && x.b < x.a)
+        .sort((a, b) => (a.b - a.a) - (b.b - b.a));
+    const bigUp = recs.filter(x => num(x.a) && num(x.b) && x.b - x.a >= 10)
+        .sort((a, b) => (b.b - b.a) - (a.b - a.a));
+    /* 涨得最狠的那批里有多少条是结晶——缺结晶时开不开称号，全靠这一条 */
+    const cryCnt = {};
+    bigUp.forEach(x => { if (/结晶/.test(x.item)) cryCnt[x.item] = (cryCnt[x.item] || 0) + 1; });
+    const cryTxt = Object.keys(cryCnt).map(n => n + ' ' + cryCnt[n] + ' 条').join('、');
+
+    const solo = items.filter(n => new Set(byItem[n].map(x => x.mon)).size === 1);
+    /* 概率没写的（null）不参与「都很低」的判断——「—」不是 0 */
+    const lowAll = items.filter(n => byItem[n].every(x => num(x.a) && x.a <= 5));
+
+    /* 每只怪给几件 —— 分布比平均值有用：它说明「一只怪能不能一并补齐」 */
+    const dist = {};
+    D.forEach(r => { const k = (r[1] || []).length; dist[k] = (dist[k] || 0) + 1; });
+    const distRows = Object.keys(dist).map(Number).sort((a, b) => a - b).map(k => [k === 0 ? '0 件' : k + ' 件', dist[k] + ' 只']);
+    const hi5 = D.filter(r => (r[1] || []).length >= 5).length;
+
+    const itemRows = items.map(n => {
+        const arr = byItem[n];
+        const ms = Array.from(new Set(arr.map(x => x.mon)));
+        const hia = Math.max.apply(null, arr.map(x => num(x.a) ? x.a : -1));
+        const hib = Math.max.apply(null, arr.map(x => num(x.b) ? x.b : -1));
+        return [n + ' ' + ms.join(' '), [
+            n,
+            ms.length + ' 只',
+            hia < 0 ? '<span class="mon-no">—</span>' : hia + '%',
+            hib < 0 ? '<span class="mon-no">—</span>' : hib + '%',
+            ms.slice(0, 3).join('、') + (ms.length > 3 ? '…' : ''),
+        ]];
+    });
+
+    const monRows = D.map(r => [r[0] + ' ' + (r[2] || '') + ' ' + (r[1] || []).map(t => t[0]).join(' '), [
+        r[0],
+        r[2] || '<span class="mon-no">—</span>',
+        (r[1] || []).length
+            ? r[1].map(t => t[0] + ' ' + (t[1] == null ? '—' : t[1] + '%') + '／' + (t[2] == null ? '—' : t[2] + '%')).join('　')
+            : '<span class="mon-no">—</span>',
+    ]]);
+
+    return `
+            <h2 class="h2">每件掉落并排两个数：常态，和带「高级」称号时</h2>
+            <p class="p">海洋的掉落表不像别作只给一个概率，它给<b>两列</b>：前一个是常态掉率，后一个是<b>带「高级」称号时</b>的掉率（与站内「魔物图鉴」海洋段同一口径）。${recs.length} 条记录里 <b>${up.length} 条高级更高、${eq.length} 条持平、${down.length} 条反而更低</b>——最后这一小撮是最容易踩坑的地方，下面单独列。</p>
+            ${stat([['收录魔物', D.length + ' 只'], ['有掉落', (D.length - empty.length) + ' 只'], ['掉落记录', recs.length + ' 条'], ['素材种类', items.length + ' 种']])}
+            <div class="key">两列都要看的前提下，判断顺序应该是：<b>先确认这件素材在不在「反降」名单里，再决定要不要开称号</b>。开了称号结果掉率腰斩，比不开还难受。</div>
+
+            <h2 class="h2">${down.length} 条反着来：开高级称号反而更难出</h2>
+            <p class="p">这 ${down.length} 条的「高级」数值比常态还低。跌幅最大的一批：</p>
+            ${tbl(['素材', '掉落者', '常态', '高级'], down.slice(0, 14).map(x => [x.item, x.mon, x.a + '%', '<b>' + x.b + '%</b>']), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto', '4rem', '4rem'] })}
+            <div class="key">最扎眼的两条都是<b>30% → 10%</b>：松鼠王的<b>龟壳</b>、狼王的<b>金</b>。想刷这两样，<b>别开高级称号</b>——同一只怪、同样的打法，掉率差三倍。注意这不是「高级称号整体更差」，而是<b>具体到这一条掉落</b>上数值就是这么写的；原表没有解释原因，本站也不猜。</div>
+
+            <h2 class="h2">反过来，涨得最狠的 ${bigUp.length} 条</h2>
+            <p class="p">以「高级比常态至少高 10 个百分点」为门槛，全表只有 ${bigUp.length} 条达标——数量比想象中少，说明<b>高级称号带来的主要是小幅上调</b>，而不是普遍翻倍。</p>
+            ${tbl(['素材', '掉落者', '常态 → 高级'], bigUp.map(x => [x.item, x.mon, x.a + '% → <b>' + x.b + '%</b>']), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto', '7rem'] })}
+            <div class="key">这 ${bigUp.length} 条里有 ${bigUp.length - bigUp.filter(x => !/结晶/.test(x.item)).length} 条是结晶类（${cryTxt}）——结晶在这套表里对称号最敏感。缺结晶的时候，开称号是值的。</div>
+
+            <h2 class="h2">${empty.length} 只精灵什么都不掉</h2>
+            <p class="p">${empty.map(r => r[0]).join('、')}——这几只的掉落栏在源表里就是<b>空数组</b>，不是本站漏收。至于它们到底给什么，原表没写，本页也不补。</p>
+            <div class="key">看到「精灵」两个字就先别指望素材。真要凑草类素材，去找<b>火焰史莱姆</b>（黄草、红草）和<b>水牛哞哞</b>（蓝草）——这两条在表里各有 5%。</div>
+
+            <h2 class="h2">${solo.length} 件素材只有一个来源</h2>
+            ${tbl(['素材', '唯一的来源', '常态', '高级'], solo.map(n => {
+                const x = byItem[n][0];
+                return [n, x.mon, pc(x.a), pc(x.b)];
+            }), { leftFirst: true, cls: 'txt', colw: ['6.4rem', 'auto', '4.4rem', '4.4rem'] })}
+            <p class="p">这批里有<b>鸡蛋、牛奶</b>这种产出型素材，也有<b>暗元素</b>这种只在浮士德身上、常态 4% 的东西。产出型那几样其实不用靠打——把它们收进牧场按期刷毛就有稳定产出，比刷怪省事。</p>
+
+            <h2 class="h2">${lowAll.length} 件素材，所有来源都在 5% 以下</h2>
+            <p class="p">这些是海洋里真正难凑的一批。表里给的是<b>各来源中的最高常态概率</b>，也就是说最好的一处也只有这么点。</p>
+            ${tbl(['素材', '来源', '最高常态'], lowAll.map(n => {
+                const arr = byItem[n];
+                const ms = Array.from(new Set(arr.map(x => x.mon)));
+                const hi = Math.max.apply(null, arr.map(x => num(x.a) ? x.a : -1));
+                return [n, ms.slice(0, 4).join('、') + (ms.length > 4 ? '…' : ''), hi < 0 ? '<span class="mon-no">—</span>' : hi + '%'];
+            }), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto', '5.4rem'] })}
+
+            <h2 class="h2">每只怪给几件：三件与四件是主流</h2>
+            <p class="p">掉落件数不是平均分布的。${distRows.length} 档里，<b>3 件与 4 件占了绝大多数</b>，5 件以上的一共只有 ${hi5} 只——想一次补齐多种素材，只能盯箱类与史莱姆。</p>
+            ${tbl(['掉落件数', '魔物数'], distRows, { leftFirst: true, cls: 'txt', colw: ['6.6rem', '6rem'] })}
+            <div class="key"><b>魔物箱、贪食箱</b>各给 7 件，是全表最多的两只；史莱姆系（史莱姆、黑暗史莱姆、火焰史莱姆）各 6 件。缺杂项素材时先找它们，比按素材逐个找怪快得多。</div>
+
+            <h2 class="h2">反向查：${items.length} 种素材各从哪来</h2>
+            <p class="p">「最高常态／最高高级」两列取的是这件素材所有来源里的最大值。同一件素材常有多处来源，完整名单看「来源」列或下一张表。</p>
+            ${ftableOwn(['素材', '来源数', '最高常态', '最高高级', '来源'],
+                ['7.4rem', '4.2rem', '4.6rem', '4.6rem', 'auto'], itemRows, { ph: '输入素材名或魔物名' })}
+
+            <h2 class="h2">正向查：全部 ${D.length} 只，谁是必掉、谁概率低得离谱</h2>
+            <p class="p">每件掉落后面括注的是<b>「常态 ／ 高级」</b>两个百分比。掉落件数为 0 的那几只也留在表里，方便确认「它真的不掉东西」。</p>
+            ${ftableOwn(['魔物', '出现点', '掉落（常态／高级）'],
+                ['6.4rem', '8rem', 'auto'], monRows, { ph: '输入魔物、地点或素材' })}
+
+            <div class="note">数据源：biligame 符文工厂 wiki 的「RFOmonster」页掉落概率表，与站内「魔物图鉴」海洋段同源。<b>${D.length} 只、${recs.length} 条</b>为本页现解；${empty.length} 只（${empty.map(r => r[0]).join('、')}）原表为空数组，本页显示「—」而不补。<b>「高级」只表示带该称号时的数值</b>，原表未说明其它修正项，本站不叠加推算。</div>
+
+            <div class="jump">
+                <a href="#/page/mbook">
+                    <div class="jp-t">魔物图鉴</div>
+                    <div class="jp-s">海洋全魔物的数值、抗性与能替你种什么</div>
+                </a>
+                <a href="#/page/material">
+                    <div class="jp-t">素材与矿石</div>
+                    <div class="jp-s">这些素材最后进了哪种装备</div>
+                </a>
+            </div>`;
+}
+
 /* 分节模式的搜索栏（id 与 app.js 约定一致） */
 function eqbar(n, ph) {
     return `<div class="rec-filter">
@@ -4578,8 +4850,10 @@ const PAGES = [
     },
     {
         key: 'source', group: 'item', title: '素材出处与掉落', icon: 'gem',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
         body: g => {
+            if (g.id === 'rff') return sourceRffHtml();
+            if (g.id === 'rfo') return sourceRfoHtml();
             const is5 = g.id === 'rf5';
             const S4 = (typeof SRC_RF4 !== 'undefined') ? SRC_RF4 : [];
             const M4 = (typeof MDROP_RF4 !== 'undefined') ? MDROP_RF4 : [];
@@ -5200,6 +5474,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百一十三次：「素材出处与掉落」补上边境与海洋，两份掉落表各自拆出一条主线</h2>
+            <ul class="ul">
+                <li class="li"><b>为什么先做这两作</b>：这个条目原只覆盖 RF4／RF5。而边境与海洋的掉落数据<b>站内本来就有</b>——边境在 <code>RFF_MON[8]</code>（总掉落物），海洋在 <code>RFO_DROP</code>——只是没做成能反查的页面。这两份都是从 biligame 符文工厂 wiki 抄下来的，不用去别处补数，正好符合「不臆造」这条规矩。</li>
+                <li class="li"><b>边境那一页，先纠正一个读法</b>：掉落写作「素材 Lv8 50%」，中间的 <code>Lv</code> 是<b>物品等级</b>，不是件数。同一件素材常以两三个等级各占一段（冰蛇的舌头就是 <code>Lv8 50%</code> 与 <code>Lv10 50%</code> 并列），看着像重复记录，其实是同一件东西的两种成色。<b>这两段一次只出一段还是各判各的，原表没写</b>，页面明说「不猜」。</li>
+                <li class="li"><b>接着算出一个规律</b>：把每件素材的等级档摊开、算每个档位掉落者的平均等级，62 种素材里有 <b>34 种</b>存在多个等级档、其中 <b>20 种</b>有三个档以上；这 20 种里 <b>19 种是严格单调的</b>——物品等级越高，掉它的怪平均越高级。唯一的例外是<b>锐利的爪子</b>：鸡鹫兽的 ED 后形态 95 级却只给 Lv1、而且 100% 必给，把低档的平均值硬拉了上去。所以规律是「大致」，不是定律，页面把这一条单列出来。</li>
+                <li class="li"><b>348 条记录里有 54 条是 100% 必给</b>，集中在米（8 只怪）、小麦粉（7）、油（5）、白金（4）、巧克力（4）。所以缺米缺小麦粉更该去刷那几只怪，而不是回田里种。反向再看：<b>只有 3 件素材是全作独一份</b>——龟壳（陆龟）、铁与银（同一只迷你石魔人）。</li>
+                <li class="li"><b>海洋那一页的关键在「第二列」</b>：每件掉落并排两个数，常态与带「高级」称号时。328 条里 <b>262 条高级更高、52 条持平、14 条反而更低</b>——最后这 14 条单独成表，跌幅最大的两条都是 <b>30% → 10%</b>：松鼠王的<b>龟壳</b>、狼王的<b>金</b>，想刷这两样别开称号。涨得最狠的（≥10 个百分点）只有 6 条，其中 <b>4 条是结晶</b>。</li>
+                <li class="li"><b>两类「空」都照录不补</b>：黄精灵／红精灵／蓝精灵／绿精灵四只的掉落栏在源表里就是空数组，页面显示「—」；概率栏为空的条目（如咕咕鸡的鸡蛋）不参与「所有来源都 ≤5%」这类统计——<b>「—」不是 0</b>，混进去会让人以为鸡蛋 0%。</li>
+                <li class="li"><b>统计全部现算</b>：解析规则写在页面里，每个百分比都是原样抄下来的，没有一条推算或补写；页面上的「平均等级」也标明只用于判断趋势、不是游戏内数值。</li>
+                <li class="li"><b>修掉两处排版坑</b>：一是 <code>mon-desc</code> 是 <code>display:block</code>，用它包「Lv8」会让掉落列竖着一行一个词（页面高度一度被撑到 22000px）；二是 <code>mon-aux</code> 带 <code>white-space:nowrap</code>，长文本列用它就不换行、只能横滑，这两页的表格改回可换行。</li>
+                <li class="li"><b>校验</b>：<b>362 个页面实例</b> / 0 异常 / 头像 214 张缺 0；1100px 与 520px 下页面无横向溢出（<code>scrollWidth 482 &lt; 视口 490</code>），仅边境那张四列表在 520px 下容器内横滑，与站内 RF5 同类表格一致。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百一十二次：海洋钓点表拆掉 7 条「粘连行」，补回 85 条真实分布，改掉 3 处已失效的判断</h2>
             <ul class="ul">
                 <li class="li"><b>发现的问题</b>：海洋（RFO）钓点表里有 7 条记录的「钓点」字段是一整段文字——例如「白沙海滩 - 春 昼 沙丁鱼 40 … 教会广场 - 冬 夜 … 薇薇亚修小路」。这是当初从源表抓取时被拍平成一行留下的，页面真的把这一长串当钓点名显示了出来。</li>
