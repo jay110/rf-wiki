@@ -1,15 +1,14 @@
 # 作品卡配图来源（assets/title/*.jpg|png）
 
 卡片图区默认 284×96（CSS `.wcard-fig` 6rem 高），比例约 **2.96:1**。
-9 张图统一预构图成 960×325 JPEG(q88)，上线后 CSS `object-fit:cover` 几乎不再裁切；
-RF1/RF2 例外，是 ROM 原生 256×192 无损 PNG（零修图），靠 `object-position` 选可见带。
+7 张图统一预构图成 960×325 JPEG(q88)，上线后 CSS `object-fit:cover` 几乎不再裁切；
+RF1/RF2/RF3 例外，是 ROM 原生 256×192 无损 PNG（零修图），靠 `object-position` 选可见带。
 
-**第一行三张（RF1/RF2/RF3）另加 `.wcard-fig.is-tall`（aspect-ratio 16/9，284×160）**：
-RF1 标题块 86px、RF2 logo 块 134px，在 96px 框里只能露 86.5px 原生高，必被切；
-16:9 框可见原生高 144px，两者都能完整装下。RF3 补齐是为了让第一行三张卡等高
-（否则 RF3 会被 grid stretch 拉长、文字区空出一截），但它只在三列断点生效
-（`.is-tall-lg`）：双列时 RF3 的同行是窄条的 RF3SP，跟着变高会让 RF3SP 空一截。
-**其余 6 张不能同法**：它们是按 2.96:1 构图的横图，改 16:9 要裁掉左右各约 20%，
+**第一行三张（RF1/RF2/RF3）另加 `.wcard-fig.is-tall` 或 `.is-tall-lg`（aspect-ratio 16/9，284×160）**：
+RF1 标题块 86px、RF2 logo 块 134px、RF3 logo 块 54px，96px 框按宽 cover 只露 86.5px 原生高。
+16:9 框可见原生高 144px，三张都能完整装下。RF3 用 `.is-tall-lg`（仅三列生效）是为了
+和第一行的 RF1/RF2 对齐：双列时它的同行是窄条的 RF3SP，跟着变高会让 RF3SP 空一截。
+**其余 7 张不能同法**：它们是按 2.96:1 构图的横图，改 16:9 要裁掉左右各约 20%，
 RF4SP/RF5 的群像会被切人。
 
 重新生成：`G:/wit_tools/tmp/sw/venv/Scripts/python.exe _title_src/build_titles.py`
@@ -19,7 +18,7 @@ RF4SP/RF5 的群像会被切人。
 |---|---|---|---|
 | RF1 | NDS ROM `符文工房/1/` 图层合成 → `src/rf1_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；`.is-tall` 16:9 框，可见 144px 原生高，标题块 86px 居中（`object-position: 69%`） |
 | RF2 | 日版 NDS ROM `符文工房2.nds` 的 `/res/obj/rune2_titleA01.{NCGR,NCLR,NSCR}` → `src/rf2_native_256x192.png` | 256×192 | **原生 PNG 无损直出**，零修图；图框单独加高到 16:9（`.wcard-fig.is-tall`），可见 144px 原生高，logo 块 134px 全装下 |
-| RF3 | marv.jp 官网 `special/game/ds/runefactory3/img/top/bg1.jpg` | 981×590 | 大树村场景画，裁 2.95:1；卡片侧走 `.is-tall-lg`（仅 ≥560px 三列时生效），CSS 取中间约 60% 宽度（577/960），树干居中、构图仍成立 |
+| RF3 | 本机 NDS 提取 `G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP`（源自 `符文工房3.nds` 的 `/res/obj/rf3Archive.arc` 第 8027 号 NCGR） | 256×192 | **原生 PNG 无损直出**，零修图；`.is-tall-lg`（仅三列 16:9）+ `object-position: 35%`，logo 块 y=58..112 在 16:9 与 96px 两档下都完整 |
 | RF3SP | Steam appid 2243710 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |
 | RF4 | biligame wiki `Rune_Factory_4` 页官方背景画 | 756×425 | 浮空船场景，裁 2.95:1 |
 | RF4SP | Steam appid 1580240 `capsule_616x353.jpg` | 616×353 | 含 logo，两侧边缘色延伸后居中 |

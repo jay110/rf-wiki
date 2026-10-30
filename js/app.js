@@ -12,7 +12,7 @@ const LSKEY = 'rf_wiki_v1';
 const TITLE_ART = {
     rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
-    rf3:   { src: 'assets/title/rf3.jpg', tall: 'lg' },
+    rf3:   { src: 'assets/title/rf3.png', pos: '35%', tall: 'lg' },
     rf3sp: { src: 'assets/title/rf3sp.jpg' },
     rf4:   { src: 'assets/title/rf4.jpg' },
     rf4sp: { src: 'assets/title/rf4sp.jpg' },

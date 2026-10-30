@@ -6,8 +6,8 @@
 每张源图按自身比例选择处理方式：
   cover      —— 全幅画面，直接按 2.95:1 居中裁切
   fill       —— 构图不能被切（带边框/圆形/竖构图），整体保留，两侧用同图模糊延伸
-  native     —— rf1/rf2 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
-输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1/rf2 例外，是 256x192 PNG。
+  native     —— rf1/rf2/rf3 专用：ROM 原生 256x192 原样输出（无损 PNG，零修图）
+输出 960px 宽 JPEG（显示宽度只有 284px，够 3 倍屏）；rf1/rf2/rf3 例外，是 256x192 PNG。
 """
 import os
 from PIL import Image, ImageFilter, ImageDraw
@@ -130,6 +130,33 @@ def rf2_native():
     return p
 
 
+def rf3_native():
+    """RF3 横幅：ROM 原生 256x192 无损图，零修图（做法同 rf1/rf2）。
+
+    源图 src/rf3_native_256x192.png 的来历：
+      本机 NDS 提取目录 G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP
+      —— 从 符文工房3.nds 的 /res/obj/rf3Archive.arc 里解出的第 8027 号 NCGR
+      （8bpp 调色板，256x192，即 NDS 上屏原生分辨率）。
+      本脚本做的是「P 模式调色板图 → RGB → PNG」，像素值一一对应，无任何重采样。
+
+      为什么换掉旧的 rf3.jpg：那张是 marv.jp 官网的大树村场景画，画面里只有树、
+      没有 logo，卡片上根本认不出是哪一作。这张是游戏自己的标题屏：蓝天、发光树、
+      金色 RuneFactory 3 加假名 ルーンファクトリー，是唯一「零修图又带 logo」的选择。
+
+    可见带：logo 的暖色像素集中在 y=58..112（中心 85）。
+      三列布局（.is-tall-lg → 16:9，可见 144px）配 object-position: center 35%
+      → 可见 y≈17..161，logo 上下留白约 42/48，基本居中；
+      双列布局（96px，可见 86.5px）→ 可见 y≈37..124，假名底 112 下方仍有 12px 余量，
+      不会贴边。同一个 35% 在两档下都安全，所以只设一个 pos。
+    """
+    src = Image.open(os.path.join(SRC, 'rf3_native_256x192.png')).convert('RGB')
+    if src.size != (256, 192):
+        raise SystemExit('rf3 原生图尺寸不对：%s（应为 256x192）' % (src.size,))
+    p = os.path.join(OUT, 'rf3.png')
+    src.save(p, optimize=True)          # 无损 PNG，不重采样
+    return p
+
+
 def emit(im, gid, wy=0.5, mode='cover'):
     im = cover(im, wy) if mode == 'cover' else fill(im)
     im = im.convert('RGB')
@@ -171,9 +198,10 @@ def build():
     bg.alpha_composite(im)
     made.append(emit(bg.convert('RGB'), 'rfo', 0.45))
 
-    # RF3：官网场景画（大树村全景）
-    im = Image.open(os.path.join(SRC, 'rf3_jp_top_bg1.jpg')).convert('RGB')
-    made.append(emit(im, 'rf3', 0.45))
+    # RF3：ROM 原生 256x192 标题屏，零修图（同 rf1/rf2）。
+    # 旧图是 marv.jp 的大树村场景画，只有树没有 logo，卡上认不出是哪一作。
+    p = rf3_native()
+    made.append((p, Image.open(p).size))
 
     # RF4：biligame 官方背景画（浮空船）
     im = Image.open(os.path.join(SRC, 'rf4w_1.jpg')).convert('RGB')

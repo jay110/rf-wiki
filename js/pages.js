@@ -4967,6 +4967,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第一百零三次：符文3 换成 ROM 原生 256x192 标题屏（蓝天 + 发光树 + 金色 logo），第一行三张终于是同一套做法</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：第一百零二次把符文3 也加高到 16:9 后，卡上显示的是<b>大树村场景画</b>——只有树、没有 logo，认不出是哪一作。用户直接指出「符文3 不是有一张图可以当成 logo」，并把本机提取好的 <code>G:/10257/Desktop/符文工房/符文工房/3/rf3Archive-8027.NCGR.BMP</code> 发了过来。</li>
+                <li class="li"><b>那张图是什么</b>：<code>符文工房3.nds</code> 的 <code>/res/obj/rf3Archive.arc</code> 里第 <b>8027 号 NCGR</b>，8bpp 调色板、<b>256×192</b>（NDS 上屏原生分辨率）。画面是蓝天、发光的白色巨树、金色 <code>RuneFactory 3</code> 加假名 <code>ルーンファクトリー</code>——正是 RF3 的标题屏。</li>
+                <li class="li"><b>为什么之前没拿到</b>：RF3 的资源不像 RF1/RF2 那样是散文件，全部塞在 104MB 的 <code>rf3Archive.arc</code> 里（头部声明 8033 个条目，但表里没有文件名字符串、偏移也对不上常规 NARC），我解到一半就停了。本机这份 BMP 是早就解好的，直接拿来用，不必再啃归档格式。</li>
+                <li class="li"><b>换图</b>：<code>assets/title/rf3.png</code> = 该 BMP 转 RGB 后按原尺寸存的无损 PNG（P 模式调色板 → RGB → PNG，像素值一一对应，不缩放/不插值/不拼接/不补边）；旧的 <code>rf3.jpg</code>（marv.jp 大树村场景画）删除。</li>
+                <li class="li"><b>可见带定位</b>：logo 的暖色像素集中在 <b>y=58..112</b>（中心 85）。<code>object-position: center 35%</code> 下，三列 16:9 框可见 y≈17..161（上下留白 42/48，基本居中），双列 96px 框可见 y≈37..124（假名底 112 下方还有 12px 余量）。同一个 35% 在两档下都安全。</li>
+                <li class="li"><b>中途试过并全部弃用的合成方案</b>：把 <code>assets/logo/rf3.png</code>（金色 logo，420×120）叠到大树村场景上，试了无处理 / 白色外发光 12px / 20px / 黑色投影 / 下移构图——金色 logo 压在明亮树冠上对比始终不够，加发光又像贴纸、发雾。既然有原生标题屏，这些就都没必要了。</li>
+                <li class="li"><b>结果</b>：第一行三张（RF1 金底、RF2 白底龙翼、RF3 蓝天生辉树）现在走的是<b>同一套逻辑</b>——ROM 原生 256×192 无损 PNG + 16:9 加高框 + 各自的 object-position，全部零修图；第二行起仍是 2.96:1 的横图窄条。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第一百零二次：符文1 也改用 16:9 加高图框（标题块居中、不再贴边），符文3 补齐第一行</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：第一百零一次把符文2 的图框加高到 16:9 后，用户说「1 也试试看」。符文1 是 96px 框里<b>刚好贴边</b>塞下 86px 标题块的，加高后可以变成「居中、上下留白」。</li>
