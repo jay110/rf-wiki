@@ -1500,19 +1500,19 @@ const PAGES = [
     /* ================= BOSS 战 ================= */
     {
         key: 'boss', group: 'basic', title: 'BOSS 战', icon: 'skull',
-        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf5', 'rff'],
+        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf4', 'rf5', 'rff'],
         body: g => {
             const B = (typeof BOSS !== 'undefined') ? BOSS : null;
             if (!B) return '<p class="p">BOSS 数据未加载。</p>';
             const id = (g && g.id) || 'rf1';
-            const n1 = B.rf1.length, n2 = B.rf2.length, n3 = B.rf3.length, no = B.rfo.length, nrff = B.rff.length;
+            const n1 = B.rf1.length, n2 = B.rf2.length, n3 = B.rf3.length, no = B.rfo.length, n4 = B.rf4.length, nrff = B.rff.length;
 
             /* ---------- 共通开头 ---------- */
             const intro = `
             <h2 class="h2">这一页收的是什么</h2>
             <p class="p">「魔物图鉴」按种类收全表，这一页只收<b>剧情与迷宫里的 BOSS</b>：它们不进牧场，掉落也不按普通素材走，混在图鉴里反而最难查。</p>
-            <p class="p">六作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no + B.rf5.length + nrff} 位</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）、五代 ${B.rf5.length} 位、边境 ${nrff} 位。四代在 wiki 上没有独立的 BOSS 数值页，它的抗性明细统一放在「战斗与弱点」页里看。</p>
-            <div class="note">数值全部取自 biligame 符文工厂 wiki 各作 BOSS 页（RF3 取自魔物抗性表），<b>表里没有的列本页不填、不推算</b>。四作对「属性」的记录方式根本不是一套量纲——一代是点数、二代是克制、三代是等级——跨作比数值没有意义，最后一节单独讲这件事。</div>`;
+            <p class="p">七作目前有可核实 BOSS 表的，一共 <b>${n1 + n2 + n3 + no + n4 + B.rf5.length + nrff} 位</b>——RF1 ${n1} 位、RF2 ${n2} 位、RF3 ${n3} 位、海洋 ${no} 条（含圆形竞技场两轮同名的复战）、四代 ${n4} 位、五代 ${B.rf5.length} 位、边境 ${nrff} 位。四代此前在 wiki 上没有集中的 BOSS 数值页，本次补齐主线 BOSS 表（数值取自 fandom 怪物数值表 + GameFAQs 主线流程，部分线上无源的 BOSS 留空标「待补」），抗性明细仍同步放在「战斗与弱点」页看。</p>
+            <div class="note">数值全部取自各作 BOSS 页（RF1/RF2/RF3/五代/边境来自 biligame，四代来自 fandom + GameFAQs），<b>表里没有的列本页不填、不推算</b>。这七作对「属性」的记录方式根本不是一套量纲——一代/边境/海洋是点数、二代是克制、三代是等级、四代/五代是百分比系数——跨作比数值没有意义，最后一节单独讲这件事。</div>`;
 
             /* ---------- RF1 ---------- */
             const blk1 = () => {
@@ -1658,6 +1658,53 @@ const PAGES = [
             <div class="note">五代八项属性的<b>具体百分比数值</b>（火水地风光暗爱各 +/- 多少）在「战斗与弱点」页 RF5 一节，与本表同源、口径一致——本表只收「哪几个属性弱、哪几个抗」的结论与基础数值。芬布尔境界的最终 BOSS 在原流程页未给专名，暂以「芬布尔境界 BOSS」指代。</div>`;
             };
 
+            /* ---------- RF4 ---------- */
+            const blk4 = () => {
+                const EL7 = ['火', '水', '地', '风', '光', '暗', '爱'];
+                const dash = v => (v === null || v === undefined) ? '<span class="mon-no">—</span>' : String(v);
+                const parseR4 = s => {
+                    if (!s || s === '待补') return { weak: '<span class="mon-no">待补</span>', resist: '<span class="mon-no">待补</span>' };
+                    const m = {}; let hasNum = false;
+                    const re = /(火|水|地|风|光|暗|爱)(-?\d+)/g;
+                    let r; while ((r = re.exec(s)) !== null) { m[r[1]] = +r[2]; hasNum = true; }
+                    if (hasNum) {
+                        const wk = EL7.filter(e => m[e] < 0).map(e => '<b class="wk">' + e + m[e] + '%</b>');
+                        const rs = EL7.filter(e => m[e] > 0).map(e => e + m[e] + '%');
+                        return { weak: wk.length ? wk.join('、') : '无', resist: rs.length ? rs.join('、') : '无' };
+                    }
+                    const wk = (s.match(/([火水地风光暗爱])弱/g) || []).map(x => '<b class="wk">' + x[0] + '</b>');
+                    const rs = (s.match(/([火水地风光暗爱])抗/g) || []).map(x => x[0]);
+                    return { weak: wk.length ? wk.join('、') : '无', resist: rs.length ? rs.join('、') : '无' };
+                };
+                const H = ['BOSS', 'Lv', 'HP', '攻击', '防御', '魔攻', '魔防', '弱点', '抵抗', '出现点'];
+                const rows = B.rf4.map(x => {
+                    const p = parseR4(x[7]);
+                    return [x[0], dash(x[1]), dash(x[2]), dash(x[3]), dash(x[4]), dash(x[5]), dash(x[6]), p.weak, p.resist, x[8]];
+                });
+                const all = B.rf4;
+                const hpVals = all.filter(x => x[2] !== null).map(x => x[2]);
+                const lvVals = all.filter(x => x[1] !== null).map(x => x[1]);
+                const hpMin = hpVals.length ? Math.min.apply(null, hpVals) : 0;
+                const hpMax = hpVals.length ? Math.max.apply(null, hpVals) : 0;
+                const lvMin = lvVals.length ? Math.min.apply(null, lvVals) : 0;
+                const lvMax = lvVals.length ? Math.max.apply(null, lvVals) : 0;
+                const miss = all.filter(x => x[2] === null).length;
+                const top = all.filter(x => x[2] !== null).slice().sort((a, b) => b[2] - a[2])[0];
+                return `
+            <h2 class="h2">符文工房4：${all.length} 位主线 BOSS</h2>
+            <p class="p">四代（RF4）的 BOSS 表按主线出场顺序排，数值取自 fandom「therunefactory」怪物数值表与 GameFAQs 主线流程攻略。<b>抗性串是七项百分比系数</b>（火/水/地/风/光/暗/爱）：<b>负数弱、正数抗，绝对值越大越极端</b>——和五代同一套量纲。例如死亡树火 -200% 等于「极弱火」，拿火属性打它收益最高。</p>
+            ${stat([['收录', all.length + ' 位'], ['Lv 区间', lvVals.length ? (lvMin + ' ～ ' + lvMax) : '部分待补'], ['HP 区间', hpVals.length ? (hpMin.toLocaleString() + ' ～ ' + hpMax.toLocaleString()) : '部分待补'], ['数值待补', miss + ' 位']])}
+            ${tbl(H, rows, { leftFirst: true, cls: 'boss', colw: ['8rem'] })}
+            ${top ? '<p class="p">数值最高的是<b>' + top[0] + '</b>（Lv ' + top[1] + '、HP ' + top[2].toLocaleString() + '），作为最终 BOSS 镇守浮游帝国城。</p>' : ''}
+            <h3 class="h3">看这张表的三件事</h3>
+            <ul class="ul">
+                <li class="li"><b>弱点和五代一样是百分比系数</b>：负数是弱点（如埃塞尔巴德爱 -10%、弗雷克火龙水弱），正数是抗性（如阿克娜水龙水 50%、死亡树水/地 50%）。弱的那一项会放大你打出去的伤害。</li>
+                <li class="li"><b>${miss} 位线上没有可靠的 HP／攻防源</b>（安布洛希亚、霸王花、左之、右乃、石棺、塞克斯龙等），本页<b>留空标「待补」、不推算</b>；它们的弱点／抵抗同样只在 GameFAQs 明确写到时才填（如普罗戴地龙风弱地抗、弗雷克火龙水弱火抗），其余标待补。</li>
+                <li class="li"><b>双极值并列会同时标出</b>：死亡树同时火 -200%（极弱）与地/水 50%（抗），所以它在「弱点」列出现、又在「抵抗」列出现——一条 BOSS 同时占两列是正常的。</li>
+            </ul>
+            <div class="note">四代八项属性（含状态抗）的<b>完整百分比明细</b>在「战斗与弱点」页 RF4 一节（resist4.js），与本表同源。本表只收主线 BOSS 的 Lv/HP/攻防与「哪几个属性弱、哪几个抗」的结论。少数 BOSS 的弱点仅 GameFAQs 以「X弱Y抗」定性给出、未给百分比，本页照实不换算成数字。</div>`;
+            };
+
             /* ---------- RFF（边境） ---------- */
             const blkRff = () => {
                 const names = ['火', '水', '风', '地'];
@@ -1724,7 +1771,7 @@ const PAGES = [
                 </a>
             </div>`;
 
-            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR, rf5: blk5, rff: blkRff };
+            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rfo: blkR, rf4: blk4, rf5: blk5, rff: blkRff };
             const mid = (per[id] || blk1)();
             return intro + mid + tail;
         }
@@ -4920,6 +4967,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-30　第九十五次：补 BOSS 战「符文工房4（RF4）」14 位主线 BOSS，boss 页由六作扩到七作</h2>
+            <ul class="ul">
+                <li class="li"><b>数据源</b>：fandom「therunefactory」怪物数值表（每只 BOSS 给完整 HP/ATK/DEF/M.ATK/M.DEF + 七项百分比抗性）、GameFAQs 主线流程攻略（弗雷克火龙/普罗戴地龙弱点）、biligame RF4 主线页（出场顺序与 3DS 汉化版官方译名）。</li>
+                <li class="li"><b>接入</b>：<code>boss.js</code> 新增 <code>BOSS.rf4</code>（14 条，按主线出场顺序：安布洛希亚→雷电→悬丝傀儡→死亡树→奇美拉→霸王花→左之/右乃→石棺→塞克斯龙→普罗戴地龙→弗雷克火龙→阿克娜水龙→埃塞尔巴德）；<code>pages.js</code> 新增 <code>blk4</code> 渲染（七项百分比弱点/抗解析：负弱正抗、绝对值越大越极端、双极值并列标红、定性「X弱Y抗」照实不换算数字）；boss 页 <code>gms</code> 加 <code>rf4</code>、<code>intro</code> 六作改七作、<code>per</code> 加 <code>rf4</code>。</li>
+                <li class="li"><b>口径（铁律）</b>：7 位 BOSS（安布洛希亚、霸王花、左之、右乃、石棺、塞克斯龙，及只给弱点不给攻防的弗雷克火龙/普罗戴地龙）线上无可靠 HP/攻防源，数值<b>留空标「待补」、不推算</b>；弱点/抵抗只在 GameFAQs 明确写到时才填，其余标待补。rf4 与 rf5 同为百分比系数量纲，已并入「战斗与弱点」页 RF4 一节同源对照。</li>
+                <li class="li"><b>覆盖第九十四次</b>：上条日志「rf4 仍缺…boss 页暂不实装」已被本条覆盖——四代现已实装，boss 页口径由「六作」更正为「七作」。</li>
+                <li class="li"><b>校验</b>：<code>node _verify.js</code> → 页面实例 354、异常 0；<code>node --check</code> 两文件 exit 0；头像 8 作 214 张、缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-30　第九十四次：补 BOSS 战「符文工房 边境（RFF）」12 位主线 BOSS，boss 页由五作扩到六作</h2>
             <ul class="ul">
                 <li class="li"><b>数据源纠正</b>：此前清单把 rff 标为「无数值源」，实际 biligame <code>RFFmonster</code> 页含 9 组主线 BOSS（鸡鹫兽/拟态史莱姆/艾莉丝/魔力驱动单元A-D/瓦格纳/魔法生物/杰尔文/冰蛇/电力海月乌贼）且带 Lv/HP/攻/防/魔攻/四属性点数——与本站魔物图鉴 <code>rffmon.js</code> 同源，数据混在图鉴里被漏看。</li>
