@@ -4967,6 +4967,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百零八次：龙之天地换上官方「龍の国」logo，卡面改用官网 key visual</h2>
+            <ul class="ul">
+                <li class="li"><b>问题</b>：龙之天地那张卡一直只有画、没有字标——两位主角对刀、双龙盘在两侧，画面很漂亮，但在 284×160 的卡上认不出是哪一作。Steam 的 <code>library_hero.jpg</code>、官网 key visual、fan kit 主视觉<b>全都是纯画不带 logo</b>；官方带 logo 的只有 Steam 竖版 <code>library_600x900</code>（300×450）和 <code>header</code>（460×215），尺寸根本不够放大。</li>
+                <li class="li"><b>logo 的来源</b>：官网有一个「ファンキット素材」页（<code>jp.runefactory.com/ryu-no-kuni/news/detail/?id=31320</code>），官方直接提供 <b>1000×600 透明 PNG</b>「龍の国」logo（黑 / 白两版，含 <code>RuneFactory</code> 花体与假名），另有主视觉横竖版、四季の里 4 张场景、17 个角色头像，官方允许用于配信与投稿。</li>
+                <li class="li"><b>卡面底图也一起换了</b>：先用官网顶部 key visual <code>assets/img/main/kv_pc.jpg</code>（<b>2000×1123</b>，比 fan kit 的 1920×1080 分辨率高）铺成 960×540，两人双龙的位置与旧图一致，但上下不再被 3.1:1 的旧图裁掉。</li>
+                <li class="li"><b>logo 放哪、多大</b>：放<b>左上角</b>，缩到 460×276、位置 (30,20)。画面中央是两人对刀、左侧白龙、右侧蓝龙，只有左上那片樱枝 + 金屏风最静；460 宽已是上限——再放大「国」字右侧就压到白龙头。左上角留 30,20 是为了避开卡片 0.6rem 的圆角裁切。黑字米白描边的 logo 压在浅金屏风上对比够，卡上「龍の国」三个字仍然清楚；下方 <code>RuneFactory</code> 花体与假名会糊，但别的卡在 284px 下同样如此。</li>
+                <li class="li"><b>取图的两个坑</b>（写进 <code>SOURCES.md</code> 了）：① 站点的素材 <b>必须带浏览器 UA</b>，否则 PNG 一律 404（返回 196 字节错误页），页面本身却正常；② 别并发下，连发几个请求会随机吃到 404，逐个下 + 中间 sleep 1 秒就稳。</li>
+                <li class="li"><b>没用官网那块 kv_logo</b>：<code>assets/img/main/kv_logo.png</code>（1040×704）比 fan kit 版多一行「「ルーンファクトリー」シリーズ最新作」宣传语，放上卡像广告。</li>
+                <li class="li"><b>素材归档</b>：<code>_title_src/src/azuma_kv_2000x1123.jpg</code>、<code>azuma_logo_1000x600.png</code>；旧图 <code>azuma_library_hero.jpg</code> 移入「备而未用的素材」。<code>build_titles.py</code> 新增 <code>azuma_tall()</code>（叠 logo 一步可复现）。<code>azuma.jpg</code> 171KB → 182KB。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百零七次：双作卡改用一张整图，不再上下拼两条</h2>
             <ul class="ul">
                 <li class="li"><b>改了什么</b>：RF3+3特别版、RF4+4豪华版两张并卡的配图，从「上下各 270px 拼一条」改成<b>一张完整的 16:9 官方标题画面</b>（960×540 整图）。卡上不再有接缝，两个入口（上半区 / 下半区）照旧，两部作品靠下方两行文字区分，当前所在的那行前面有 <code>›</code>。</li>

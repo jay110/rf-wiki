@@ -36,7 +36,7 @@
 | RF5 | Steam appid 1702330 `capsule_616x353.jpg` | 616×353（1.745:1） | 16:9 只切纵向 3px，几乎零裁切 |
 | RFF | marv.jp Wii 官网 `img/top/main.swf` 内嵌天空底（CWS 解压后抽 JPEG）＋ `assets/logo/rff.png` | 550×523 + 371×204 | 16:9（按宽铺满后保留 54% 高度），居中叠官方透明 logo |
 | RFO | PS3 版贴图 PSD 三层合成 → `src/rfo_title_1280x720.png`：`02207_LUGTITLE_00_960x720_RGBA8`（岛+海底图，去水印文字层/图标层）＋`02896_LUGTITLE_01_1280x720_CI8`（藤蔓前景框，去左上水印层）＋`02202_LLGTITLEJP_568x400_RGBA8`（原版日文 logo 层，含假名行） | 960×720 + 1280×720 + 568×400 | **三层 1:1 合成，零缩放零插值**：底图水平居中 (1280−960)/2=160，藤蔓 (0,0) 压其上，logo 居中 x=356、y=150；1280×720 正好 16:9 → 卡上整屏零裁切；存 JPEG q92 |
-| 龙之天地 | Steam appid 2864560 `library_hero.jpg` | 1920×620（3.1:1） | 16:9 居中切掉左右各 21%：两位角色与两条龙都在中间，切完构图反而更紧 |
+| 龙之天地 | jp.runefactory.com/ryu-no-kuni 官网顶部 key visual → `src/azuma_kv_2000x1123.jpg`<br>＋ 官方 fan kit「龍の国」透明 logo（黑字米白描边）→ `src/azuma_logo_1000x600.png` | 2000×1123 + 1000×600 | key visual 是 1.781:1，按宽铺满后左右各裁约 2px → 960×540；官方 logo 缩到 460×276 叠在**左上**（那里是樱枝 + 金屏风，画面最静），位置 (30,20)，避开卡片 0.6rem 圆角 |
 
 **备而未用的素材**（留在 `src/` 里，不进 `assets/title/`）：
 
@@ -48,6 +48,36 @@
 - `rf1_desmume_title.png`、`rf2_titleA01.png`、`rf3_jp_top_bg1.jpg` —— 更早的中间件，已被原生图取代。
 - `rf4sp_capsule_616x353.jpg` —— RF4SP 的 Steam capsule（角色特写 + logo 分居上下两端），
   同比例下 16:9 只装得下其一，故用 OP 帧代替。
+- `azuma_library_hero.jpg` —— Steam appid 2864560 的 `library_hero.jpg`（1920×620，3.1:1）。
+  曾作龙之天地卡面（居中切掉左右各 21%），但它**不带字标**，卡上认不出是哪一作；
+  现在改用官网 2000×1123 的 key visual + 官方 fan kit logo（见上表）。
+- `assets/logo/azuma.png`（376×191，英文「RuneFactory Guardians of Azuma」）——
+  `_logo_src/` 那批站内 logo 之一，全站没有引用；卡面用的是官方日文「龍の国」logo。
+
+## 龙之天地的官方 fan kit（logo 与主视觉都在这）
+
+`https://jp.runefactory.com/ryu-no-kuni/news/detail/?id=31320` 是官方「ファンキット素材」页，
+素材可直接下载，官方允许用于配信 / 视频 / 静止画投稿（需遵守同站 `id=31319` 的 guideline）。
+
+图片根地址 `https://jp.runefactory.com/ryu-no-kuni/assets/img/fankit/`：
+
+| 文件 | 尺寸 | 内容 |
+|---|---|---|
+| `ryunokuni_logo_black.png` / `_white.png` | 1000×600 透明 PNG | 「龍の国」大字 + `RuneFactory` 花体 + 假名，**无宣传语**（本卡用黑版） |
+| `ryunokuni_mainvisual_horizon.png` | 1920×1080 | 主视觉横版（两人对刀 + 双龙 + 四季屏风），不带 logo |
+| `ryunokuni_mainvisual_vertical.png` | 1080×1920 | 同一画面的竖版 |
+| `village_01..04-spring/summer/autumn/winter.png` | 1920×1080 | 四季の里场景图（春之里：樱花 + 社殿） |
+| `icon_XX-<英文名>.png` | 400×400 | 17 个角色头像 |
+| `mini_XX-<英文名>.png` | 600×600 | 角色 Q 版立绘 |
+
+坑：
+1. **必须带浏览器 UA**，否则这些 PNG 一律返回 404（196 字节的错误页），但页面本身 200。
+   `curl -A "Mozilla/5.0 ..."` 就正常。
+2. **别并发下**，连发几个请求会随机吃到 404，逐个下、中间 sleep 1 秒就稳。
+3. 官网顶部那块「龍の国」`assets/img/main/kv_logo.png`（1040×704）比 fan kit 版多了顶上一行
+   「「ルーンファクトリー」シリーズ最新作」宣传语，做卡面会显得像广告，所以用 fan kit 那版。
+4. 官网顶部底图 `assets/img/main/kv_pc.jpg` 是 **2000×1123**，比 fan kit 的 1920×1080 分辨率高，
+   本卡用的是这张（构图与 fan kit 主视觉一致）。
 
 ## 取图时的坑
 

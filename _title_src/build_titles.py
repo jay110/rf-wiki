@@ -236,6 +236,41 @@ def pair_rf4():
     return emit_tall(src, 'pair-rf4', 0.5)
 
 
+# ---- 龙之天地：官方 key visual + 官方透明 logo ----
+AZUMA_LOGO_W = 460          # logo 在 960 宽画布里占的宽度（约 48%）
+AZUMA_LOGO_POS = (30, 20)   # 左上角：那里是樱枝 + 金屏风，画面最静（避开卡片圆角）
+
+
+def azuma_tall():
+    """龙之天地 → assets/title/azuma.jpg（960x540，一张整图）。
+
+    两件素材都来自官方：
+      src/azuma_kv_2000x1123.jpg —— jp.runefactory.com/ryu-no-kuni 官网顶部的 key visual
+        （2000x1123 = 1.781:1，与 16:9 只差 0.3%，按宽铺满后左右各裁约 5px）
+      src/azuma_logo_1000x600.png —— 官方 fan kit 的「龍の国」透明 logo（黑字 + 米白描边），
+        已去掉官网版顶部那行「「ルーンファクトリー」シリーズ最新作」宣传语
+
+    为什么要自己叠 logo：这张画本身不带字标——Steam 的 library_hero、官网 kv、
+    fan kit 的主视觉全是纯画，不带 logo；而卡上图区只有 284x160，没有字标就认不出是哪一作。
+    （官方带 logo 的图只有 Steam 竖版 library_600x900 300x450 和 header 460x215，尺寸不够。）
+
+    logo 位置：左上。画面里两人在中央对刀、白龙占左、蓝龙占右，只有左上角那片
+    樱枝 + 金屏风最静；logo 400px 宽（卡上显示约 118px），「龍の国」三个字仍然清楚，
+    下方 RuneFactory 花体与假名会糊成一团——但别的卡在 284px 下同样如此，不影响辨识。
+    """
+    base = Image.open(os.path.join(SRC, 'azuma_kv_2000x1123.jpg')).convert('RGB')
+    if base.size != (2000, 1123):
+        raise SystemExit('azuma key visual 尺寸不对：%s（应为 2000x1123）' % (base.size,))
+    canvas = cover(base, 0.5, TALL).convert('RGBA')
+    logo = Image.open(os.path.join(SRC, 'azuma_logo_1000x600.png')).convert('RGBA')
+    if logo.size != (1000, 600):
+        raise SystemExit('azuma logo 尺寸不对：%s（应为 1000x600）' % (logo.size,))
+    lw = AZUMA_LOGO_W
+    lg = logo.resize((lw, int(round(logo.size[1] * lw / logo.size[0]))), Image.LANCZOS)
+    canvas.alpha_composite(lg, AZUMA_LOGO_POS)
+    return emit_tall(canvas.convert('RGB'), 'azuma', 0.5)
+
+
 def emit(im, gid, wy=0.5, mode='cover', ratio=None):
     r = ratio or RATIO
     im = cover(im, wy, r) if mode == 'cover' else fill(im)
@@ -284,9 +319,8 @@ def build():
     im = Image.open(os.path.join(SRC, 'rf5_capsule_616x353.jpg')).convert('RGB')
     made.append(emit_tall(im, 'rf5', 0.5))
 
-    # 龙之天地：Steam 官方 library hero 1920x620（3.1:1）→ 16:9 居中切掉左右各 21%
-    im = Image.open(os.path.join(SRC, 'azuma_library_hero.jpg')).convert('RGB')
-    made.append(emit_tall(im, 'azuma', 0.5))
+    # 龙之天地：官方 key visual 2000x1123 → 16:9，叠官方 fan kit 的「龍の国」透明 logo
+    made.append(azuma_tall())
 
     for p, size in made:
         print('%-12s %s  %4d KB' % (os.path.basename(p), size,
