@@ -83,11 +83,20 @@ def card_band(W, H):
     return top, int(round(top + vis))
 
 
-def rf1_banner(y0=151, y1=325, feather=56):
-    """RF1 横幅：标题块等比缩到卡片可见带内，两侧用「按行边缘色插值」补天空。
+def rf1_banner(y0=151, y1=325, strip=18, vs=1):
+    """RF1 横幅：标题块等比缩到卡片可见带内，两侧用「纯天空窄条的逐行镜像」补齐。
 
     参数 y0/y1 是源图（582x442）里标题块的上下界：
       RUNE FACTORY 顶 ≈155 / ルーンファクトリー ≈240..275 / — 新牧場物語 — ≈290..320
+
+    为什么不是模糊延展：卡片可见带折算回源图只有约 135px，而标题块要 165px，
+    所以必须先等比缩小（缩到占宽约 78%），左右各留约 11% 需要补。
+    补法有三种，只有「镜像纯天空窄条」既清晰又无缝：
+      · 边缘纯色/插值 → 面板边缘本来就是亮白云，铺开成一条白带，见 P1/Q 实验；
+      · 高斯模糊     → 用户明确否掉（「不要模糊」）；
+      · 镜像窄条     → 接缝处像素与面板边缘完全相同（零色差），且是真实像素，不糊。
+    窄条取 18px（源图上 R 花饰约从 x≈25 起，18px 内是纯天空，不会镜像出花饰）。
+    侧区再沿 y 做 3 行均值（vs=1），压掉逐行镜像的纵向条纹 —— 只作用于侧区，面板不动。
     """
     W = OUT_W
     H = int(round(OUT_W / RATIO))
@@ -102,39 +111,42 @@ def rf1_banner(y0=151, y1=325, feather=56):
     x = (W - nw) // 2
     y = BT + ((BB - BT) - nh) // 2
 
-    base = Image.new('RGB', (W, H))
+    base = Image.new('RGB', (W, H), (208, 232, 250))
     ap, bp = art.load(), base.load()
-    for ry in range(nh):                     # 每行左右边界色 → 向外插值到画布两端
-        cl, cr = ap[0, ry], ap[nw - 1, ry]
+    K = strip
+    for ry in range(nh):                     # 逐行镜像铺两侧（周期 2K，接缝处连续）
         Y = y + ry
-        lt = tuple(min(255, int(c * 1.03 + 12)) for c in cl)
-        for bx in range(x):
-            t = bx / max(1, x - 1)
-            bp[bx, Y] = tuple(int(lt[i] + (cl[i] - lt[i]) * t) for i in range(3))
-        rt = tuple(min(255, int(c * 1.03 + 12)) for c in cr)
-        for bx in range(x + nw, W):
-            t = (bx - (x + nw)) / max(1, W - (x + nw) - 1)
-            bp[bx, Y] = tuple(int(cr[i] + (rt[i] - cr[i]) * t) for i in range(3))
-        for bx in range(x, x + nw):
-            bp[bx, Y] = ap[bx - x, ry]
-    for Y in range(0, y):                    # 上下同理
-        t = Y / max(1, y - 1)
-        for bx in range(W):
-            c = bp[bx, y]
-            top = tuple(min(255, int(v * 1.05 + 18)) for v in c)
-            bp[bx, Y] = tuple(int(top[i] + (c[i] - top[i]) * (1 - t)) for i in range(3))
+        row = [ap[c, ry] for c in range(nw)]
+        for dx in range(x):
+            i = dx % (2 * K)
+            bp[x - 1 - dx, Y] = row[i if i < K else 2 * K - 1 - i]
+        for dx in range(W - (x + nw)):
+            i = dx % (2 * K)
+            bp[x + nw + dx, Y] = row[nw - 1 - (i if i < K else 2 * K - 1 - i)]
+        for c in range(nw):
+            bp[x + c, Y] = row[c]
+    for ry in range(nh):                     # 只对侧区做纵向 3 行均值，去条纹
+        if not vs:
+            break
+        Y = y + ry
+        lo, hi = max(0, ry - vs), min(nh - 1, ry + vs)
+        for bx in list(range(x)) + list(range(x + nw, W)):
+            acc = [0, 0, 0]
+            for k in range(lo, hi + 1):
+                c = bp[bx, y + k]
+                acc[0] += c[0]; acc[1] += c[1]; acc[2] += c[2]
+            n = hi - lo + 1
+            bp[bx, Y] = (acc[0] // n, acc[1] // n, acc[2] // n)
+    for Y in range(0, y):                    # 上下补满（卡片上看不到，只为整图完整）
+        for c in range(W):
+            bp[c, Y] = bp[c, y]
     for Y in range(y + nh, H):
-        t = (Y - (y + nh)) / max(1, H - (y + nh) - 1)
-        for bx in range(W):
-            c = bp[bx, y + nh - 1]
-            bot = tuple(min(255, int(v * 1.05 + 18)) for v in c)
-            bp[bx, Y] = tuple(int(c[i] + (bot[i] - c[i]) * t) for i in range(3))
-    base = base.filter(ImageFilter.GaussianBlur(16))
+        for c in range(W):
+            bp[c, Y] = bp[c, y + nh - 1]
 
-    base.paste(art, (x, y), Image.new('L', (nw, nh), 255).filter(
-        ImageFilter.GaussianBlur(feather)))
+    base.paste(art, (x, y))
     p = os.path.join(OUT, 'rf1.jpg')
-    base.convert('RGB').save(p, quality=93, optimize=True, progressive=True)
+    base.save(p, quality=94, optimize=True, progressive=True)
     return p
 
 
