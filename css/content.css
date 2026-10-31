@@ -580,6 +580,17 @@
     text-align: left;
 }
 
+/* RF3 配方大全：材料与「其它特效」都是长文本。默认 td 是 nowrap，
+   长特效会把表撑到两屏宽、只能横滑才看得全——这里放开换行 */
+.content .table.rec3 table {
+    min-width: 56rem;
+}
+
+.content .table.rec3 .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
 /* RF3 魔物表：两张 ftableOwn（数值 7 列 / 抗性掉落 4 列），列宽已定，
    给最小宽度避免数字被压成竖排，超宽时容器横滑 */
 .content .table.mon-aux table {

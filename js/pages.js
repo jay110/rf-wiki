@@ -1750,6 +1750,215 @@ function recipeAzumaHtml() {
 }
 
 /* ------------------------------------------------------------
+   符文工房3（RF3 / RF3SP）配方大全
+   源：js/recipe_rf3.js（biligame 四张 RF3recipe* 页，_build_recipe_rf3.py 生成）
+   四组表列位各不相同，故按组分别渲染：武器 15 列、防具与饰品 17 列、
+   农具 7 列（一种农具一张表）、药学 12 列（自带「类别」）。
+   ⚠️ RF3 与 RF3SP 共用这一份数据：两版用 /^rf3/ 判断，不各列一遍。
+   ------------------------------------------------------------ */
+function recipeRf3Html() {
+    const D = (typeof RECIPE_RF3 !== 'undefined') ? RECIPE_RF3 : null;
+    if (!D || !D.groups) return '';
+    const G = D.groups;
+    const grp = k => (G.filter(x => x.k === k)[0] || { cats: [] }).cats;
+    const N = v => /^\d+$/.test(String(v).replace(/G$/, '')) ? +String(v).replace(/G$/, '') : null;
+    const dash = '<span class="mon-no">—</span>';
+    const money = v => N(v) == null ? dash : N(v).toLocaleString() + 'G';
+    const clean = v => (v == null || v === '' || v === '—' || v === '-' || v === '–') ? '' : v;
+    const idx = (h, kw) => h.findIndex(x => x.indexOf(kw) >= 0);
+    const mats = (r, h) => h.map((x, i) => ({ x: x, i: i }))
+        .filter(o => o.x.indexOf('材料') === 0).map(o => clean(r[o.i])).filter(Boolean);
+
+    /* ---------- 武器：7 类，列位相同 ---------- */
+    const WC = grp('武器');
+    const wRow = c => {
+        const h = c.head;
+        const iL = idx(h, '等级'), iA = idx(h, '攻击'), iM = idx(h, '魔法攻击'), iAt = idx(h, '属性'),
+            iE = idx(h, '其它特效'), iB = idx(h, '买价'), iS = idx(h, '卖价');
+        return c.rows.map(r => ({
+            k: c.n, n: r[0], lv: N(r[iL]), m: mats(r, h),
+            a: clean(r[iA]), mg: clean(r[iM]), at: clean(r[iAt]), e: clean(r[iE]),
+            b: N(r[iB]), s: N(r[iS])
+        }));
+    };
+    const wFlat = [];
+    WC.forEach(c => wRow(c).forEach(x => wFlat.push(x)));
+
+    /* ---------- 防具与饰品：4 类 ---------- */
+    const AC = grp('防具与饰品');
+    const aRow = c => {
+        const h = c.head;
+        const iL = idx(h, '等级'), iD = idx(h, '防御力'), iMd = idx(h, '魔法防御力'),
+            iR1 = idx(h, '属性抗性'), iR2 = idx(h, '异常状态抗性'), iAt = idx(h, '攻击属性'),
+            iE = idx(h, '其它效果'), iB = idx(h, '买价'), iS = idx(h, '卖价');
+        return c.rows.map(r => ({
+            k: c.n, n: r[0], lv: N(r[iL]), m: mats(r, h),
+            d: clean(r[iD]), md: clean(r[iMd]), r1: clean(r[iR1]), r2: clean(r[iR2]),
+            at: clean(r[iAt]), e: clean(r[iE]), b: N(r[iB]), s: N(r[iS])
+        }));
+    };
+    const aFlat = [];
+    AC.forEach(c => aRow(c).forEach(x => aFlat.push(x)));
+
+    /* ---------- 农具：一种农具一张表，5 档 ---------- */
+    const TC = grp('农具');
+    const tFlat = [];
+    TC.forEach(c => {
+        const h = c.head;
+        const iJp = idx(h, '官译'), iCn = idx(h, 'NDS'), iShop = idx(h, '商店'),
+            iAt = idx(h, '属性'), iL = idx(h, '等级'), iM = idx(h, '材料'), iC = idx(h, '蓄力');
+        c.rows.forEach(r => tFlat.push({
+            k: c.n, n: r[iJp], cn: r[iCn], shop: r[iShop], at: r[iAt],
+            lv: N(r[iL]), m: clean(r[iM]), ch: clean(r[iC])
+        }));
+    });
+
+    /* ---------- 药学：自带类别列 ---------- */
+    const PC = grp('药学');
+    const pFlat = [];
+    PC.forEach(c => {
+        const h = c.head;
+        const iK = idx(h, '类别'), iL = idx(h, '等级'), iE = idx(h, '效果'),
+            iB = idx(h, '买价'), iS = idx(h, '卖价');
+        c.rows.forEach(r => pFlat.push({
+            k: r[iK], n: r[1], lv: N(r[iL]), m: mats(r, h),
+            e: clean(r[iE]), b: N(r[iB]), s: N(r[iS])
+        }));
+    });
+
+    /* ---------- 现算的统计 ---------- */
+    const lvAll = wFlat.concat(aFlat, pFlat, tFlat).map(x => x.lv).filter(v => v != null);
+    const lvLo = Math.min.apply(null, lvAll), lvHi = Math.max.apply(null, lvAll);
+    const rng = a => {
+        const v = a.map(x => x.lv).filter(x => x != null);
+        return v.length ? 'Lv' + Math.min.apply(null, v) + '–' + Math.max.apply(null, v) : '—';
+    };
+
+    const matCnt = {};
+    wFlat.forEach(x => x.m.forEach(m => { matCnt[m] = (matCnt[m] || 0) + 1; }));
+    aFlat.forEach(x => x.m.forEach(m => { matCnt[m] = (matCnt[m] || 0) + 1; }));
+    pFlat.forEach(x => x.m.forEach(m => { matCnt[m] = (matCnt[m] || 0) + 1; }));
+    tFlat.forEach(x => String(x.m).split(/[+＋]/).map(s => s.trim()).filter(s => s && s !== '—')
+        .forEach(m => { matCnt[m] = (matCnt[m] || 0) + 1; }));
+    const matKeys = Object.keys(matCnt).sort((a, b) => matCnt[b] - matCnt[a]);
+    const matTop = matKeys.slice(0, 6);
+
+    /* 链式锻造：配方材料里出现另一件武器的行数 */
+    const wNames = new Set(wFlat.map(x => x.n));
+    const chainRows = wFlat.filter(x => x.m.some(m => wNames.has(m)));
+    const chainPrev = {};
+    chainRows.forEach(x => x.m.filter(m => wNames.has(m)).forEach(m => { chainPrev[m] = (chainPrev[m] || 0) + 1; }));
+    const prevTop = Object.keys(chainPrev).sort((a, b) => chainPrev[b] - chainPrev[a]).slice(0, 4);
+
+    const wTop = wFlat.filter(x => x.s != null).slice().sort((a, b) => b.s - a.s)[0];
+    const aTop = aFlat.filter(x => x.s != null).slice().sort((a, b) => b.s - a.s)[0];
+    const wCost = wFlat.filter(x => x.b != null).slice().sort((a, b) => b.b - a.b)[0];
+    const pKind = {};
+    pFlat.forEach(x => { pKind[x.k] = (pKind[x.k] || 0) + 1; });
+    const pKeys = Object.keys(pKind).sort((a, b) => pKind[b] - pKind[a]);
+
+    /* 材料位占用：6 格用满的有多少 */
+    const slotUse = {};
+    wFlat.concat(aFlat, pFlat).forEach(x => { slotUse[x.m.length] = (slotUse[x.m.length] || 0) + 1; });
+    const slotKeys = Object.keys(slotUse).map(Number).sort((a, b) => a - b);
+    const slotFull = slotUse[6] || 0;
+    const slotTotal = wFlat.length + aFlat.length + pFlat.length;
+
+    /* 农具的档位与材料递进 */
+    const toolLv = TC.length && TC[0].rows.length ? TC[0].rows.map(r => N(r[idx(TC[0].head, '等级')])) : [];
+
+    /* 与站内「武器数值表」交叉核对（EQW_RF3，188 件） */
+    const eqw = (typeof EQW_RF3 !== 'undefined') ? EQW_RF3.map(x => x[0]) : [];
+    const lackInRecipe = eqw.filter(n => !wNames.has(n));
+    const onlyInRecipe = Array.from(wNames).filter(n => eqw.indexOf(n) < 0);
+    const toolish = onlyInRecipe.filter(n => /锤|斧/.test(n));
+
+    const rowW = x => [x.n + ' ' + x.k + ' ' + x.m.join(' '), [
+        x.n, x.k, x.lv == null ? dash : 'Lv' + x.lv,
+        x.m.length ? x.m.join('＋') : dash,
+        (x.a || '—') + ' / ' + (x.mg || '—'),
+        x.at || dash,
+        x.e || dash,
+        money(x.b), money(x.s),
+    ]];
+    const rowA = x => [x.n + ' ' + x.k + ' ' + x.m.join(' '), [
+        x.n, x.k, x.lv == null ? dash : 'Lv' + x.lv,
+        x.m.length ? x.m.join('＋') : dash,
+        (x.d || '—') + ' / ' + (x.md || '—'),
+        [x.r1, x.r2].filter(Boolean).join('／') || '—',
+        [x.at, x.e].filter(Boolean).join('／') || '—',
+        x.b == null ? dash : money(x.b), money(x.s),
+    ]];
+    const rowT = x => [x.n + ' ' + x.cn + ' ' + x.k, [
+        x.n, x.cn === x.n ? dash : x.cn, x.k, 'Lv' + x.lv,
+        x.m ? x.m.split(/[+＋]/).join('＋') : dash, x.ch || dash, x.shop || dash,
+    ]];
+    const rowP = x => [x.n + ' ' + x.k + ' ' + x.m.join(' '), [
+        x.k, x.n, x.lv == null ? dash : 'Lv' + x.lv,
+        x.m.length ? x.m.join('＋') : dash, x.e || dash, money(x.b), money(x.s),
+    ]];
+
+    return `
+        <p class="p">本页是<b>《符文工房3》</b>的配方大全：武器 ${wFlat.length} 条、防具与饰品 ${aFlat.length} 条、农具 ${tFlat.length} 条、药学 ${pFlat.length} 条，合计 <b>${wFlat.length + aFlat.length + tFlat.length + pFlat.length} 条</b>，分 ${WC.length + AC.length + TC.length + PC.length} 类。每条的「材料」是锻造／调合台上的实际投入，照源表逐格录，没有折算合成素材。</p>
+        <div class="key"><b>本页不为 RF3 与 RF3SP 各列一份</b>：源站的四张配方表本身不分版本，站内也只维护这一份数据（两版都按 <code>rf3</code> 前缀取同一张表）。特别版相对本体以追加内容为主，但<b>本站没有两个版本的配方表可以逐条比对</b>，所以这里既不声称「SP 一条没改」，也不给任何一条配方标「SP 新增」——只把这一份照录。名字用 biligame 汉化版译法，与站内其它作的译名不一定一致。</div>
+        ${stat([
+        ['配方总数', (wFlat.length + aFlat.length + tFlat.length + pFlat.length) + ' 条'],
+        ['类别', (WC.length + AC.length + TC.length + PC.length) + ' 类'],
+        ['等级跨度', 'Lv' + lvLo + '–' + lvHi],
+        ['素材种类', matKeys.length + ' 种'],
+    ])}
+
+        <h2 class="h2">四组配方：各组的列不一样，分开列</h2>
+        <p class="p">四张源表的列位本来就不同——武器表带<b>攻击／魔攻／属性／其它特效</b>，防具表换成<b>防御／魔防／两种抗性</b>，农具表按<b>一种农具一张</b>竖着排还带两套译名，药学表自带<b>类别</b>列。合成一张大表会丢列，所以按组分四张，每张都能单独搜。</p>
+        ${tbl(['组', '类别数', '条数', '等级范围', '代表性类别'],
+        [
+            ['武器', WC.length + ' 类', wFlat.length + ' 条', rng(wFlat), WC.map(c => c.n).join('／')],
+            ['防具与饰品', AC.length + ' 类', aFlat.length + ' 条', rng(aFlat), AC.map(c => c.n + '（' + c.rows.length + '）').join('／')],
+            ['农具', TC.length + ' 种', tFlat.length + ' 条', rng(tFlat), TC.map(c => c.n).join('／')],
+            ['药学', pKeys.length + ' 类', pFlat.length + ' 条', rng(pFlat), pKeys.map(k => k + '（' + pKind[k] + '）').join('／')],
+        ], { leftFirst: true, cls: 'txt', colw: ['7rem', '4.6rem', '4.6rem', '6.4rem', 'auto'], left: [4] })}
+
+        <h2 class="h2">武器 ${wFlat.length} 条：${chainRows.length} 条拿另一件武器当材料</h2>
+        <p class="p">这是 RF3 锻造最要紧的一条：<b>${chainRows.length} 条配方（${Math.round(100 * chainRows.length / wFlat.length)}%）的材料里写着另一件武器</b>，也就是「先打一把，再拿它当底料往上叠」。被当底料最多的是 <b>${prevTop.map(n => n + '（' + chainPrev[n] + ' 次）').join('、')}</b>——它们都是各类武器的第一、第二级，等于全系的起手件。所以锻造不是「凑齐材料做一把」，而是<b>沿着一条链往上爬</b>；中间哪一级漏了，后面那一串都做不了。</p>
+        ${ftableOwn(['名称', '类别', '等级', '材料（＋分隔）', '攻击 / 魔攻', '属性', '其它特效', '买价', '卖价'],
+        ['6.6rem', '5rem', '4.8rem', 'auto', '5.8rem', '4.2rem', 'auto', '6rem', '5.4rem'],
+        wFlat.map(rowW), { ph: '搜武器名、类别或材料', cls: 'rec3', left: [3, 6] })}
+        <div class="note">「攻击 / 魔攻」两列合成一格是为了省宽度；属性写「—」的是无属性武器。<b>买价最高的是 ${wCost.n}（${money(wCost.b)}）</b>，卖价最高的是 <b>${wTop.n}（${money(wTop.s)}）</b>——两者不是同一件，买价高得多是锻造铺的成品价，卖价只按 Lv1 品质折算，别拿买价当成本估收益。</div>
+
+        <h2 class="h2">防具与饰品 ${aFlat.length} 条：饰品一项就占 ${AC.filter(c => c.n === '饰品').length ? AC.filter(c => c.n === '饰品')[0].rows.length : 0} 条</h2>
+        <p class="p">四类里<b>饰品最多</b>，盾牌与头部装备反而最少——这一作的戒指与项链是主要战力来源（抗性、属性攻击、特殊效果都从这里出），防具本身只堆防御。卖价最高的是 <b>${aTop.n}（${money(aTop.s)}，${aTop.k}）</b>。</p>
+        ${ftableOwn(['名称', '类别', '等级', '材料（＋分隔）', '防御 / 魔防', '抗性（属性／异常）', '攻击属性／其它效果', '买价', '卖价'],
+        ['6.6rem', '5rem', '4.8rem', 'auto', '5.8rem', 'auto', 'auto', '6rem', '5.4rem'],
+        aFlat.map(rowA), { ph: '搜防具名、类别或材料', cls: 'rec3', left: [3, 5, 6] })}
+
+        <h2 class="h2">农具 ${tFlat.length} 条：${TC.length} 种 × ${TC.length ? TC[0].rows.length : 0} 档，等级固定 ${toolLv.filter(v => v != null).join('／')}</h2>
+        <p class="p">六种农具都是 <b>5 档</b>，等级固定 <b>${toolLv.filter(v => v != null).map(v => 'Lv' + v).join('、')}</b>；从第 2 档起，材料的主料一律是<b>上一档的那把农具</b>（破洒水壶→马口铁洒水壶→狮子→彩虹→幸福的），追加材料则按档位换代。<b>五种用金属的农具都是 铜→银→金→白金 这一条线</b>，只有<b>钓竿例外</b>：强韧的蜘蛛丝→漂亮的蜘蛛丝→海盗哥布林的布→龟壳→古代鱼之骨，它不用金属。每档要几块也不统一——洒水壶每档 2 块、镰刀 1～2 块、锤子 3～5 块，蓄力效果同样不齐（洒水壶 3X3→3X9→6X9、锄头到 3X9 为止、锤子与斧头一律停在 3X3），这些逐行看表，别按一种农具推六种。表里同时给了<b>官译（简体）与 NDS 汉化版两套译名</b>。</p>
+        ${ftableOwn(['官译（简体）', 'NDS 汉化译名', '农具', '锻造等级', '锻造材料', '蓄力', '商店贩卖'],
+        ['7.6rem', '7.6rem', '4.6rem', '5.4rem', 'auto', 'auto', '5rem'],
+        tFlat.map(rowT), { ph: '搜农具名或材料', cls: 'rec3', left: [4, 5] })}
+        <div class="note">「NDS 汉化译名」列<b>只在与官译不同时留字</b>，两版一致的地方显示破折号——不是没查到，是同一把农具。已知不同的是这几处：${tFlat.filter(x => x.cn !== x.n).map(x => x.n + '→' + x.cn).join('、')}。<b>「商店贩卖」的 ○／×</b>是源表写法（能不能在店里直接买到），照录不改。</div>
+
+        <h2 class="h2">药学 ${pFlat.length} 条：药剂 ${pKind['药剂'] || 0}、农药 ${pKind['农药'] || 0}、调味料 ${pKind['调味料'] || 0}</h2>
+        <p class="p">源表把农药与调味料也算进药学——<b>农药</b>是喷在田里的，<b>调味料</b>是料理台上的，两者都不回血，所以别在战斗前翻这一栏找药。真正的恢复与强化类在「药剂」${pKind['药剂'] || 0} 条里。</p>
+        ${ftableOwn(['类别', '名称', '等级', '材料（＋分隔）', '效果', '买价', '卖价'],
+        ['4.6rem', '7.4rem', '4rem', 'auto', 'auto', '6rem', '5.4rem'],
+        pFlat.map(rowP), { ph: '搜药名、类别或效果', cls: 'rec3', left: [3, 4] })}
+
+        <h2 class="h2">材料位：6 格用满的有 ${slotFull} 条</h2>
+        <p class="p">锻造／调合台一共 6 个材料位。${slotTotal} 条非农具配方里，用满 6 格的有 <b>${slotFull} 条</b>；只占 1 格的 <b>${slotUse[1] || 0} 条</b>多是最基础的起手件（阔剑只要一块铁）。出现次数最多的素材是 <b>${matTop.map(m => m + '（' + matCnt[m] + ' 次）').join('、')}</b>——贵金属之所以排在前头，是因为它们既当主料又当每级农具的加固件。</p>
+        ${tbl(['占用材料位', '条数'], slotKeys.map(k => [k + ' 格', '<b>' + slotUse[k] + '</b> 条']), { leftFirst: true, colw: ['7rem', '6rem'] })}
+
+        <h2 class="h2">与站内「武器数值表」对一遍：${onlyInRecipe.length} 件只在配方里，${lackInRecipe.length} 件对不上</h2>
+        <p class="p">本站另有一张从 biligame《RF3weapon》抓的武器数值表（<code>EQW_RF3</code>，<b>${eqw.length} 件</b>）。两边并排对：<b>数值表里每一件在配方表里都查得到（缺 ${lackInRecipe.length} 件）</b>；反过来配方表多出 <b>${onlyInRecipe.length} 件</b>——${onlyInRecipe.join('、')}。这 ${toolish.length} 件全是<b>锤与斧</b>：数值表把农具锤／农具斧归进了农具页，配方页仍把它们列在锤／斧下，是<b>归类口径不同，不是缺数据</b>。两边数字差 ${onlyInRecipe.length} 件，正好等于这一批。</p>
+        <div class="note"><b>料理配方不在这页</b>：RF3 的 ${(typeof RF3_RECIPE !== 'undefined') ? RF3_RECIPE.length : 0} 条料理配方（含「其它」成品）在 <a href="#/page/cook">料理</a> 页，那里按厨具分七类、并带食用效果。本页只收锻造、装饰与调合三类。<br>数据源：biligame 符文工厂 wiki 的 <code>RF3recipeweapon</code>／<code>RF3recipeornament</code>／<code>RF3recipefarmtool</code>／<code>RF3recipepharmacy</code> 四页，<code>_build_recipe_rf3.py</code> 生成 <code>js/recipe_rf3.js</code>。这是<b>网络 wiki，非官方解包</b>，数值以游戏内为准；源表空格写「—」或「-」，本页统一按破折号显示。RF3SP 与本体共用本表，不另列。</div>
+        <div class="jump">
+            <a href="#/page/cook"><div class="jp-t">料理</div><div class="jp-s">RF3 全套料理配方与食用效果</div></a>
+            <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">素材品质与技能等级怎么决定成品</div></a>
+        </div>
+    `;
+}
+
+/* ------------------------------------------------------------
    素材出处与掉落：边境（RFF）
    源：js/rffmon.js 的 RFF_MON[8]「总掉落物」，每段形如「白金Lv1 100%」。
    中间那个 Lv 是<b>物品等级</b>，不是件数；同一素材常按等级分档各占一段，
@@ -6501,11 +6710,13 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'rff') return recipeRffHtml();
             if (g.id === 'rfo') return recipeRfoHtml();
             if (g.id === 'azuma') return recipeAzumaHtml();
+            /* RF3 与 RF3SP 共用一份配方表（特别版没改锻造/药学体系），不各列一遍 */
+            if (/^rf3/.test(g.id)) return recipeRf3Html();
             if (g.id.indexOf('rf4') === 0) return recipe4Html();
             const rec = (typeof RECIPE !== 'undefined') ? RECIPE : [];
             const cats = (typeof RECIPE_CATS !== 'undefined') ? RECIPE_CATS : [];
@@ -6975,6 +7186,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十九次：「配方大全」补上 RF3——武器／防具／农具／药学 382 条，RF3 与 RF3SP 共用一张表不各列一份</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「配方大全」此前只覆盖边境／海洋／RF4／RF4S／RF5／龙之天地，<b>RF3 完全没有条目</b>（它的料理配方在「料理」页，锻造与调合的配方站内一条都没有）。本次给 <code>recipe</code> 条目加上 <code>rf3</code>／<code>rf3sp</code>，新增顶层函数 <code>recipeRf3Html()</code>，分支写成 <code>/^rf3/</code>。</li>
+                <li class="li"><b>RF3 与 RF3SP 不分开列</b>：特别版相对本体以追加内容为主（新婚模式等），锻冶／调合体系是同一套，所以这里<b>只维护一份数据、两版共用</b>——站内 50 个条目里，除「新婚模式」这一页本来就只挂两部 SP 外，其余条目一律 rf3／rf3sp 同进同退。<b>但「SP 一条配方都没改」这句话本站没有证据</b>（没有两个版本的配方表可逐条比对），所以页上既不这样声称，也不给任何一条配方标「SP 新增」。</li>
+                <li class="li"><b>数据源</b>：biligame 符文工厂 wiki 的四张页——<code>RF3recipeweapon</code>／<code>RF3recipeornament</code>／<code>RF3recipefarmtool</code>／<code>RF3recipepharmacy</code>，<code>_build_recipe_rf3.py</code> 生成 <code>js/recipe_rf3.js</code>。<b>382 条 / 18 类</b>：武器 198（单手剑 33、双手剑 34、枪 33、锤 28、斧 25、双剑 31、杖 14）、防具与饰品 111（盾 17、头部 11、鞋子 21、饰品 62）、农具 30、药学 43。</li>
+                <li class="li"><b>四张源表的列位各不相同，所以分四张表</b>：武器表带攻击／魔攻／属性／其它特效，防具表换成防御／魔防／两种抗性，农具表是「一种农具一张」的竖表（还带官译与 NDS 汉化两套译名），药学表自带「类别」列。合成一张会丢列，因此按组分列、各自可搜。</li>
+                <li class="li"><b>算出来的几条</b>：① <b>198 条武器配方里有 173 条（87%）把另一件武器写进材料</b>，锻造是「拿上一把当底料」的链式升级，被当底料最多的是 大剑 29 次、阔剑 27 次、长枪 25 次、短剑 24 次——漏了中间一级，后面整串都做不了；② 农具六种都是 5 档、等级固定 Lv5／15／30／60／80，第 2 档起主料是上一档那把农具，<b>五种用 铜→银→金→白金，只有钓竿例外</b>（蛛丝→布→龟壳→古代鱼之骨）；③ 药学 43 条里药剂 30、农药 9、调味料 4；④ 6 个材料位用满的 71 条，只占 1 格的 34 条多是最基础起手件。</li>
+                <li class="li"><b>与站内武器数值表交叉核对</b>：<code>EQW_RF3</code> 188 件，配方表 198 件——<b>数值表里每一件都有配方（缺 0）</b>，反向多出 10 件：破锤子、青铜锤、银锤、金锤、白金锤、破斧、砍柴用斧、砍伐用斧、巡山用斧、奇迹斧。<b>这 10 件全是锤与斧</b>，数值表把农具锤／农具斧归进农具页、配方页仍列在锤／斧下，<b>是归类口径差，不是缺数据</b>；差额 10 件正好对上。</li>
+                <li class="li"><b>版面</b>：默认单元格是 <code>nowrap</code>，长特效（「暴击率+10%，眩晕抗性+5%…消耗RP：2。」）会把表撑到两屏宽、只能横滑才看得全，新增 <code>.table.rec3</code> 放开换行并把表格最小宽度定到 56rem；窄屏横滑时列不再被压成一字一行。<code>_verify</code> <b>382 实例</b>（新增 2）／0 异常／头像 214 张缺 0；1100px 与 520px 两档截图核对。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百二十八次：「鱼类图鉴」补上龙之天地——此前它显示的其实是 RF4／RF5 的鱼，现在换成这一作自己的 42 种，并接上图鉴任务奖励</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块（而且是一处会误导人的地方）</b>：「鱼类图鉴」页对龙之天地<b>没有专属分支</b>，既没命中 RF2／边境／RF3／RF1 的专用表，就一路落到页尾的 RF4／RF5 通用表，只在顶上多一句「本作鱼类专项数据暂缺」。读者点进来看到的是 61 种 RF4 鱼、金杯线、鱼影机制——<b>全是别作的数据</b>。这次新增顶层函数 <code>fishAzumaHtml()</code>，<code>fish</code> 条目的 <code>body</code> 第一行就分流（写最前，避免被后面的兜底逻辑吃掉）。</li>
