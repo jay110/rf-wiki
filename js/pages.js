@@ -2196,7 +2196,7 @@ function newlywedRf4(g) {
             <h2 class="h2">商店里能买到什么</h2>
             <p class="p">共 ${F.filter(f => f.shops.length).length} 种鱼能直接买，${shops.length} 处店铺，其中最全的是<b>${shops[0]}</b>（${byShop[shops[0]].length} 种）：</p>
             ${tbl(['店铺', '在售', '鱼'], shops.map(s => [s, byShop[s].length + ' 种', byShop[s].join('、')]), { leftFirst: true, colw: ['11rem', '4.6rem', 'auto'] })}
-            <div class="note">取自 gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829，与本站 <code>azuma_gift.js</code>／<code>AZUMA_MON</code> 同源），由 <code>_build_fishspot_azuma.py</code> 解析生成 <code>js/fishspot_azuma.js</code>，收录 <b>${F.length} 种鱼与钓物、${allSpots.length} 处钓点（含条件写法）</b>。源表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。${F.filter(f => f.unlock).length ? '有解锁条件的 ' + F.filter(f => f.unlock).length + ' 种（' + F.filter(f => f.unlock).map(f => f.n).join('、') + '）原表写在「解锁条件」列，多为村等级要求，本页照录。' : ''}<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
+            <div class="note">取自 gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829，与本站 <code>azuma_gift.js</code>／<code>AZUMA_MON</code> 同源），由 <code>_build_fishspot_azuma.py</code> 解析生成 <code>js/fishspot_azuma.js</code>，收录 <b>${F.length} 种鱼与钓物、${allSpots.length} 处钓点（含条件写法）</b>。源表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。${F.filter(f => f.unlock).length ? '有解锁条件的 ' + F.filter(f => f.unlock).length + ' 种（' + F.filter(f => f.unlock).map(f => f.n).join('、') + '）原表写在「解锁条件」列，本页照录。' : ''}<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
     }
 
 const PAGES = [
