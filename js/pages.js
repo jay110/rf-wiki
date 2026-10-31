@@ -2058,6 +2058,48 @@ function newlywedRf4(g) {
             <div class="note">取自 biligame 符文工厂 wiki「RF3fishing」页（${rows.length} 条目录记录，由 <code>_build_fishspot_rf3.py</code> 生成）。原表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。两处季节钓点（石池小道、阿克娜湖）原表写「当前季节的所有鱼」，随季节轮换的具体名单源表未列，本页照录不展开。「全地点通用」五项（乌贼／心动鲷鱼／空罐／高筒靴／罕见的空罐）在所有钓点都能钓到，已并入目录的「全地点通用」钓点。<b>命名沿用 biligame 中文名</b>。</div>`;
     }
 
+    /* ------------------------------------------------------------
+       钓点与季节：RF1 / RF2 / 边境（RFF）—— biligame 钓点×鱼 目录，无出现率
+       数据 SPOT_RF1 / SPOT_RF2 / SPOT_RFF：由 _build_fishspot_legacy.py 生成。
+       三作列不同（见各自 head），统一用一张可搜索目录表渲染；RFF 另带价格。
+       ------------------------------------------------------------ */
+    function fishspotRf12fHtml(g) {
+        const MAP = {
+            rf1: (typeof SPOT_RF1 !== 'undefined') ? SPOT_RF1 : null,
+            rf2: (typeof SPOT_RF2 !== 'undefined') ? SPOT_RF2 : null,
+            rff: (typeof SPOT_RFF !== 'undefined') ? SPOT_RFF : null
+        };
+        const D = MAP[g.id];
+        if (!D) return '';
+        const rows = D.rows.map(r => [r.join(' '), r]);
+
+        const intro = `
+            <h2 class="h2">${D.title} 的钓鱼没有「出现率」，只有一张钓点目录</h2>
+            <p class="p">和 RF4／RF5 那种「钓点 × 季节 × 概率」的解包表不同，<b>${D.title}</b> 的钓鱼数据是一张<b>「钓点(地图) × 鱼」</b>的目录：每个钓点列了能钓上来的鱼${D.prices ? '、鱼等级与三档卖价' : ''}，但<b>没有逐钓点的出现概率</b>。所以这一页是「<b>在哪能钓到什么</b>」的索引，不是「钓多少次能出」的概率表——原表没给的，本站不替它编。</p>
+            ${stat([['钓点(地图)', D.maps.length + ' 处'], ['去重鱼种', D.fishes.length + ' 种'], ['目录条目', D.rows.length + ' 条']])}
+            <p class="p">${g.name} 的钓点（地图）共 <b>${D.maps.length}</b> 处，去重鱼与钓物 <b>${D.fishes.length}</b> 种。下面按钓点或鱼名搜索全部目录。</p>`;
+
+        let priceTbl = '';
+        if (D.prices && D.topSell && D.topSell.length) {
+            priceTbl = `
+            <h2 class="h2">最值钱的几样（Lv1 卖价）</h2>
+            <p class="p">边境的钓点自带卖价，按 Lv1 卖价排，最贵的几乎都出自<b>自家门口两桥</b>与<b>赛尔提亚湖</b>：</p>
+            ${tbl(['鱼（Lv1卖价）', '卖价'], D.topSell.map(([n, v]) => [n, '<b>' + v + 'G</b>']), { leftFirst: true, colw: ['11rem', '6rem'] })}
+            <div class="key">${D.topSell[0][0]} 卖价最高（${D.topSell[0][1]}G），且<b>城镇门口两桥独占</b>——在偏远分区钓一辈子也出不来。最低价鱼多是不值钱的杂鱼与垃圾钓物。</div>`;
+        }
+
+        const wikiName = g.id === 'rf1' ? 'RF1fishing' : (g.id === 'rf2' ? 'RF2fishing' : 'RFFfishing');
+        const note = `<div class="note">取自 biligame 符文工厂 wiki「${wikiName}」页（${D.rows.length} 条目录记录，由 <code>_build_fishspot_legacy.py</code> 生成）。原表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。${D.prices ? '边境每张记录带鱼等级与三档卖价（Lv1／最低／最高）。' : ''}<b>命名沿用 biligame 中文名</b>；地图名已取链接显示名（如「1洞」＝卡麦特洞窟、「自家门口」＝自宅前）。</div>`;
+
+        return `
+            ${intro}
+            ${priceTbl}
+            <h2 class="h2">全部钓点 × 鱼 目录</h2>
+            <p class="p">按钓点、地点、鱼名或等级搜索。${g.id === 'rf2' ? '同一地图分<b>蓝色／红色</b>两片水域，季节也随区域不同；' : ''}${g.id === 'rff' ? '季节栏「春、冬」＝该钓点夏秋不出，「春~冬」＝全年。' : ''}同一鱼在多处出现的，会各自成行。</p>
+            ${ftableOwn(D.head, D.colw, rows, { ph: '输入钓点或鱼名' })}
+            ${note}`;
+    }
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -5848,10 +5890,11 @@ const PAGES = [
     /* ================= RF5 钓点与季节分布 ================= */
     {
         key: 'fishspot', group: 'item', title: '钓点与季节', icon: 'fish',
-        gms: ['rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rfo'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rfo', 'rff'],
         body: g => {
             if (g.id === 'rf3' || g.id === 'rf3sp') return fishspotRf3Html();
             if (g.id === 'rfo') return fishspotRfoHtml();
+            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rff') return fishspotRf12fHtml(g);
             if (String(g.id).indexOf('rf5') !== 0) return fishspot4Html();
             const S = (typeof SPOT_RF5 !== 'undefined') ? SPOT_RF5 : [];
             const SH = (typeof SPOT_SHARE !== 'undefined') ? SPOT_SHARE : [];
@@ -6118,6 +6161,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十次：「钓点与季节」补上 RF1／RF2／边境——三作都没有出现率，只有钓点×鱼目录</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「钓点与季节」原覆盖 rf3／rf3sp／rf4／rf4sp／rf5／rfo，<b>缺 RF1、RF2、边境（RFF）</b>。这次一并补齐，数据源都是 biligame 符文工厂 wiki 的钓鱼页（<code>RF1fishing</code>／<code>RF2fishing</code>／<code>RFFfishing</code>），由 <code>_build_fishspot_legacy.py</code> 生成 <code>SPOT_RF1</code>／<code>SPOT_RF2</code>／<code>SPOT_RFF</code>。</li>
+                <li class="li"><b>三作数据结构各不相同</b>：RF1 是「地图／地点／鱼／蓄力等级」（10 钓点、32 鱼、85 条）；RF2 是「地图／区域(蓝红)／季节／鱼／钓竿Lv」（40 钓点、34 鱼、295 条，季节可跨季如「春~夏」）；边境是「地图／分区／鱼／季节／鱼等级／三档卖价」（35 钓点、30 鱼、310 条，是唯一带价格的）。三张表都不含<b>逐钓点出现率</b>——和 RF4／RF5 的概率矩阵不是一回事，所以本页只做「在哪能钓到什么」的索引，不推算概率。</li>
+                <li class="li"><b>渲染统一成一个函数</b>：新增顶层 <code>fishspotRf12fHtml(g)</code>，按 <code>g.id</code> 选 <code>SPOT_RF1/RF2/RFF</code>，各自带 <code>head/colw</code> 描述列，通用一张可搜索目录表；边境额外带「最贵鱼 Top5」。这比给三作各写一遍函数省事，也把上次数组内函数声明的坑彻底绕开（函数从一开始就在 <code>const PAGES</code> 之前）。</li>
+                <li class="li"><b>命名沿用 biligame</b>：地图名取链接显示名（如「1洞」＝卡麦特洞窟、「自家门口」＝自宅前）；RF2 的「蓝色／红色」区域来自源表 <code>&lt;font&gt;</code> 标签，已去标签提取颜色。</li>
+                <li class="li"><b>校验</b>：375 实例（新增 3）／0 异常／头像 214 缺 0；三张目录表沿用 <code>.content .table</code> 的 <code>overflow-x:auto</code> 容器（边境 8 列最宽，窄屏容器内横滑），520 与 1100px 下零溢出、逐格零裁切。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百一十九次：「钓点与季节」补上 RF3／RF3 特别版——这一作没有出现率，只有一张钓点目录</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「钓点与季节」原只覆盖 rf4／rf4sp／rf5／rfo，<b>缺 RF3 与 RF3 特别版</b>。这次补上，数据源是 biligame 符文工厂 wiki「RF3fishing」页，由 <code>_build_fishspot_rf3.py</code> 生成 <code>SPOT_RF3</code>。新增顶层函数 <code>fishspotRf3Html()</code>，<code>fishspot</code> 条目 <code>gms</code> 加 <code>rf3</code>／<code>rf3sp</code>。</li>
