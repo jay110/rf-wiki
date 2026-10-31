@@ -6810,6 +6810,59 @@ const PAGES = [
         }
     },
     {
+        key: 'rune', group: 'item', title: '符文能力', icon: 'bolt',
+        gms: ['rf4', 'rf4sp'],
+        body: (g) => {
+            const D = (typeof RUNE_RF4 !== 'undefined') ? RUNE_RF4 : [];
+            const id = (g && g.id) || 'rf4';
+            const nm = (g && g.name) || '符文工房4';
+            if (!D.length) return `<p class="p">这一作暂时没有符文能力的获取数据。</p>`;
+            const abil = D.filter(x => x[2] === '符文能力');
+            const magic = D.filter(x => x[2] === '魔法');
+            const lvd = D.filter(x => x[4]);
+            const byCat = c => D.filter(x => x[2] === c).map(x => x[3]).join('、');
+            const rows = D.map(x => {
+                const key = x[2] + ' ' + x[3] + ' ' + x[1] + ' ' + x[0] + ' ' + x[4];
+                return [key, [x[2], x[3], x[1], (x[0] || '—'), (x[4] || '—')]];
+            });
+            return `
+            <p class="p"><b>${nm}</b>的武器有<b>符文槽</b>：打怪、开宝箱捡到的<b>符文能力</b>可以装到武器上，给普攻附加效果（横扫、升龙、一心一刀这类）；另一类是<b>符文魔法</b>（螺旋石锥、彗星暴雨、大治愈……），来自魔法书，能<b>升级 Lv</b>而符文能力不能。下面这张表是<b>去哪拿每一个</b>——按地点与出处排好，找某个符文前先查这里。</p>
+            ${stat([['符文能力', abil.length + ' 个'], ['符文魔法', magic.length + ' 个'], ['合计', D.length + ' 个'], ['需 Lv 才能用', lvd.length + ' 个']])}
+
+            <h2 class="h2">两类不是一回事</h2>
+            <p class="p"><b>符文能力</b>装在武器符文槽上，是被动／主动的攻击附加效果，<b>不能升级</b>——高 Lv 的只能靠随机掉落碰运气。<b>符文魔法</b>来自魔法书，可以拿给雷欧（手持魔法递给他）逐 Lv 强化：Lv2 500G、Lv3 3000G、Lv4 粉宝石、Lv5 白金、Lv6 奥利哈钢、Lv7 芜菁的奇迹、Lv8 龙幻石、Lv9 符文结晶、Lv10 小结晶。两者都走「地图上找」这条路，下面一并列出。</p>
+            <div class="key">升级加的是<b>固定伤害</b>不是百分比威力：彗星暴雨攻击力 52，Lv1 倍率 1、Lv10 倍率 30.5，基础伤害 1000 时 Lv10 是 1000+1586。所以魔法攻击越高，Lv10 的固定加成收益反而越小；火／水／风／地这类属性技能加的是对应属性伤害，对固定伤害同样有效。</div>
+
+            <h2 class="h2">全部 ${D.length} 个：去哪拿</h2>
+            <p class="p">按「类别 → 名字」排。出处一栏是<b>宝箱</b>或<b>特殊事件</b>（少数要解谜，如双子岩 8 字绕圈）。参数一栏写 <b>Lv2／Lv3</b> 的是该能力本身有等级门槛，多数写「—」表示装上即用。地点为空「—」的，出处栏里通常已写明区域。</p>
+            <div class="table rune">
+            ${ftableOwn(['类别', '名字', '出处', '地点', '参数'],
+                ['3.6rem', '8rem', '4rem', 'auto', '3rem'],
+                rows, {
+                    ph: '输入符文名／类别／地点／出处筛选',
+                    cls: 'rune',
+                    note: `<div class="note">源表（biligame 符文工厂 wiki「RF4runeability」）只给<b>获取地点与出处</b>，<b>不写每个符文能力／魔法的具体效果</b>——想看「横扫千军到底造成什么」，源页没有，本页不编。本表四代本体与豪华版共用同一张本体获取表，故两版显示相同。RF5 的同类数据在源站只有「待补充」一句话，没有可逐条核对的表，本页不挂五代。</div>`
+                })}
+            </div>
+            <h2 class="h2">两类各有哪些</h2>
+            <p class="p">先按类别认全貌，再回上面的表查地点。</p>
+            ${tbl(['类别', '全部名字'], [
+                ['符文能力（' + abil.length + '）', byCat('符文能力')],
+                ['符文魔法（' + magic.length + '）', byCat('魔法')],
+            ], { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
+            <div class="jump">
+                <a href="#/page/fx">
+                    <div class="jp-t">状态与抗性</div>
+                    <div class="jp-s">RF4 装备面板上看不到的隐藏数值</div>
+                </a>
+                <a href="#/page/weapon">
+                    <div class="jp-t">武器</div>
+                    <div class="jp-s">全武器攻击、魔攻与属性一览</div>
+                </a>
+            </div>`;
+        }
+    },
+    {
         key: 'tool', group: 'item', title: '农具', icon: 'hoe',
         body: (g) => {
             const id = (g && g.id) || 'rf5';
@@ -8204,6 +8257,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十次：新开「符文能力」页——RF4／RF4S 的 54 个符文去哪拿</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是个新门类</b>：站内一直有「武器／防具／状态与抗性（fx）」，但<b>符文能力</b>与<b>符文魔法</b>这一套（RF4 把效果装到武器符文槽、魔法书能升级 Lv）没有独立一页。新开 <code>rune</code>（<code>key: 'rune'</code>，归「物品」，<code>gms: ['rf4','rf4sp']</code>），数据由 <code>_build_rune.py</code> 从 biligame 符文工厂 wiki 的 <code>RF4runeability</code>／<code>RF4Sruneability</code> 解析成 <code>js/rune.js</code>（两版共用同一张本体获取表，故只存一份）。</li>
+<li class="li"><b>54 个，两类二分</b>：<b>符文能力 29 个</b>（横扫千军、升龙拳、无心剑、云裂、一心一刀……装武器槽、不可升级）＋<b>符文魔法 25 个</b>（螺旋石锥、彗星暴雨、大治愈、黑洞……来自魔法书、可逐 Lv 强化）。<b>20 个有等级门槛</b>（参数栏写 Lv2／Lv3），其余装上即用。</li>
+<li class="li"><b>表是「获取地图」不是「效果说明」</b>：源表只给<b>地点／出处／类别／名字／参数</b>——去哪拿（宝箱 or 特殊事件，少数要解谜如双子岩 8 字绕圈），<b>不写每个符文到底造成什么</b>。所以页面照实定位成「去哪拿」，效果栏不编；页内另列两类名字全集方便先认全貌。</li>
+<li class="li"><b>为什么只挂 RF4</b>：RF5 的同类数据在源站只有「待补充」一句话（<code>RF5符文技能、魔法数据</code> 正文 389 字、零表），没有可逐条核对的表，本页不挂五代；其他作（RF1～3／边境／海洋／龙之天地）走的是各自的技能／魔法体系，与 RF4 这套「武器符文槽」不是一回事，不硬凑。</li>
+<li class="li"><b>一处源站自相矛盾，照录不修</b>：RF4S 页把「蓝宝石」括注成「四代民间翻译为粉宝石」，而 RF4 本体页的强化必需品栏写的是「粉宝石」——同一件材料两叫法，本页照源文并列，不替谁统一（强化阶梯仍以本体页的「粉宝石」为准）。</li>
+<li class="li"><b>版面与校验</b>：新增 <code>.table.rune</code>（min-width 26rem、地点列放开换行、类别与名字两列锁宽）。1100 与 520px 截图核对（五列横排对齐、窄屏按站内约定横滑、无表头拆字）。<code>_verify</code> <b>397 实例</b>（新增 2）／0 异常／头像 214 张缺 0。 <code>index.html</code> 已引用 <code>js/rune.js</code>。</li>
+            </ul>
+
             <h2 class="h2">2026-11-01　第一百三十九次：农作补上最后一作——海洋（RFO）的「精灵杖＋岛上宠物」种地法</h2>
             <ul class="ul">
                 <li class="li"><b>填补农作页最后一块</b>：之前覆盖 7 作（缺海洋）。本作机制和其他九作完全不同——<b>没有锄头、没有洒水壶、也买不到种子</b>，种地靠「精灵杖魔法播种 + 岛上对应的宠物才会真种」。新增顶层函数 <code>cropRfoHtml()</code>，数据由 <code>_build_crop_rfo.py</code> 从 <code>RFOfarm</code> 一遍抓全的三张表解析成 <code>js/crop_rfo.js</code>（种地列表 4 岛、精灵石树 39 处、魔物农作物 92 只）。农作页至此覆盖全部 10 作。</li>

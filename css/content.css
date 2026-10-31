@@ -852,6 +852,27 @@
     min-width: 6.4rem;
 }
 
+/* 符文能力获取表：地点可换行，类别／名字锁宽，窄屏按站内约定横滑 */
+.content .table.rune table {
+    width: 100%;
+    min-width: 26rem;
+}
+
+.content .table.rune .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rune tbody td:first-child {
+    white-space: nowrap;
+    min-width: 3.6rem;
+}
+
+.content .table.rune tbody td:nth-child(2) {
+    white-space: nowrap;
+    min-width: 8rem;
+}
+
 /* 海洋表里的「—」、空值、纯劳力等占位标注：弱化显示，不与数据混淆 */
 .content .mon-no {
     color: #9aa3ad;
