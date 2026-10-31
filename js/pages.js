@@ -4039,7 +4039,8 @@ const PAGES = [
     },
     {
         key: 'beast', group: 'life', title: '魔物与伙伴', icon: 'monster',
-        body: () => {
+        body: g => {
+            if (g && g.id === 'azuma') return azumaBeastHtml();
             const n5 = (typeof MON !== 'undefined' && MON.rf5) ? MON.rf5.length : 0;
             const n4 = (typeof MON !== 'undefined' && MON.rf4) ? MON.rf4.length : 0;
             const n1 = (typeof MON_RF1 !== 'undefined' && MON_RF1) ? MON_RF1.length : 0;
@@ -4505,6 +4506,19 @@ const PAGES = [
                 </a>`).join('')}
             </div>`;
 
+            /* ---------- 龙之天地：本作没有七作那张数值图鉴，只留门牌 ---------- */
+            const blockAz = () => {
+                const M = (typeof AZUMA_MON !== 'undefined') ? AZUMA_MON : [];
+                const C = (typeof AZUMA_BOSS_CAP !== 'undefined') ? AZUMA_BOSS_CAP : [];
+                const N = (typeof AZUMA_BOSS_MAIN !== 'undefined') ? AZUMA_BOSS_MAIN : [];
+                const ride = M.filter(x => x[1] === '能');
+                return `
+            <p class="p">龙之天地是动作 RPG ＋ 村庄建设，<b>没有七作那张数值图鉴</b>——等级、HP、双攻双防、EXP、属性与状态抗性这一整套，本作既没有官方公开表，也没有能逐只对上的攻略本。本站能核实的是三份名单：<b>${M.length} 只魔物</b>（出现区域＋最爱／喜欢／讨厌物品＋能否骑乘）、<b>${C.length} 只可捕获 BOSS</b>（武器弱点／属性弱点／体型／最爱）、<b>${N.length} 场主线 BOSS</b>（等级与弱点）。</p>
+            ${stat([['收录魔物', M.length + ' 只'], ['可骑乘', ride.length + ' 只'], ['不可骑乘', (M.length - ride.length) + ' 只']])}
+            <div class="key">本作的魔物明细不挂在这一页：区域与喜好道具在<a class="link" href="#/page/azuma_mon">魔物与喜好</a>，可捕与主线 BOSS 的弱点在<a class="link" href="#/page/azuma_boss">BOSS 战</a>。这一页只留门牌，免得你按七作的列名来找一张本作并不存在的表。</div>
+            <div class="note">为什么不套七作的模板：那张表的核心列（等级／HP／抗性）在本作缺失，而本作的「骑乘」这一维度七作又没有。硬套的结果只有两种——满屏「—」，或者把七作的抗性数值当成通用规律读；两种都比不写更糟。</div>`;
+            };
+
             const rfoM = (typeof RFO_MON !== 'undefined') ? RFO_MON : [];
             const cnt = id === 'rf5' ? mon5.length
                 : /^rf4/.test(id) ? new Set(m4.map(x => x[0])).size
@@ -4513,11 +4527,12 @@ const PAGES = [
                             : /^rf3/.test(id) ? m3.length
                                 : id === 'rff' ? (rfm.length || mf.length)
                                     : id === 'rfo' ? rfoM.length
-                                        : mro.length;
+                                        : id === 'azuma' ? ((typeof AZUMA_MON !== 'undefined') ? AZUMA_MON.length : 0)
+                                            : mro.length;
             const title = id === 'rf5' ? 'RF5' : (id === 'rfo' ? 'RFO'
                 : (/^rf4/.test(id) ? 'RF4' : (id === 'rf1' ? 'RF1'
                     : (id === 'rf2' ? 'RF2' : (/^rf3/.test(id) ? 'RF3'
-                        : (id === 'rff' ? 'RFF' : ''))))));
+                        : (id === 'rff' ? 'RFF' : (id === 'azuma' ? '龙之天地' : '')))))));
             const bodyText = id === 'rf5' ? block5()
                 : /^rf4/.test(id) ? block4()
                     : id === 'rf1' ? block1()
@@ -4525,14 +4540,17 @@ const PAGES = [
                             : /^rf3/.test(id) ? block3()
                                 : id === 'rff' ? blockF()
                                     : id === 'rfo' ? blockR()
+                                    : id === 'azuma' ? blockAz()
                                         : blockNone();
 
             return `
             <h2 class="h2">「图鉴」在符文工房里指的是伙伴名录</h2>
-            <p class="p">系列里能收进牧场的魔物，才是这份表的主角——奶、蛋、毛、蜜全靠它们产出。怎么收服、怎么照料，在<a class="link" href="#/page/beast">魔物与伙伴</a>那一页；这边查具体是哪一只、它能给你什么。</p>
+            ${id === 'azuma'
+                ? '<p class="p">前七作能收进牧场的魔物就是这份表的主角——奶、蛋、毛、蜜全靠它们产出。龙之天地没有牧场，魔物收服之后是<b>坐骑与同行战力</b>，所以本页只报名单与数量，明细拆到「魔物与喜好」「BOSS 战」两页看。</p>'
+                : '<p class="p">系列里能收进牧场的魔物，才是这份表的主角——奶、蛋、毛、蜜全靠它们产出。怎么收服、怎么照料，在<a class="link" href="#/page/beast">魔物与伙伴</a>那一页；这边查具体是哪一只、它能给你什么。</p>'}
             ${title ? `<h2 class="h2">${title}：${cnt} 种魔物</h2>` : ''}
             ${bodyText}
-            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 的怪日表来自《符文工厂海洋（最强攻略）》，等级／HP／双攻双防／EXP／属性与状态抗性／掉落概率／农作物／生产物来自 biligame 符文工厂 wiki，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表，战斗数值与全套抗性来自 biligame 符文工厂 wiki；RFF（边境）的等级／HP／双防／魔法力／元素属性／出没地点／掉落物来自 biligame 符文工厂 wiki。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。</div>
+            <div class="note">数据取自各作解包表与攻略本：RF5、RF4 来自数据解包汉化版，RF3 来自《符文工房3全攻略》（NW 旅团整理），RFO 的怪日表来自《符文工厂海洋（最强攻略）》，等级／HP／双攻双防／EXP／属性与状态抗性／掉落概率／农作物／生产物来自 biligame 符文工厂 wiki，RF1 的个体名单来自全资料整合的洞窟怪物表，种族与特技来自初代汉化文本表，战斗数值与全套抗性来自 biligame 符文工厂 wiki；RFF（边境）的等级／HP／双防／魔法力／元素属性／出没地点／掉落物来自 biligame 符文工厂 wiki。解包表把掉落那一列写作「喜好道具」，但内容与掉率表逐项对得上，本站按实质改称<b>掉落道具</b>。${id === 'azuma' ? '龙之天地的魔物名单取自中文攻略站 gametoeasy.com《魔物喜好表》，可捕 BOSS 取自 biligame 中文 wiki 可捕表与 gametoeasy《BOSS 抓捕攻略》，主线 BOSS 取自 game8／neoseeker。' : ''}</div>
         `;
         }
     },
@@ -5172,7 +5190,8 @@ const PAGES = [
     /* ================= 活动事件 ================= */
     {
         key: 'festival', group: 'event', title: '年度节日', icon: 'calendar',
-        body: () => `
+        body: g => `
+            ${(g && g.id === 'azuma') ? `<div class="note" style="border-left-width:3px">你当前在<b>龙之天地</b>名下打开这一页，但本页收的是<b>前七作</b>的日程——RF1、RF2、RF3、RF4、边境、海洋、RF5 各一节，<b>没有龙之天地</b>。原因很具体：本作的节庆挂在四季村落与「大地舞者」的祭祀上，日程在版本更新里改过，本站手上没有能逐条核对的完整表。拿七作的日历凑一节出来，日期全是错的，所以宁可空着。<br>本作能查的相邻内容：<a class="link" href="#/page/request">委托任务</a>（东国六条线 37 条记录）、<a class="link" href="#/page/azuma_npc">角色详情</a>（含各自生日）。</div>` : ''}
             <h2 class="h2">节日的类型</h2>
             <p class="p">节日是「一年只有一次」的限时机会，通常兼有三种功能：<b>拿奖金／奖品、大幅提升全镇好感、解锁特殊剧情</b>。错过要等一年。</p>
             ${tbl(['类型', '例子', '怎么赢'], [
@@ -7191,6 +7210,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十二次：龙之天地三页收口——图鉴不再说「还没整理」，伙伴页不再套七作的牧场流程</h2>
+            <ul class="ul">
+                <li class="li"><b>先修一处数据缺陷</b>：魔物表里 <b>23 只可骑乘的魔物，名字末尾都多了一个「能」字</b>（「旋风天狗兽能」「土佐马能」「温罗王能」…），页面上的名称列就直接这么显示。查下来的解释是<b>解析时骑乘标记被并进了名称格</b>：同一份数据里 99 只不可骑乘的一个都没沾上，而站内另一份独立来源的掉落表里，这 23 只<b>全部</b>以不带「能」的名字出现、带「能」的一次都没有。源页原件已不在本地，没法再回头看那一个单元格，所以按两侧证据指向的一方修正（23 只全部改掉），并把依据写进 <code>js/azuma.js</code> 的文件头，免得日后有人照「原名含能」再还原回去。</li>
+                <li class="li"><b>「魔物图鉴」不再说假话</b>：这一页对龙之天地原本走兜底文案，写着「这一作还没有整理」——可 <code>AZUMA_MON</code> 的 122 只早就入库了，只是没挂在这一页。改成专属门牌：写明本作<b>没有七作那张数值图鉴</b>（等级／HP／双攻双防／EXP／抗性都缺），能核实的是三份名单——122 只魔物、18 只可捕 BOSS、6 场主线 BOSS，并给出 <b>122／23 可骑／99 不可</b> 三格统计与两页入口。</li>
+                <li class="li"><b>「魔物与伙伴」不再套牧场</b>：这一页原本把七作的整套流程摊在龙之天地名下——刷毛、投喂、爱心、每天四步、产奶下蛋。本作没有牧场，伙伴是<b>坐骑与同行战力</b>。改为本作专属：<b>能骑的 23 只</b>（附出现区域与最爱物品）＋<b>可捕 BOSS 18 只</b>（武器弱点／属性弱点／可骑／体型／最爱）。七作那套驯服流程<b>没有可核实源说明在本作通用，所以一个字不搬</b>，页上直接讲清为什么不搬。</li>
+                <li class="li"><b>「年度节日」补上边界</b>：这一页是七作合订的日程（RF1／RF2／RF3／RF4／边境／海洋／RF5 各一节），龙之天地没有。此前从本作点进来毫无提示，等于让人以为看完就是本作的节日。现在顶部先说明「本页不含本作」及原因——<b>本作节庆挂在四季村落与大地舞者的祭祀上，日程在版本更新里改过，手上没有能逐条核对的完整表</b>，同时给出委托任务与角色详情（含生日）两个相邻入口。</li>
+                <li class="li"><b>版面</b>：BOSS 表「属性弱点」表头在窄列里被折成「属性弱／点」，两个弱点列加宽到 5rem；「魔物与喜好」的「骑乘」列原本把「可骑乘」折成「可骑／乘」，也给了 4.4rem 的定宽。1100px 与 520px 截图核对，520px 下宽表按既有约定横向滑动。<code>_verify</code> <b>383 实例</b>／0 异常／头像 214 张缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百三十一次：新增「角色详情」页——龙之天地 16 位一人一页，顺带发现两份技能表对不上</h2>
             <ul class="ul">
                 <li class="li"><b>补的是什么</b>：龙之天地的「角色档案」一直只有名字——<code>NPC_FULL</code> 只覆盖七作，这一作落到 <code>g.chars</code> 兜底，21 个人的生日、喜好全是空的。本次把源站一人一页的 16 篇（post/1837–1852）收成新条目 <code>azuma_npc</code>「角色详情」，数据由 <code>_build_npc_azuma.py</code> 生成 <code>js/npc_azuma.js</code>：<b>16 人／37 段简介／295 条技能</b>，每人还有礼物四档、话题四档、互动五项（回礼／生日礼物／泡澡／便当／一起烹饪）。</li>
@@ -8395,7 +8422,34 @@ function azumaMonHtml() {
         </tr>`).join('');
     return `
         <div class="note">数据来自中文攻略站 gametoeasy.com《符文工房:龙之天地 魔物喜好表》（2025-06-20）。「骑乘」列：<b>可骑乘</b>表示可收服为坐骑／宠物，<b>不可</b>表示不能，BOSS／精英为「—」。出现区域与物品为原文中文列举，未作改写。本作系统是动作 RPG + 村庄建设，没有传统数值抗性表，故仅收录喜好与区域。</div>
-        <div class="table mon-table"><table><thead><tr><th>名称</th><th>骑乘</th><th>出现区域</th><th>最爱物品</th><th>喜欢物品</th><th>讨厌物品</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        <div class="table mon-table"><table><thead><tr><th>名称</th><th style="width:4.4rem">骑乘</th><th>出现区域</th><th>最爱物品</th><th>喜欢物品</th><th>讨厌物品</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* 龙之天地（azuma）专属：魔物与伙伴——本作没有牧场与产出，伙伴＝坐骑／同行。
+   与前七作「刷毛→投喂→爱心→每天四步」的流程页分开，七作的流程没有可核实源说明在本作通用，故不搬。 */
+function azumaBeastHtml() {
+    const M = (typeof AZUMA_MON !== 'undefined') ? AZUMA_MON : [];
+    const C = (typeof AZUMA_BOSS_CAP !== 'undefined') ? AZUMA_BOSS_CAP : [];
+    const N = (typeof AZUMA_BOSS_MAIN !== 'undefined') ? AZUMA_BOSS_MAIN : [];
+    if (!M.length && !C.length) return '';
+    const ride = M.filter(x => x[1] === '能');
+    const capRide = C.filter(x => x[3] === '可');
+    const cell = v => (v && v !== '×') ? v : '<span class="mon-no">—</span>';
+    return `
+        <h2 class="h2">本作的「伙伴」是坐骑，不是牲畜</h2>
+        <p class="p">前七作把魔物收进牧场产奶下蛋，龙之天地没有这套循环：收服之后它跟你出门，能骑的还能当脚力。源表记这件事的方式就是「骑乘：能／×」，<b>所以本页也只按这一列说事</b>，不拿前七作的产出表往本作身上套。</p>
+        ${stat([['收录魔物', M.length + ' 只'], ['可骑乘', ride.length + ' 只'], ['不可骑乘', (M.length - ride.length) + ' 只'], ['可捕 BOSS', C.length + ' 只']])}
+        <h2 class="h2">能骑的 ${ride.length} 只</h2>
+        <p class="p">源表标「能」的全部 ${ride.length} 只，按原表顺序排，附出现区域与最爱物品——<b>骑着它跑图，顺手喂最爱的东西，好感涨得最快</b>。</p>
+        ${tbl(['魔物', '出现区域', '最爱物品'], ride.map(x => [x[0], x[2] || '—', x[3] || '—']), { leftFirst: true, colw: ['7.2rem', 'auto', 'auto'], cls: 'txt', left: [1, 2] })}
+        <h2 class="h2">可捕获 BOSS：${C.length} 只，其中 ${capRide.length} 只能骑</h2>
+        <p class="p">BOSS 级的也能收，只是门槛高。弱点列决定你拿什么打，最爱列决定收服时喂什么；体型是源表的档位标注，不是数值。</p>
+        ${tbl(['BOSS', '武器弱点', '属性弱点', '可骑', '体型', '最爱'], C.map(x => [x[0], cell(x[1]), cell(x[2]), x[3] === '可' ? '<span class="mon-yes">可</span>' : '<span class="mon-no">—</span>', cell(x[4]), cell(x[5])]), { leftFirst: true, colw: ['7.4rem', '5rem', '5rem', '3rem', '3rem', 'auto'], cls: 'txt', left: [1, 2, 5] })}
+        <div class="note">这里为什么没有「怎么驯服」：前七作那套<b>刷毛 → 投喂 → 爱心 → 每天四步</b>的流程，在本作是否通用、数值怎么算，本站没有可核实的流程源，所以不把七作的步骤搬过来充数。上面两张表只回答两件事：<b>谁能骑、打它该带什么</b>。</div>
+        <div class="jump">
+            <a href="#/page/azuma_mon"><div class="jp-t">魔物与喜好</div><div class="jp-s">${M.length} 只的区域与最爱／喜欢／讨厌物品</div></a>
+            <a href="#/page/azuma_boss"><div class="jp-t">BOSS 战</div><div class="jp-s">可捕 ${C.length} 只＋主线 ${N.length} 场</div></a>
+        </div>`;
 }
 
 /* 龙之天地（azuma）专属：角色详情 16 位（post/1837–1852，一页一人）

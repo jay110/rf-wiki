@@ -88,3 +88,6 @@ _rf1_card/**
 
 # 符文2 卡片合成中间件（源图在 _title_src/src/，成品在 assets/title/rf2.jpg，脚本入库）
 _rf2_card/**
+
+# 单页临时预览（注入 S.game 后截图用，截完即删）
+_t_*.html
