@@ -1944,6 +1944,55 @@ function newlywedRf4(g) {
     </div>`;
 }
 
+    /* ------------------------------------------------------------
+       RF3 魔物喜好（gift 页的 RF3 段）
+       数据 GIFT_RF3 = [名, 捕捉率, 喜好1, 喜好2, ...]
+       源：biligame 符文工厂 wiki「RF3monster」页「总喜好物品」列
+       ------------------------------------------------------------ */
+    function giftRf3Html() {
+        const G3 = (typeof GIFT_RF3 !== 'undefined') ? GIFT_RF3 : [];
+        if (!G3.length) return '';
+        /* 喜好道具的通用度：多少只魔物吃这一样，决定「背包里该常备什么」 */
+        const freq = (rows, from) => {
+            const m = {};
+            rows.forEach(r => r.slice(from).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; }));
+            return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        };
+        const have = G3.filter(r => r.length > 2);
+        const none = G3.filter(r => r.length <= 2);
+        const f3 = freq(G3, 2);
+        const cf3 = k => { const x = f3.find(y => y[0] === k); return x ? x[1] : 0; };
+        const rates = G3.map(r => r[1]).filter(v => typeof v === 'number');
+        const lo = rates.length ? Math.min.apply(null, rates) : null;
+        const hi = rates.length ? Math.max.apply(null, rates) : null;
+        const top = have.filter(r => (typeof r[1] === 'number') && r[1] === hi);
+
+        return `
+            <h2 class="h2">喂对东西，它才肯跟你回家</h2>
+            <p class="p">RF3 收服魔物靠的是<b>刷子刷好感 + 投喂偏爱道具</b>。biligame 的怪物页给每只都列了「总喜好物品」——这些就是投喂时爱心涨得最快的那几样。表里也给的是<b>初始捕捉率</b>，是不刷毛、不喂任何东西时的基准；实际投喂与等级差会显著抬高，本页只给基准，不推算最终概率。</p>
+            ${stat([['收录', G3.length + ' 只'], ['有喜好记录', have.length + ' 只'], ['无记录', none.length + ' 只']])}
+            <p class="p">${none.length} 只没有喜好记录（多为 Boss 与不可收服个体，biligame 原表「总喜好物品」栏为「-」），它们<b>本来就不给驯服</b>，表里那两列是空的，不是漏填。</p>
+
+            <h2 class="h2">先看哪几样最通用</h2>
+            <p class="p">把 ${have.length} 只有记录的魔物喜欢的道具按出现次数排一遍：</p>
+            ${tbl(['高频喜好道具', '多少只吃'], f3.slice(0, 10).map(([k, n]) => [k, n + ' 只']), { leftFirst: true, cls: 'txt', colw: ['11rem', '6rem'] })}
+            <div class="key">出现最多的是<b>${f3[0][0]}</b>，有 ${cf3(f3[0][0])} 只吃；前几名多为「自身掉落物」——刷对应魔物时顺手拾取，抓同种时直接用掉落物投喂，一两份就能收服。biligame 没有单列「杂草」这种全游戏通用物，但它仍是前期最省事的万能钥匙。</div>
+
+            <h2 class="h2">捕捉率：基准区间 ${lo}% ～ ${hi}%</h2>
+            <p class="p">到顶的 ${hi}% 只有 ${top.length} 只，最末一档 ${lo}% 是 ${G3.filter(r => (typeof r[1] === 'number') && r[1] === lo).length} 只。捕捉率只是起始难度，<b>玩家等级高于魔物时门槛会降，低于则要多投好几份</b>——高等级强怪先去迷宫刷几级再回头抓更稳。</p>
+
+            <h2 class="h2">全部 ${G3.length} 只魔物</h2>
+            <p class="p">按名字或喜好道具搜索。没有记录的也留在表里，方便你确认「这只确实不给驯服」，别在它身上浪费素材。</p>
+            ${ftableOwn(['魔物', '捕捉率', '喜好道具'], ['7.4rem', '4.4rem'], G3.map(r => [
+                r[0] + (r.length > 2 ? '' : ' 无记录') + ' ' + r.slice(2).filter(Boolean).join(' '),
+                [
+                    r[0] + (r.length > 2 ? '' : ' <span class="txc">无记录</span>'),
+                    (typeof r[1] === 'number' ? '<b>' + r[1] + '%</b>' : '<span class="mon-no">—</span>'),
+                    r.slice(2).filter(Boolean).join('、') || '<span class="mon-no">—</span>',
+                ],
+            ]), { ph: '输入魔物名或喜好道具' })}
+            <div class="note">取自 biligame 符文工厂 wiki「RF3monster」页的「总喜好物品」列（${G3.length} 行），由 <code>_build_gift_rf3.py</code> 生成。原表「捕捉率」为整数百分比基准；「总喜好物品」按「、」拆分为可变长列表，原表为「-」或无记录者显示「—」。<b>命名沿用 biligame 中文名</b>；站内魔物图鉴（MON_RF3）取自《符文工房3全攻略》另一套译名，个别魔物名会有出入（如 biligame「摩可摩可」对应图鉴「莫可莫可」），本页以 biligame 译名为准。</div>`;
+    }
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -5134,11 +5183,14 @@ const PAGES = [
             </div>`;
         }
     },
+
+
     /* ================= 魔物喜好与素材出处 ================= */
     {
         key: 'gift', group: 'life', title: '魔物喜好', icon: 'gift',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5'],
         body: g => {
+            if (g.id === 'rf3' || g.id === 'rf3sp') return giftRf3Html();
             const is5 = g.id === 'rf5';
             const G4 = (typeof GIFT_RF4 !== 'undefined') ? GIFT_RF4 : [];
             const G5 = (typeof GIFT_RF5 !== 'undefined') ? GIFT_RF5 : [];
@@ -6000,6 +6052,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百一十八次：魔物喜好补上 RF3／RF3 特别版——biligame 的「总喜好物品」列，90 只喂对了才肯跟你回家</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「魔物喜好」原只覆盖 RF4／RF4S／RF5，<b>独缺 RF3 与 RF3 特别版</b>。这次补上，数据源是 biligame 符文工厂 wiki「RF3monster」页的「<b>总喜好物品</b>」列——<code>_build_gift_rf3.py</code> 抓这张表生成 <code>GIFT_RF3</code>（90 只）。新增顶层函数 <code>giftRf3Html()</code>，<code>gms</code> 加 <code>rf3</code>／<code>rf3sp</code>。</li>
+                <li class="li"><b>先核实、再动手：RF1／RF2 这次不动</b>。查了 biligame 的 RF1monster／RF2monster，<b>两作都没有「总喜好物品」列</b>——只有零散的「喜好」文字或根本没有。没有干净的结构化数据就不写，所以本轮只做 RF3，RF1 仍列为缺口、等源。</li>
+                <li class="li"><b>数据长什么样</b>：90 只里 <b>87 只有喜好记录、3 只无记录</b>（大嘎咕鸭、巨人王、死亡菌菇，捕捉率原表未给、字段留空，原表「总喜好物品」栏就是「-」，本就不给驯服——表上那两列是空的，不是漏填）。喜好按「、」拆成可变长列表，<b>最多的是哥布林大佬（4 样）</b>。</li>
+                <li class="li"><b>顺手排了一张「高频喜好」</b>：把 87 只有记录的魔物喜欢的道具按出现次数排，前几名多为「自身掉落物」——刷对应魔物时顺手拾取、抓同种时直接拿掉落物投喂，一两份就能收服。页面开头也写明：biligame 没有单列「杂草」这种全游戏通用物，但它仍是前期最省事的万能钥匙。</li>
+                <li class="li"><b>捕捉率只给基准</b>：表里给的是<b>初始捕捉率</b>（不刷毛、不喂任何东西时的基准），实际投喂与等级差会显著抬高，本页只给基准、不推算最终概率。</li>
+                <li class="li"><b>命名分歧，照实注明不擅改</b>：比对 <code>GIFT_RF3</code> 与站内 <code>MON_RF3</code> 图鉴，<b>仅 28 个共名</b>，62 个仅 GIFT、71 个仅图鉴（如 biligame「摩可摩可」对应图鉴「莫可莫可」、「兽人射手」对应「兽人弓箭手」）。<b>不擅自改译名</b>，页内 note 写明「命名沿用 biligame，与站内图鉴或有出入」。</li>
+                <li class="li"><b>踩坑（已修）</b>：第一版把 <code>giftRf3Html()</code> 当 <b>PAGES 数组里的元素</b>写——裸函数声明夹在对象字面量之间，<code>node _verify</code> 直接 <code>SyntaxError: Unexpected token '{'</code>。改成<b>顶层函数</b>（与 <code>fishspot4Html()</code> 等同级、在 <code>const PAGES</code> 之前）后即过。</li>
+                <li class="li"><b>校验</b>：<b>370 个页面实例</b>（新增 2）／0 异常／头像 214 张缺 0；表格沿用 <code>.content .table</code> 的 <code>overflow-x:auto</code> 容器，520px 与 1100px 下<b>零溢出、逐格零裁切</b>。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百一十七次：BOSS 战补上两个特别版——名单一个不差，但「地狱」难度让表里的数字都不作数</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「BOSS 战」原覆盖七作，<b>独缺 3 特别版与 4 豪华版</b>。这次补上，<code>gms</code> 加 <code>rf3sp</code>／<code>rf4sp</code>，新增 <code>blk3sp()</code>／<code>blk4sp()</code> 两个分支（各自先渲染一段「特别版怎么对应」，再复用原作那张表）。</li>
