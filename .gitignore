@@ -32,6 +32,9 @@ _rff_terms2.csv
 _rff_terms_raw.json
 _rff_terms_raw2.json
 
+# 页面渲染预览（headless 截图核对用，临时）
+_preview/
+
 # biligame wiki 抓取的原始 wikitext 快照
 _rf1mon_raw.txt
 _rfomon_raw.txt
@@ -51,6 +54,8 @@ _RF1recipepharmacy.txt
 _RF2recipecook.txt
 _RF2recipepharmacy.txt
 _rf3recipes_src.html
+_azuma_fishing.html
+_azuma_satobito.txt
 
 # 人物页 wikitext 抓取件（_build_npcfull.py 的输入，本地保留）
 _npc_src/

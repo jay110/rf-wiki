@@ -2117,6 +2117,88 @@ function newlywedRf4(g) {
             ${note}`;
     }
 
+    /* ------------------------------------------------------------
+       龙之天地（azuma）钓点与季节 —— gametoeasy 钓鱼攻略
+       数据 SPOT_AZUMA：fishes[{n,buy,sell,spots,shops,unlock}]
+       注意方向与 RF1/RF2/RF3/边境 相反：源表是「鱼 → 钓点」，
+       这里现反查出「钓点 → 鱼」再渲染。同样没有出现率。
+       ------------------------------------------------------------ */
+    function fishspotAzumaHtml() {
+        const D = (typeof SPOT_AZUMA !== 'undefined') ? SPOT_AZUMA : null;
+        if (!D || !(D.fishes || []).length) return '';
+        const F = D.fishes;
+        const money = v => v ? v + 'G' : '<span class="mon-no">—</span>';
+
+        /* 鱼 → 钓点 反查成 钓点 → 鱼 */
+        const bySpot = {};
+        F.forEach(f => f.spots.forEach(s => { (bySpot[s] = bySpot[s] || []).push(f.n); }));
+        const allSpots = Object.keys(bySpot);
+        const baseOf = s => s.replace(/（[^）]*）$/, '');
+        const isCond = s => s !== baseOf(s);
+        const condSpots = allSpots.filter(isCond).sort((a, b) => bySpot[b].length - bySpot[a].length);
+        const plainSpots = allSpots.filter(s => !isCond(s)).sort((a, b) => bySpot[b].length - bySpot[a].length);
+
+        /* 商店 */
+        const byShop = {};
+        F.forEach(f => f.shops.forEach(s => { (byShop[s] = byShop[s] || []).push(f.n); }));
+        const shops = Object.keys(byShop).sort((a, b) => byShop[b].length - byShop[a].length);
+
+        /* 最贵（并列全收） */
+        const maxSell = Math.max.apply(null, F.map(f => +f.sell || 0));
+        const top = F.filter(f => (+f.sell || 0) === maxSell);
+
+        /* 买价恒为卖价的 2 倍？现算，别写死 */
+        const doubleAll = F.length > 0 && F.every(f => +f.buy === (+f.sell || 0) * 2);
+
+        /* 目录行：鱼名 / 钓点 / 商店 / 买价 / 卖价 */
+        const rows = F.map(f => {
+            const sp = f.spots.length ? f.spots.join('、') : '—';
+            const sh = f.shops.length ? f.shops.join('、') : '—';
+            return [f.n + ' ' + sp + ' ' + sh, [f.n, sp, sh, money(f.buy), money(f.sell)]];
+        }).sort((a, b) => a[1][0].localeCompare(b[1][0], 'zh'));
+
+        const topN = plainSpots[0];
+        const condFish = new Set();
+        condSpots.forEach(s => bySpot[s].forEach(n => condFish.add(n)));
+        /* 只在条件钓点出现的鱼（常驻钓点钓不到） */
+        const condOnly = F.filter(f => f.spots.length && f.spots.every(isCond)).map(f => f.n);
+        /* 顶级鱼的大本营：按基础钓点（去掉雨天／夜晚后缀）归并，取覆盖 top 最多者 */
+        const topAt = {};
+        top.forEach(f => f.spots.forEach(s => { const b = baseOf(s); topAt[b] = (topAt[b] || 0) + 1; }));
+        const topHome = Object.keys(topAt).sort((a, b) => topAt[b] - topAt[a])[0];
+        const minSell = Math.min.apply(null, F.map(f => +f.sell || 0));
+        const cheap = F.filter(f => (+f.sell || 0) === minSell).map(f => f.n);
+
+        return `
+            <h2 class="h2">龙之天地的钓鱼，源站按「鱼」列钓点，本站反着做成了两种索引</h2>
+            <p class="p">和 RF4／RF5 那种「钓点 × 季节 × 概率」的解包矩阵不同，<b>龙之天地</b>的这份攻略是<b>按鱼种</b>写的：每种鱼后面列「在哪能钓到」「哪家店能买到」「买价／卖价」「解锁条件」，<b>没有出现率</b>。所以这一页还是「<b>在哪能钓到什么</b>」的索引——原表没给的，本站不替它编。</p>
+            ${stat([['鱼与钓物', F.length + ' 种'], ['钓点写法', allSpots.length + ' 处'], ['其中需天气／时段', condSpots.length + ' 处'], ['商店在售', shops.length + ' 处']])}
+            <p class="p">钓点按东国的地形散开：<b>夏之里</b>与<b>冬之里</b>两座村子、<b>春之台地／秋之草原／冬之原野</b>三片原野、以及<b>竹笋岛／垂钓岛／妖怪岛／朦胧岛／东三龟岛</b>等离岛，另有<b>雪狼岳</b>与<b>翠风洞</b>。其中 <b>${condSpots.length}</b> 处在钓点名后带条件——<b>${condSpots.filter(s => s.indexOf('雨') >= 0).length}</b> 处只有雨天、<b>${condSpots.filter(s => s.indexOf('夜晚') >= 0).length}</b> 处只有夜晚才出对应的鱼，条件钓点与同名常驻钓点的鱼名单<b>分开列</b>，不合并。「冬之原野」还细分成海边、池塘·河两片水域，鱼种完全不同。</p>
+
+            <h2 class="h2">最值钱的鱼：${maxSell.toLocaleString()}G，${top.length} 种并列</h2>
+            <p class="p">按卖价排，塔尖是<b>整 ${top.length} 种并列</b>${topAt[topHome] === top.length ? '，而且这 ' + top.length + ' 种<b>全都能在' + topHome + '</b>钓到（含其夜晚／雨天钓位）' : '，其中 ' + topAt[topHome] + ' 种在 ' + topHome}——离岛与海边的鱼价明显高于里山的淡水鱼：</p>
+            ${tbl(['鱼', '卖价', '能钓到的钓点'], top.map(f => [f.n, '<b>' + money(f.sell) + '</b>', f.spots.join('、')]), { leftFirst: true, colw: ['8rem', '6rem', 'auto'] })}
+            <div class="key">${top.map(f => f.n).join('、')} 是这一作的顶级鱼，卖价 ${maxSell.toLocaleString()}G 封顶；最便宜的 ${cheap.join('、')} 只值 ${minSell}G，一头一尾差 <b>${Math.round(maxSell / minSell)} 倍</b>——想赚钱就别在里山磨。${doubleAll ? '另外注意：源表里 <b>' + F.length + ' 种鱼的买价恰好都是卖价的 2 倍</b>，一家不漏——买来倒卖是纯亏一半的。' : ''}</div>
+
+            <h2 class="h2">哪个钓点鱼最多</h2>
+            <p class="p">只数不带天气／时段条件的常驻钓点，<b>${topN}</b> 以 ${bySpot[topN].length} 种居首，比第二名（${plainSpots[1]} ${bySpot[plainSpots[1]].length} 种）多 ${bySpot[topN].length - bySpot[plainSpots[1]].length} 种：</p>
+            ${tbl(['钓点', '鱼种数', '能钓到的鱼'], plainSpots.map(s => [s, bySpot[s].length + ' 种', bySpot[s].join('、')]), { leftFirst: true, colw: ['8.4rem', '4.6rem', 'auto'] })}
+
+            <h2 class="h2">雨天与夜晚：${condSpots.length} 处条件钓点</h2>
+            <p class="p">源表把天气与时段直接写进钓点名，意思是这份名单<b>只有在那个条件下才成立</b>。其中 <b>${condOnly.length} 种</b>（${condOnly.join('、')}）<b>只在条件钓点出现</b>——常驻钓点怎么钓都出不来；剩下 ${condFish.size - condOnly.length} 种只是在这里多一个来源。</p>
+            ${tbl(['条件钓点', '鱼种数', '能钓到的鱼'], condSpots.map(s => [s, bySpot[s].length + ' 种', bySpot[s].join('、')]), { leftFirst: true, colw: ['9.6rem', '4.6rem', 'auto'] })}
+            <div class="key">源表把雨天写成「（雨）」和「（雨天）」两种写法（如<b>夏之里（雨）</b>与<b>夏之里（雨天）</b>），本站照录不改——两处指的是同一个村子在同一天气下的两个钓位，鱼名单并不相同，合并会丢信息。</div>
+
+            <h2 class="h2">全部鱼 × 钓点 目录</h2>
+            <p class="p">按鱼名、钓点或商店搜索。同一鱼在多处能钓到的，钓点列以「、」并列；「商店」列是可以<b>直接买</b>的地方，不是钓点。</p>
+            ${ftableOwn(['鱼', '钓点', '商店', '买价', '卖价'], ['6.4rem', 'auto', 'auto', '4.4rem', '4.4rem'], rows, { ph: '输入鱼名、钓点或商店' })}
+
+            <h2 class="h2">商店里能买到什么</h2>
+            <p class="p">共 ${F.filter(f => f.shops.length).length} 种鱼能直接买，${shops.length} 处店铺，其中最全的是<b>${shops[0]}</b>（${byShop[shops[0]].length} 种）：</p>
+            ${tbl(['店铺', '在售', '鱼'], shops.map(s => [s, byShop[s].length + ' 种', byShop[s].join('、')]), { leftFirst: true, colw: ['11rem', '4.6rem', 'auto'] })}
+            <div class="note">取自 gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829，与本站 <code>azuma_gift.js</code>／<code>AZUMA_MON</code> 同源），由 <code>_build_fishspot_azuma.py</code> 解析生成 <code>js/fishspot_azuma.js</code>，收录 <b>${F.length} 种鱼与钓物、${allSpots.length} 处钓点（含条件写法）</b>。源表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。${F.filter(f => f.unlock).length ? '有解锁条件的 ' + F.filter(f => f.unlock).length + ' 种（' + F.filter(f => f.unlock).map(f => f.n).join('、') + '）原表写在「解锁条件」列，多为村等级要求，本页照录。' : ''}<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
+    }
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -5908,8 +5990,9 @@ const PAGES = [
     /* ================= RF5 钓点与季节分布 ================= */
     {
         key: 'fishspot', group: 'item', title: '钓点与季节', icon: 'fish',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rfo', 'rff'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rfo', 'rff', 'azuma'],
         body: g => {
+            if (g.id === 'azuma') return fishspotAzumaHtml();
             if (g.id === 'rf3' || g.id === 'rf3sp') return fishspotRf3Html();
             if (g.id === 'rfo') return fishspotRfoHtml();
             if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rff') return fishspotRf12fHtml(g);
@@ -6179,6 +6262,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十二次：「钓点与季节」补上龙之天地——这一作的源表方向是反的，鱼在前、钓点在后</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「钓点与季节」上一轮补完 RF1／RF2／边境后，十作里只剩<b>龙之天地（azuma）</b>没接。这一作此前不在 <code>gms</code> 里，条目对它不可见；本次加 <code>azuma</code> 并新增顶层函数 <code>fishspotAzumaHtml()</code>。⚠️ 顺带填了一个坑：<code>fishspot</code> 的 <code>body</code> 末尾有 <code>if (String(g.id).indexOf('rf5') !== 0) return fishspot4Html()</code>，只要把 azuma 加进 <code>gms</code> 却漏了前面的分支，它就会静默渲染成 <b>RF4 的钓点页</b>——所以新分支必须写在最前面。</li>
+                <li class="li"><b>数据源</b>：gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829），与站内 <code>azuma_gift.js</code>／<code>AZUMA_MON</code> 同源，由 <code>_build_fishspot_azuma.py</code> 解析生成 <code>js/fishspot_azuma.js</code>（<code>SPOT_AZUMA</code>），收录 <b>42 种鱼与钓物、22 处钓点写法、4 家商店</b>。</li>
+                <li class="li"><b>方向和前几作相反</b>：RF1／RF2／RF3／边境的源表是「钓点 → 鱼」，龙之天地是「<b>鱼 → 钓点／商店／买价卖价／解锁条件</b>」。所以页内先做一次反查（鱼→钓点 还原成 钓点→鱼），再渲染「钓点鱼种数」「条件钓点」两张索引表，最后仍是一张可搜索的鱼 × 钓点目录。<b>同样没有出现率</b>，不做概率推算。</li>
+                <li class="li"><b>天气与时段写在钓点名里</b>：<b>8 处</b>带条件（4 处雨天、4 处夜晚）。其中 <b>5 种</b>（伊富鱼／剑尖枪鱿／旗鱼／螯龙虾／金章鱼）<b>只在条件钓点出现</b>，常驻钓点钓不到——这是现算的集合差，不是抄文案。源表把雨天写成「（雨）」和「（雨天）」两种，照录不合并（同名村子的两个钓位，鱼名单不同）。</li>
+                <li class="li"><b>两条可核实的数字</b>：① 最贵 <b>5 种并列 5,000G</b>（心动鲷鱼／翻车鱼／金章鱼／闪光鲷鱼／鳕场蟹），<b>全都能在垂钓岛</b>钓到（含其夜晚钓位）；最便宜的虾只值 30G，一头一尾差 167 倍。② 源表里 <b>42 种鱼的买价恰好都是卖价的 2 倍</b>，一家不漏——买来倒卖纯亏一半。两条都由数据现算，源表改了页面会跟着变。</li>
+                <li class="li"><b>踩坑</b>：判断「顶级鱼大本营」时，第一版按<b>钓点名原样</b>统计，「垂钓岛」与「垂钓岛（夜晚）」被当成两个地方，于是 5 种里只数到 4 种，文案退化成「分散在垂钓岛等处」。改成先去掉雨天／夜晚后缀、按基础钓点归并，才得出「5 种全在垂钓岛」这个正确结论——<b>条件后缀会把同一片水域切碎，统计前必须先归并</b>。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>377 实例</b>（新增 1）／0 异常／头像 214 张缺 0；正文无字面空值占位；520 与 1100px 两档 headless 截图核对，表格在 <code>overflow-x:auto</code> 容器内横滑，未撑破页面。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百二十一次：「村民喜好」补上龙之天地——azuma 不进七作模板，单独成表，还多了话题／回礼／泡澡三条线</h2>
             <ul class="ul">
                 <li class="li"><b>这一页此前 9 作全覆盖，唯独缺龙之天地</b>：因为 azuma 是动作 RPG＋村庄建设，体系与七作不同，站内一直把它当独立模块（azuma.js 的 AZUMA_MON 收魔物喜好，源是 gametoeasy）。村民喜好按站规不混进七作的 npcfull 模板，所以单独成表。</li>
