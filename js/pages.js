@@ -1613,13 +1613,28 @@ const GIFT_DIFF = {
     rf2: '<b>没有「最喜欢」档</b>，取而代之的是每人指定一件「生日礼物」，只在生日当天送才吃满收益。讨厌档齐备，这一作的雷区反而最值得记。',
     rf3: '四档里<b>讨厌档特别整齐</b>，另有每位候补的<b>喜欢的香水</b>——香水是独立于料理与素材的一条加成线，本作独有。',
     rff: '<b>没有「最讨厌」档</b>，只有最喜欢／喜欢／讨厌三份。人物与初代重叠很多，生日也大半沿用了初代的日期。',
-    rfo: '<b>没有「最讨厌」档</b>。这一作的喜好清单偏长，几乎人人二十样起步，查的时候按人翻比按物品找快。'
+    rfo: '<b>没有「最讨厌」档</b>。这一作的喜好清单偏长，几乎人人二十样起步，查的时候按人翻比按物品找快。',
+    azuma: '这一作（龙之天地）的送礼体系和前作<b>骨架一致、细节多出四条线</b>：最喜欢／喜欢／讨厌／最讨厌四档都齐，但多了<b>话题</b>、<b>回礼</b>、<b>泡澡后的乐子</b>、<b>给你的生日礼物</b>（本页在折叠区单列，前作没有）。源站给的生日只覆盖 10 位——剩下 7 位（空／海／陆／花／露／夜／摩可绒，多为精灵系）源表本就未列，本页留「—」，不替它编一个。'
 };
 
-function giftPage(g) {
+function giftPage(g, arr) {
     const k = GIFT_KEY[g.id] || g.id;
-    const A = ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
+    const A = arr || ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
     if (!A.length) return '<div class="note">这一作的人物喜好数据尚未收录。</div>';
+
+    /* azuma（龙之天地）的村民数据不进 npcfull 的七作模板，单独成表，且比前作多了
+       话题／回礼／泡澡后的乐子／给你的生日礼物 四个维度，前作页不收，这里单列。 */
+    const azumaExtras = (k === 'azuma') ? (
+        '<details class="mon-fold"><summary>展开 azuma 专属的 4 个维度（话题／回礼／泡澡／生日礼）</summary>' +
+        '<p class="p" style="padding:.2rem 0 .8rem">龙之天地比前作多了几条「送礼之外」的亲密度线：<b>话题</b>（共度时光聊什么涨最快）、<b>回礼</b>（你送他、他回你什么）、<b>泡澡后的乐子</b>（一起泡澡时递什么）、<b>给你的生日礼物</b>（他送你的生日礼，反过来记）。这几样前作没有，前作页也不收，这里单独列。</p>' +
+        '<div class="txt-list">' + A.map(x => '<p><b>' + x.n + '</b>' +
+            ((x.tf || x.tl || x.th || x.twh) ? ' ｜ 话题：最喜欢 ' + (x.tf || []).join('、') + '／喜欢 ' + (x.tl || []).join('、') + '／讨厌 ' + (x.th || []).join('、') + (x.twh ? '／最讨厌 ' + (x.twh || []).join('、') : '') : '') +
+            (x.ret ? ' ｜ 回礼：' + x.ret.join('、') : '') +
+            (x.bath ? ' ｜ 泡澡：' + x.bath.join('、') : '') +
+            (x.bgYou ? ' ｜ 给你的生日礼：' + x.bgYou.join('、') : '') +
+            '</p>').join('') + '</div></details>'
+    ) : '';
+
 
     const bdKey = s => {
         const m = /^([春夏秋冬])(\d+)日/.exec(s || '');
@@ -1721,13 +1736,15 @@ function giftPage(g) {
         <div class="txt-list">${A.filter(x => x.pf && String(x.pf).length).map(x => `<p><b>${x.n}</b>：${[].concat(x.pf).join('、')}</p>`).join('')}</div>
     </details>` : ''}
 
-    <div class="note">数据与「人物档案」是同一批源——biligame 符文工厂 wiki 各作人物页（CC BY-SA），由 <code>_build_npcfull.py</code> 生成到 <code>js/npcfull.js</code>。本页只是把同一份数据横过来看：<b>没有新增任何推断值</b>，所以你在人物页和这里看到的清单一定一致。<br>源表没给的字段就是空的：${A.length} 人里有 ${A.filter(x => !x.bd).length} 人查不到生日、${A.filter(x => !(x.b || []).length).length} 人没有最喜欢记录，本页留「—」，不按同族或同村推一个日期出来。</div>
+    <div class="note">${k === 'azuma' ? '数据源自中文攻略站 gametoeasy.com《符文工房:龙之天地》村民喜好页（post/1853，CC 转载），由 <code>_build_azuma_villager.py</code> 解析生成 <code>js/azuma_gift.js</code>；龙之天地是动作 RPG＋村庄建设，体系与七作不同，本页<b>不混入</b> npcfull 的七作模板，单独成表' : '数据与「人物档案」是同一批源——biligame 符文工厂 wiki 各作人物页（CC BY-SA），由 <code>_build_npcfull.py</code> 生成到 <code>js/npcfull.js</code>'}。本页只是把同一份数据横过来看：<b>没有新增任何推断值</b>，所以你在人物页和这里看到的清单一定一致。<br>源表没给的字段就是空的：${A.length} 人里有 ${A.filter(x => !x.bd).length} 人查不到生日、${A.filter(x => !(x.b || []).length).length} 人没有最喜欢记录，本页留「—」，不按同族或同村推一个日期出来。</div>
+
+    ${azumaExtras}
 
     <div class="jump">
-        <a href="#/resident/${g.id}/全部">
+        ${k !== 'azuma' ? `<a href="#/resident/${g.id}/全部">
             <div class="jp-t">居民一览</div>
             <div class="jp-s">按身份、生日排序，点进去看完整档案</div>
-        </a>
+        </a>` : ''}
         <a href="#/page/love">
             <div class="jp-t">恋爱与结婚</div>
             <div class="jp-s">好感怎么涨、告白条件与婚后生活</div>
@@ -5378,8 +5395,9 @@ const PAGES = [
     /* ================= 村民喜好（人，不是魔物） ================= */
     {
         key: 'npcgift', group: 'life', title: '村民喜好', icon: 'users',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
+            if (g.id === 'azuma') return giftPage(g, (typeof AZUMA_GIFT !== 'undefined') ? AZUMA_GIFT : []);
             if (g.id !== 'rf4' && g.id !== 'rf4sp' && g.id !== 'rf5') return giftPage(g);
             const is5 = g.id === 'rf5';
             const P4 = (typeof NPC_RF4 !== 'undefined') ? NPC_RF4 : [];
@@ -6161,6 +6179,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十一次：「村民喜好」补上龙之天地——azuma 不进七作模板，单独成表，还多了话题／回礼／泡澡三条线</h2>
+            <ul class="ul">
+                <li class="li"><b>这一页此前 9 作全覆盖，唯独缺龙之天地</b>：因为 azuma 是动作 RPG＋村庄建设，体系与七作不同，站内一直把它当独立模块（azuma.js 的 AZUMA_MON 收魔物喜好，源是 gametoeasy）。村民喜好按站规不混进七作的 npcfull 模板，所以单独成表。</li>
+                <li class="li"><b>数据源</b>：gametoeasy.com《符文工房:龙之天地》村民喜好页（post/1853），和 AZUMA_MON 同源。由 <code>_build_azuma_villager.py</code> 解析生成 <code>js/azuma_gift.js</code>，收录 <b>17 位村民</b>的 生日／最喜欢／喜欢／讨厌／最讨厌，外加源站独有的 回礼／泡澡后的乐子／给你的生日礼物／话题 四维度（折叠区单列，前作页不收）。</li>
+                <li class="li"><b>踩坑</b>：源页每个村民是 <code>&lt;h2&gt;&lt;span class="mw-headline"&gt;</code> 结构，首版正则卡在 span 的 style 属性上只抓到 1 人；改成直接定位 mw-headline span 后抓满 17 人。另：7 位（空／海／陆／花／露／夜／摩可绒，多为精灵系）源表没给生日，本页留「—」，不替它编一个。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> 376 实例（新增 1）／0 异常／头像 214 缺 0；azuma 可见条目 33→34。底部来源说明与「居民一览」跳转都做了 azuma 感知（azuma 无七作居民档案，不指向空路由）。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百二十次：「钓点与季节」补上 RF1／RF2／边境——三作都没有出现率，只有钓点×鱼目录</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「钓点与季节」原覆盖 rf3／rf3sp／rf4／rf4sp／rf5／rfo，<b>缺 RF1、RF2、边境（RFF）</b>。这次一并补齐，数据源都是 biligame 符文工厂 wiki 的钓鱼页（<code>RF1fishing</code>／<code>RF2fishing</code>／<code>RFFfishing</code>），由 <code>_build_fishspot_legacy.py</code> 生成 <code>SPOT_RF1</code>／<code>SPOT_RF2</code>／<code>SPOT_RFF</code>。</li>
