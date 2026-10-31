@@ -2550,6 +2550,175 @@ const GIFT_DIFF = {
     azuma: '这一作（龙之天地）的送礼体系和前作<b>骨架一致、细节多出四条线</b>：最喜欢／喜欢／讨厌／最讨厌四档都齐，但多了<b>话题</b>、<b>回礼</b>、<b>泡澡后的乐子</b>、<b>给你的生日礼物</b>（本页在折叠区单列，前作没有）。源站给的生日只覆盖 10 位——剩下 7 位（空／海／陆／花／露／夜／摩可绒，多为精灵系）源表本就未列，本页留「—」，不替它编一个。'
 };
 
+/* ------------------------------------------------------------
+   村民喜好：RF1 / RF2
+   RF1 只有「最喜欢」「喜欢」两档（源页原话：RF1 没有最讨厌和讨厌的礼物），
+   另附住址、其它加好感手段、求婚条件与婚后便当。
+   RF2 没有「最喜欢」档，改成每人指定一件「生日礼物」；讨厌档齐备。
+   两作字段互不相同，各渲染各的，不套一张表、不把别作机制搬过来。
+   源：biligame 符文工房 wiki「RF1characters」「RF2characters」；2026-10-31 复核，
+   wikitext 与本地快照逐字节相同。由 _build_gift_rf12.py 生成 js/gift_rf12.js。
+   ------------------------------------------------------------ */
+function giftRf12Html(g) {
+    const id = g.id;
+    const D = (typeof GIFT_RF12 !== 'undefined') ? GIFT_RF12 : {};
+    const A = (D[id] || []).slice();
+    if (!A.length) return '<div class="note">这一作的人物喜好数据尚未收录。</div>';
+
+    const SEAS = '春夏秋冬';
+    const bdKey = s => {
+        const m = /^([春夏秋冬])(\d+)日/.exec(s || '');
+        return m ? SEAS.indexOf(m[1]) * 100 + Number(m[2]) : 9999;
+    };
+    const dash = '<span class="mon-no">—</span>';
+    const cut = (arr, n) => !arr || !arr.length ? dash
+        : arr.length > n
+            ? arr.slice(0, n).join('、') + ` <span class="txc">等 ${arr.length} 样</span>`
+            : arr.join('、');
+    const who = x => npcLink(id, x.n);
+    const byBd = A.slice().sort((a, b) => bdKey(a.bd) - bdKey(b.bd) || a.n.localeCompare(b.n));
+
+    /* 源站与站内的中文译名不一定一样。本页按日文名对齐到站内名，差异集中说明一次。 */
+    const diff = A.filter(x => x.src);
+    const diffNote = diff.length
+        ? `源站与站内对其中 ${diff.length} 位的译名不同（本页按<b>日文名</b>逐一对齐，不靠中文名猜）：` +
+        diff.map(x => `源「${x.src}」→ 本站「${x.n}」`).join('、') + '。'
+        : '';
+
+    if (id === 'rf1') {
+        const withBd = byBd.filter(x => x.bd);
+        const noBd = byBd.filter(x => !x.bd);
+        const totL = A.reduce((s, x) => s + x.l.length, 0);
+        const seasonCnt = withBd.reduce((a, x) => { a[x.bd[0]] = (a[x.bd[0]] || 0) + 1; return a; }, {});
+        const seasonTxt = SEAS.split('').filter(s => seasonCnt[s]).map(s => s + seasonCnt[s]).join('／');
+        const bAll = A.reduce((s, x) => s.concat(x.b), []);
+        const noB = A.filter(x => !x.b.length);
+        const prop = A.filter(x => x.prop);
+        const extras = A.filter(x => x.extra);
+        const most = A.slice().sort((a, b) => b.l.length - a.l.length)[0];
+        const nf = (typeof NPC_FULL !== 'undefined' && NPC_FULL[id]) || [];
+        const roleOf = n => ((nf.filter(x => x.n === n)[0] || {}).r) || '';
+        const gap = prop.filter(x => !roleOf(x.n));
+
+        const rows = byBd.map(x => [
+            [x.n, x.b.join(' '), x.l.join(' '), x.bd, x.prop, x.bento].join(' '),
+            [x.bd || dash, who(x), cut(x.b, 2),
+                (x.lq ? `<span class="txc">（${x.lq}${x.lnotes && x.lnotes.length ? '，' + x.lnotes.join('；') : ''}）</span><br>` : '')
+                + cut(x.l, 12)],
+        ]);
+        const propRows = prop.map(x => [
+            [x.n, x.prop, x.bento].join(' '),
+            [who(x), x.prop, x.bento || dash],
+        ]);
+
+        return `
+        <h2 class="h2">这一作只有两档：最喜欢，和「喜欢」</h2>
+        <p class="p">源页开头一句就是结论：<b>RF1 没有最讨厌和讨厌的礼物</b>。送错了不掉好感，只是白送一份东西——所以本页没有讨厌栏，不是漏收。真正要记的只有两样：他在生日那天最想要的那一件，和平常随手都送得出手的那一类。</p>
+        ${stat([
+            ['收录村民', A.length + ' 人'],
+            ['有生日', withBd.length + ' 人'],
+            ['最喜欢', bAll.length + ' 件'],
+            ['喜欢合计', totL + ' 条'],
+        ])}
+        <div class="key">每人只指定 <b>一件</b> 最喜欢的东西，${bAll.length} 件<b>互不重复</b>——没有「一样东西通吃全村」的捷径，背一包草莓换不来几个人的心。反倒「喜欢」那一档宽得多：平均每人 ${(totL / A.length).toFixed(1)} 样，最宽的 ${most.n} 有 ${most.l.length} 样。</div>
+
+        <h2 class="h2">生日一览：${withBd.length} 人有日子，${noBd.length} 人源页写「无」</h2>
+        <p class="p">生日当天送「最喜欢」是这一作最划算的一步。表按季节和日期排好，谁的日子快到了就从上往下找。四季分布 ${seasonTxt} 人，冬天最挤，${seasonCnt['冬'] || 0} 个人过生日。</p>
+        ${ftableOwn(['生日', '村民', '最喜欢', '喜欢'], ['5rem', '7.4rem', '9rem', 'auto'],
+            rows, { ph: '搜村民或礼物', cls: 'gfill', left: [2, 3] })}
+        <div class="note">${noB.length ? noB.map(x => x.n).join('、') + ' 在源页里「最喜欢」「喜欢」两栏都写「无」——照录，不是漏收。' : ''}${noBd.length ? noBd.map(x => x.n).join('、') + ' 的生日源页也写「无」。' : ''}</div>
+
+        <h2 class="h2">${prop.length} 位能结婚的人：求婚条件与婚后便当</h2>
+        <p class="p">源页对这 ${prop.length} 位各给了一条求婚条件和一份「结婚后的便当」。便当是配偶每天给你带的午饭，也是这一作婚姻里唯一实打实拿到手的东西。两栏名单<b>完全重合</b>——能求婚的，就是会给便当的。</p>
+        ${ftableOwn(['村民', '求婚条件', '婚后便当'], ['7.4rem', 'auto', '9rem'],
+            propRows, { ph: '搜村民', cls: 'gfill', left: [1] })}
+        ${gap.length ? `<div class="key">这 ${prop.length} 位里有 ${gap.length} 位在站内「角色」页的身份栏还是空的（${gap.map(x => x.n).join('、')}），而源页明确给了她们的求婚条件。两处对不上，本页照源页列，不据此给谁补一个身份。</div>` : ''}
+
+        <h2 class="h2">${extras.length} 个人除了送礼还有别的门路</h2>
+        <p class="p">源页给这几个人单列了「其它提升好感度手段」——对他们来说送礼不是最快的路。其中两条是<b>扣分</b>的：在女澡堂撞见美乐蒂会掉好感，拉碧丝则会因为你在这座城镇里 HP 归零而掉好感。</p>
+        ${tbl(['村民', '手段'], extras.map(x => [who(x), x.extra]),
+            { leftFirst: true, colw: ['7.4rem', 'auto'], left: [1] })}
+        <div class="note">数据取自 biligame 符文工房 wiki「RF1characters」页。三处照录不改：「冥」的喜欢写的是<b>除心动鲷鱼、封印乌贼、龙虾、西太公鱼外的所有鱼</b>并列出 26 种；「莎拉」写的是<b>所有菜刀食物</b>并列出 25 种——源页的分类式写法，本站只把物品一条条拆出来，<b>「菜刀食物」这个词没改</b>（原文如此，疑为「包丁料理」的直译），也没替它补全清单外的品种。求婚条件里还夹着没译的日文原文（「グリード通行書」「クレメンス山」），照录；同一页对同一人前后写法也不统一——标题写「萝赛塔」、琉特那栏写「罗塞塔」，两处都保留，没替源站抹平。${diffNote}</div>`;
+    }
+
+    const totL = A.reduce((s, x) => s + x.l.length, 0);
+    const hAll = A.reduce((s, x) => s.concat(x.h), []);
+    const hUniq = new Set(hAll).size;
+    const prop = A.filter(x => x.prop);
+    /* 源页的「民译」有 3 条与站内名逐字相同（多萝茜／高顿／麦克斯），列出来只会像打错字 */
+    const aliasAll = A.filter(x => x.alias && x.alias !== x.n);
+    const srcMap = {};
+    A.forEach(x => { if (x.src) srcMap[x.src] = x.n; });
+    const fix = s => srcMap[s] || s;
+
+    const marry = [];
+    A.forEach(x => (x.notes || []).forEach(t => {
+        const m = /^第(\d)年([春夏秋冬]\d+日)\s*[　 ](.+?)和(.+?)结婚$/.exec(t.trim());
+        if (m) {
+            const a = fix(m[3]), b = fix(m[4]);
+            if (!marry.some(y => (y.a === a && y.b === b) || (y.a === b && y.b === a))) {
+                marry.push({ y: m[1], d: m[2], a: a, b: b });
+            }
+        }
+    }));
+    const kids = [];
+    A.forEach(x => (x.notes || []).forEach(t => {
+        const m = /^母：(.+?)，父：(.+)$/.exec(t.trim());
+        if (m) kids.push({ child: x.n, mom: fix(m[1]), dad: fix(m[2]) });
+    }));
+
+    const rows = byBd.map(x => [
+        [x.n, x.l.join(' '), x.h.join(' '), x.bg].join(' '),
+        [x.bd || dash, who(x),
+            cut(x.l, 6) + (x.ch2 ? ` <span class="txc">${x.ch2}</span>` : ''),
+            cut(x.h, 3)],
+    ]);
+    const bgRows = byBd.map(x => [
+        [x.n, x.bg, x.prop].join(' '),
+        [who(x), x.bd || dash, x.bg || dash, x.prop || dash],
+    ]);
+
+    return `
+    <h2 class="h2">这一作没有「最喜欢」，换成了一件生日礼物</h2>
+    <p class="p">源页写的是：<b>RF2 没有最讨厌和最喜欢的礼物</b>。取而代之，每个人指定<b>一样生日礼物</b>——只在生日当天送才吃满收益，平时送就是普通的「喜欢」。所以本页的「最喜欢」栏换成「生日礼物」，别拿它当日常清单用。</p>
+    ${stat([
+        ['收录村民', A.length + ' 人'],
+        ['喜欢合计', totL + ' 条'],
+        ['讨厌', hAll.length + ' 件'],
+        ['求婚道具', prop.length + ' 件'],
+    ])}
+    <div class="key">这一作的雷区反而最值得记：${A.length} 个人各讨厌 <b>一样</b>东西，${hAll.length} 件<b>一件都没撞车</b>——不像 RF5 那样有「垃圾」清单能一刀切，这里必须逐人记，送错就是明着掉好感。</div>
+
+    <h2 class="h2">生日与喜好：${A.length} 人</h2>
+    <p class="p">${(() => {
+        const c = {};
+        A.forEach(x => { if (x.bd) c[x.bd[0]] = (c[x.bd[0]] || 0) + 1; });
+        const v = SEAS.split('').map(s => c[s] || 0);
+        return v.every(n => n === v[0])
+            ? `这一作生日排得很匀：春夏秋冬<b>各 ${v[0]} 人</b>，平均一个季节 ${(v[0] / 3).toFixed(1)} 个。`
+            : `四季分布 ${SEAS.split('').map((s, i) => s + v[i]).join('／')} 人。`;
+    })()}表按日期排。</p>
+    ${ftableOwn(['生日', '村民', '喜欢', '讨厌'], ['5rem', '7.4rem', 'auto', '10rem'],
+        rows, { ph: '搜村民或礼物', cls: 'gfill', left: [2, 3] })}
+    <div class="note">「喜欢」平均每人 ${(totL / A.length).toFixed(1)} 样，比 RF1 的清单短得多——这一作不靠堆礼物，靠记准。${A.filter(x => x.ch2).map(x => x.n + ' 的源页分章节写：' + x.ch2).join('；')}。</div>
+
+    <h2 class="h2">生日礼物与求婚道具</h2>
+    <p class="p">${A.length} 件生日礼物同样<b>互不重复</b>，没有两个人想要同一样。求婚道具只有 ${prop.length} 件，每人一样、彼此不同。其中「${prop.filter(x => /特製|特制/.test(x.prop)).map(x => x.prop).join('、') || '—'}」是限定兑换券，别当普通道具用掉。</p>
+    ${ftableOwn(['村民', '生日', '生日礼物', '求婚道具'], ['7.4rem', '5rem', 'auto', '9rem'],
+        bgRows, { ph: '搜村民或物品', cls: 'gfill', left: [2, 3] })}
+
+    <h2 class="h2">第二代：${marry.length} 对婚礼、${kids.length} 个孩子</h2>
+    <p class="p">这一作的时间跨度横跨两代，源页把婚礼的日子和孩子的父母都写进了人物栏。${marry.length} 对夫妻、${kids.length} 个孩子之间的对应关系整理如下——孩子也是可对话的村民，喜好单独算。</p>
+    ${tbl(['夫妻', '婚礼', '孩子'],
+        marry.map(m => {
+            const k = kids.filter(k => (k.mom === m.a && k.dad === m.b) || (k.mom === m.b && k.dad === m.a))[0];
+            return [npcLink(id, m.a) + ' ＆ ' + npcLink(id, m.b),
+                '第' + m.y + '年' + m.d, k ? npcLink(id, k.child) : dash];
+        }),
+        { leftFirst: true, colw: ['auto', '8rem', 'auto'], left: [2] })}
+    <div class="note">婚礼按源页写的「第几年」计，四个日子分散在第 2～4 年，不是开局就能看到的剧情。数据取自 biligame 符文工房 wiki「RF2characters」页。照录不合并几处：源页给 ${aliasAll.length} 位另标了<b>民译</b>（${aliasAll.map(x => x.n + '＝' + x.alias).join('、')}；另有 3 条的民译与站内名同字，未重复列），本站不采用这些别译、也不合并成条目；${(A.filter(x => x.lnotes && x.lnotes.length).map(x => x.n + ' 的『' + x.lnotes.join('；') + '』')).join('；')}——都是源页原话。${diffNote}</div>`;
+}
+
 function giftPage(g, arr) {
     const k = GIFT_KEY[g.id] || g.id;
     const A = arr || ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
@@ -6555,6 +6724,7 @@ const PAGES = [
         gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'azuma') return giftPage(g, (typeof AZUMA_GIFT !== 'undefined') ? AZUMA_GIFT : []);
+            if (g.id === 'rf1' || g.id === 'rf2') return giftRf12Html(g);
             if (g.id !== 'rf4' && g.id !== 'rf4sp' && g.id !== 'rf5') return giftPage(g);
             const is5 = g.id === 'rf5';
             const P4 = (typeof NPC_RF4 !== 'undefined') ? NPC_RF4 : [];
@@ -7344,6 +7514,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十四次：村民喜好补上 RF1／RF2——28 人＋24 人，两作机制不同不并表</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是什么</b>：「村民喜好」页的 <code>gms</code> 里早就有 rf1／rf2，可 <code>NPC_FULL</code> 这两作只存了姓名、身份、声优、简介，<b>没有喜好清单</b>，于是落到兜底文案「这一作的人物喜好数据尚未收录」。本次补齐：<b>RF1 28 人、RF2 24 人</b>。数据由 <code>_build_gift_rf12.py</code> 从本地 wikitext 快照（<code>_npc_src/RF1characters.txt</code>／<code>RF2characters.txt</code>）解析成 <code>js/gift_rf12.js</code>，新增顶层函数 <code>giftRf12Html()</code>。</li>
+                <li class="li"><b>先确认源没变</b>：这两份快照是早前抓的，本次重抓比对——源站 <code>/rf/</code> 路径已重定向到 biligame 首页，现路径是 <code>/runefactory/</code>；取回的 wikitext 与本地快照<b>逐字节相同</b>（RF1 5,765 字、RF2 3,420 字），才动手。</li>
+                <li class="li"><b>两作机制不同，不套一张表</b>：RF1 源页开头写明<b>没有最讨厌和讨厌的礼物</b>，只有「最喜欢」「喜欢」两档，另附求婚条件与婚后便当；RF2 源页写明<b>没有最讨厌和最喜欢的礼物</b>，代之以每人一件<b>生日礼物</b>，讨厌档反而齐备。若沿用七作那套四档模板，两边都会凭空多出两栏。</li>
+                <li class="li"><b>译名按日文名对齐，不按中文名猜</b>：源站与站内对 <b>11 位</b>写法不同（RF1 3 位：萝赛塔／比安卡／塔芭莎；RF2 8 位：艾丽西亚／塞希莉娅／朱利亚／桃乐丝／巴雷特／雷伊／戈登／马克斯）。<code>NPC_FULL</code> 有日文名字段，逐一对齐后再取站内名，页面链接才不会失效。踩过一个坑：<b>映射不能跨作合并</b>——RFF 也有「ロゼッタ 萝赛塔」，会盖掉 RF1 的「萝洁塔」。</li>
+                <li class="li"><b>算出来的事实</b>：RF1 每人只指定<b>一件</b>最喜欢，26 件<b>互不重复</b>——没有「一样东西通吃全村」的捷径；「喜欢」合计 238 条、人均 8.5 样，最宽的冥 26 样（除 4 种鱼外的全部鱼）、莎拉 25 样（所有菜刀食物）。RF2 24 人各讨厌<b>一样</b>东西，24 件<b>一件都没撞车</b>，不像 RF5 有「垃圾」清单能一刀切；24 件生日礼物同样不重复；生日四季<b>各 6 人</b>，排得极匀。</li>
+                <li class="li"><b>两个别人页面上没有的维度</b>：RF1 的<b>婚后便当</b>与<b>求婚条件</b>——两栏名单完全重合（11 人），能求婚的就是会给便当的；另有 <b>7 人</b>有「其它提升好感度手段」，其中两条是<b>扣分</b>的（撞见美乐蒂洗澡、在城镇里 HP 归零会掉拉碧丝的好感）。RF2 的<b>第二代</b>：4 对婚礼（第 2～4 年）、4 个孩子，孩子也是可对话村民，单列一张对照表。</li>
+                <li class="li"><b>顺带发现一处对不上</b>：RF1 那 11 位里，<b>5 位</b>（菲尔、夏伦、托尔蒂、冥、莉妮特）在站内「角色」页的身份栏还是空的，而源页明确给了她们的求婚条件与婚后便当。两处不一致，本页照源页列并写明差异，<b>不替谁补一个身份</b>。</li>
+                <li class="li"><b>原文照录几处</b>：「冥」的喜欢是<b>除心动鲷鱼、封印乌贼、龙虾、西太公鱼外的所有鱼</b>并列出 26 种，「莎拉」是<b>所有菜刀食物</b>并列 25 种——分类式写法只拆物品、不改词（「菜刀食物」疑为「包丁料理」的直译，原文如此）；求婚条件里夹着未译的日文（「グリード通行書」「クレメンス山」）；同一页对同一人前后写法也不统一（标题「萝赛塔」、琉特那栏「罗塞塔」）；RF2 源页另标了 11 条<b>民译</b>（其中 3 条与站内名同字，未重复列），不采用、不合并。</li>
+                <li class="li"><b>版面</b>：新增 <code>.table.gfill</code>（<code>width:100%</code> ＋ <code>min-width:40rem</code>）——列少时表身按内容收缩会在右侧留一截空白，与上下说明框对不齐；窄屏若不留下限，<b>「春12日」「斗牛的角」会被逐字拆成两行</b>，故按站内既有约定改为横向滑动。1100 与 520px 截图核对。<code>_verify</code> <b>385 实例</b>／0 异常／头像 214 张缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百三十三次：配方大全补上 RF1／RF2 的药学——24 条＋27 条，只补能核实的那一类</h2>
             <ul class="ul">
                 <li class="li"><b>补的是什么</b>：配方大全此前只覆盖边境、海洋、RF3、RF4、RF5 与龙之天地，<b>RF1／RF2 根本没有这一页</b>（<code>gms</code> 里没有这两作；就算手输地址进来，渲染的是 RF5 那张表）。本次两作各补一类：<b>RF1 药学 24 条、RF2 药学 27 条</b>，数据由 <code>_build_recipe_rf12.py</code> 从本地 wikitext 快照（<code>_RF1recipepharmacy.txt</code>／<code>_RF2recipepharmacy.txt</code>）解析成 <code>js/recipe_rf12.js</code>。</li>
