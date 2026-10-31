@@ -640,6 +640,39 @@
     min-width: 11rem;
 }
 
+/* 宠物产出（produce）：花型表是「魔物 × 五档概率」六列，矿石组是五列宽格；
+   RF1 工作表三列但地点是长串，放开换行、给首列下限 */
+.content .table.prod table {
+    width: 100%;
+    min-width: 38rem;
+}
+
+.content .table.prod .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.prod tbody td:first-child {
+    white-space: nowrap;
+    min-width: 6.4rem;
+}
+
+.content .table.petwork table {
+    width: 100%;
+    /* 只有三列，窄屏不必横滑：地点列放开换行就能塞进 520px */
+    min-width: 26rem;
+}
+
+.content .table.petwork .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.petwork tbody td:first-child {
+    white-space: nowrap;
+    min-width: 6.4rem;
+}
+
 .content .table.gfill table {
     width: 100%;
     /* 手机宽度下 4 列铺开会把「春12日」「斗牛的角」逐字拆行，这里兜一个下限，
