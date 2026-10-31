@@ -95,3 +95,7 @@ _rf2_card/**
 
 # 单页临时预览（注入 S.game 后截图用，截完即删）
 _t_*.html
+_t_*.js
+
+# biligame wikitext 抓取快照（_build_*.py 的输入，本地保留）
+_snap/

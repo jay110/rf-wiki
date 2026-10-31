@@ -611,6 +611,35 @@
     white-space: nowrap;
 }
 
+/* 旧四作收服表（RF2／边境）：列多且「出现地点」是长串地名。
+   默认 td 的 nowrap 会把表撑到两屏宽，这里放开换行、只留首列不换 */
+.content .table.pet12 table {
+    min-width: 44rem;
+    width: 100%;
+}
+
+.content .table.pet12 .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* 列宽给死会被挤成竖排（「等级」拆成两个字两行），垫一个下限让表整体宽于屏幕、按站内约定横滑 */
+.content .table.pet12 .th,
+.content .table.pet12 .td {
+    min-width: 3.6rem;
+}
+
+.content .table.pet12 tbody td:first-child {
+    white-space: nowrap;
+    min-width: 5.6rem;
+}
+
+/* 末列是「出现地点／特技」这类长串，列宽不给下限会被挤成一行两个字 */
+.content .table.pet12 .th:last-child,
+.content .table.pet12 .td:last-child {
+    min-width: 11rem;
+}
+
 .content .table.gfill table {
     width: 100%;
     /* 手机宽度下 4 列铺开会把「春12日」「斗牛的角」逐字拆行，这里兜一个下限，
