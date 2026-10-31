@@ -6881,6 +6881,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十七次：新增「村民技能」页——502 条技能分成两套体系，顺带发现名单里有 8 位村民没收录</h2>
+            <ul class="ul">
+                <li class="li"><b>为什么新开一页</b>：龙之天地的技能表按<b>「村民 × 技能 × 解锁等级」</b>列，502 行挂在 28 个村民名下，塞不进「战斗与弱点」或「魔物与伙伴」任何一页。新增 azuma 专属条目 <code>azuma_skill</code>（<code>gms: ['azuma']</code>，与「魔物与喜好」「BOSS 战」同一类）与顶层函数 <code>azumaSkillHtml()</code>。</li>
+                <li class="li"><b>数据源</b>：gametoeasy.com《符文工房:龙之天地》村民技能表（post/1828），<code>_build_skill_azuma.py</code> 生成 <code>js/skill_azuma.js</code>（<code>SKILL_AZUMA</code>，<b>502 行 × 4 列</b>：村民／技能／等级／描述）。</li>
+                <li class="li"><b>核心结构：两套体系并排</b>。一套是角色自身等级（初始、5、10……90）解锁的战斗技能，共 <b>146 条</b>；另一套是牵绊等级（牵绊Lv1～Lv10），共 <b>270 条</b>。分得很干净——<b>16 位有等级型、12 位一条都没有</b>，有等级型的正好是两位主角加全部 14 位恋人候补，没有的是村民；<b>昴流是唯一没有牵绊线的人</b>。</li>
+                <li class="li"><b>命名体系也分得干净</b>：146 条等级型技能<b>没有一条</b>以「强化」开头，全是具名战技（猎追箭、升龙连击、流星雨）；牵绊型 270 条里有 <b>250 条</b>是「强化某某」，剩下 20 条是「配方某某」与「解锁战技」，即到等级后开放某个配方或招式。</li>
+                <li class="li"><b>算出来的几条</b>：① <b>彼方一人 25 条</b>最多（15 条等级型 + 10 条牵绊），单人等级线最长；② 档位密度差得不少，<b>20／30／40／60 级各 16 条</b>最挤，而 <b>55／65／90 级各只有 1 条</b>；③ 最高档 90 级全表只有一条——<b>彼方·放肆</b>；④ 27 位的牵绊线正好 Lv1～Lv10 十格，一格不缺。</li>
+                <li class="li"><b>踩坑：同名技能被当成「没有重复」</b>。初稿凭印象写了「整张表没有同名重复项」，实测有 <b>18 组</b>同一村民名下的同名技能——全是「强化能力值·某某」，最夸张的是<b>丽日的「强化能力值·魔法防御力」出现在 Lv1、Lv2、Lv9、Lv10 四格</b>。源表把同名项分开列在不同等级下，本页照录不去重，文案已改成正确说法。</li>
+                <li class="li"><b>踩坑：「一字之差」判断把单字名也算进去了</b>。对角名单时用「等长且只差一个字符」来找近似译名，结果<b>「花」「夜」这两个单字名和名单里的「魁」也被判成近似</b>，页面写出「花——名单里写作『魁』」这种荒唐比对。已加长度 ≥2 的限制，现在只剩真正的一处：技能表写 <b>板木</b>、站内名单写 <b>坂木</b>。</li>
+                <li class="li"><b>顺带核对出名单缺人</b>：技能表 28 人，本站角色名单 21 位。<b>名单里没有的 8 位村民</b>——飞燕、草津、小太郎、八千代、萨扎、渡濑、花、夜（都是店主与村里人，技能表按游戏内 NPC 表列全，名单只收有剧情的角色）；名单里也有 2 位不在技能表——<b>摩可绒</b>（魔物伙伴不学技能）与 <b>坂木／板木</b>。哪一个是正确译名没有第三份源可判定，两边都按原样照录。</li>
+                <li class="li"><b>照录不补</b>：描述列 <b>276 行写「—」、134 行写「0」</b>，源站两种写法都是「这一格没填」，本页统一显示为灰色破折号，不替它编说明；真正有描述的只有 <b>92 条</b>（带描述最多的是妃那 8 条）。等级列照录，数字与「初始」为角色等级、「牵绊LvN」为牵绊等级，两套不互相换算。</li>
+                <li class="li"><b>版面</b>：17 个档位的两列表在宽屏上左空一大片，改成四列两两并排（9 行）；村民汇总表四列等宽。<code>_verify</code> <b>380 实例</b>（新增本页）／0 异常／头像 214 张缺 0；1100px 与 520px 两档截图核对，502 行总目录在容器内正常横滑。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百二十六次：「商店与设施」补上龙之天地——248 行在售物品落地，顺带发现两处种子的价对不上农作页</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「商店与设施」页此前<b>十部作品共用同一段 400 余字的通用说明</b>（设施类型 + 营业时间两张泛表），一件具体商品都没有。新增顶层函数 <code>shopAzumaHtml()</code>，<code>shop</code> 条目的 <code>body</code> 改为接收 <code>g</code> 并在末尾分流，只对 <code>azuma</code> 渲染，其余九作保持原样。</li>
@@ -7871,6 +7884,11 @@ const PAGES = [
         `
     },
     {
+        key: 'azuma_skill', group: 'life', title: '村民技能', icon: 'book',
+        gms: ['azuma'],
+        body: () => azumaSkillHtml(),
+    },
+    {
         key: 'azuma_mon', group: 'life', title: '魔物与喜好', icon: 'monster',
         gms: ['azuma'],
         body: () => azumaMonHtml(),
@@ -7881,6 +7899,130 @@ const PAGES = [
         body: () => azumaBossHtml(),
     },
 ];
+
+/* 龙之天地（azuma）专属：村民技能表（502 行，两套解锁体系，不混入七作模板） */
+function azumaSkillHtml() {
+    const R = (typeof SKILL_AZUMA !== 'undefined') ? SKILL_AZUMA.rows : [];
+    if (!R.length) return '';
+    const dash = '<span class="mon-no">—</span>';
+    const L = s => '<span style="display:block;width:100%;text-align:left">' + s + '</span>';
+    const blank = v => (!v || v === '—' || v === '0') ? dash : v;
+    const isKizuna = lv => /^牵绊Lv\d+$/.test(lv);
+    const isLevel = lv => lv === '初始' || /^\d+$/.test(lv);
+
+    /* 按村民汇总 */
+    const people = {};
+    R.forEach(r => {
+        const o = people[r[0]] = people[r[0]] || { n: 0, lv: [], kz: [], none: 0, desc: 0 };
+        o.n++;
+        if (isKizuna(r[2])) o.kz.push(r[2]);
+        else if (isLevel(r[2])) o.lv.push(r[2]);
+        else o.none++;
+        if (r[3] !== '—' && r[3] !== '0' && r[3]) o.desc++;
+    });
+    const names = Object.keys(people);
+    const withLv = names.filter(k => people[k].lv.length > 0);
+    const onlyKz = names.filter(k => people[k].lv.length === 0);
+    const maxNum = k => {
+        const ns = people[k].lv.map(v => v === '初始' ? 0 : +v).filter(v => !isNaN(v));
+        return ns.length ? Math.max.apply(null, ns) : null;
+    };
+    const kzFull = names.filter(k => people[k].kz.length === 10);
+    const kzNone = names.filter(k => people[k].kz.length === 0);
+    const kzAll = R.filter(r => isKizuna(r[2]));
+    const kzQ = kzAll.filter(r => r[1].indexOf('强化') === 0);
+    const lvAll = R.filter(r => isLevel(r[2]));
+    const lvQ = lvAll.filter(r => r[1].indexOf('强化') === 0);
+
+    /* 同一村民名下的同名技能（源表在不同牵绊等级重复列） */
+    const cntKey = {};
+    R.forEach(r => { const k = r[0] + '|' + r[1]; cntKey[k] = (cntKey[k] || 0) + 1; });
+    const dupGroups = Object.keys(cntKey).filter(k => cntKey[k] > 1);
+    const dupMax = dupGroups.slice().sort((a, b) => cntKey[b] - cntKey[a])[0];
+    const dupMaxName = dupMax ? dupMax.split('|') : null;
+
+    /* 等级分布 */
+    const byLevel = {};
+    R.forEach(r => { if (isLevel(r[2])) byLevel[r[2]] = (byLevel[r[2]] || 0) + 1; });
+    const lvKeys = Object.keys(byLevel).sort((a, b) => (a === '初始' ? -1 : +a) - (b === '初始' ? -1 : +b));
+    const lvTop = lvKeys.filter(k => k !== '初始').slice().sort((a, b) => +b - +a)[0];
+    const hiHolders = R.filter(r => r[2] === lvTop).map(r => r[0] + '·' + r[1]);
+
+    /* 描述覆盖 */
+    const descRows = R.filter(r => r[3] !== '—' && r[3] !== '0' && r[3]);
+    const dashRows = R.filter(r => r[3] === '—').length;
+    const zeroRows = R.filter(r => r[3] === '0').length;
+    const descTop = names.slice().sort((a, b) => people[b].desc - people[a].desc)[0];
+
+    /* 与站内角色名单对照 */
+    const G = (typeof GAMES !== 'undefined') ? GAMES.filter(x => x.id === 'azuma')[0] : null;
+    const siteNames = (G && G.chars) ? G.chars.map(c => c.name) : [];
+    const notSite = siteNames.length ? names.filter(n => siteNames.indexOf(n) < 0) : [];
+    const notTable = siteNames.length ? siteNames.filter(n => names.indexOf(n) < 0) : [];
+    const nearSame = notSite.filter(n => n.length >= 2 && siteNames.some(s => s.length === n.length && s !== n
+        && s.split('').filter((ch, i) => ch !== n.charAt(i)).length === 1));
+    const topTotal = names.slice().sort((a, b) => people[b].n - people[a].n || (a < b ? -1 : 1))[0];
+    const lvCounts = lvKeys.filter(k => k !== '初始').map(k => byLevel[k]);
+    const lvDense = lvKeys.filter(k => k !== '初始' && byLevel[k] === Math.max.apply(null, lvCounts));
+    /* 档位表两两并排，免得 17 行的两列表在宽屏上左空一大片 */
+    const lvLabel = k => k === '初始' ? '初始（开局）' : k + ' 级';
+    const lvHalf = Math.ceil(lvKeys.length / 2);
+    const lvGrid = [];
+    for (let i = 0; i < lvHalf; i++) {
+        const a = lvKeys[i], b = lvKeys[i + lvHalf];
+        lvGrid.push([lvLabel(a), '<b>' + byLevel[a] + '</b> 条',
+            b ? lvLabel(b) : '', b ? '<b>' + byLevel[b] + '</b> 条' : '']);
+    }
+
+    return `
+        <h2 class="h2">${names.length} 位村民、${R.length} 条技能，分成两套完全分开的解锁体系</h2>
+        <p class="p">这张表不是「一个技能树」，而是<b>两套体系并排</b>：一套是<b>角色自身等级</b>（初始、5、10……一直到 ${lvTop} 级）解锁的战斗技能，另一套是<b>牵绊等级</b>（牵绊Lv1～Lv10）解锁的强化。前者只有主角与恋人候补才有，后者几乎人人都有——两套的条数几乎一比二。</p>
+        ${stat([['收录村民', names.length + ' 位'], ['技能条目', R.length + ' 条'], ['等级解锁', Object.keys(byLevel).reduce((a, k) => a + byLevel[k], 0) + ' 条'], ['牵绊解锁', R.filter(r => isKizuna(r[2])).length + ' 条']])}
+        <p class="p">分开得很干净：<b>${withLv.length} 位有等级型技能、${onlyKz.length} 位一条都没有</b>。有等级型的正好是主角两位加全部 14 位恋人候补；没有的是村民——他们不参战，只靠牵绊给你加成。${kzNone.length ? '<b>' + kzNone.join('、') + '</b> 是唯一没有牵绊线的人，只走等级。' : ''}</p>
+
+        <h2 class="h2">谁的技能最多：${topTotal} 一人 ${people[topTotal].n} 条</h2>
+        <p class="p">按条数排。等级型条数多的人不代表更强，只代表他的成长线拉得更细（等级档位多则条数多）：</p>
+        ${tbl(['村民', '等级解锁', '牵绊解锁', '最高等级'], names.slice().sort((a, b) => people[b].n - people[a].n || (a < b ? -1 : 1)).map(k => {
+            const m = maxNum(k);
+            return [k, people[k].lv.length ? '<b>' + people[k].lv.length + '</b> 条' : dash,
+                people[k].kz.length ? '<b>' + people[k].kz.length + '</b> 条' : dash,
+                m == null ? dash : (m === 0 ? '初始' : m + ' 级')];
+        }), { leftFirst: true, colw: ['9rem', '9rem', '9rem', '9rem'] })}
+        <div class="key"><b>${withLv.slice().sort((a, b) => people[b].lv.length - people[a].lv.length)[0]}</b> 的等级线有 ${people[withLv.slice().sort((a, b) => people[b].lv.length - people[a].lv.length)[0]].lv.length} 条，是全表最长的；${kzFull.length ? '<b>' + kzFull.length + ' 位</b>的牵绊线正好各 10 条（Lv1～Lv10 一格不缺）' : ''}。表里还有 <b>${dupGroups.length} 组同名技能</b>——同一村民在<b>不同牵绊等级</b>拿到同名的「强化能力值·某某」，最夸张的是 ${dupMaxName ? dupMaxName[0] + ' 的「' + dupMaxName[1] + '」进了 ' + cntKey[dupMax] + ' 个等级' : '—'}。源表把同名项分开列在不同等级下，本页照录不去重。</div>
+
+        <h2 class="h2">等级线：从 5 级一档爬到 ${lvTop} 级</h2>
+        <p class="p">等级型的技能按档位挂，${lvKeys.length} 个档位里「${lvKeys[0]}」是开局就有的。最高档 ${lvTop} 级只有 ${hiHolders.length} 条：<b>${hiHolders.join('、')}</b>——想拿这条，得先把对应角色练到 ${lvTop} 级。${lvQ.length === 0 ? '这 ' + lvAll.length + ' 条<b>没有一条</b>以「强化」开头，全是具名战技（猎追箭、升龙连击、流星雨这类），命名体系与牵绊线分得很干净。' : ''}</p>
+        ${tbl(['档位', '技能数', '档位', '技能数'], lvGrid, { leftFirst: true, colw: ['9rem', '7rem', '9rem', '7rem'] })}
+        <div class="key">档位密度差得不少：<b>${lvDense.join('、')} 级各 ${Math.max.apply(null, lvCounts)} 条</b>是最挤的，而 ${lvKeys.filter(k => k !== '初始' && byLevel[k] === Math.min.apply(null, lvCounts)).join('、')} 级只有 ${Math.min.apply(null, lvCounts)} 条。这说明不同角色的成长线并不一样长——档位密的那几级是多人共有的门槛，疏的那几级只有个别人能到。</div>
+
+        <h2 class="h2">牵绊线：Lv1 到 Lv10，一人一条强化带</h2>
+        <p class="p">牵绊型的 ${kzAll.length} 条里有 <b>${kzQ.length} 条</b>是「强化某某」的格式——强化战技、强化能力值这类；剩下的 ${kzAll.length - kzQ.length} 条是「配方某某」与「解锁战技」，即达到牵绊等级后开放某个配方或招式。${kzFull.length} 位的牵绊线正好是 Lv1～Lv10 十格，一格不缺${kzNone.length ? '；' + kzNone.join('、') + ' 没有牵绊线，只走等级' : ''}。</p>
+        <div class="key">这条路比等级线省事：<b>牵绊靠送礼、同住、一起出战就能涨</b>，不用练级。村民不能上战场，但他们的牵绊技能全是给你的加成，想拿干净就得把村里人一个个喂上去。送什么、喜欢什么，在<a href="#/page/npcgift">村民喜好</a>页。</div>
+
+        <h2 class="h2">${R.length} 条里只有 ${descRows.length} 条带描述</h2>
+        <p class="p">源表的「描述」列<b>大部分是空的</b>：${dashRows} 行写「—」、${zeroRows} 行写「0」，两者在源站都是「这一格没填」。本页把这两种写法<b>统一显示为灰色破折号</b>，不替它编说明。真正有描述的只有 <b>${descRows.length} 条</b>，集中在战斗技能的攻击类——描述也多是一句「以某某武器发动的强力攻击」。</p>
+        <div class="key">带描述最多的是 <b>${descTop}</b>（${people[descTop].desc} 条）。反过来，牵绊线的「强化某某」几乎全没描述——名字本身已经把效果说完了，源站就没再写。</div>
+
+        ${notSite.length ? `<h2 class="h2">与站内角色名单对一遍：${notSite.length} 位还不在名单里</h2>
+        <p class="p">这张表有 ${names.length} 人，本站「龙之天地」的角色名单有 ${siteNames.length} 位，两者并不是一套：技能表<b>多出 ${notSite.length} 位</b>，名单里也有 ${notTable.length} 位在技能表里没有。</p>
+        ${tbl(['情况', '是谁'], [
+            ['技能表有、名单没有', L(notSite.join('、'))],
+            ['名单有、技能表没有', L(notTable.join('、'))]
+        ], { leftFirst: true, colw: ['12rem', 'auto'] })}
+        <div class="key">${nearSame.length ? '注意 <b>' + nearSame.join('、') + '</b>——名单里写作' + nearSame.map(n => '「' + siteNames.filter(s => s.length === n.length && s !== n && s.split('').filter((ch, i) => ch !== n.charAt(i)).length === 1)[0] + '」').join('、') + '，<b>一字之差</b>。哪一个是正确译名本站没有第三份源可以判定，两边都按各自原样照录，未强行统一。' : ''}多出来的这几位都是店主与村里人（技能表按游戏内 NPC 表列全，名单只收有剧情的角色），不是录错。</div>` : ''}
+
+        <h2 class="h2">全部 ${R.length} 条技能（可搜索）</h2>
+        <p class="p">按源表原顺序排列，<b>未按村民或等级重排</b>，方便拿着源表对行。搜村民名或技能名都能筛：</p>
+        ${ftableOwn(['村民', '技能', '等级', '描述'],
+            ['7rem', 'auto', '8rem', 'auto'],
+            R.map(r => [r[0] + ' ' + r[1], [r[0], r[1], isKizuna(r[2]) ? '<b>' + r[2] + '</b>' : (r[2] === '初始' ? '<b>初始</b>' : ('<b>' + r[2] + '</b>')), L(blank(r[3]))]]),
+            { ph: '输入村民名或技能名筛选' })}
+        <div class="note">取自 ${(typeof SKILL_AZUMA !== 'undefined') ? SKILL_AZUMA.src : 'gametoeasy'}，共 ${R.length} 行。<b>描述列的「—」与「0」都按灰色破折号显示</b>（源站两种写法都表示未填），原文数值一个未改；等级列照录——数字与「初始」为角色等级，「牵绊LvN」为牵绊等级，两套体系不互相换算。</div>
+        <div class="jump">
+            <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">送什么涨牵绊</div></a>
+            <a href="#/page/azuma_boss"><div class="jp-t">BOSS 战</div><div class="jp-s">练级路上的对手</div></a>
+        </div>`;
+}
 
 /* 龙之天地（azuma）专属：魔物喜好表（不混入七作模板，gms 仅 azuma） */
 function azumaMonHtml() {
