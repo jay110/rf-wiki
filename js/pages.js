@@ -2199,6 +2199,118 @@ function newlywedRf4(g) {
             <div class="note">取自 gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829，与本站 <code>azuma_gift.js</code>／<code>AZUMA_MON</code> 同源），由 <code>_build_fishspot_azuma.py</code> 解析生成 <code>js/fishspot_azuma.js</code>，收录 <b>${F.length} 种鱼与钓物、${allSpots.length} 处钓点（含条件写法）</b>。源表<b>没有逐钓点出现率</b>，本页只做「在哪能钓到什么」的索引，不推算概率。${F.filter(f => f.unlock).length ? '有解锁条件的 ' + F.filter(f => f.unlock).length + ' 种（' + F.filter(f => f.unlock).map(f => f.n).join('、') + '）原表写在「解锁条件」列，本页照录。' : ''}<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
     }
 
+    /* ------------------------------------------------------------
+       龙之天地（azuma）素材出处与掉落 —— gametoeasy 掉落表
+       数据 DROP_AZUMA：rows [[魔物, 区域, [素材...]], ...]（无概率）
+       要点：同一只魔物在不同区域各成一行，掉落品质随区域升档
+       ------------------------------------------------------------ */
+    function sourceAzumaHtml() {
+        const D = (typeof DROP_AZUMA !== 'undefined') ? DROP_AZUMA : null;
+        if (!D || !(D.rows || []).length) return '';
+        const R = D.rows;
+
+        /* 素材名的品质前缀；表里出现的就这几档，从低到高 */
+        const TIERS = ['结实', '优质', '顶级', '极品', '神秘'];
+        const tierOf = it => {
+            for (let i = 0; i < TIERS.length; i++) if (it.indexOf(TIERS[i]) === 0) return TIERS[i];
+            return '';
+        };
+
+        const mons = {}, areas = {};
+        R.forEach(([n, a]) => { mons[n] = (mons[n] || 0) + 1; if (a) areas[a] = (areas[a] || 0) + 1; });
+        const monList = Object.keys(mons);
+        const areaList = Object.keys(areas);
+
+        /* 区域 → 各档出现次数，取最多的那档当「主力档」 */
+        const areaTier = {};
+        R.forEach(([n, a, its]) => {
+            if (!a) return;
+            const m = areaTier[a] = areaTier[a] || {};
+            its.forEach(it => { const t = tierOf(it); if (t) m[t] = (m[t] || 0) + 1; });
+        });
+        const mainTier = a => {
+            const m = areaTier[a] || {};
+            let best = '', bv = 0;
+            TIERS.forEach(t => { const v = m[t] || 0; if (v > bv) { bv = v; best = t; } });
+            return { tier: best, n: bv, total: Object.keys(m).reduce((s, t) => s + m[t], 0) };
+        };
+        const areaSorted = areaList.slice().sort((a, b) => {
+            const ta = mainTier(a).tier, tb = mainTier(b).tier;
+            const i = TIERS.indexOf(ta), j = TIERS.indexOf(tb);
+            return (i - j) || (areas[b] - areas[a]);
+        });
+
+        /* 素材 → 出处（魔物·区域） */
+        const byItem = {};
+        R.forEach(([n, a, its]) => its.forEach(it => {
+            (byItem[it] = byItem[it] || []).push(a ? n + '·' + a : n + '（未标注）');
+        }));
+        const itemList = Object.keys(byItem).sort((a, b) => byItem[a].length - byItem[b].length || a.localeCompare(b, 'zh'));
+        const soloItems = itemList.filter(k => byItem[k].length === 1);
+
+        /* 示例怪：覆盖档次种类最多、且至少出现在 3 个区域的那只 */
+        const spread = n => {
+            const s = {};
+            R.forEach(([m, a, its]) => { if (m === n) its.forEach(it => { const t = tierOf(it); if (t) s[t] = 1; }); });
+            return Object.keys(s).length;
+        };
+        const sample = monList
+            .filter(n => mons[n] >= 3)
+            .sort((a, b) => spread(b) - spread(a) || mons[b] - mons[a])[0] || monList[0];
+        const sampleRows = R.filter(r => r[0] === sample);
+
+        /* 目录行 */
+        const monRows = R.map(([n, a, its]) => [
+            n + ' ' + (a || ''),
+            [n, a || '<span class="mon-no">未标注</span>', its.length ? its.join('、') : '<span class="mon-no">无掉落</span>'],
+        ]);
+        const itemRows = itemList.map(k => [k + ' ' + byItem[k].join(' '), [k, byItem[k].length + ' 条', byItem[k].join('、')]]);
+
+        const noArea = R.filter(r => !r[1]).length;
+        const noDrop = R.filter(r => !r[2].length).length;
+
+        /* 按主力档把区域分组，文案跟着数据走，不写死地名 */
+        const grp = {};
+        areaSorted.forEach(a => { const t = mainTier(a).tier || '—'; (grp[t] = grp[t] || []).push(a); });
+        const grpTxt = (t, sep) => (grp[t] || []).join(sep || '、');
+        /* 主力档占比不到六成的，当「混档区域」单独点出来 */
+        const mixed = areaSorted.filter(a => { const m = mainTier(a); return m.total && m.n / m.total < 0.6; });
+        const sampleTiers = (() => {
+            const s = {};
+            sampleRows.forEach(r => r[2].forEach(it => { const t = tierOf(it); if (t) s[t] = 1; }));
+            return TIERS.filter(t => s[t]);
+        })();
+
+        return `
+            <h2 class="h2">同一只魔物，换个区域，掉的东西就换一档</h2>
+            <p class="p">龙之天地的掉落表不是「一只怪一张清单」，而是<b>「魔物 × 区域」</b>：同一只魔物在不同区域各占一行，<b>掉落名单并不相同</b>——越深的区域，掉的素材前缀越高级（结实 → 优质 → 顶级 → 神秘）。所以「这素材谁掉」这个问题，答案必须带上区域，否则等于没答。</p>
+            ${stat([['魔物', monList.length + ' 只'], ['区域', areaList.length + ' 处'], ['收录行', R.length + ' 条'], ['去重素材', itemList.length + ' 种']])}
+            <p class="p">表里 <b>${R.length - monList.length}</b> 条记录是「同一只怪在另一个区域再出现」，去重后只有 <b>${monList.length}</b> 只魔物、${R.length} 条记录。<b>${soloItems.length}</b> 种素材只有一个来源，${itemList.length - soloItems.length} 种多处都有——查毕业素材先看这个数字：只有一处来源的，刷怪点没有第二个选择。</p>
+
+            <h2 class="h2">区域决定档次：${areaList.length} 处地方的「主力品质」</h2>
+            <p class="p">把每个区域里出现过的素材按前缀归类，取出现最多的那一档，就是这一区的主产档位：</p>
+            ${tbl(['区域', '主力档', '主力档条数'], areaSorted.map(a => {
+                const m = mainTier(a);
+                return [a, m.tier ? '<b>' + m.tier + '</b>' : '<span class="mon-no">—</span>', m.n + ' / ' + m.total];
+            }), { leftFirst: true, colw: ['10rem', '5.4rem', 'auto'] })}
+            <div class="key">按主力档聚起来看：<b>结实</b>档 ${grpTxt('结实')}；<b>优质</b>档 ${grpTxt('优质')}；<b>顶级</b>档 ${grpTxt('顶级')}${grp['极品'] ? '；<b>极品</b>档 ' + grpTxt('极品') : ''}；<b>神秘</b>档 ${grpTxt('神秘')}。${mixed.length ? '<b>' + mixed.join('、') + '</b> 的主力档占比不到六成，掉落是混着的——那底下挂着一串不同等级的副本，不能当一整片地方看。' : ''}</div>
+
+            <h2 class="h2">一只怪的多档掉落：以 ${sample} 为例（${sampleRows.length} 处区域 / ${sampleTiers.length} 个档次）</h2>
+            <p class="p">${sample} 在表里出现在 ${sampleRows.length} 个区域，掉的东西跟着区域一路升档（${sampleTiers.join(' → ')}）：</p>
+            ${tbl(['区域', '掉落'], sampleRows.map(([n, a, its]) => [a || '<span class="mon-no">未标注</span>', its.length ? its.join('、') : '<span class="mon-no">无掉落</span>']), { leftFirst: true, colw: ['9rem', 'auto'] })}
+            <div class="key">想凑「顶级／神秘」的素材，就得跟着区域走——在春之台地支起帐篷刷一辈子，也只能拿到结实档。反过来，前期要「结实」类素材，别跑去终末之森送死。</div>
+
+            <h2 class="h2">素材 → 出处（${itemList.length} 种，按来源多少排）</h2>
+            <p class="p">按素材名搜索。出处写成「魔物·区域」，<b>排在前面的只有一两个来源</b>，那些就是最难凑的；区域写「未标注」的，说明源表那一行没给地方，只能确定是哪只怪掉。</p>
+            ${ftableOwn(['素材', '来源条数', '谁掉（魔物·区域）'], ['7rem', '4.6rem', 'auto'], itemRows, { ph: '输入素材名或魔物名' })}
+
+            <h2 class="h2">全部魔物 × 区域 掉落（${R.length} 条）</h2>
+            <p class="p">按魔物名、区域或素材名搜索。同一只怪有多行，是因为它在多个区域出现且掉落不同。</p>
+            ${ftableOwn(['魔物', '区域', '掉落'], ['8rem', '7.4rem', 'auto'], monRows, { ph: '输入魔物、区域或素材' })}
+
+            <div class="note">取自 gametoeasy.com《符文工房:龙之天地》魔物掉落表（post/1816，${R.length} 条记录，由 <code>_build_drop_azuma.py</code> 生成 <code>js/drop_azuma.js</code>）。同一张表 biligame「龙之天地 材料掉落」（RRFSitemdrop）也有收录，本站已抽 6 只魔物逐行对照，内容一致。<b>原表不带掉落概率</b>，本页只做「谁掉什么、在哪掉」的索引，不推算掉率。「上空」是游戏后期浮空副本的分区，属正常区域名；${noArea} 条记录的源表区域写「???」，本页标<b>未标注</b>；${noDrop} 条源表掉落写「×」，本页标<b>无掉落</b>——都照录，不替它补。<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
+    }
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -5632,8 +5744,9 @@ const PAGES = [
     },
     {
         key: 'source', group: 'item', title: '素材出处与掉落', icon: 'gem',
-        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5'],
+        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
+            if (g.id === 'azuma') return sourceAzumaHtml();
             if (g.id === 'rff') return sourceRffHtml();
             if (g.id === 'rfo') return sourceRfoHtml();
             if (g.id === 'rf3' || g.id === 'rf3sp') return sourceRf3Html();
@@ -6262,6 +6375,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十三次：「素材出处与掉落」补上龙之天地——掉落是「魔物×区域」，同一只怪换个地方就换一档</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「素材出处与掉落」此前覆盖边境／海洋／RF3／RF4／RF5 共 7 个条目，<b>缺龙之天地</b>。新增顶层函数 <code>sourceAzumaHtml()</code>，<code>source</code> 条目 <code>gms</code> 加 <code>azuma</code>（分支写在最前，避免落进 RF4／RF5 的兜底逻辑）。</li>
+                <li class="li"><b>数据源与交叉核对</b>：gametoeasy.com《符文工房:龙之天地》魔物掉落表（post/1816），<code>_build_drop_azuma.py</code> 生成 <code>js/drop_azuma.js</code>（<code>DROP_AZUMA</code>），<b>458 条记录 / 122 只魔物 / 21 处区域 / 124 种素材</b>。同一张表 biligame 也有收录（<code>RRFSitemdrop</code>），已抽<b>野熊、九尾、摩可摩可、水牛哞哞、花蜂、照照笼笼</b>六只逐行对照，区域与掉落完全一致。</li>
+                <li class="li"><b>这张表的形状和前几作都不一样</b>：不是「一只怪一张清单」，而是<b>「魔物 × 区域」</b>——同一只怪在不同区域各占一行，掉落并不相同，品质随区域升档：<b>结实 → 优质 → 顶级 → 神秘</b>（另有「极品」用于蛋奶类）。458 条里有 <b>336 条</b>是同一只怪在另一个区域再出现，所以「这素材谁掉」必须带上区域才有意义。</li>
+                <li class="li"><b>页面按这个结构做的四块</b>：① 区域 → 主力档（把每区素材按前缀归类，取最多的那档）；② 一只怪的多档掉落示例（现算「覆盖档次最多且至少 3 个区域」的那只，当前选中赤鬼：12 处区域 / 4 个档次）；③ <b>素材 → 出处</b>反向表（<b>9 种素材只有一个来源</b>：海蓝宝石、红宝石、红核、蓝核、绿宝石、糯稻秧苗、生锈的铁、镇守木材、钻石）；④ 全部 458 条魔物×区域目录，可搜索。</li>
+                <li class="li"><b>踩坑：第一版把区域分组写死了</b>。我按「后期区域＝神秘档」的直觉在文案里手写了四组地名，结果和表算出来的对不上——<b>根之国</b>虽然是后期地图，但 33 条里 29 条是<b>优质</b>档，只有 4 条神秘；而<b>终末之森</b>才是真·神秘（115/135）。改成按主力档动态分组、地名由数据生成后，顺带发现<b>上空</b>的主力档只占 38%（优质 41／顶级 34／结实 33 三档混着），于是又加了一条「占比不到六成＝混档区域」的自动提示——现在这类例外是算出来的，不是我记得的。</li>
+                <li class="li"><b>照录不补的部分</b>：<b>8 条</b>记录源表区域写「???」（空乃、妖魔天晴、黑龙的残渣等 BOSS 类），本页标「未标注」；<b>4 条</b>掉落写「×」（阵笠众、空乃、温罗王·终末之森、魅星霸吐），本页标「无掉落」。原表<b>不带掉落概率</b>，本页不做掉率推算。「上空」是游戏后期浮空副本的分区，属正常区域名，不是占位符。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>378 实例</b>（新增 1）／0 异常／头像 214 张缺 0；正文无字面空值占位；1100px headless 截图核对，两张目录表在 <code>overflow-x:auto</code> 容器内正常。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百二十二次：「钓点与季节」补上龙之天地——这一作的源表方向是反的，鱼在前、钓点在后</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「钓点与季节」上一轮补完 RF1／RF2／边境后，十作里只剩<b>龙之天地（azuma）</b>没接。这一作此前不在 <code>gms</code> 里，条目对它不可见；本次加 <code>azuma</code> 并新增顶层函数 <code>fishspotAzumaHtml()</code>。⚠️ 顺带填了一个坑：<code>fishspot</code> 的 <code>body</code> 末尾有 <code>if (String(g.id).indexOf('rf5') !== 0) return fishspot4Html()</code>，只要把 azuma 加进 <code>gms</code> 却漏了前面的分支，它就会静默渲染成 <b>RF4 的钓点页</b>——所以新分支必须写在最前面。</li>

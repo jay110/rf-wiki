@@ -56,6 +56,8 @@ _RF2recipepharmacy.txt
 _rf3recipes_src.html
 _azuma_fishing.html
 _azuma_satobito.txt
+_azuma_drop.html
+_azuma_index.html
 
 # 人物页 wikitext 抓取件（_build_npcfull.py 的输入，本地保留）
 _npc_src/
