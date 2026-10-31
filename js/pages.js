@@ -5358,7 +5358,11 @@ const PAGES = [
     },
     {
         key: 'request', group: 'event', title: '委托任务', icon: 'board',
-        body: () => `
+        body: (g) => {
+            /* 龙之天地有六篇专属的东国任务（post/1831–1836），走专用分支，
+               不再套下面这段七作通用的委托机制说明 */
+            if (g && g.id === 'azuma') return requestAzumaHtml();
+            return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
             ${tbl(['奖励类型', '说明'], [
@@ -5370,7 +5374,8 @@ const PAGES = [
             <h2 class="h2">接委托的取舍</h2>
             <p class="p">不要全接。判断标准有两条：<b>顺路不顺手</b>和<b>给的东西现在用不用得上</b>。为了一个用不上的奖励跑半个地图，是典型的时间浪费。</p>
             <div class="note">限定委托（期限一天／只在特定天气出现）优先处理，它们不会保留到第二天。</div>
-        `
+        `;
+        }
     },
 
     /* ================= 物品道具（通用机制） ================= */
@@ -7186,6 +7191,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十次：「委托任务」补上龙之天地——东国任务六条线 37 条记录，117 项奖励一项不重复</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是站里最空的一页</b>：「委托任务」此前十作共用同一段 316 字的通用说明（讲钱、道具、好感、点数四类奖励），<b>没有一个作品有真表</b>。本次给这一条加龙之天地分支（<code>g</code> 为 <code>azuma</code> 时走 <code>requestAzumaHtml()</code>），其余九作仍是原来那段。</li>
+                <li class="li"><b>龙之天地的委托＝东国任务，但没有统一任务板</b>：六篇源文各讲一条线——<b>饭团滚滚 6 处、青蛙石爱好家 12 档、鉴定蘑菇 30 种、与一的射靶 8 处、打扫地藏 5 档、甜点翁 6 题</b>，合计 37 条记录。数据由 <code>_build_quest_azuma.py</code> 从 post/1831–1836 生成为 <code>js/quest_azuma.js</code>。</li>
+                <li class="li"><b>算出来的四条</b>：① 六篇奖励 <b>117 项，去重后还是 117 项</b>——一条线补不了另一条线的漏，想凑配方六条都得跑；② 青蛙石 12 档从 5 到 204，前两档差 5 与 20，之后<b>每 20 一档排到 190，末档 204 是唯一破例</b>（多 14 个）；③ 甜点翁六题里<b>三道题要交的菜正是另一道题发出来的</b>（蜂蜜吐司、蜂蜜卡斯提拉、三色团子），不能按顺序硬推；④ 与「配方大全」摆设表交叉，<b>12 项奖励能查到同名条目</b>（红松鼠玩偶、貉子石像、鸟石、摩可摩可玩偶、河童玩偶、诡异的鸟居、雪狼玩偶、貉子摆件、大社、呱太石、三连地藏、高贵的勺子）。</li>
+                <li class="li"><b>两条线是串着的</b>：草莓牛奶既是青蛙石 50 个的奖励，又是甜点翁第 5 题要交的菜——<b>不先攒够青蛙石，那道题交不了</b>。页上把这条写明了，且这一条是源文自己交代的，不是推测。</li>
+                <li class="li"><b>三个「不替它编」</b>：① 饭团滚滚的<b>「大」「小」两列只有两个字</b>，源文没解释、biligame 的「东国任务」页当前是空页、无第二来源 → 两列照录，不合并、不改名、不替它俩编含义；② 六篇里<b>只有饭团滚滚与鉴定蘑菇写了「全部完成／全满奖励」</b>，其余四篇的末档奖励按表位置读，不升级成「全满」；③ 打扫地藏第 30 档的「桃树苗Lv×1」<b>源文 Lv 后没有数字</b>，照录不补。</li>
+                <li class="li"><b>版面</b>：新增 <code>.table.azuq</code>（放开换行、最小宽度 46rem）；总表与各分表用 <code>left:[下标]</code> 让表头与内容一起左对齐；饭团表「大」「小」两列反复调宽到 9.6rem／7.8rem／7.2rem 才能单行放下「结实的丝线×10」这类内容。<code>_verify</code> <b>382 实例</b>（条数不变，本页本来就有龙之天地实例）／0 异常／头像 214 张缺 0；1100px 与 520px 截图核对。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百二十九次：「配方大全」补上 RF3——武器／防具／农具／药学 382 条，RF3 与 RF3SP 共用一张表不各列一份</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「配方大全」此前只覆盖边境／海洋／RF4／RF4S／RF5／龙之天地，<b>RF3 完全没有条目</b>（它的料理配方在「料理」页，锻造与调合的配方站内一条都没有）。本次给 <code>recipe</code> 条目加上 <code>rf3</code>／<code>rf3sp</code>，新增顶层函数 <code>recipeRf3Html()</code>，分支写成 <code>/^rf3/</code>。</li>
@@ -8402,6 +8416,127 @@ function azumaBossHtml() {
         <h3>主线剧情 BOSS</h3>
         <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站音译定名（中文攻略站无权威译名，保留英文名对照）。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>英文名</th><th>Lv</th><th>武器弱点</th><th>属性弱点</th><th>定位／备注</th></tr></thead><tbody>${mainRows}</tbody></table></div>`;
+}
+
+/* 龙之天地（azuma）专属：东国任务（gametoeasy post/1831–1836 六篇）
+   六篇表结构互不相同：6 列／2 列／没有表／3 列／2 列／3 列，所以不合并成一张表，
+   按篇保留各自表头。表头一律照录，包括源文没解释的「大」「小」两列。 */
+function requestAzumaHtml() {
+    const Q = (typeof QUEST_AZUMA !== 'undefined') ? QUEST_AZUMA.tasks : [];
+    if (!Q.length) return '';
+    const G = pg => Q.filter(t => t.pg === pg)[0];
+    const sp = s => String(s == null ? '' : s).split('、').map(x => x.trim()).filter(Boolean);
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + s + '</span>';
+    const q = G(1831), frog = G(1832), shroom = G(1833), tgt = G(1834), jizo = G(1835), sweet = G(1836);
+
+    /* 奖励项统一数一遍，不手写数字。饭团那篇的「配方／大／小」三列都算奖励 */
+    const pool = [];
+    q.rows.forEach(r => { [3, 4, 5].forEach(i => { pool.push.apply(pool, sp(r[i])); }); });
+    frog.rows.forEach(r => { pool.push.apply(pool, sp(r[1])); });
+    tgt.rows.forEach(r => { pool.push.apply(pool, sp(r[2])); });
+    jizo.rows.forEach(r => { pool.push.apply(pool, sp(r[1])); });
+    sweet.rows.forEach(r => { pool.push.apply(pool, sp(r[2])); });
+    const uniq = [];
+    pool.forEach(x => { if (uniq.indexOf(x) < 0) uniq.push(x); });
+    const nRow = Q.reduce((a, t) => a + t.rows.length, 0);
+
+    /* 与「配方大全」的摆设表交叉：能查到同名条目的就是摆设 */
+    const deco = {};
+    if (typeof RECIPE_AZUMA !== 'undefined') {
+        RECIPE_AZUMA.cats.forEach(c => {
+            if (c.k !== '摆设') return;
+            c.rows.forEach(r => { deco[r[0]] = 1; });
+        });
+    }
+    const decoHit = uniq.filter(x => deco[x]);
+
+    /* 青蛙石：档位差与每档项数 */
+    const th = frog.rows.map(r => +r[0]);
+    const gaps = th.slice(1).map((v, i) => v - th[i]);
+    const per = frog.rows.map(r => sp(r[1]).length);
+    const maxPer = Math.max.apply(null, per);
+    const maxTier = th.filter((v, i) => per[i] === maxPer);
+    const frogPool = frog.rows.reduce((a, r) => a.concat(sp(r[1])), []);
+    const frogDeco = frogPool.filter(x => deco[x]);
+
+    /* 甜点翁：哪道题正是另一道题发出来的 */
+    const sName = sweet.rows.map(r => r[0]);
+    const sGive = sweet.rows.map(r => sp(r[2]));
+    const chain = [];
+    sName.forEach((n, i) => {
+        sGive.forEach((list, k) => {
+            if (k !== i && list.indexOf(n) >= 0) chain.push({ t: n, i: i, from: k });
+        });
+    });
+    const orphan = sName.filter((n, i) => !chain.some(x => x.i === i));
+    const milkTier = frog.rows.filter(r => sp(r[1]).indexOf('草莓牛奶') >= 0).map(r => r[0]);
+
+    return `
+        <h2 class="h2">东国任务不是一张清单，是六条各自独立的线</h2>
+        <p class="p">龙之天地的委托任务就是「东国任务」，但没有一块统一的任务板：<b>${Q.map(t => t.n).join('、')}</b>六条线各自计数、各自发奖。有的按地图上的点逐个交付（饭团滚滚、与一的射靶），有的按收集数量累计（青蛙石爱好家、打扫地藏），甜点翁是按 6 道题逐个交菜，鉴定蘑菇那条干脆只做鉴定、没有奖励表。</p>
+        ${stat([
+        ['任务线', Q.length + ' 条'],
+        ['表内记录', nRow + ' 条'],
+        ['蘑菇清单', shroom.list.length + ' 种'],
+        ['点名的奖励', uniq.length + ' 项'],
+    ])}
+        <p class="p">六篇加起来的奖励项 <b>${pool.length}</b> 项，<b>一项不重复</b>——同一件东西不会在两条线里各给一次。这条对规划有用：想凑齐配方，不能指望一条线补另一条线的漏，六条都得各跑一遍。</p>
+        ${tbl(['任务', '形态', '接取／领取处', '记录', '收尾奖励'], Q.map(t => [
+        '<b>' + t.n + '</b>',
+        t.type,
+        Lf(t.where),
+        t.rows.length ? t.rows.length + ' 条' : t.list.length + ' 种',
+        t.full.t === '—' ? dash : '<b>' + t.full.t + '</b><br><span class="mon-no" style="font-size:0.82em">' + t.full.why + '</span>',
+    ]), { colw: ['7.4rem', '6rem', 'auto', '4.4rem', '9.6rem'], left: [2], cls: 'azuq' })}
+        <div class="note">「形态」是本站按<b>表的形状</b>分的（分点交付／数量累计／按题目提交／纯鉴定），不是游戏里的官方分类名。最后一列的小字说明那项奖励是<b>源文自己写明的「全部完成／全满」</b>，还是<b>只是表里最后一档</b>——六篇里只有饭团滚滚与鉴定蘑菇两篇写了「全部完成」「全满奖励」，其余四篇的末档奖励是照表位置读的，不替它升级成「全满」。</div>
+
+        <h2 class="h2">饭团滚滚：六处各一句话，听它念完就知道该做什么</h2>
+        <p class="p">${q.intro.join('')}六个区域<b>一处不重复</b>：${q.rows.map(r => r[0]).join('、')}。「问题」列记的是它说的那句话，「要什么」列是要交给它的那件东西——把这两列对着读，就是「它点的是什么、你该做哪一道」。</p>
+        ${tbl(q.head, q.rows, {
+        colw: ['9.6rem', 'auto', '6.6rem', 'auto', '7.8rem', '7.2rem'],
+        left: [0, 1, 3], cls: 'azuq',
+    })}
+        <div class="key"><b>「大」「小」这两列，本站没法核实。</b>源表就写两个单字，源文一句解释都没有；biligame 的「东国任务」页目前是<b>空页（无内容）</b>，也没有第二个来源能对。所以两列<b>照录：不合并、不改名、不替它俩编含义</b>。能确定只有两件事——两列都是素材（金×3、优质角×1 这种），而且六行各不相同。</div>
+
+        <h2 class="h2">青蛙石爱好家：12 档，从 5 个到 204 个</h2>
+        <p class="p">${frog.intro.join('')}档位是 ${th.join(' → ')}：前两档差 ${gaps[0]} 与 ${gaps[1]}，从第三档起<b>每 20 个一档</b>一直排到 190，唯一破例的是最后一档 204——比前一档多 ${gaps[gaps.length - 1]} 个，全表就这一处不按 20 走。</p>
+        ${tbl(frog.head, frog.rows, { colw: ['5.4rem', 'auto'], leftFirst: true, left: [1], cls: 'azuq' })}
+        <p class="p">每档给 2～6 项，<b>不随档位递增</b>：给得最多的是 ${maxTier.map(v => v + ' 个').join(' 与 ')}这两档，各 ${maxPer} 项；而 130 个往后每档只剩 3～4 项。这一篇 ${frogPool.length} 项奖励里有 ${frogDeco.length} 项是<b>摆设</b>（${frogDeco.join('、')}），能在「配方大全」的摆设表里查到同名条目与做法；其余是料理，本站配方大全不含料理（源页没有表），只能对到名字、对不到配方。</p>
+
+        <h2 class="h2">鉴定蘑菇：30 种，这条线没有奖励表</h2>
+        <p class="p">${shroom.intro.join('')}</p>
+        <p class="p">30 种菇的名字按源文列表顺序照录，未按季节或稀有度重排：<br>${shroom.list.join('、')}。</p>
+        <div class="note">这条线跟另外五条不同：<b>没有数量档位、没有配方奖励</b>，也没有「鉴定 10、15、20 个就送配方」那套（源文专门写了这句）。名字里带季节的四种（春之菇、夏之菇、秋之菇、冬之菇）与「每个采集点固定出几种」的设定对得上，但源文没给每个点具体出哪几种，所以本页<b>不按季节分组、也标不出采集点</b>。</div>
+
+        <h2 class="h2">与一的射靶：8 处，茄子等级一路升到 Lv8</h2>
+        <p class="p">8 个射靶按序号排，前七处给的全是茄子相关（种子／茄子／大茄子／茄子的配方），<b>等级随序号往上走</b>：Lv1 → Lv3 → Lv6 → Lv7 → Lv8。配方只有三处——第 2、第 4、第 8，最后一处的奖励是<b>配方与一之弓</b>。</p>
+        ${tbl(tgt.head, tgt.rows, { colw: ['4.4rem', 'auto', 'auto'], left: [1, 2], cls: 'azuq' })}
+
+        <h2 class="h2">打扫地藏：5 档，扫完第二天早上发</h2>
+        <p class="p">${jizo.intro.join('')}档位只有五档：${jizo.rows.map(r => r[0] + ' 个').join('、')}。米是主线奖励，等级从 Lv1 一路给到 Lv5，到第 30 个那档还多一株桃树苗。</p>
+        ${tbl(jizo.head, jizo.rows, { colw: ['5.4rem', 'auto'], leftFirst: true, left: [1], cls: 'azuq' })}
+        <div class="note">第 30 个那档的「桃树苗Lv×1」<b>源文 Lv 后面没有数字</b>，照录不改——这里不替它补等级。</div>
+
+        <h2 class="h2">甜点翁：6 道题，先交的菜正好是后一题发出来的</h2>
+        <p class="p">${sweet.intro.join('')}题目按「等级要求」从 Lv1 排到 Lv4：${sweet.rows.map(r => r[0] + ' ' + r[1]).join('、')}。每题给 4 个配方，六题合计 ${sweet.rows.length * 4} 个，也<b>一个不重复</b>。「等级要求」四个字照录——源文没说明这是这道菜本身的等级，还是要求的料理等级，两说都留着。</p>
+        ${tbl(sweet.head, sweet.rows, { colw: ['7.4rem', '6rem', 'auto'], left: [2], cls: 'azuq' })}
+        <p class="p">把「题目」和同一篇的「奖励」对起来，<b>三道题要交的菜正是另一道题发出来的</b>：${chain.map(c => '「' + c.t + '」（第 ' + (c.i + 1) + ' 题）来自第 ' + (c.from + 1) + ' 题的奖励').join('；')}。也就是说这三道题不能按顺序硬推，得先做给出配方的那一道。</p>
+        <div class="key">剩下三道题<b>不是自家人发的</b>：${orphan.join('、')}。其中「草莓牛奶」的来路源文自己写了——<b>青蛙石爱好家 ${milkTier.join('、')} 个那档的奖励</b>（上一节 50 档的奖励里确实有它）；<b>「${orphan.filter(x => x !== '草莓牛奶').join('」「')}」的配方六篇里都查不到出处</b>，本站不替它们编。所以这条线是串着的：<b>不先把青蛙石攒到 ${milkTier.join('、')} 个，甜点翁的第 5 题就交不了</b>。</div>
+
+        <h2 class="h2">四件可以从表里读出来的事</h2>
+        <ul class="ul">
+            <li class="li"><b>奖励一项不重复</b>：六篇 ${pool.length} 项奖励去重后还是 ${uniq.length} 项。这不是巧合——六条线各有各的奖池，谁都不补谁。</li>
+            <li class="li"><b>${decoHit.length} 项奖励是摆设</b>：${decoHit.join('、')}。这些在「配方大全」的摆设表里有同名条目与材料，是本文与配方表唯一能对上的部分。</li>
+            <li class="li"><b>料理配方对不上，不是缺数据</b>：奖励里绝大多数是料理，而本站配方大全<b>本来就不含料理</b>——源站的料理页正文零表格，只有一段文字，所以那一块一直是空的。这里只列菜名，不往配方表里硬塞。</li>
+            <li class="li"><b>两条线是串着的</b>：草莓牛奶既是青蛙石 50 个的奖励，又是甜点翁第 5 题要交的菜；甜点翁内部还有三条「前一题发后一题」的链。规划顺序时先跑青蛙石，再跑甜点翁。</li>
+        </ul>
+        <div class="jump">
+            <a href="#/page/recipe"><div class="jp-t">配方大全</div><div class="jp-s">上面那些摆设怎么做</div></a>
+            <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">交菜之外怎么涨牵绊</div></a>
+            <a href="#/page/azuma_boss"><div class="jp-t">BOSS 战</div><div class="jp-s">跑图路上的对手</div></a>
+        </div>
+        <div class="note">数据取自 ${(typeof QUEST_AZUMA !== 'undefined') ? QUEST_AZUMA.src : 'gametoeasy'}，六篇各一张表，<b>表头与「—」「×」一律照录</b>；六篇都没有给奖励的数量区间或概率，所以本页不算期望收益。</div>`;
 }
 
 /* 物品道具：分类页在前，本作物品一览在后 */

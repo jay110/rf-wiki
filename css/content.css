@@ -591,6 +591,18 @@
     word-break: break-word;
 }
 
+/* 龙之天地东国任务：饭团那篇的「问题」列是一整句台词、奖励列是多件物品，
+   默认 nowrap 会把表撑到两屏宽，这里放开换行 */
+.content .table.azuq table {
+    min-width: 46rem;
+}
+
+.content .table.azuq .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.7;
+}
+
 /* RF3 魔物表：两张 ftableOwn（数值 7 列 / 抗性掉落 4 列），列宽已定，
    给最小宽度避免数字被压成竖排，超宽时容器横滑 */
 .content .table.mon-aux table {
