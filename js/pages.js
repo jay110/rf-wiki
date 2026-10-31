@@ -1308,6 +1308,143 @@ function recipeRfoHtml() {
 }
 
 /* ============================================================
+   商店与设施 · 龙之天地（azuma）
+   SHOP_AZUMA.rows = [[地点, 商品, 价格, 库存, 备注], ...]，248 行照录。
+   源表「库存」「备注」两列 248 行全写 —，本站不补数；
+   28 处地点写法里有三组商品与价格完全一致（火仙药店／药店、
+   萨扎的铁匠铺／铁匠铺、木工樱屋／营造铺），照录不合并，只在页上点明。
+   ============================================================ */
+function shopAzumaHtml() {
+    const R = (typeof SHOP_AZUMA !== 'undefined') ? SHOP_AZUMA.rows : [];
+    if (!R.length) return '';
+    const dash = '<span class="mon-no">—</span>';
+    const N = v => /^\d+$/.test(String(v)) ? +v : null;
+    const money = v => v == null ? dash : Number(v).toLocaleString() + 'G';
+    const L = s => '<span style="display:block;width:100%;text-align:left">' + s + '</span>';
+
+    /* 按地点汇总 */
+    const shops = {};
+    R.forEach(r => {
+        const v = N(r[2]);
+        const o = shops[r[0]] = shops[r[0]] || { n: 0, lo: Infinity, hi: 0, sum: 0 };
+        o.n++;
+        if (v != null) { o.sum += v; o.lo = Math.min(o.lo, v); o.hi = Math.max(o.hi, v); }
+    });
+    const shopList = Object.keys(shops).sort((a, b) => shops[b].n - shops[a].n || (a < b ? -1 : 1));
+
+    /* 按商品反查：一种商品在几家店卖、价格是否一致 */
+    const byItem = {};
+    R.forEach(r => { (byItem[r[1]] = byItem[r[1]] || []).push([r[0], N(r[2])]); });
+    const items = Object.keys(byItem);
+    const multi = items.filter(k => byItem[k].length > 1)
+        .map(k => ({
+            n: k, at: byItem[k],
+            prices: byItem[k].map(x => x[1]).filter(v => v != null).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b)
+        }))
+        .sort((a, b) => b.at.length - a.at.length || (a.n < b.n ? -1 : 1));
+    const priced = multi.filter(m => m.prices.length > 1);
+    const soloN = items.length - multi.length;
+
+    /* 商品与价格完全一致的地点对（同店异写） */
+    const sig = a => R.filter(r => r[0] === a).map(r => r[1] + '/' + r[2]).sort().join(',');
+    const same = [];
+    for (let i = 0; i < shopList.length; i++) {
+        for (let j = i + 1; j < shopList.length; j++) {
+            if (shops[shopList[i]].n !== shops[shopList[j]].n) continue;
+            if (sig(shopList[i]) === sig(shopList[j])) same.push([shopList[i], shopList[j]]);
+        }
+    }
+
+    /* 价格两端 */
+    const allP = R.map(r => N(r[2])).filter(v => v != null);
+    const hiP = Math.max.apply(null, allP), loP = Math.min.apply(null, allP);
+    const top = R.filter(r => N(r[2]) === hiP);
+    const bottom = R.filter(r => N(r[2]) === loP);
+    const dearest = shopList.slice().sort((a, b) => (shops[b].sum / shops[b].n) - (shops[a].sum / shops[a].n))[0];
+
+    /* 种子交叉核对：商店表的种子售价 vs 农作页的「种子买价」
+       两张表来自同一站点的两篇文章，数值并不完全一致——这里只把差异摆出来，不改任何一边。 */
+    const cropSeed = {}, cropSeason = {};
+    if (typeof CROP_AZUMA !== 'undefined') {
+        CROP_AZUMA.rows.forEach(r => { cropSeed[r[0]] = r[1]; cropSeason[r[0]] = r[6]; });
+    }
+    const seedRows = R.filter(r => /种子$/.test(r[1])).map(r => {
+        const base = r[1].replace(/种子$/, '');
+        const cv = cropSeed[base];
+        const sp = N(r[2]);
+        return {
+            shop: r[0], n: r[1], base: base, sp: sp,
+            cv: (cv != null && /^\d+$/.test(String(cv))) ? +cv : null,
+            r: (cv != null && /^\d+$/.test(String(cv)) && +cv > 0 && sp != null) ? sp / +cv : null
+        };
+    }).filter(x => x.r != null);
+    const seedBand = seedRows.filter(x => x.r >= 1.28 && x.r <= 1.35);
+    const seedOff = seedRows.filter(x => x.r < 1.28 || x.r > 1.35).sort((a, b) => b.r - a.r);
+    /* 每家店卖的种子分属哪些季节 */
+    const seedByShop = {};
+    seedRows.forEach(x => { (seedByShop[x.shop] = seedByShop[x.shop] || []).push(x); });
+    const seedShopSeasons = {};
+    seedRows.forEach(x => {
+        const s = cropSeason[x.base];
+        if (!s) return;
+        (seedShopSeasons[x.shop] = seedShopSeasons[x.shop] || []).push(s);
+    });
+    const seasonOnly = Object.keys(seedShopSeasons).filter(k => {
+        const s = seedShopSeasons[k].filter(v => v && v !== '×' && v !== '—');
+        return s.length >= 3 && s.every(v => v === s[0]);
+    });
+
+    return `
+        <h2 class="h2">${R.length} 行在售商品分在 ${shopList.length} 处地点${same.length ? '，其中 ' + same.length + ' 组是同一家店的两种写法，实为 ' + (shopList.length - same.length) + ' 家' : ''}</h2>
+        <p class="p">这一作的商店不是「一家店卖一大类」，而是<b>按村子与街区铺开的小铺子</b>：种苗店只卖树苗与金作物、豆腐店只有两样、木工樱屋只卖木材与石材。想买齐一套东西得跑好几家，这跟 RF4／RF5 那种「杂货店一站买完」的节奏完全不同。</p>
+        ${stat([['在售条目', R.length + ' 条'], ['地点写法', shopList.length + ' 处'], ['去重商品', items.length + ' 种'], ['价格区间', money(loP) + ' ～ ' + money(hiP)]])}
+        <p class="p">表里 <b>${items.length}</b> 种商品有 <b>${soloN}</b> 种只在一家店出现，占 ${Math.round(soloN / items.length * 100)}%；剩下 ${multi.length} 种跨店重复，其中<b>只有 ${priced.length} 种在不同店价格不一样</b>。</p>
+
+        <h2 class="h2">哪家店卖什么：${shopList.length} 处地点的商品数与价位</h2>
+        <p class="p">按商品数排。均价那列能看出店铺的档次——<b>咒术屋翡翠</b>只卖 9 样却均价 ${money(Math.round(shops[dearest].sum / shops[dearest].n))}，因为它卖的是属性结晶：</p>
+        ${tbl(['地点', '商品数', '价格区间', '均价'], shopList.map(k => {
+            const o = shops[k];
+            return [k, '<b>' + o.n + '</b> 种', money(o.lo) + ' ～ ' + money(o.hi), money(Math.round(o.sum / o.n))];
+        }), { leftFirst: true, colw: ['auto', '6rem', '10rem', '7rem'] })}
+        ${same.length ? `<div class="key">这三组<b>商品与价格完全一致</b>：${same.map(p => '<b>' + p[0] + '</b> 与 <b>' + p[1] + '</b>').join('、')}。源表把它们当两个地点分开列，本页照录未合并——你如果只看到其中一家，买到的东西是一样的。</div>` : ''}
+
+        <h2 class="h2">${multi.length} 种跨店商品里，只有 ${priced.length} 种有价差</h2>
+        <p class="p">把同一种商品在各店的标价排在一起，<b>${multi.length - priced.length} 种在每家店都同价</b>——铁、铜、银、金在矿石店与两家铁匠铺同价，米饭在三家卖吃食的地方同价，小麦粉与黄油在三家店同价。有价差的只有下面这 ${priced.length} 种：</p>
+        ${tbl(['商品', '在哪几家', '价差'], priced.map(m => [m.n, L(m.at.map(x => x[0] + ' ' + money(x[1])).join('、')), money(m.prices[m.prices.length - 1] - m.prices[0])]), { leftFirst: true, colw: ['7rem', 'auto', '5.4rem'] })}
+        <div class="key">分两类：<b>恢复类道具是杂货店贵</b>——恢复壶药店 ${money(427)}、杂货店 ${money(475)}；疗愈壶药店 ${money(854)}、杂货店 ${money(950)}，各贵 ${money(48)} 与 ${money(96)}，要补 RP 就往药店走。<b>种子则是杂货店的价明显不合群</b>——白萝卜种子杂货店 ${money(380)}、渡濑鱼店 ${money(95)}，南瓜种子杂货店 ${money(95)}、常夏杂货店 ${money(87)}。这两条与下一节的交叉核对正好对上，先别急着照杂货店的价算成本。</div>
+
+        <h2 class="h2">种子不只在种苗店卖：${Object.keys(seedByShop).length} 家店分季上货</h2>
+        <p class="p">把 ${R.length} 行里带「种子」的挑出来（${seedRows.length} 行），按店归堆会发现<b>种子是按季节分给对应村子的店在卖</b>，不是全塞在种苗店。种苗店反倒只卖树苗与金作物：</p>
+        ${tbl(['店铺', '种子数', '卖的是哪些（括号内为农作页的适宜季）'], Object.keys(seedByShop).sort((a, b) => seedByShop[b].length - seedByShop[a].length || (a < b ? -1 : 1)).map(k => {
+            const g = seedByShop[k];
+            return [k, '<b>' + g.length + '</b> 种', L(g.map(x => x.base + (cropSeason[x.base] && cropSeason[x.base] !== '×' ? '（' + cropSeason[x.base] + '）' : '')).join('、'))];
+        }), { leftFirst: true, colw: ['9.4rem', '5.4rem', 'auto'] })}
+        <div class="key">${seasonOnly.length ? seasonOnly.map(k => '<b>' + k + '</b> 卖的 ' + seedByShop[k].length + ' 种' + (cropSeason[seedByShop[k][0].base] ? '全是' + cropSeason[seedByShop[k][0].base] + '作物' : '')).join('，') + '——村子对着季节上货，这条是齐的' : ''}。另外几家混了季（常夏杂货店的南瓜是秋作物、八千代居酒屋的青椒是夏作物），花店则按四季各两种铺开、外加金刚花这种不分季的。想买当季种子，先看这一季的村口那家店。</div>
+
+        <h2 class="h2">与农作页对一遍：${seedRows.length} 行种子里 ${seedOff.length} 行的价对不上</h2>
+        <p class="p">本站农作页那张表（同源的另一篇）给的是<b>种子买价</b>，本页是<b>商店售价</b>，两者本来不必相等。但把 ${seedRows.length} 行并排比，<b>${seedBand.length} 行都落在 ${(Math.min.apply(null, seedBand.map(x => x.r))).toFixed(2)}～${(Math.max.apply(null, seedBand.map(x => x.r))).toFixed(2)} 倍</b>这个很窄的带里，只有 ${seedOff.length} 行跳出去——这个反差本身就指出哪几行可疑：</p>
+        ${tbl(['店铺', '种子', '本页售价', '农作页种子买价', '售价 ÷ 买价'], seedOff.map(x => [x.shop, x.n, '<b>' + money(x.sp) + '</b>', money(x.cv), x.r.toFixed(2) + ' 倍']), { leftFirst: true, colw: ['9.4rem', 'auto', '6.2rem', '8rem', 'auto'] })}
+        <div class="key">这 ${seedOff.length} 行集中在两家店：<b>杂货店的三种种子全部跳带</b>（白萝卜 ${(380 / 72).toFixed(2)} 倍、南瓜 ${(95 / 66).toFixed(2)} 倍、胡萝卜 ${(87 / 76).toFixed(2)} 倍），<b>种苗店的金马铃薯与金南瓜则是低于 1 倍</b>——同一个店的另两种金作物（金芜菁、金卷心菜）都是 ${(532 / 400).toFixed(2)} 倍。名目上像同一列数被串了行，但<b>哪一边是游戏里的实际数字，本站没有第三个源可以判定</b>，所以两处都照录原值，不做改正。</div>
+
+        <h2 class="h2">最贵的是宝石，${money(hiP)} 五种并列</h2>
+        <p class="p">矿石店的宝石柜是全作最贵的柜台，<b>${top.length} 种并列 ${money(hiP)}</b>：</p>
+        ${tbl(['商品', '价格', '在哪买'], top.map(r => [r[1], '<b>' + money(N(r[2])) + '</b>', r[0]]), { leftFirst: true, colw: ['9rem', '7rem', 'auto'] })}
+        <div class="key">往下一档是咒术屋翡翠的<b>属性结晶 ${money(9500)}</b>（风、水、火、地、暗……），再往下才轮到 ${money(8170)} 的舶来品与 ${money(4560)} 的高档食材。最便宜的一头是<b>石块 ${money(loP)}</b>——矿石店连这个都卖，做建筑时缺石料可以直接买。整张表从 ${money(loP)} 到 ${money(hiP)}，最贵一件是最便宜一件的 ${Math.round(hiP / loP).toLocaleString()} 倍。</div>
+
+        <h2 class="h2">全部 ${R.length} 条在售清单（可搜索）</h2>
+        <p class="p">按源表原顺序排列，<b>未按价格或店名重排</b>，方便拿着源表对行。搜店名或商品名都能筛：</p>
+        ${ftableOwn(['地点', '商品', '价格', '库存', '备注'],
+            ['9.4rem', 'auto', '6.4rem', '5rem', '5rem'],
+            R.map(r => [r[1] + ' ' + r[0], [r[0], r[1], '<b>' + money(N(r[2])) + '</b>', r[3] || dash, r[4] || dash]]),
+            { ph: '输入店名或商品名筛选' })}
+        <div class="note">取自 ${(typeof SHOP_AZUMA !== 'undefined') ? SHOP_AZUMA.src : 'gametoeasy'}，共 ${R.length} 行。<b>「库存」与「备注」两列源表 248 行全部写「—」</b>，本页照录，不推算补货频率或限购数量；价格照录原表数字，页内统一加「G」显示。<b>本页没有「营业时间」数据</b>——源表只列在售商品，几点开门、哪天休息都没写，这一栏空着比编一个准。</div>
+        <div class="jump">
+            <a href="#/page/crop"><div class="jp-t">农作</div><div class="jp-s">种子买价与卖价对照</div></a>
+            <a href="#/page/recipe"><div class="jp-t">配方大全</div><div class="jp-s">这些素材做成什么</div></a>
+        </div>`;
+}
+
+/* ============================================================
    配方大全 · 龙之天地（azuma）
    RECIPE_AZUMA.cats = [{ k: 类目, page: 源文号, head: [列名…], rows: [[原表单元格…]] }]
    源表十二张的列位并不一致：武器 13 列、防具 13 列、建筑 12 列、药学 15 列，
@@ -3560,7 +3697,7 @@ const PAGES = [
     },
     {
         key: 'shop', group: 'life', title: '商店与设施', icon: 'shop',
-        body: () => `
+        body: g => `
             <h2 class="h2">镇上的基本配置</h2>
             <p class="p">无论哪一作，一套完整的城镇都包含以下几类设施。名称随作品变化，功能基本一致。</p>
             ${tbl(['设施', '功能', '什么时候去'], [
@@ -3575,6 +3712,7 @@ const PAGES = [
             <div class="key">逛镇子有个高效顺序：<b>委托板 → 杂货店 → 锻冶屋 → 逐个送礼</b>。前三个是资源，最后一个是时间，凑一趟走完。</div>
             <h2 class="h2">营业时间</h2>
             <p class="p">每家店都有开门与关门时间，晚上去会吃闭门羹。多数作品在店门口或菜单里能查到营业时间。换季第一天、节日当天，部分店铺不开。</p>
+            ${g.id === 'azuma' ? shopAzumaHtml() : ''}
         `
     },
     {
@@ -6743,6 +6881,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十六次：「商店与设施」补上龙之天地——248 行在售物品落地，顺带发现两处种子的价对不上农作页</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「商店与设施」页此前<b>十部作品共用同一段 400 余字的通用说明</b>（设施类型 + 营业时间两张泛表），一件具体商品都没有。新增顶层函数 <code>shopAzumaHtml()</code>，<code>shop</code> 条目的 <code>body</code> 改为接收 <code>g</code> 并在末尾分流，只对 <code>azuma</code> 渲染，其余九作保持原样。</li>
+                <li class="li"><b>数据源</b>：gametoeasy.com《符文工房:龙之天地》店铺可购买物品（post/1827），<code>_build_shop_azuma.py</code> 生成 <code>js/shop_azuma.js</code>（<code>SHOP_AZUMA</code>，<b>248 行 × 5 列</b>：地点／商品／价格／库存／备注）。</li>
+                <li class="li"><b>这张表的形状</b>：不是「一家店卖一大类」，而是<b>按村子与街区铺开的小铺子</b>——种苗店只卖树苗与金作物，豆腐店只有两样，木工樱屋只卖木材与石材。248 行分在 <b>28 处地点写法</b>、去重后 <b>198 种商品</b>，其中 <b>160 种只在一家店出现</b>（占 81%）。</li>
+                <li class="li"><b>算出来的几条</b>：① <b>28 处地点里有 3 组是同一家店的两种写法</b>——火仙药店／药店、萨扎的铁匠铺／铁匠铺、木工樱屋／营造铺，<b>商品与价格完全一致</b>，实为 25 家；源表分开列，本页照录不合并，只在页上点明。② 38 种跨店商品里 <b>34 种在每家店都同价</b>（铁铜银金在矿石店与两家铁匠铺同价、米饭在三家卖吃食的地方同价），有价差的只有 4 种。③ 价差分两类：<b>恢复壶／疗愈壶是杂货店贵</b>（475 对药店 427、950 对 854）；<b>种子则是杂货店的价明显不合群</b>（白萝卜种子 380 对渡濑鱼店 95、南瓜种子 95 对常夏杂货店 87）。④ 价格从石块 <b>4G</b> 到宝石 <b>14,250G</b>，五种宝石并列塔尖，全在矿石店。</li>
+                <li class="li"><b>种子不是只在种苗店卖</b>：把 248 行里带「种子」的挑出来共 35 行，按店归堆是 <b>7 家店分季上货</b>——伊吕波茶屋 5 种全是春作物、渡濑鱼店 4 种全是冬作物，常夏杂货店与八千代居酒屋各混了一季（南瓜是秋、青椒是夏），花店按四季各两种铺开，种苗店反倒只卖树苗与金作物。</li>
+                <li class="li"><b>交叉核对：35 行种子里 5 行的价对不上农作页</b>。农作页给「种子买价」，本页给「商店售价」，本来不必相等；但 <b>30 行都落在 1.30～1.33 倍</b>这个很窄的带里，跳出去的 5 行集中在两家店：<b>杂货店三种种子全部跳带</b>（白萝卜 5.28 倍、南瓜 1.44 倍、胡萝卜 1.14 倍），<b>种苗店的金马铃薯与金南瓜低于 1 倍</b>（0.95），而同店另两种金作物都是 1.33 倍。看起来像同一列数被串了行，但<b>哪一边是游戏里的实际数字，本站没有第三个源可以判定</b>——两处都照录原值，不做改正，也不猜原因。</li>
+                <li class="li"><b>照录不补</b>：「库存」与「备注」两列 <b>248 行全部写「—」</b>，原样保留在总目录里，不推算补货频率或限购数量；价格照录原表数字。<b>本页没有营业时间</b>——源表只列在售商品，几点开门、哪天休息都没写，页尾已注明这一栏空着比编一个准。</li>
+                <li class="li"><b>版面修正</b>：长名单列（跨店商品的「在哪几家」）此前用 <code>text-align:left</code> 块包裹仍然居中，因为单元格是 flex 容器、块宽缩到内容宽；改成同时给 <code>width:100%</code> 才真正左对齐。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>379 实例</b>／0 异常／头像 214 张缺 0；1100px 与 520px 两档 headless 截图核对，248 行总目录在容器内正常横滑。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百二十五次：「农作」补上龙之天地——种子表平铺成一列，没有阶段天数也没有土壤系数</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「农作」页此前有四段作物表（边境／RF1／RF4／RF5），<b>缺龙之天地</b>。新增顶层函数 <code>cropAzumaHtml()</code>，<code>crop</code> 条目的 <code>body</code> 末段分流里加 <code>azuma</code> 分支（写在各作之前，避免落进 RF 系分支）。</li>
