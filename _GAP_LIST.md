@@ -154,7 +154,7 @@
   - **校验**：366 实例（新增 2）/ 0 异常 / 头像 214 缺 0；7 张表在 520 与 1100px 下零溢出、逐格零裁切。
 - [ ] **配方大全（recipe）**：仍缺 **rf1／rf2／rf3／rf3sp**（现覆盖 rff／rfo／rf4／rf4sp／rf5）。**但要注意：RF1（184 条）与 RF2（190 条）的料理数据已在 `cook`（料理）条目里完整铺开**——配方表、两张效果表、配方书表、药学表都有，再在 recipe 里做一遍会大量重复。**真要补，应该是给 cook 页加分析视角，而不是照搬列表。** RF3 那批（`RF3_COOK`）只有名字与效果描述、**没有材料**，不适合进配方页。
 - [ ] **魔物喜好（gift）**：2026-10-31 第一百一十八次补上 **rf3／rf3sp**（源 biligame RF3monster「总喜好物品」列，90 只，`_build_gift_rf3.py` 生成 `GIFT_RF3`），现覆盖 rf3／rf3sp／rf4／rf4sp／rf5。仍缺 rf1／rf2／rff／rfo——RF1／RF2 经核实无「总喜好物品」列，rff／rfo 站内无数据文件，暂不做、不臆造。
-- [ ] **钓点与季节（fishspot）**：仍缺 rf1／rf2／rf3／rf3sp／rff。站内只有 `SPOT_RFO`（fishspot.js）与 `SPOT_RF5`／`SPOT_SHARE`（fishspot4.js），**其余各作没有数据**。
+- [ ] **钓点与季节（fishspot）**：2026-10-31 第一百一十九次补上 **rf3／rf3sp**（源 biligame RF3fishing「钓点×鱼」目录、无出现率、36 种鱼，`_build_fishspot_rf3.py` 生成 `SPOT_RF3`），现覆盖 rf3／rf3sp／rf4／rf4sp／rf5／rfo。仍缺 rf1／rf2／rff——RF1／RF2 经核实无集中钓点概率表，rff 站内无数据文件，暂不做、不臆造。
 - [ ] **装备打造·毕业（gear）**：只覆盖 rf5，缺 9 作。站内只有 `rf3weapon.js`（RF3 武器）等零散数据。
 - [x] **更正两条此前记错的缺口**：① **BOSS 战并不缺龙之天地**——`azuma_boss` 条目（gms=['azuma']）专门覆盖它，缺的其实只是 **rf3sp／rf4sp**（这两作沿用了原作 BOSS，可直接映射）；② **RF1／RF2 的配方并不缺**——数据在 `cook` 页里，只是不在 `recipe` 页。以后记录缺口前**先看 `gms` 实际值，别凭印象写**。
 - [x] **「BOSS 战」补上 3 特别版与 4 豪华版（2026-10-31）**：`boss` 条目 `gms` 由 7 作改为 9 作（加 `rf3sp`／`rf4sp`），新增 `blk3sp()`／`blk4sp()` 两个分支——各自先渲染一段「特别版怎么对应」，再复用原作那张表。**本站第一次出现「先核实再决定不另立表」的情况**：查了官方 runefactory.com 两个 what's new 页与多方新增要素整理，确认**两作都没有新增任何 BOSS**，于是直接沿用原作名单（RF3／RF3S 同 20 位、RF4／RF4S 同 14 位）。
@@ -170,7 +170,9 @@
 - [x] **BOSS 战至此十作全覆盖**：`boss` 覆盖 9 作，龙之天地走 `azuma_boss` 专属条目。**这个缺口可以划掉了。**
 - [x] **「魔物喜好」补上 RF3／RF3 特别版（2026-10-31 第一百一十八次）**：`gift` 条目 `gms` 由 `rf4／rf4sp／rf5` 扩到 `rf3／rf3sp／rf4／rf4sp／rf5`，新增顶层函数 `giftRf3Html()`（源 biligame RF3monster「总喜好物品」列，90 只，由 `_build_gift_rf3.py` 生成 `GIFT_RF3`）。经核实 RF1／RF2 的 monster 页**没有「总喜好物品」列**，rff／rfo 站内无数据，故只补 RF3、其余仍缺源不臆造。命名沿用 biligame，与站内 `MON_RF3` 图鉴译名或有出入（仅 28 共名），已在页内注明。
   - **校验**：370 实例（新增 2）／0 异常／头像 214 缺 0；表格沿用 `.content .table` 的 `overflow-x:auto` 容器，520 与 1100px 下零溢出、逐格零裁切。
+- [x] **「钓点与季节」补上 RF3／RF3 特别版（2026-10-31 第一百一十九次）**：`fishspot` 条目 `gms` 由 `rf4／rf4sp／rf5／rfo` 扩到 `rf3／rf3sp／rf4／rf4sp／rf5／rfo`，新增顶层函数 `fishspotRf3Html()`（源 biligame RF3fishing「钓点×鱼」目录，无出现率，36 种鱼，由 `_build_fishspot_rf3.py` 生成 `SPOT_RF3`）。RF3 的数据结构和 RF4／RF5 不同——只有钓点×鱼的目录（鱼影／买价／Lv1卖价），**没有逐钓点出现率**，故本页只做「在哪能钓到什么」索引，不推算概率。RF1／RF2 经核实无集中钓点概率表、rff 站内无数据，仍缺源不臆造。命名沿用 biligame。
+  - **校验**：372 实例（新增 2）／0 异常／头像 214 缺 0；表格沿用 `.content .table` 的 `overflow-x:auto` 容器，520 与 1100px 下零溢出、逐格零裁切。
 - [ ] **魔物喜好（gift）**：2026-10-31 第一百一十八次补上 **rf3／rf3sp**（源 biligame RF3monster「总喜好物品」列，90 只，`_build_gift_rf3.py` 生成 `GIFT_RF3`），现覆盖 rf3／rf3sp／rf4／rf4sp／rf5。仍缺 rf1／rf2／rff／rfo——RF1／RF2 经核实无「总喜好物品」列，rff／rfo 站内无数据文件，暂不做、不臆造。
-- [ ] **钓点与季节（fishspot）**：仍缺 rf1／rf2／rf3／rf3sp／rff。站内只有 `SPOT_RFO` 与 `SPOT_RF5`／`SPOT_SHARE`，**其余各作没有数据**。
+- [ ] **钓点与季节（fishspot）**：2026-10-31 第一百一十九次补上 **rf3／rf3sp**（源 biligame RF3fishing「钓点×鱼」目录、无出现率、36 种鱼，`_build_fishspot_rf3.py` 生成 `SPOT_RF3`），现覆盖 rf3／rf3sp／rf4／rf4sp／rf5／rfo。仍缺 rf1／rf2／rff——RF1／RF2 经核实无集中钓点概率表，rff 站内无数据文件，暂不做、不臆造。
 - [ ] **装备打造·毕业（gear）**：只覆盖 rf5，缺 9 作。站内只有 `rf3weapon.js` 等零散数据。
 - [ ] **配方大全（recipe）**：缺 rf1／rf2／rf3／rf3sp。**但 RF1／RF2 的料理数据已在 `cook` 页完整铺开**（184／190 条），真要补应给 cook 页加分析视角而不是照搬列表；RF3 那批只有名字与效果描述、**没有材料**。
