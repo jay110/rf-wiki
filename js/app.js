@@ -380,9 +380,43 @@ function npcOf(g) {
     const k = NPC_KEY[g.id] || g.id;
     const full = (typeof NPC_FULL !== 'undefined') && NPC_FULL[k];
     if (full && full.length) return full;
-    return (g.chars || []).map(c => ({
+    const base = (g.chars || []).map(c => ({
         n: c.name, j: c.jp || '', r: c.role || '', cv: c.cv, nt: c.note, bd: c.bday || ''
     }));
+    /* 龙之天地没有进 npcfull 的七作模板：g.chars 只有名字，生日／喜好全空。
+       角色页（post/1837–1852）与礼物表（post/1853）里有真数据，按日文名／中文名
+       对上去合并，缺什么不补什么——合并不上就保持原样，不猜。 */
+    if (g.id === 'azuma') {
+        const C = (typeof NPC_AZUMA !== 'undefined') ? NPC_AZUMA.chars : [];
+        const GF = (typeof AZUMA_GIFT !== 'undefined') ? AZUMA_GIFT : [];
+        const put = (o, k2, v) => { if (v && (!o[k2] || !String(o[k2]).length)) o[k2] = v; };
+        base.forEach(x => {
+            const c = C.filter(y => y.jp && y.jp === x.j)[0];
+            if (c) {
+                put(x, 'e', c.en);
+                put(x, 'cv', c.cvJp);
+                put(x, 'bd', c.bd);
+                put(x, 'nt', c.intro.join(''));
+                put(x, 'b', c.like.best);
+                put(x, 'l', c.like.good);
+                put(x, 'h', c.like.bad);
+                put(x, 'w', c.like.worst);
+                put(x, 'g', (c.gift.ret || []).join('、'));
+                put(x, 'bg', (c.gift.birthday || []).join('、'));
+            }
+            const f = GF.filter(y => y.n === x.n)[0];
+            if (f) {
+                put(x, 'bd', f.bd);
+                put(x, 'b', f.b);
+                put(x, 'l', f.l);
+                put(x, 'h', f.h);
+                put(x, 'w', f.w);
+                put(x, 'g', (f.ret || []).join('、'));
+                put(x, 'bg', (f.bgYou || []).join('、'));
+            }
+        });
+    }
+    return base;
 }
 
 /* 花嫁候补 / 花婿候补 / 结婚候补 统一归为「结婚候补」——各作源的叫法不一样 */
