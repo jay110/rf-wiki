@@ -8,7 +8,7 @@
 做法（两条路，优先第一条）：
   A) 人脸检测：用 lbpcascade_animeface（cv2）找脸框，校验是否可信
      （脸中心须在人物上部、脸宽与身高比例合理），由脸框推头框：
-         head_h ≈ 脸框高 × 1.55（脸框到下巴，往上是头发）
+         head_h = 发顶(alpha 顶) → 脸框下沿(≈下巴)
   B) 兜底几何法：alpha 轮廓找头顶，按身高比例估头高，逐行中点定水平中心。
   最后由头框定正方形：side = head_h * HEAD_SCALE，顶部留 HEADROOM，水平居中。
   半身像（小图 / 宽高比 ≥0.62）本来就是头肩构图，取接近整图的方形。
@@ -43,12 +43,12 @@ KEY4 = {
     'ダグ': 'doug', 'レオン': 'leon', 'ヴォルカノン': 'volkanon', 'バド': 'bado',
     'ポコリーヌ': 'porcoline', 'リンファ': 'linfa', 'エルミナータ': 'illuminata',
     'ブロッサム': 'blossom', 'ジョーンズ': 'jones', 'ナンシー': 'nancy',
-    'セルザウィード': 'ventuswill', 'ルーナ': 'luna', 'ノエル': 'noel', 'トゥーナ': 'raven', 'トゥーナ': 'raven',
+    'セルザウィード': 'ventuswill', 'ルーナ': 'luna', 'ノエル': 'noel', 'トゥーナ': 'raven',
     'バレット': 'barrett', 'レイヴン': 'raven',
 }
 
 OUT = 160
-HEAD_SCALE = 1.56      # side = head_h * HEAD_SCALE → 头高约占画幅 64%
+HEAD_SCALE = 1.28      # side = head_h * HEAD_SCALE → 头高约占画幅 78%
 HEADROOM = 0.055
 MASK_T = 24
 
@@ -61,8 +61,6 @@ OVERRIDE = {
 # 不走主源目录的三位 RF3 角色（官网没有立绘）：
 #   ondolfa / zeze 用 neoseeker 攻略 wiki 的半身像（与 _build_rf3_extra.py 同源）；
 #   kururfa 只有 24x21 的小图标，重裁没有意义，保持原样不动。
-ALIAS = {('rf3', 'raven'): ('toona',)}
-
 ALIAS = {('rf3', 'raven'): ('toona',)}
 
 EXTRA3 = [
@@ -128,8 +126,9 @@ def head_box(im):
         plausible = (y_top - 0.10 * fig_h <= fcy <= y_top + 0.40 * fig_h and
                      fig_h * 0.045 <= fw <= fig_h * 0.32)
         if plausible:
-            # 脸框顶到发顶还有一段，用 alpha 头顶补足
-            head_h = max(fh * 1.55, (fy - y_top) + fh * 1.55)
+            # 头高 = 发顶(alpha y_top) → 脸框下沿(≈下巴)，两者相减即可，
+            # 不要再给脸框乘系数，否则头发段会被重复计算
+            head_h = max((fy + fh) - y_top, fh * 1.15)
             return y_top, fig_h, head_h, fcx, 'face'
 
     # ---- B. 几何兜底 ----
@@ -174,7 +173,7 @@ def head_box(im):
 def crop_square(im, y_top, fig_h, head_h, head_cx):
     w, h = im.size
     rows = alpha_rows(im)
-    bust = (h <= 300) or (w / h >= 0.62)
+    bust = (h <= 300) or (w / h >= 0.62 and h <= 520)
     if bust:
         side = min(w, h) * 0.94
         top = max(0, y_top - 0.05 * side)
