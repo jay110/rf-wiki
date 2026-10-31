@@ -1158,6 +1158,219 @@ function recipeRfoHtml() {
     </div>`;
 }
 
+/* ============================================================
+   配方大全 · 龙之天地（azuma）
+   RECIPE_AZUMA.cats = [{ k: 类目, page: 源文号, head: [列名…], rows: [[原表单元格…]] }]
+   源表十二张的列位并不一致：武器 13 列、防具 13 列、建筑 12 列、药学 15 列，
+   连表头用词都不同（「武器攻击」/「攻击」、「买价」/「价格-买价」）。
+   所以一律按表头找列，不硬编码下标；统计全部现算，不另存衍生表。
+   ============================================================ */
+function recipeAzumaHtml() {
+    const R = (typeof RECIPE_AZUMA !== 'undefined') ? RECIPE_AZUMA : null;
+    if (!R || !R.cats || !R.cats.length) return '<p class="p">龙之天地的配方数据未加载。</p>';
+    const C = R.cats;
+    const num = v => { const s = String(v).replace(/,/g, ''); return /^-?\d+$/.test(s) ? +s : null; };
+    const money = v => v == null ? '<span class="mon-no">—</span>' : Number(v).toLocaleString() + 'G';
+    const dash = v => (!v || v === '—') ? '<span class="mon-no">—</span>' : v;
+    const col = (c, kw) => c.head.findIndex(h => h.indexOf(kw) >= 0);
+    const iBuy = c => col(c, '买价');
+    const iSell = c => col(c, '卖价');
+    const iUnlock = c => col(c, '解锁');
+    const iAtk = c => c.head.findIndex(h => h.indexOf('攻击') >= 0);
+
+    /* 全部摊平：{ 类目, 名, 材料[], 买价, 卖价, 解锁 } */
+    const flat = [];
+    C.forEach(c => {
+        const bi = iBuy(c), si = iSell(c), ui = iUnlock(c);
+        c.rows.forEach(r => flat.push({
+            k: c.k, n: r[0], head: c.head,
+            m: r.slice(1, 5).filter(x => x && x !== '—'),
+            b: bi >= 0 ? num(r[bi]) : null,
+            s: si >= 0 ? num(r[si]) : null,
+            u: (ui >= 0 && r[ui] && r[ui] !== '—') ? r[ui] : ''
+        }));
+    });
+    const total = flat.length;
+
+    /* 类目一览 */
+    const catRows = C.map(c => {
+        const si = iSell(c);
+        const g = c.rows.map(r => ({ n: r[0], s: si >= 0 ? num(r[si]) : null })).filter(x => x.s != null);
+        const top = g.slice().sort((a, b) => b.s - a.s)[0];
+        return [c.k, c.rows.length + ' 条', top ? top.n + '（' + money(top.s) + '）' : '<span class="mon-no">—</span>', 'post/' + c.page];
+    });
+    const bigCat = C.slice().sort((a, b) => b.rows.length - a.rows.length)[0];
+
+    /* 材料复用 */
+    const mat = {};
+    flat.forEach(x => x.m.forEach(s => { const nm = s.split('×')[0].trim(); if (nm) mat[nm] = (mat[nm] || 0) + 1; }));
+    const matList = Object.keys(mat).sort((a, b) => mat[b] - mat[a]);
+    const base3 = ['木材', '石材', '铁'];
+    const base3n = base3.reduce((a, k) => a + (mat[k] || 0), 0);
+    const single = flat.filter(x => x.m.length === 1).length;
+    const emptyMat = flat.filter(x => !x.m.length).length;
+
+    /* 武器五类：攻击上限。wStat 保留算好的对象，文案里一律从这里取数，不写死数字 */
+    const W = C.slice(0, 5);
+    const wStat = W.map(c => {
+        const ai = iAtk(c), si = iSell(c);
+        const g = c.rows.map(r => ({ n: r[0], a: ai >= 0 ? num(r[ai]) : null, s: si >= 0 ? num(r[si]) : null }))
+            .filter(x => x.a != null);
+        const bot = g.slice().sort((x, y) => x.a - y.a)[0];
+        const top = g.slice().sort((x, y) => y.a - x.a)[0];
+        return {
+            k: c.k, n: c.rows.length, has: g.length, bot: bot, top: top,
+            span: (bot && top && bot.a > 0) ? top.a / bot.a : null
+        };
+    });
+    const wRows = wStat.map(s => [s.k, s.has + ' / ' + s.n,
+        s.bot ? s.bot.a.toLocaleString() : '—',
+        s.top ? '<b>' + s.top.n + '</b>（' + s.top.a.toLocaleString() + '）' : '—',
+        s.top && s.top.s != null ? money(s.top.s) : '—']);
+    const allW = [];
+    W.forEach(c => { const ai = iAtk(c); c.rows.forEach(r => { const a = ai >= 0 ? num(r[ai]) : null; if (a != null) allW.push({ n: r[0], k: c.k, a }); }); });
+    const wTop = allW.slice().sort((a, b) => b.a - a.a)[0];
+    const bgStat = wStat.filter(s => s.k === '大剑')[0];
+    const ssStat = wStat.filter(s => s.k === '单手剑')[0];
+    /* 符咒：攻击列整列空；数值在「魔攻」 */
+    const charm = C.filter(c => c.k === '符咒')[0];
+    const charmAtkEmpty = charm ? charm.rows.filter(r => { const ai = iAtk(charm); return ai >= 0 && (r[ai] === '—' || !r[ai]); }).length : 0;
+    const iMatk = charm ? charm.head.findIndex(h => h.indexOf('魔攻') >= 0) : -1;
+    const charmTop = (charm && iMatk >= 0)
+        ? charm.rows.map(r => ({ n: r[0], v: num(r[iMatk]) })).filter(x => x.v != null).sort((a, b) => b.v - a.v)[0]
+        : null;
+
+    /* 卖价高于买价 */
+    const over = flat.filter(x => x.b != null && x.s != null && x.b > 0 && x.s > x.b);
+    const decor = C.filter(c => c.k === '摆设')[0];
+    /* 建筑三类（建筑物／地形／摆设）的买价整列是同一个固定值，只有卖价与制作花费逐件不同 */
+    const buildCats = C.filter(c => c.k === '建筑物' || c.k === '地形' || c.k === '摆设');
+    const buildBuy = {};
+    buildCats.forEach(c => {
+        const bi = iBuy(c);
+        if (bi < 0) return;
+        c.rows.forEach(r => { const v = r[bi] || '—'; buildBuy[v] = (buildBuy[v] || 0) + 1; });
+    });
+    const buildBuyTop = Object.keys(buildBuy).sort((a, b) => buildBuy[b] - buildBuy[a])[0];
+    const buildFixed = buildBuy[buildBuyTop] || 0;
+    const buildBuyNone = buildBuy['—'] || 0;
+    const isBuild = k => k === '建筑物' || k === '地形' || k === '摆设';
+    const overNoDecor = over.filter(x => !isBuild(x.k));
+    const zero = flat.filter(x => x.b === 0 && x.s === 0);
+    const buildRange = (kw) => {
+        const g = [];
+        buildCats.forEach(c => {
+            const i = c.head.findIndex(h => h.indexOf(kw) >= 0);
+            if (i < 0) return;
+            c.rows.forEach(r => {
+                const v = num(String(r[i]).replace(/G$/, ''));
+                if (v != null) g.push({ n: r[0], v: v, k: c.k });
+            });
+        });
+        if (!g.length) return null;
+        return { lo: g.slice().sort((a, b) => a.v - b.v)[0], hi: g.slice().sort((a, b) => b.v - a.v)[0] };
+    };
+    const decoSell = buildRange('卖价');
+    const decoCost = buildRange('制作花费');
+    /* 各类卖价头名，供文案引用 */
+    const topOf = k => {
+        const c = C.filter(x => x.k === k)[0];
+        if (!c) return null;
+        const si = iSell(c);
+        const g = c.rows.map(r => ({ n: r[0], s: si >= 0 ? num(r[si]) : null })).filter(x => x.s != null);
+        return g.length ? g.slice().sort((a, b) => b.s - a.s)[0] : null;
+    };
+    const topShoulder = topOf('肩甲'), topAcc = topOf('饰品'), topTerrain = topOf('地形');
+    const ceilStat = wStat.slice().sort((a, b) => (b.top ? b.top.a : 0) - (a.top ? a.top.a : 0))[0];
+    const floorStat = wStat.slice().sort((a, b) => (a.bot ? a.bot.a : 1e9) - (b.bot ? b.bot.a : 1e9))[0];
+    const spanSorted = wStat.filter(s => s.span != null).slice().sort((a, b) => b.span - a.span);
+    const overSorted = overNoDecor.slice().sort((a, b) => (b.s / b.b) - (a.s / a.b));
+    const weaponCat = W.reduce((a, c) => a + c.rows.length, 0);
+    const buildCat = C.filter(c => c.k === '建筑物' || c.k === '地形' || c.k === '摆设').reduce((a, c) => a + c.rows.length, 0);
+    const matSlots = flat.reduce((a, x) => a + x.m.length, 0);
+    const buildMaxSell = Math.max.apply(null, flat.filter(x => isBuild(x.k) && x.s != null).map(x => x.s));
+    /* 建筑三类里要用木材/竹材或石材的有多少条 */
+    const buildWood = flat.filter(x => x.k === '建筑物' || x.k === '地形' || x.k === '摆设')
+        .filter(x => x.m.some(m => m.indexOf('木材') >= 0 || m.indexOf('竹材') >= 0 || m.indexOf('石材') >= 0)).length;
+
+    /* 卖价最高 */
+    const sellTop = flat.filter(x => x.s != null).slice().sort((a, b) => b.s - a.s).slice(0, 8);
+    const topAllWeapon = sellTop.every(x => W.some(c => c.k === x.k));
+
+    /* 解锁条件 */
+    const noUnlock = flat.filter(x => !x.u).length;
+    const spotRe = /^(龙柩城|罗刹峡|根之国|奇缘殿|雪狼岳|秋之草原|勿忘竹林|翠风洞|天之国|樱幻异乡|结缘神社|春之台地|夏之海边|冬之原野|金华坑道|终末之森|宵暗之牢|冰牙洞|机关迷宫|竹笋岛|垂钓岛|妖怪岛|朦胧岛|东三龟岛)/;
+    const task = flat.filter(x => x.u.indexOf('任务') === 0).length;
+    const kizuna = flat.filter(x => x.u.indexOf('牵绊') >= 0).length;
+    const frog = flat.filter(x => x.u.indexOf('青蛙石') >= 0).length;
+    const spotCnt = {};
+    flat.forEach(x => { const m = x.u.match(spotRe); if (m) spotCnt[m[1]] = (spotCnt[m[1]] || 0) + 1; });
+    const spotList = Object.keys(spotCnt).sort((a, b) => spotCnt[b] - spotCnt[a]);
+    /* 建筑三类的解锁条件构成：青蛙石 / 任务 / 村等级 / 无 */
+    const buildStat = (() => {
+        const B = flat.filter(x => x.k === '建筑物' || x.k === '地形' || x.k === '摆设');
+        if (!B.length) return null;
+        const s = { n: B.length, frog: 0, task: 0, lv: 0, none: 0, other: 0 };
+        B.forEach(x => {
+            if (!x.u) s.none++;
+            else if (x.u.indexOf('青蛙石') >= 0) s.frog++;
+            else if (x.u.indexOf('任务') >= 0) s.task++;
+            else if (x.u.indexOf('等级') >= 0) s.lv++;
+            else s.other++;
+        });
+        return s;
+    })();
+
+    return `
+    <h2 class="h2">${total} 条配方，十二张表：武器五类、防具三类、建筑三类、药学</h2>
+    <p class="p">龙之天地的配方没有一张总表，源站是<b>按品类拆成十二篇</b>的——五类武器各一篇、头部／肩甲／饰品各一篇、建筑物／地形／摆设各一篇，药学单独一篇。<b>这十二张表的列位并不一致</b>：武器的「攻击」「魔攻」、防具换成「防御力」「魔防」、建筑换成「所属系列」「制作花费」，药学的恢复量还分 HP／HP%／RP／RP% 四列。本页把它们并成一张可搜索的总目录，同时保留各表的原列。</p>
+    ${stat([['配方', total + ' 条'], ['品类', C.length + ' 类'], ['素材名', matList.length + ' 种'], ['无解锁条件', noUnlock + ' 条']])}
+    <h2 class="h2">十二类各多少条：${bigCat.k}最多，占了 ${Math.round(bigCat.rows.length / total * 100)}%</h2>
+    <p class="p">按条数排，<b>${bigCat.k}</b> 一类就有 ${bigCat.rows.length} 条${bigCat.rows.length > weaponCat ? '，比武器五类加起来（' + weaponCat + ' 条）还多' : ''}。每一类的卖价头名各不相同，下表最后一列就是各类卖价最高的成品：</p>
+    ${tbl(['品类', '条数', '该类卖价最高', '源文'], catRows, { leftFirst: true, colw: ['7rem', '5rem', 'auto', '6.4rem'] })}
+    <div class="key"><b>卖价的天花板全在武器上</b>：全表最贵的是 <b>${sellTop[0].n}（${sellTop[0].k}，${money(sellTop[0].s)}）</b>${topAllWeapon ? '，前八名清一色是武器' : ''}。${topShoulder && topAcc ? '防具里最高的是肩甲的 <b>' + topShoulder.n + '（' + money(topShoulder.s) + '）</b>，是饰品头名「' + topAcc.n + '」的 ' + (topShoulder.s / topAcc.s).toFixed(1) + ' 倍。' : ''}<b>建筑／地形／摆设的卖价${buildMaxSell < 10000 ? '全在五位数以下' : '最高也只有 ' + money(buildMaxSell)}</b>${topTerrain ? '——地形这一类里最贵的「' + topTerrain.n + '」只卖 ' + money(topTerrain.s) : ''}，这三类不是拿来卖的。</div>
+
+    <h2 class="h2">五类武器：攻击力阶梯与各类型的顶配</h2>
+    <p class="p">武器五类的攻击列都能读到数（<b>只有符咒例外</b>：${charm && charmAtkEmpty === charm.rows.length ? '它的「攻击」列整列 ' + charm.rows.length + ' 条全是「—」，数值只写在「魔攻」列' : charmAtkEmpty + ' 条的「攻击」写的是「—」'}）。各类型的下限与上限：</p>
+    ${tbl(['类型', '有攻击数值', '最低攻击', '最高攻击', '该件卖价'], wRows, { leftFirst: true, colw: ['5.6rem', '6.4rem', '5.6rem', 'auto', '5.4rem'] })}
+    <div class="key">全表攻击最高的是 <b>${wTop.n}（${wTop.k}，${wTop.a.toLocaleString()}）</b>，也就是${ceilStat.k}的上限；下限最低的是${floorStat.k}的 <b>${floorStat.bot.n}（${floorStat.bot.a}）</b>。<b>跨度最大的是${spanSorted[0].k}</b>：从「${spanSorted[0].bot.n} ${spanSorted[0].bot.a.toLocaleString()}」到「${spanSorted[0].top.n} ${spanSorted[0].top.a.toLocaleString()}」，${spanSorted[0].span.toFixed(0)} 倍；${spanSorted[1].k}紧随其后（${spanSorted[1].span.toFixed(0)} 倍），跨度最窄的是${spanSorted[spanSorted.length - 1].k}（${spanSorted[spanSorted.length - 1].span.toFixed(0)} 倍）。<b>符咒别按攻击挑</b>，它的数值全在「魔攻」列${charmTop ? '，最高那条是「' + charmTop.n + '」（魔攻 ' + charmTop.v.toLocaleString() + '）' : ''}。</div>
+
+    <h2 class="h2">屯什么素材：${matList.length} 种里，前三样占了 ${Math.round(base3n / matSlots * 100)}% 的材料位</h2>
+    <p class="p">${total} 条配方一共用到 <b>${matList.length} 种素材</b>、${matSlots} 个材料位。用得最多的十二种：</p>
+    ${tbl(['素材', '被几条配方用到'], matList.slice(0, 12).map(k => [k, mat[k] + ' 条']), { leftFirst: true, colw: ['auto', 'auto'] })}
+    <div class="key"><b>${base3.map(k => k + ' ' + (mat[k] || 0) + ' 条').join('、')}</b>——这三样出现在 ${base3n} 个材料位里，占全部材料位的 ${Math.round(base3n / matSlots * 100)}%。<b>它们主要不是被武器消耗的，是被建筑吃掉的</b>：建筑物／地形／摆设三类共 ${buildCat} 条配方，其中 <b>${buildWood} 条（${Math.round(buildWood / buildCat * 100)}%）</b>要用到木材／竹材或石材。想把村庄建起来，先备木材石材；想锻武器，要的是白金 ${mat['白金'] || 0} 条、银 ${mat['银'] || 0} 条这一档。<b>另有 ${single} 条配方只要一种材料</b>${emptyMat ? '，' + emptyMat + ' 条一个材料都不填（' + flat.filter(x => !x.m.length).map(x => x.k + '「' + x.n + '」').join('、') + '，原表如此）' : ''}。</div>
+
+    <h2 class="h2">卖价高于买价的，去掉建筑三类只剩 ${overNoDecor.length} 条</h2>
+    <p class="p">把每一类的买价与卖价并排比，绝大多数成品卖出去只有买价的五到七成。剩下的例外只有 ${overNoDecor.length} 条，落在 ${new Set(overNoDecor.map(x => x.k)).size} 个品类里：</p>
+    ${tbl(['成品', '品类', '买入', '卖出', '卖价／买价'], overSorted.map(x => [x.n, x.k, money(x.b), money(x.s), (x.s / x.b).toFixed(2) + ' 倍']), { leftFirst: true, colw: ['auto', '5.4rem', '5.4rem', 'auto', '5.4rem'] })}
+    <div class="key">${overSorted.length ? '价差最大的是<b>' + overSorted[0].k + '的「' + overSorted[0].n + '」，买 ' + money(overSorted[0].b) + ' 卖 ' + money(overSorted[0].s) + '，差 ' + (overSorted[0].s / overSorted[0].b).toFixed(1) + ' 倍</b>' : ''}${overSorted.length > 1 ? '；其次是' + overSorted.slice(1, 3).map(x => x.k + '「' + x.n + '」（' + (x.s / x.b).toFixed(1) + ' 倍）').join('与') : ''}。<b>但源表只给了这两个价，没写这些成品能不能重复购买</b>——本页只照录，不做「买来倒卖」的结论。</div>
+    <details class="mon-fold">
+        <summary>建筑三类的「买价」是整列固定值（点开看为什么）</summary>
+        <p class="p">建筑物／地形／摆设三类共 ${buildCat} 条里，<b>${buildFixed} 条的买价全写同一个数「${buildBuyTop}」</b>，${buildBuyNone} 条写「—」，<b>没有一条是逐件定价</b>。拿这个数算利润率没有意义。</p>
+        <p class="p">这也解释了为什么「卖价 > 买价」的 ${over.length} 条里有 ${over.length - overNoDecor.length} 条落在摆设——不是摆设能套利，而是这一列的买价本来就没填真实价格。这三类真正逐件不同的是卖价与制作花费两列${decoSell ? '：卖价从' + decoSell.lo.k + '的「' + decoSell.lo.n + '」' + money(decoSell.lo.v) + ' 到' + decoSell.hi.k + '的「' + decoSell.hi.n + '」' + money(decoSell.hi.v) : ''}${decoCost ? '；制作花费从「' + decoCost.lo.n + '」的 ' + decoCost.lo.v + 'G 到「' + decoCost.hi.n + '」的 ' + decoCost.hi.v.toLocaleString() + 'G' : ''}。</p>
+    </details>
+
+    <h2 class="h2">解锁条件：${noUnlock} 条没有条件，${task} 条靠任务，${frog} 条靠青蛙石</h2>
+    <p class="p">源表的「解锁条件」一列写法很杂：地名、任务名、牵绊等级、宝箱、青蛙石、NPC 对话都混在一起。<b>${noUnlock} 条（${Math.round(noUnlock / total * 100)}%）这一列是「—」</b>，也就是一开局就能做。能归到地名上的按地方数一遍：</p>
+    ${tbl(['解锁地点', '解锁了几条'], spotList.slice(0, 12).map(k => [k, spotCnt[k] + ' 条']), { leftFirst: true, colw: ['auto', 'auto'] })}
+    <div class="key">${spotList.length ? '归到地名上最多的是 <b>' + spotList[0] + '</b>（' + spotCnt[spotList[0]] + ' 条），意味着主线要推到那里才解锁对应配方。' : ''}另有 <b>${task} 条</b>要完成委托任务、<b>${kizuna} 条</b>要刷某人牵绊、<b>${frog} 条</b>要去敲青蛙石拿。${buildStat ? '拆开看，建筑／地形／摆设这三类 ' + buildStat.n + ' 条里，<b>' + buildStat.frog + ' 条靠青蛙石、' + buildStat.task + ' 条靠任务、' + buildStat.lv + ' 条看村子等级</b>，剩下 ' + buildStat.none + ' 条不写条件——想建村庄，敲石头与推村等级比刷怪重要得多。' : ''}</div>
+
+    <h2 class="h2">全部 ${total} 条，可按名字／素材／解锁条件搜索</h2>
+    <p class="p">十二张表并成一张。材料列照原表列到第 4 个材料位为止，原表写「—」的不显示。<b>建筑三类的买价会一律显示「10,000G」</b>，那是原表的固定值，不是真实定价（见上方折叠块）：</p>
+    ${ftableOwn(['成品', '品类', '材料', '买价', '卖价', '解锁条件'],
+        ['auto', '5.2rem', 'auto', '5rem', '5.4rem', 'auto'],
+        flat.map(x => [x.n + ' ' + x.k + ' ' + x.m.join(' ') + ' ' + x.u,
+            [x.n, x.k, x.m.length ? x.m.join('、') : '<span class="mon-no">—</span>',
+                money(x.b), money(x.s), dash(x.u)]]),
+        { ph: '输入成品名、素材或解锁条件' })}
+    <div class="note">取自 ${R.src}，十二篇共 ${total} 行，逐篇解析后合并；每类条数与源文号见上方「十二类各多少条」表。<b>本页不改原表数值</b>：「—」照录为「—」${zero.length ? '，「买价 0／卖价 0」的照录为 0（' + zero.map(x => x.k + x.n).join('、') + ' 共 ' + zero.length + ' 条）' : ''}，摆设表里「木材×290120」「石材×」这种数字粘连与缺数的格子也照录未改。<b>龙之天地的料理配方源页是图片，没有可解析的表格</b>，所以本页不含料理——缺的是这一块，不是漏抓。</div>
+    <div class="jump">
+        <a href="#/page/source"><div class="jp-t">素材出处与掉落</div><div class="jp-s">这些材料打谁掉</div></a>
+        <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">素材品质与技能等级怎么决定成品</div></a>
+        <a href="#/page/fishspot"><div class="jp-t">钓点与季节</div><div class="jp-s">药学要用的鱼在哪钓</div></a>
+    </div>`;
+}
+
 /* ------------------------------------------------------------
    素材出处与掉落：边境（RFF）
    源：js/rffmon.js 的 RFF_MON[8]「总掉落物」，每段形如「白金Lv1 100%」。
@@ -5904,10 +6117,11 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
+        gms: ['rff', 'rfo', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'rff') return recipeRffHtml();
             if (g.id === 'rfo') return recipeRfoHtml();
+            if (g.id === 'azuma') return recipeAzumaHtml();
             if (g.id.indexOf('rf4') === 0) return recipe4Html();
             const rec = (typeof RECIPE !== 'undefined') ? RECIPE : [];
             const cats = (typeof RECIPE_CATS !== 'undefined') ? RECIPE_CATS : [];
@@ -6375,6 +6589,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十四次：「配方大全」补上龙之天地——十二张表列位各不相同，只能按表头找列</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「配方大全」此前只覆盖边境／海洋／RF4／RF4S／RF5，<b>缺龙之天地</b>。新增顶层函数 <code>recipeAzumaHtml()</code>，<code>recipe</code> 条目 <code>gms</code> 加 <code>azuma</code> 并在 <code>body</code> 最前面分流。</li>
+                <li class="li"><b>数据源</b>：gametoeasy 的十二篇分品类配方页（单手剑 1814、大剑 1815、双剑 1813、符咒 1812、弓 1286；药学 1811；头部 1819、肩甲 1818、饰品 1817；建筑物 1820、地形 1821、摆设 1822），<code>_build_recipe_azuma.py</code> 逐篇解析后生成 <code>js/recipe_azuma.js</code>（<code>RECIPE_AZUMA.cats</code>，保留原表列序与原始单元格）。合计 <b>405 条配方 / 12 类 / 145 种素材 / 956 个材料位</b>。</li>
+                <li class="li"><b>为什么不能硬编码列下标</b>：这十二张表的列数就不一样——武器与防具 13 列、建筑 12 列、药学 15 列；表头用词也不统一（<b>「武器攻击」／「攻击」、「买价」／「价格-买价」、「特殊效果」／「武器特殊效果」</b>）。所以页面一律用 <code>head.indexOf(关键词)</code> 找列，取「买价／卖价／解锁／攻击」都靠表头名，换一篇不会错位。</li>
+                <li class="li"><b>从数据里算出来、和直觉不一样的几条</b>：① <b>摆设 140 条</b>是最大一类，比武器五类加起来（111 条）还多；② 卖价天花板全在武器——最贵是<b>双龙剑 225,750G</b>（不是单手剑的神龙剑 222,500G），前八名清一色是武器；③ <b>符咒的「攻击」列整列 22 条全是「—」</b>，数值只写在「魔攻」列，最高那条是高阶阴阳符咒（魔攻 4,800）——按攻击挑符咒会一条都挑不出来；④ 木材 97 条、石材 94 条、铁 49 条合计占 <b>25% 的材料位</b>，而建筑三类 184 条里有 <b>153 条</b>要用木／竹／石材，说明这三样是被建筑吃掉的、不是被武器吃掉的。</li>
+                <li class="li"><b>踩坑一：把「新手到毕业」写死了</b>。初稿在武器段写「单手剑跨度最大、是新手到毕业都能用的类型」——那是我按印象写的。按表算出来跨度最大的是<b>双剑（钢化刃 12 → 双龙剑 4,820，402 倍）</b>，单手剑 333 倍只排第二，跨度最窄的反而是弓（141 倍）。改成本页现算 <code>span</code> 并排序输出，句子里的类型名和倍数都由数据生成。</li>
+                <li class="li"><b>踩坑二：只查了摆设，漏了建筑与地形</b>。初稿发现「摆设 129 条买价全写 10000」，就当成摆设一类的问题。后来翻目录表才发现<b>建筑物 27/29、地形 15/15 也全是 10000</b>——是<b>建筑三类共 171/184 条的买价整列都被填成固定值</b>。统计口径从「摆设一类」扩到「建筑三类」，折叠块与目录表上方的提示都跟着改。因此「卖价 > 买价」的 16 条里有 12 条落在摆设并不是套利机会，而是这一列本来就没填真实价格。</li>
+                <li class="li"><b>照录不补的部分</b>：写「—」的照录为「—」；<b>买价 0／卖价 0</b> 的 6 条（大剑神剑祭华火、饰品幸运放大镜／幸运戒指／贤者之证／洞察绑腿／闪身绑腿）照录为 0；摆设表里<b>「木材×290120」「石材×」</b>这类数字粘连与缺数的格子也照录未改。<b>料理没有收录</b>：源站 post/1810 的料理页正文里没有表格（29KB、零 table），是图片排版，无法解析——缺的是这一块，不是漏抓，已在页尾注明。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>379 实例</b>（新增 1）／0 异常／头像 214 张缺 0；正文无空值占位；1100px 与 520px 两档 headless 截图核对，405 行总目录与各类小表都在容器内正常横滑。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百二十三次：「素材出处与掉落」补上龙之天地——掉落是「魔物×区域」，同一只怪换个地方就换一档</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「素材出处与掉落」此前覆盖边境／海洋／RF3／RF4／RF5 共 7 个条目，<b>缺龙之天地</b>。新增顶层函数 <code>sourceAzumaHtml()</code>，<code>source</code> 条目 <code>gms</code> 加 <code>azuma</code>（分支写在最前，避免落进 RF4／RF5 的兜底逻辑）。</li>
