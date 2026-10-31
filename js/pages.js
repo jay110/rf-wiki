@@ -17,9 +17,11 @@ function tbl(head, rows, opts) {
     const w = o.colw || [];
     const st = i => (w[i] ? ` style="width:${w[i]}"` : '');
     const cls = o.cls ? ' ' + o.cls : '';
-    const th = head.map((h, i) => `<th class="th${i === 0 && o.leftFirst ? ' left' : ''}"${st(i)}>${h}</th>`).join('');
+    /* 左对齐列：首列由 leftFirst 控制，其余列用 left:[下标] 指定（表头一起左对齐） */
+    const isL = i => (i === 0 && o.leftFirst) || (o.left && o.left.indexOf(i) >= 0);
+    const th = head.map((h, i) => `<th class="th${isL(i) ? ' left' : ''}"${st(i)}>${h}</th>`).join('');
     const tr = rows.map(r => '<tr>' + r.map((c, i) =>
-        `<td class="td${i === 0 && o.leftFirst ? ' left' : ''}"${st(i)}>${c}</td>`).join('') + '</tr>').join('');
+        `<td class="td${isL(i) ? ' left' : ''}"${st(i)}>${c}</td>`).join('') + '</tr>').join('');
     return `<div class="table${cls}"><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 function stat(pairs) {
@@ -50,10 +52,11 @@ function npcLink(gid, s) {
 function ftableOwn(head, colw, rows, opts) {
     const o = opts || {};
     const w = colw || [];
+    const isL = i => (i === 0) || (o.left && o.left.indexOf(i) >= 0);
     const th = head.map((h, i) =>
-        `<th class="th${i === 0 ? ' left' : ''}"${w[i] ? ` style="width:${w[i]}"` : ''}>${h}</th>`).join('');
+        `<th class="th${isL(i) ? ' left' : ''}"${w[i] ? ` style="width:${w[i]}"` : ''}>${h}</th>`).join('');
     const tr = rows.map(r => `<tr data-s="${r[0]}">` +
-        r[1].map((c, i) => `<td class="td${i === 0 ? ' left' : ''}">${c}</td>`).join('') + '</tr>').join('');
+        r[1].map((c, i) => `<td class="td${isL(i) ? ' left' : ''}">${c}</td>`).join('') + '</tr>').join('');
     return `<div class="eqown">
         <div class="rec-filter">
             <input class="eqown-q" type="search" placeholder="${o.ph || '输入名称筛选'}" />
@@ -243,6 +246,95 @@ function fishRf1Html() {
             fishRows, { ph: '输入鱼名筛选' })}
 
         <div class="note">中文名取自汉化版《RF1文本翻译对照表（校对7）》的日文→中文映射（<b>非 SE 官方</b>，汉化组译法，不同汉化组可能有出入），例如 鳟鱼=Cherry Salmon、鲭鱼=Mackerel、鰤鱼=Yellowtail、银鲫鱼=Crucian Carp、鲽鱼=Turbot、珠星鱼=Chub、黑毛鱼=Girella、西太公鱼=Pond Smelt、螯龙虾=Lobster、斑乌贼=Jamasquid、伊富鱼=Taimen、心动鲷鱼=Lover Snapper。事实层（出现率、卖价、钓点分布）来自 Fandom 双页交叉核对，可信。以下 4 种暂无汉化对照表直接对应，采用通用水产译名或系列原创名音译，作为本站定名（如有更准汉化对应可再替换）：基贝里奥(Gibelio·系列原创名)、秋比目鱼(Fall Flounder·秋生比目鱼)、狗鱼(Pike·狗鱼 Esox lucius)、真鳟(Masu Trout·马苏鲑类)。<b>钓点名</b>多数采用本站洞窟定稿（卡麦特／特罗斯／克莱门斯／癸干忒／密丝特布鲁姆／卡西米尔／达努／格力德），海边、农场与河流、密丝特布鲁姆洞窟外 为该表无存盘点记录者，用通译。</div>
+    `;
+}
+
+/* ------------------------------------------------------------
+   龙之天地（azuma）鱼类图鉴
+   数据两处，同一条事实只存一处：
+     SPOT_AZUMA.fishes（post/1829）→ 鱼种／卖价／买价／钓点／商店／解锁
+     FISH_AZUMA（post/1830）      → 图鉴任务 5 档配方奖励 + 全满奖励
+   鱼种表与「钓点与季节」页共用 SPOT_AZUMA，本页不另存一份鱼名。
+   ------------------------------------------------------------ */
+function fishAzumaHtml() {
+    const F = (typeof SPOT_AZUMA !== 'undefined' && SPOT_AZUMA.fishes) ? SPOT_AZUMA.fishes : [];
+    if (!F.length) return '';
+    const RW = (typeof FISH_AZUMA !== 'undefined') ? FISH_AZUMA : { rewards: [], full: null };
+    const N = v => /^\d+$/.test(String(v)) ? +v : null;
+    const money = v => N(v) == null ? '<span class="mon-no">—</span>' : N(v).toLocaleString() + 'G';
+    const dash = '<span class="mon-no">—</span>';
+
+    /* 卖价档位 */
+    const bySell = {};
+    F.forEach(f => { const v = N(f.sell); if (v != null) (bySell[v] = bySell[v] || []).push(f.n); });
+    const sells = Object.keys(bySell).map(Number).sort((a, b) => b - a);
+    const topSell = sells[0], topNames = bySell[topSell];
+    const lowSell = sells[sells.length - 1];
+    const eq2 = F.filter(f => N(f.buy) === N(f.sell) * 2).length;
+
+    /* 钓点 → 鱼 */
+    const spotMap = {};
+    F.forEach(f => f.spots.forEach(s => (spotMap[s] = spotMap[s] || []).push(f.n)));
+    const spotKeys = Object.keys(spotMap).sort((a, b) => spotMap[b].length - spotMap[a].length || a.localeCompare(b, 'zh'));
+    const condSpots = spotKeys.filter(s => /雨|夜晚/.test(s));
+    const single = F.filter(f => f.spots.length === 1);
+
+    /* 商店 */
+    const shopMap = {};
+    F.forEach(f => f.shops.forEach(s => (shopMap[s] = shopMap[s] || []).push(f.n)));
+    const shopKeys = Object.keys(shopMap).sort((a, b) => shopMap[b].length - shopMap[a].length);
+    const buyable = F.filter(f => f.shops.length);
+    const unlock = F.filter(f => f.unlock);
+
+    const rw = RW.rewards || [];
+    const maxAt = rw.length ? N(rw[rw.length - 1].at) : null;
+    const rwItems = rw.reduce((n, r) => n + r.items.length, 0);
+    const gap = (maxAt != null) ? maxAt - F.length : null;
+
+    const fishRows = F.map(f => [f.n + ' ' + f.spots.join(' ') + ' ' + f.shops.join(' '), [
+        f.n, money(f.sell), money(f.buy),
+        f.spots.length ? f.spots.join('、') : dash,
+        f.shops.length ? f.shops.join('、') : dash,
+        f.unlock || dash,
+    ]]);
+
+    return `
+        <p class="p">本页是<b>《符文工房：龙之天地》</b>的鱼类专项数据，不收前作的鱼表——这一作的鱼、价格、钓点、商店通路都是另起一套，套 RF4／RF5 的名单只会误导。共 <b>${F.length} 种鱼与钓物</b>，全部能在<b>${spotKeys.length} 处钓点写法</b>里查到出没位置，其中 ${buyable.length} 种另有商店通路。要按「某片水域出哪几种鱼」翻，去 <a href="#/page/fishspot">钓点与季节</a> 页；这一页按<b>鱼</b>排，外加图鉴任务的奖励表。</p>
+        ${stat([
+        ['鱼种', F.length + ' 种'],
+        ['钓点写法', spotKeys.length + ' 处'],
+        ['能买到的', buyable.length + ' 种'],
+        ['图鉴档位', rw.length + ' 档'],
+    ])}
+        <div class="key">价格上有一处极整齐的规律：<b>${F.length} 种鱼的买价全部正好是卖价的 2 倍（${eq2}/${F.length} 行）</b>。所以「买鱼再出货」是稳亏一半的生意——商店在这作里是补图鉴/凑料理的通道，不是赚钱通道。最贵的 <b>${topNames.join('、')}</b> 卖 ${money(topSell)}、买 ${money(topSell * 2)}，最便宜的只卖 ${money(lowSell)}。</div>
+
+        <h2 class="h2">全鱼种：${F.length} 种，按名字排</h2>
+        <p class="p">列序照源表：<b>卖价</b>是出货所得、<b>买价</b>是店里买入要付的钱；「钓点」带括号的是条件写法（雨天／夜晚），照录不展开成两行；「可买店」为「—」的只能自己钓。源表没有出现率与尺寸，本页也不编。</p>
+        ${ftableOwn(['名称', '卖价', '买价', '钓点', '可买店', '解锁'],
+        ['7.4rem', '5.2rem', '5.2rem', '13rem', '12rem', '9rem'],
+        fishRows, { ph: '输入鱼名、钓点或店名筛选', cls: 'spot', left: [3, 4] })}
+
+        <h2 class="h2">图鉴任务：钓到 ${rw.length ? rw.map(r => r.at).join('／') : '—'} 种时给配方</h2>
+        <p class="p">龙之天地的鱼类图鉴不是纯收集——每攒到一个档位，任务会给一批<b>配方</b>，五个档位合计 ${rwItems} 项，全是钓竿与海鲜料理。注意奖励给的是<b>配方（会做）</b>，不是成品：拿到配方还得自己备料下厨。</p>
+        ${tbl(['图鉴数量', '奖励配方（照源表顺序）'],
+        rw.map(r => ['<b>' + r.at + '</b> 种', r.items.join('、')]),
+        { leftFirst: true, colw: ['6.4rem', 'auto'], left: [1] })}
+        ${RW.full ? `<div class="key">表后另有一句：<b>全满奖励是 ${RW.full.text}</b>。${RW.full.item ? '「' + RW.full.item + '」是钓具，不在上面五个档位的配方里，是独立的一件。' : ''}</div>` : ''}
+        ${gap != null && gap !== 0 ? `<div class="note"><b>两篇源文的数字对不上，照录不改</b>：图鉴任务最高一档写的是 <b>${maxAt} 种</b>，而钓鱼攻略（post/1829）只列出 <b>${F.length} 种</b>鱼——差 ${Math.abs(gap)} 种。两端都是源站原文，本站既不给那 ${Math.abs(gap)} 种编名字，也不把 ${maxAt} 改成 ${F.length}；想确认缺的是哪几种，得回游戏里对图鉴。另有 ${unlock.length ? unlock.length + ' 种（' + unlock.map(f => f.n).join('、') + '）的解锁条件写着「' + unlock[0].unlock + '」' : '部分鱼有解锁条件'}——那是商店上架条件，不是钓取条件。</div>` : ''}
+
+        <h2 class="h2">卖价 ${sells.length} 档：${topNames.length} 种并列 ${money(topSell)}，下面是 ${money(sells[1])} 的断层</h2>
+        <p class="p">把卖价按档排开，最上面那一档是<b>${topNames.length} 种并列第一</b>，第二档只有 ${money(sells[1])}（${bySell[sells[1]].join('、')}）——差 ${(topSell / sells[1]).toFixed(1)} 倍，是个很硬的断层。这 ${topNames.length} 种全部出在<b>垂钓岛</b>与<b>妖怪岛</b>（含夜晚），没有例外：${topNames.map(n => n + '（' + F.filter(f => f.n === n)[0].spots.join('、') + '）').join('；')}。</p>
+        ${tbl(['卖价', '种数', '鱼名'], sells.map(v => [money(v), '<b>' + bySell[v].length + '</b>', bySell[v].join('、')]), { leftFirst: true, colw: ['6rem', '4.2rem', 'auto'], left: [2] })}
+
+        <h2 class="h2">钓点：竹笋岛 ${spotMap['竹笋岛'] ? spotMap['竹笋岛'].length : 0} 种最多，${single.length} 种只在一个地方出</h2>
+        <p class="p">${spotKeys.length} 处写法里，${condSpots.length} 处带条件（${condSpots.map(s => '「' + s + '」' + spotMap[s].length + ' 种').join('、')}）——同一片地方，下雨或入夜才会换一批鱼，白天去是白跑。反过来看，<b>${single.length} 种鱼只在一个钓点出</b>：${single.map(f => f.n + '→' + f.spots[0]).join('、')}。想凑图鉴，这 ${single.length} 种得专门跑一趟。</p>
+        ${tbl(['钓点', '种数', '能钓到的鱼'], spotKeys.map(s => [s, '<b>' + spotMap[s].length + '</b>', spotMap[s].join('、')]), { leftFirst: true, colw: ['11rem', '4.2rem', 'auto'], left: [2] })}
+        <div class="note">「冬之原野」「冬之原野：海边」「冬之原野：池塘·河」在源表里是三处不同写法，本页照录不合并；同理「夏之里（雨）」与「夏之里（雨天）」是源表两种写法，各自成行。<b>${F.length - buyable.length} 种鱼没有商店通路</b>（${F.filter(f => !f.shops.length).map(f => f.n).join('、')}），只能钓。</div>
+
+        <h2 class="h2">商店：${buyable.length} 种能买，${shopKeys.length} 处柜台</h2>
+        <p class="p">可买的 ${buyable.length} 种集中在一处：<b>${shopKeys[0]}</b> 一家就占 ${shopMap[shopKeys[0]].length} 种，其余分给 ${shopKeys.slice(1).map(s => s + '（' + shopMap[s].length + ' 种）').join('、')}。按买价 2 倍算，凑齐这 ${buyable.length} 种要花 <b>${buyable.reduce((n, f) => n + (N(f.buy) || 0), 0).toLocaleString()}G</b>——而这些鱼全部卖掉只值 ${Math.round(buyable.reduce((n, f) => n + (N(f.sell) || 0), 0)).toLocaleString()}G。</p>
+        ${tbl(['店', '种数', '在售鱼'], shopKeys.map(s => [s, '<b>' + shopMap[s].length + '</b>', shopMap[s].join('、')]), { leftFirst: true, colw: ['12rem', '4.2rem', 'auto'], left: [2] })}
+        <div class="note">数据源：gametoeasy.com《符文工房:龙之天地》钓鱼攻略（post/1829，鱼种／价格／钓点／商店）与《鱼类图鉴 任务奖励》（post/1830，五档配方与全满奖励），分别由 <code>_build_fishspot_azuma.py</code>、<code>_build_fish_azuma.py</code> 生成 <code>js/fishspot_azuma.js</code>、<code>js/fish_azuma.js</code>。两篇是同站同系列，<b>没有第二个独立来源交叉核对</b>；<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。源表把河豚的商店一栏写成「夏之里 海之家水滨／妖怪岛」，本页照录为两处柜台，不改判。</div>
     `;
 }
 
@@ -6487,6 +6579,8 @@ const PAGES = [
     {
         key: 'fish', group: 'item', title: '鱼类图鉴', icon: 'fish',
         body: (g) => {
+            /* 龙之天地另起一套鱼表，分支写最前：漏过去就会落进 RF4／RF5 的通用表 */
+            if (g.id === 'azuma') return fishAzumaHtml();
             /* RF2 / 边境 有自身的鱼表，走专用分支，不套用 RF4／RF5 数据 */
             const oldFish = fishOldHtml(g || {});
             if (oldFish) return oldFish;
@@ -6881,6 +6975,16 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十八次：「鱼类图鉴」补上龙之天地——此前它显示的其实是 RF4／RF5 的鱼，现在换成这一作自己的 42 种，并接上图鉴任务奖励</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块（而且是一处会误导人的地方）</b>：「鱼类图鉴」页对龙之天地<b>没有专属分支</b>，既没命中 RF2／边境／RF3／RF1 的专用表，就一路落到页尾的 RF4／RF5 通用表，只在顶上多一句「本作鱼类专项数据暂缺」。读者点进来看到的是 61 种 RF4 鱼、金杯线、鱼影机制——<b>全是别作的数据</b>。这次新增顶层函数 <code>fishAzumaHtml()</code>，<code>fish</code> 条目的 <code>body</code> 第一行就分流（写最前，避免被后面的兜底逻辑吃掉）。</li>
+                <li class="li"><b>数据源两篇，同一条事实只存一处</b>：鱼种／价格／钓点／商店取 gametoeasy《钓鱼攻略》（post/1829，早已用于「钓点与季节」页的 <code>SPOT_AZUMA.fishes</code>，本页直接复用，不另存一份鱼名）；图鉴任务奖励取《鱼类图鉴 任务奖励》（post/1830），新增 <code>_build_fish_azuma.py</code> → <code>js/fish_azuma.js</code>（<code>FISH_AZUMA</code>：5 档奖励 + 全满奖励）。</li>
+                <li class="li"><b>算出来的几条</b>：① <b>42 种鱼与钓物，买价全部正好是卖价的 2 倍（42/42 行）</b>——买鱼再出货稳亏一半，商店在这作是补图鉴与凑料理的通道；② 卖价 13 档，<b>5 种并列 5,000G</b>（心动鲷鱼／翻车鱼／金章鱼／闪光鲷鱼／鳕场蟹），第二档只有 1,500G（鲍鱼），<b>差 3.3 倍</b>的断层，且这 5 种全都出在垂钓岛与妖怪岛（含夜晚）；最便宜是虾 30G；③ <b>22 处钓点写法里 8 处带条件</b>（雨天／夜晚），<b>12 种鱼只在一个钓点出</b>，凑图鉴得专门跑；④ <b>17 种能在店里买到</b>，集中在水产品店（旅行商人）13 种，<b>买齐要 7,320G、全部卖掉只值 3,660G</b>；⑤ 25 种没有商店通路，只能钓。</li>
+                <li class="li"><b>图鉴任务奖励</b>：钓到 10／20／30／40／45 种各给一批配方，五档合计 <b>26 项</b>（三把钓竿 + 海鲜料理），奖励给的是<b>配方</b>不是成品；表后另有一句「全满奖励是鱼笼×1」，本页单列成一条，不塞进五档里。</li>
+                <li class="li"><b>两篇源文的数字对不上，照录不改</b>：图鉴任务最高一档写 <b>45 种</b>，而钓鱼攻略只列 <b>42 种</b>，<b>差 3 种</b>。两端都是源站原文，本站既不给那 3 种编名字，也不把 45 改成 42——页上把这个差额直接写出来，并指出想确认缺哪几种得回游戏对图鉴。</li>
+                <li class="li"><b>顺带修了一个公共组件的毛病</b>：<code>tbl()</code> 与 <code>ftableOwn()</code> 原来只能把<b>首列</b>左对齐，长名单列要么居中（参差不齐），要么靠块级 span 硬掰——结果出现<b>表头居中、内容左对齐</b>的错位。给两者都加了 <code>left: [下标…]</code> 选项，表头与单元格一起左对齐；本页的钓点／可买店／鱼名／配方四列都改用它，旧调用不受影响。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>380 实例</b>／0 异常／头像 214 张缺 0；1100px 与 520px 两档截图核对，42 行总表在窄屏下按列换行、不横向溢出。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百二十七次：新增「村民技能」页——502 条技能分成两套体系，顺带发现名单里有 8 位村民没收录</h2>
             <ul class="ul">
                 <li class="li"><b>为什么新开一页</b>：龙之天地的技能表按<b>「村民 × 技能 × 解锁等级」</b>列，502 行挂在 28 个村民名下，塞不进「战斗与弱点」或「魔物与伙伴」任何一页。新增 azuma 专属条目 <code>azuma_skill</code>（<code>gms: ['azuma']</code>，与「魔物与喜好」「BOSS 战」同一类）与顶层函数 <code>azumaSkillHtml()</code>。</li>
