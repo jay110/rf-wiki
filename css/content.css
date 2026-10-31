@@ -597,6 +597,20 @@
 
 /* 村民喜好（RF1／RF2）：列少、每列都不长，表身按内容收缩会在右侧留一截空白，
    与上下说明框对不齐。这里让它铺满内容区，列宽按内容比例摊开。 */
+.content .table.src12 table {
+    min-width: 52rem;
+    width: 100%;
+}
+
+.content .table.src12 .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.src12 tbody td:first-child {
+    white-space: nowrap;
+}
+
 .content .table.gfill table {
     width: 100%;
     /* 手机宽度下 4 列铺开会把「春12日」「斗牛的角」逐字拆行，这里兜一个下限，

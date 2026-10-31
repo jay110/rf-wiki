@@ -2369,6 +2369,164 @@ function sourceRfoHtml() {
    与边境／海洋两节的关键差别：这一列只写「从哪来」，**没有概率**。
    原表没给概率，页面也就一个数字都不补。
    ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   素材出处与掉落：RF1／RF2
+   源：biligame 符文工房 wiki「RF1itemdata」「RF2item」两张材料表
+   两表都只写「从哪来、值多少」，<b>没有任何掉率数字</b>——与边境／海洋那种
+   「打这只怪、掉这件东西、百分之几」不是同一种表，页上照此说明。
+   RF1 表头是 买价→卖价，RF2 是 卖价→买价，故按表头找列，不按下标硬取。
+   ------------------------------------------------------------ */
+function sourceRf12Html(g) {
+    const id = g.id;
+    const D = (typeof SOURCE_RF12 !== 'undefined') ? SOURCE_RF12[id] : null;
+    if (!D || !(D.rows || []).length) return '';
+    const H = D.head, R = D.rows;
+    const ci = kw => H.findIndex(h => h.indexOf(kw) >= 0);
+    const iMon = ci('掉落'), iLoc = ci(id === 'rf1' ? '获取地点' : '所在地');
+    const iBuy = ci('买价'), iSell = ci('卖价'), iShop = ci('店铺'), iUse = ci('配方');
+
+    const has = v => !!v && v !== '-' && v !== '无';
+    const DASH = '<span class="mon-no">—</span>';
+    const money = v => has(v) ? v + 'G' : DASH;
+    const cell = v => has(v) ? v : DASH;
+
+    const N = R.length;
+    const monR = R.filter(r => has(r[iMon]));
+    const buyR = R.filter(r => has(r[iBuy]));
+    const shopR = R.filter(r => has(r[iShop]));
+    const useR = R.filter(r => has(r[iUse]));
+
+    /* 洞窟编号：RF1 源表把洞窟简写成「3洞」「8洞」 */
+    const caveCnt = {};
+    R.forEach(r => {
+        if (!has(r[iLoc])) return;
+        r[iLoc].split('、').forEach(x => {
+            const m = /^(\d+)洞/.exec(x.trim());
+            if (m) caveCnt[m[1]] = (caveCnt[m[1]] || 0) + 1;
+        });
+    });
+    const caveKeys = Object.keys(caveCnt).sort((a, b) => +a - +b);
+    const caveR = R.filter(r => has(r[iLoc]) && /\d+洞/.test(r[iLoc]));
+
+    /* 按魔物反查：把「摩可摩可1~3心生产」这类后缀去掉再归并 */
+    const byMon = {};
+    R.forEach(r => {
+        if (!has(r[iMon])) return;
+        r[iMon].split('、').forEach(x => {
+            const n = x.replace(/\d+~\d+心生产$/, '').replace(/心生产$/, '').trim();
+            if (!n) return;
+            const arr = byMon[n] = byMon[n] || [];
+            if (arr.indexOf(r[0]) < 0) arr.push(r[0]);
+        });
+    });
+    const monKeys = Object.keys(byMon).sort((a, b) => byMon[b].length - byMon[a].length || a.localeCompare(b));
+
+    /* 配方用途 */
+    const useArr = useR.map(r => [r[0], r[iUse].split('、').filter(Boolean)])
+        .sort((a, b) => b[1].length - a[1].length);
+    const useTop = useArr.slice(0, 12);
+    const useTotal = useArr.reduce((s, x) => s + x[1].length, 0);
+
+    /* 卖价榜（按数值排，不按字符串） */
+    const sellTop = R.filter(r => has(r[iSell])).map(r => [r[0], +r[iSell]])
+        .filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+    const allRows = R.map(r => [
+        r[0] + ' ' + (has(r[iMon]) ? r[iMon] : '') + ' ' + (has(r[iLoc]) ? r[iLoc] : ''),
+        [r[0], cell(r[iMon]), cell(r[iLoc]), money(r[iBuy]), money(r[iSell]),
+        has(r[iUse]) ? r[iUse].split('、').filter(Boolean).length : DASH]]);
+
+    const monRows = monKeys.map(n => [
+        n + ' ' + byMon[n].join(' '),
+        [n, byMon[n].length + ' 种', byMon[n].join('、')]]);
+
+    /* tbl 的行是「扁平单元格数组」；[搜索词, [单元格…]] 那套是 ftableOwn 的格式，混用会把整行塞进一格 */
+    const useRows = useTop.map(([n, list]) => [
+        n, list.length + ' 项',
+        list.slice(0, 5).join('、') + (list.length > 5 ? ' 等 ' + list.length + ' 项' : '')]);
+
+    /* 跨作同名对照：两表都读同一份 SOURCE_RF12 */
+    const OTHER = (typeof SOURCE_RF12 !== 'undefined') ? SOURCE_RF12[id === 'rf1' ? 'rf2' : 'rf1'] : null;
+    let crossRows = [], crossN = 0, onlyMine = [], onlyOther = [];
+    if (OTHER && OTHER.rows) {
+        const oSell = OTHER.head.findIndex(h => h.indexOf('卖价') >= 0);
+        const oMap = {};
+        OTHER.rows.forEach(r => { oMap[r[0]] = r; });
+        const mine = {};
+        R.forEach(r => { mine[r[0]] = r; });
+        const shared = R.map(r => r[0]).filter(n => oMap[n]);
+        crossN = shared.length;
+        /* 列序固定成 RF1 在前、RF2 在后，倍数固定 RF2÷RF1——
+           两作的「卖价」列下标不同（RF1 是第 5 列、RF2 是第 4 列），
+           必须各按自己表的表头取，不能共用当前作的 iSell */
+        const iS1 = SOURCE_RF12.rf1.head.findIndex(h => h.indexOf('卖价') >= 0);
+        const iS2 = SOURCE_RF12.rf2.head.findIndex(h => h.indexOf('卖价') >= 0);
+        const r1row = n => (id === 'rf1' ? mine[n] : oMap[n]);
+        const r2row = n => (id === 'rf1' ? oMap[n] : mine[n]);
+        crossRows = shared.map(n => {
+            const a = r1row(n), b = r2row(n);
+            const sa = has(a[iS1]) ? +a[iS1] : null;
+            const sb = has(b[iS2]) ? +b[iS2] : null;
+            const k = (sa && sb) ? sb / sa : null;
+            let ratio = DASH;
+            if (k != null) ratio = (Math.abs(k - 1) < 0.005) ? '<span class="txc">同价</span>' : '×' + k.toFixed(2);
+            return [n, money(a[iS1]), money(b[iS2]), ratio];
+        });
+        onlyMine = R.map(r => r[0]).filter(n => !oMap[n]);
+        onlyOther = OTHER.rows.map(r => r[0]).filter(n => !mine[n]);
+    }
+
+    /* 两作口径不同，导语与统计分开写 */
+    const is1 = id === 'rf1';
+
+    const caveLine = is1
+        ? `源表的「获取地点」有 <b>${caveR.length}</b> 种写着「N 洞」——这是<b>第 N 个洞窟</b>的简写，不是第 N 层。全表能在店里买到的只有 <b>${buyR.length}</b> 种（${buyR.map(r => r[0]).join('、')}），其中 3 种还是<b>医院</b>卖的。`
+        : `源表的「所在地」铺得很开：<b>${N}</b> 种里有 <b>${R.filter(r => has(r[iLoc]) && !/种地|田地|钓鱼|探索华尔兹|加工机/.test(r[iLoc])).length}</b> 种落在具体地图区域，剩下的是田地／钓鱼、加工机与「探索华尔兹」这几种非地图来源。`;
+
+    const priceNote = is1
+        ? `医院那 3 种，<b>买价一律是卖价的 30 倍</b>：${buyR.filter(r => has(r[iShop]) && r[iShop].indexOf('病院') >= 0).map(r => r[0] + ' 买 ' + r[iBuy] + 'G／卖 ' + r[iSell] + 'G').join('、')}。买来再卖是纯亏，别当倒卖货源。`
+        : `源表给 <b>${buyR.length}</b> 种全填了买价，却只在 <b>${shopR.length}</b> 种上标了店铺（${shopR.map(r => r[0] + '→' + r[iShop]).join('、')}）——所以「买价」是源表给的一个数，<b>不等于每种都买得到</b>。`;
+
+    return `
+    <p class="p">这一页在前面几作讲的是「打这只怪、掉这件东西、<b>概率多少</b>」。${is1 ? 'RF1' : 'RF2'} 的源表<b>一个概率数字都没有</b>——只写了「从哪来」和「值多少」。所以下面只回答<b>去哪弄</b>、<b>能卖多少</b>，不回答打几次能出；原表没给的，本站不替它补。</p>
+    ${stat(is1
+        ? [['素材', N + ' 种'], ['标了魔物来源', monR.length + ' 种'], ['店里能买到', buyR.length + ' 种'], ['配方里用得到', useR.length + ' 种']]
+        : [['素材', N + ' 种'], ['标了魔物来源', monR.length + ' 种'], ['填了买价', buyR.length + ' 种'], ['配方里用得到', useR.length + ' 种']])}
+
+    <h2 class="h2">${N} 种素材，${is1 ? '来源几乎全靠打和挖' : '铺在大小地图与三种设施里'}</h2>
+    <p class="p">${caveLine}</p>
+    <p class="p">${priceNote}</p>
+    ${is1 && caveKeys.length ? `<p class="p">各洞摊到多少种：${caveKeys.map(k => '<b>' + k + ' 洞</b> ' + caveCnt[k] + ' 种').join('、')}。后三个洞最密，6、7、8 洞各 ${caveCnt['6'] || 0} 种，前五个洞明显稀疏。</p>` : ''}
+    ${ftableOwn(['名称', '魔物掉落', is1 ? '获取地点' : '所在地', '买价', '卖价', '配方数'],
+        ['6.4rem', '10rem', 'auto', '5.6rem', '5.2rem', '4.4rem'],
+        allRows, { ph: '搜素材、魔物或地点', cls: 'src12', left: [1, 2] })}
+    <div class="note">「配方数」是源表「${is1 ? '配方需求' : '配方用得到'}」那一列里列了几件成品，不是件数上限——一件素材能被多少配方用到，就是多少。买价写「—」的，是源表这一格空着或写「-」，本站不按卖价折算。</div>
+
+    <h2 class="h2">谁掉什么：反过来查</h2>
+    <p class="p">${is1
+            ? `按魔物归并后有 <b>${monKeys.length}</b> 只怪、共 <b>${monKeys.reduce((s, n) => s + byMon[n].length, 0)}</b> 条「怪→素材」关系，平均一只掉 ${(monKeys.reduce((s, n) => s + byMon[n].length, 0) / monKeys.length).toFixed(2)} 种。掉得最多的是 ${monKeys.slice(0, 3).map(n => n + '（' + byMon[n].length + ' 种）').join('、')}；结晶类没有专属怪——水之结晶 7 只、地／风之结晶各 6 只都能掉，缺结晶就地找怪，不必守着一只刷。`
+            : `按魔物归并后有 <b>${monKeys.length}</b> 只怪、共 <b>${monKeys.reduce((s, n) => s + byMon[n].length, 0)}</b> 条「怪→素材」关系，平均一只掉 ${(monKeys.reduce((s, n) => s + byMon[n].length, 0) / monKeys.length).toFixed(2)} 种——比 RF1 碎得多，绝大多数怪只出一种。出得最多的是 ${monKeys.slice(0, 3).map(n => n + '（' + byMon[n].length + ' 种）').join('、')}，其中摩可摩可的三种软软毛是<b>心数分档生产</b>，不是打怪掉。`}</p>
+    ${ftableOwn(['魔物', '能掉几种', '素材'], ['9rem', '5.4rem', 'auto'],
+        monRows, { ph: '搜魔物或素材', cls: 'src12', left: [2] })}
+    ${is1 ? '' : '<div class="note">源表「骷髅」那一格的魔物列写的是「哥布林流氓、哥布林大佬、<b>哥布林大佬</b>」——同一个名字写了两遍。此处照录原样，统计时按一只算。</div>'}
+
+    <h2 class="h2">配方里用得最多的素材</h2>
+    <p class="p">${useR.length} 种素材被写进了配方，合计 <b>${useTotal}</b> 处引用，平均每种 ${(useTotal / useR.length).toFixed(1)} 处。${is1 ? '铁' : '铁'}排第一（${useArr[0][1].length} 处）——${is1 ? '金、银、铜紧随其后，四种金属就占了 124 处' : '金、银紧随其后，三种金属合计 130 处'}。想攒材料，先攒金属。</p>
+    ${tbl(['素材', '配方数', '主要用途'], useRows, { leftFirst: true, colw: ['8rem', '5rem', 'auto'], cls: 'src12', left: [2] })}
+
+    ${crossN ? `<details class="mon-fold">
+        <summary>与 ${id === 'rf1' ? 'RF2' : 'RF1'} 同名的 ${crossN} 种素材，卖价并排看（点一下）</summary>
+        <p class="p">两作共 <b>${crossN}</b> 种同名素材（${id === 'rf1' ? 'RF1 ' + N + ' 种里占 ' + Math.round(crossN / N * 100) + '%' : 'RF2 ' + N + ' 种里占 ' + Math.round(crossN / N * 100) + '%'}）。<b>倍数那一列固定是「RF2 卖价 ÷ RF1 卖价」</b>，大于 1 表示同一件东西在 RF2 更值钱，小于 1 则相反——两页方向一致，不随本作翻转。差价最大的几项不一定是同一件东西真变了价——两作的素材用途本来就不同，这里只并排数字，不做换算、也不推断谁更划算。</p>
+        ${tbl(['素材', id === 'rf1' ? 'RF1 卖价' : 'RF1 卖价', id === 'rf1' ? 'RF2 卖价' : 'RF2 卖价', '倍数'],
+            crossRows, { leftFirst: true, colw: ['9rem', '6rem', '6rem', '5rem'], cls: 'src12' })}
+        <p class="p">另有只在一作出现的：${id === 'rf1' ? 'RF1' : 'RF2'} 独有 <b>${onlyMine.length}</b> 种（${onlyMine.join('、') || '—'}），${id === 'rf1' ? 'RF2' : 'RF1'} 独有 <b>${onlyOther.length}</b> 种（${onlyOther.join('、') || '—'}）。其中「软软毛 S／M／L 型」与「软软毛 S／M／L」、「毛线球 S／M／L 型」与「毛线球 S／M／L」其实是同一批东西，只是一边带「型」字——按名字对不上，不代表两作少了这些素材。</p>
+    </details>` : ''}
+
+    <div class="note">${is1
+            ? '数据取自 biligame 符文工房 wiki 的「RF1itemdata」页（源页表头：' + H.join('／') + '）。三处照录不修：源页的表格说明写的是「<b>符文工厂1药学配方</b>」，可表里装的是全部材料，说明与内容对不上；表里混着几件看着不像采集素材的东西（' + (R.filter(r => !has(r[iSell])).map(r => r[0]).join('、') || '—') + '），它们没有卖价，来源写着温泉、豪宅、铁匠铺或干脆空着，本站照录、不猜它们干什么用；店名与店址里的「ノイマンズ•ファーム」「エド病院」原文未译，照写。'
+            : '数据取自 biligame 符文工房 wiki 的「RF2item」页（源页表头：' + H.join('／') + '）。两处照录：地名里混着未译的日文（パレルモ神殿 穏やかな春、新緑の地下神殿 一層、渓谷の地下神殿 八層……），源表只给日文名，本站不替它编中文；来源写「<b>探索华尔兹</b>」的 5 种（丝绸、引火药、毒粉、结实的藤蔓、坏掉的柄）不是地图地点，源表就这么归类，具体是什么设施本页不解释。'}</div>`;
+}
+
 function sourceRf3Html() {
     const A = (typeof MAT_RF3 !== 'undefined') ? MAT_RF3 : [];
     if (!A.length) return '';
@@ -6877,8 +7035,9 @@ const PAGES = [
     },
     {
         key: 'source', group: 'item', title: '素材出处与掉落', icon: 'gem',
-        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
+            if (g.id === 'rf1' || g.id === 'rf2') return sourceRf12Html(g);
             if (g.id === 'azuma') return sourceAzumaHtml();
             if (g.id === 'rff') return sourceRffHtml();
             if (g.id === 'rfo') return sourceRfoHtml();
@@ -7514,6 +7673,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十五次：素材出处补上 RF1／RF2——79 种＋71 种，两表连口径都不一样</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是个不存在的页</b>：「素材出处与掉落」的 <code>gms</code> 里没有 rf1／rf2，这两作的作品目录里根本没这一项（手输地址进来，渲染的是 RF5 那张表）。本次补齐：<b>RF1 79 种、RF2 71 种</b>。数据由 <code>_build_source_rf12.py</code> 从 biligame 符文工房 wiki 的「RF1itemdata」「RF2item」两页 wikitext 解析成 <code>js/source_rf12.js</code>，新增顶层函数 <code>sourceRf12Html()</code>。</li>
+                <li class="li"><b>跟前面几作不是同一种表</b>：边境与海洋给的是「打这只怪、掉这件东西、<b>百分之几</b>」，RF1／RF2 的源表<b>一个概率数字都没有</b>，只写「从哪来」「值多少」。所以本页只回答去哪弄、能卖多少，不回答打几次能出——原表没给的不补，这条写在页面开头。</li>
+                <li class="li"><b>两表连口径都不同，故不合并</b>：RF1 的买价列<b>只在店里卖的时候才有值</b>（79 种里 4 种），与「店铺」列 4 条正好对上；RF2 却给 <b>71 种全填了买价</b>，而「店铺」只标了 2 条（饲料→杂货店、白金→由绘）。同叫「买价」，一个是真的能买到，一个只是个数字——页上分别说明，没把两列当同一件事。表头顺序也相反（RF1 是买价在前，RF2 是卖价在前），按表头找列，不按下标硬取。</li>
+                <li class="li"><b>算出来的几件事</b>：RF1 能在店里买到的只有 4 种（饲料、魔法之粉、根、龟壳），其中 3 种是<b>医院</b>卖的，且<b>买价一律是卖价的 30 倍</b>（魔法之粉 14,400／480、根 2,100／70、龟壳 600／20）——买来再卖是纯亏；「N 洞」是<b>第 N 个洞窟</b>的简写，不是第 N 层，65 种写着它，6、7、8 洞各 20 种、前五个洞明显稀疏。</li>
+                <li class="li"><b>反查表是一手新东西</b>：把「魔物掉落」倒过来聚合——RF1 <b>57 只怪、91 条「怪→素材」关系</b>（平均 1.60 种），RF2 <b>72 只怪、76 条</b>（平均 1.06 种，绝大多数怪只出一种）。RF1 的结晶类<b>没有专属怪</b>：水之结晶 7 只、地／风之结晶各 6 只都能掉，缺结晶就地找怪就行，不必守着一只刷。</li>
+                <li class="li"><b>两作同名 62 种，卖价并排</b>：用折叠块列出（RF2÷RF1，两页方向固定，不随本作翻转）。<b>9 种完全同价</b>（丝绸、战士之证、胶、破绷带、魔法之粉、蝎子的钳子、植物的茎、骷髅、废铁），其余差价很散——<b>小结晶在 RF2 是 RF1 的 46 倍</b>（16G→740G）、古代鱼的骨头 12 倍，反过来<b>毒粉在 RF1 是 RF2 的 20 倍</b>（800G→40G）。这里只并排数字，不做换算、也不推断谁更划算。</li>
+                <li class="li"><b>顺带修掉一处易错</b>：RF1 独有 17 种、RF2 独有 9 种，但其中「软软毛 S／M／L 型」与「软软毛 S／M／L」、「毛线球 S／M／L 型」与「毛线球 S／M／L」<b>是同一批东西</b>，只是一边多带个「型」字——按名字对不上，不代表两作少了这些素材。页上把这层写明，免得被当成两作差异。</li>
+                <li class="li"><b>源表三处照录不修</b>：RF1 那页的表格说明写的是「<b>符文工厂1药学配方</b>」，可表里装的是全部材料，说明与内容对不上；RF1 表里混着几件看着不像采集素材的东西（宠物药、纯白石、青金石、教典、罗纳贝尔提、克里莫亚的鳞片、克里莫亚的饰品剑、斯托拉圣杯、落日之路、圆石），没有卖价，来源写着温泉、豪宅、铁匠铺或空着——照录，不猜用途；RF2 的「骷髅」那格把<b>哥布林大佬写了两遍</b>，照录原样，统计时按一只算。</li>
+                <li class="li"><b>版面与两个坑</b>：新增 <code>.table.src12</code>（min-width 52rem ＋ 铺满宽度、首列锁单行）。坑一：<code>tbl()</code> 的行是<b>扁平单元格数组</b>，<code>[搜索词, [单元格…]]</code> 那套是 <code>ftableOwn()</code> 的格式——混用会把整行塞进第一格，长文本直接把表撑出屏幕。坑二：跨作对照表若让列序跟着本作翻，翻到 RF2 页时<b>表头写「RF1 卖价」、数据却是 RF2 的</b>，两作的「卖价」列下标本来就不一样（第 5 列／第 4 列），必须各按自己表的表头取。1100 与 520px 截图核对，窄屏按既有约定横滑。<code>_verify</code> <b>387 实例</b>（新增 2）／0 异常／头像 214 张缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百三十四次：村民喜好补上 RF1／RF2——28 人＋24 人，两作机制不同不并表</h2>
             <ul class="ul">
                 <li class="li"><b>补的是什么</b>：「村民喜好」页的 <code>gms</code> 里早就有 rf1／rf2，可 <code>NPC_FULL</code> 这两作只存了姓名、身份、声优、简介，<b>没有喜好清单</b>，于是落到兜底文案「这一作的人物喜好数据尚未收录」。本次补齐：<b>RF1 28 人、RF2 24 人</b>。数据由 <code>_build_gift_rf12.py</code> 从本地 wikitext 快照（<code>_npc_src/RF1characters.txt</code>／<code>RF2characters.txt</code>）解析成 <code>js/gift_rf12.js</code>，新增顶层函数 <code>giftRf12Html()</code>。</li>
