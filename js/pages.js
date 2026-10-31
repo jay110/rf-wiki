@@ -726,6 +726,127 @@ function crop1Html() {
 }
 
 /* ------------------------------------------------------------
+   符文工房 2 作物段
+   数据：CROP_RF2 ← biligame「RF2farmdata」（13 列 60 行）
+   注意：源页表头写的是「符文工厂1农作物数据」，但页名、内容与价格档都是 RF2 的；
+        这处笔误照录并写在页面上，不替它改。
+   ------------------------------------------------------------ */
+function crop2Html() {
+    const R = (typeof CROP_RF2 !== 'undefined') ? CROP_RF2 : [];
+    if (!R.length) return '';
+    const N = v => (v === null || v === undefined) ? '<span class="mon-no">—</span>' : v.toLocaleString('en-US');
+    const tot = R.length;
+    const cnt = s => R.filter(r => r.se === s).length;
+    const kindN = k => R.filter(r => r.kind === k).length;
+    const reg = R.filter(r => r.rep && r.rep !== '-');
+    const noDay = R.filter(r => !r.d);
+    const allSeason = R.filter(r => r.se === '全');
+    const noSeason = R.filter(r => r.se === '-');
+    const days = R.filter(r => r.d).map(r => r.d);
+    const minD = Math.min.apply(null, days), maxD = Math.max.apply(null, days);
+    const fast = R.filter(r => r.d === minD).map(r => r.n);
+    const slow = R.filter(r => r.d === maxD).map(r => r.n);
+    /* 三档单价：源表直接给 Lv1／Lv5／Lv10 */
+    const withP = R.filter(r => r.p1);
+    const std = withP.filter(r => r.p5 === Math.round(r.p1 * 1.1) && r.p10 === Math.round(r.p1 * 1.2));
+    const odd = withP.filter(r => std.indexOf(r) < 0 && r.p5 && r.p10);
+    const x2 = R.filter(r => r.p1 && r.bp && r.bp === r.p1 * 2);
+    const notX2 = R.filter(r => r.p1 && r.bp && r.bp !== r.p1 * 2);
+    const nobuy = R.filter(r => /买不到/.test(r.sbRaw || ''));
+
+    const grow = R.slice().sort((a, b) => (a.d || 999) - (b.d || 999) || a.n.localeCompare(b.n, 'zh'))
+        .map(r => [r.n, [
+            r.n, r.se === '-' ? '<span class="mon-no">—</span>' : r.se,
+            r.d ? String(r.d) : '<span class="mon-no">—</span>',
+            r.rep && r.rep !== '-' ? '每 ' + r.rep + ' 天' : '<span class="mon-no">—</span>',
+            r.kind,
+            r.eff === '-' ? '<span class="mon-no">—</span>' : r.eff.replace(/，$/, ''),
+        ]]);
+
+    const price = R.map(r => [r.n, [
+        r.n, N(r.sb), N(r.ss), N(r.p1), N(r.p5), N(r.p10), N(r.bp),
+    ]]);
+
+    return `
+        <h2 class="h2">${tot} 种作物，其中 ${tot - noDay.length} 种能种、${noDay.length} 种没有生长天数</h2>
+        <p class="p">RF2 的农作表比分作更细：同一种作物给出<b>首收天数、连续收获间隔、三个等级档的出货价</b>，还带食用效果与种类标签。表里 ${tot} 种作物按种类分成蔬菜 ${kindN('蔬菜')} 种、花卉 ${kindN('花卉')} 种、草 ${kindN('草')} 种、水果 ${kindN('水果')} 种。</p>
+        <div class="note">源页表头写的是「<b>符文工厂1</b>农作物数据」，但页名（<code>RF2farmdata</code>）、价格档与作物构成都是 RF2 的。这处笔误照录在此，不替源页改字。</div>
+        ${stat([['收录', tot + ' 种'], ['能种植', (tot - noDay.length) + ' 种'], ['连续收获', reg.length + ' 种'], ['生长跨度', minD + '～' + maxD + ' 天']])}
+        <div class="key">最快的是 <b>${fast.join('、')}（${minD} 天）</b>，最慢的是 <b>${slow.join('、')}（${maxD} 天）</b>——相差 30 倍。慢的那批不是拿来卖的，是拿来交任务和做药剂的。</div>
+        <h3 class="h3">成长、季节与食用效果</h3>
+        <p class="p">按生长天数从小到大排。「连续收获」写「每 N 天」的，收完不拔、隔 N 天再结一次；标 — 的是一次性作物，收完地就空了。食用效果照源表原样（源表多数条目末尾带一个「，」，这里只去掉那个尾巴）。</p>
+        ${ftableOwn(['作物', '季节', '生长天', '连续收获', '种类', '食用效果'],
+            ['6.4rem', '4.4rem', '4.6rem', '5.6rem', '4.4rem', '13rem'],
+            grow, { ph: '输入作物名、季节或种类', cls: 'crop2' })}
+
+        <h2 class="h2">连续收获 ${reg.length} 种：种一次收好几轮</h2>
+        <p class="p">这 ${reg.length} 种收完别拔。间隔最短的是<b>草莓与青椒</b>（每 2 天一次），最长的是<b>黄瓜</b>（每 6 天）。</p>
+        ${tbl(['作物', '季节', '首收', '再收间隔', '种类'], reg.map(r => [
+            r.n, r.se, r.d + ' 天', '每 ' + r.rep + ' 天', r.kind,
+        ]), { leftFirst: true, colw: ['6.4rem', '4rem', '4.4rem', '6rem', '4.4rem'] })}
+
+        <h2 class="h2">季节：${allSeason.length} 种草四季都能种，${noSeason.length} 种没有季节</h2>
+        <p class="p">表里的季节栏除了春／夏／秋／冬，还有两种写法：<b>「全」</b>与 <b>「—」</b>。<b>全季的 ${allSeason.length} 种全是草</b>（${allSeason.map(r => r.n).join('、')}），一年四季都能下种——这也解释了为什么药草类从来不用囤。<b>没有季节的 ${noSeason.length} 种</b>是 ${noSeason.map(r => r.n).join('、')}：牧草是饲料，葡萄／苹果／橘子是<b>树上结的</b>，枯草是田里长出来的麻烦，都不走「播种→成熟」这条线，所以源表不给生长天数，本页也不替它们编一个。</p>
+        ${tbl(['季节', '种数', '作物'], ['春', '夏', '秋', '冬', '全', '—'].map(s => [
+            s === '-' ? '—（无季节）' : s,
+            String(cnt(s)),
+            R.filter(r => r.se === s).map(r => r.n).join('、') || '—',
+        ]), { leftFirst: true, colw: ['6rem', '3.6rem', '26rem'], cls: 'txt' })}
+
+        <h2 class="h2">价格：等级只加一成与两成，但 ${odd.length} 种不走这条线</h2>
+        <p class="p">源表把同一件作物在 <b>Lv1／Lv5／Lv10</b> 三档的出货价都列了出来。${withP.length} 种里有 <b>${std.length} 种</b>完全符合「Lv5 = Lv1 × 1.1、Lv10 = Lv1 × 1.2」——<b>也就是说作物等级只值 +10% 和 +20%</b>，靠施肥把等级堆上去的收益远不如把地扩开。剩下的 ${odd.length} 种另一套比例：${odd.map(r => r.n + '（' + r.p5 + '／' + r.p10 + '）').join('、')}。</p>
+        <div class="note">「买价」是作物本身在店里的售价（不是种子），与 Lv1 出货价的关系<b>并不统一</b>：${x2.length} 种正好是 2 倍，另外 ${notX2.length} 种不是——${notX2.slice(0, 6).map(r => r.n + '（' + Math.round(r.bp / r.p1 * 10) / 10 + ' 倍）').join('、')}…… 两列照录并排，不做换算，也不拿它推利润率。</div>
+        <div class="note">${nobuy.length} 种的种子买价栏写着「买不到」：${nobuy.map(r => r.n + '（' + r.sbRaw + '）').join('、')}。数值仍照录在表里，但这一栏在原表就带着这个注，本页不替它解释成「在哪里能换到」。</div>
+        ${ftableOwn(['作物', '种子买价', '种子卖价', 'Lv1 卖价', 'Lv5 卖价', 'Lv10 卖价', '作物买价'],
+            ['6.4rem', '6rem', '6rem', '6rem', '6rem', '6.4rem', '6rem'],
+            price, { ph: '输入作物名', cls: 'crop2' })}
+    `;
+}
+
+/* ------------------------------------------------------------
+   符文工房 3 农作段
+   数据：SOIL_RF3（土地 6 档）、PEST_RF3（农药 4 种）、PLOVE_RF3（宠物好感 0–10 与四季作物）
+   源页 RF3farm 没有作物总表，给的是「田怎么变好」与「宠物替你种什么」，
+   故本段不列作物，只讲土质、农药与宠物种地。
+   ------------------------------------------------------------ */
+function crop3Html() {
+    const S = (typeof SOIL_RF3 !== 'undefined') ? SOIL_RF3 : [];
+    const P = (typeof PEST_RF3 !== 'undefined') ? PEST_RF3 : [];
+    const L = (typeof PLOVE_RF3 !== 'undefined') ? PLOVE_RF3 : [];
+    if (!S.length && !L.length) return '';
+
+    /* 好感档位里作物完全相同的并成一组 */
+    const sig = r => r.slice(1).join('|');
+    const groups = [];
+    L.forEach(r => {
+        const g = groups.filter(x => x.sig === sig(r))[0];
+        if (g) { g.lv.push(r[0]); } else { groups.push({ sig: sig(r), lv: [r[0]], crops: r.slice(1) }); }
+    });
+
+    return `
+        <h2 class="h2">RF3 的田：六档土质，营养值与成长速度要一起看</h2>
+        <p class="p">RF3 没有「作物一览」这种表，源页给的是<b>田本身</b>——同一块地会以六种状态之一存在，营养值决定能长多好，成长速度直接乘在生长天数上。最差的一档（营养 0～4）只有 <b>0.125 倍</b>速度，等于把 8 天的作物拖成 64 天。</p>
+        ${tbl(['土地状态', '营养值', '成长速度'], S.map(r => [r[0], r[1], '<b>' + r[2] + '</b>']),
+            { leftFirst: true, colw: ['13rem', '7rem', '9rem'], cls: 'txt' })}
+        <div class="note">源表还并排给了日文原文与英文（<code>この土は作物が最高に育ちやすそうで</code>／<code>The soil is excellent</code>），本站只取中文那一列；两者是同一行数据的两种语言，不是两种状态。</div>
+        <div class="key">六档从「完美」到「非常糟糕」，营养值区间是连续的 0～46，没有空档。所以施肥的目标很明确：<b>把这块地推过 30</b>，成长速度就从 2 倍以下跳到 2～3 倍。</div>
+
+        <h2 class="h2">农药四种：营养值全是 16，差别只在健康值</h2>
+        <p class="p">农药加的是<b>营养值</b>（16，四种全一样）与<b>健康值</b>（8／8／24／40）。所以「极速长」并不比「枯草」更能养地，它只是把健康值拉得更高。</p>
+        ${tbl(['农药', '营养值', '健康值'], P.map(r => [r[0], r[1], '<b>' + r[2] + '</b>']),
+            { leftFirst: true, colw: ['10rem', '5.6rem', '5.6rem'], cls: 'txt' })}
+        <div class="note">源表里<b>「枯草」与「很会长」两行数值完全相同</b>（16／8），名字却是两样东西——照录两行，不合并、也不猜它们是不是同一件道具的两种叫法。</div>
+
+        <h2 class="h2">宠物种地：好感越高，它替你种的作物越贵</h2>
+        <p class="p">这 ${L.length} 档（好感 0～10）是<b>宠物自己下地时种什么</b>。作物不随机，按好感档位固定。${L.length} 档一共只换了 <b>${groups.length} 组</b>：${groups.map(g => '好感 ' + g.lv.join('／')).join('、')}。</p>
+        ${tbl(['好感度', '春', '夏', '秋', '冬'], L.map(r => [r[0], r[1], r[2], r[3], r[4]]),
+            { leftFirst: true, colw: ['5rem', '6rem', '6rem', '6rem', '6rem'], cls: 'crop2' })}
+        <div class="key">低好感那三档原地不动（好感 0／1／2 都是樱芜菁·粉红猫·马铃薯·葱），说明<b>刷毛刷到 3 才开始有回报</b>；从好感 3 起<b>每升 1 档就换一批</b>，四条线一路往上换到当季最贵的那一件（春 少女蜜瓜、夏 南瓜、秋 番薯、冬 白菜）。</div>
+        <div class="note">逐只的工作能力（浇水／劈柴／砸石／收获的等级、能否骑乘、捕捉率）不在本页，去<a class="link" href="#/page/produce">宠物产出</a>看那 90 只的工作表。</div>
+    `;
+}
+
+/* ------------------------------------------------------------
    符文工房 边境（RFF）作物段
    表结构：[季节, 作物名, [种,芽,叶,花], 十级出货额, 繁荣参考, 备注]
    数据来自 RFF各作物各阶段所需时间.xls，另有 5 条原表说明存于 RFF_TIPS。
@@ -3260,6 +3381,36 @@ function produceHtml(g) {
         <div class="note">一处对不上，照录不合并：工作表中的<b>「幽灵」</b>在图鉴里没有同名条目（图鉴另有「鬼魂」）。两者是不是同一只，源页没有说明，本站不替它认定。</div>`;
     }
 
+    /* ================= RF3 ================= */
+    if (id === 'rf3' || id === 'rf3sp') {
+        const W3 = (typeof PWORK_RF3 !== 'undefined') ? PWORK_RF3 : [];
+        if (!W3.length) return '<p class="p">这一作的宠物工作表未加载。</p>';
+        const prod3 = W3.filter(r => r[2] && r[2] !== '-');
+        const multi = prod3.filter(r => r[2].indexOf('、') >= 0);
+        const ride3 = W3.filter(r => r[8] === '可骑乘');
+        const dash = W3.filter(r => [4, 5, 6, 7].every(i => r[i] === '-'));
+        const probs = W3.map(r => r[3]).filter(v => /^\d+$/.test(v)).map(Number);
+        const pMin = Math.min.apply(null, probs), pMax = Math.max.apply(null, probs);
+        const lv = k => W3.filter(r => r[k] === '优').length;
+
+        return `
+        <h2 class="h2">RF3：${W3.length} 只的农活能力表——产什么、能不能骑、活干得好不好</h2>
+        <p class="p">RF3 的宠物一张表全包了：<b>生产物</b>（它在小屋里给你什么）、<b>捕捉率</b>，以及<b>浇水／劈柴／砸石／收获</b>四项农活的等级。等级的写法是「中／良／优」，源表本来就是这三个字，<b>没有数字</b>，本页也不替它折算成百分比。</p>
+        ${stat([['收录', W3.length + ' 只'], ['有生产物', prod3.length + ' 只'], ['可骑乘', ride3.length + ' 只'], ['捕捉率', pMin + '～' + pMax]])}
+        <div class="key">能产东西的只有 <b>${prod3.length} 只</b>（${Math.round(prod3.length / W3.length * 100)}%），其余 ${W3.length - prod3.length} 只生产物栏写「-」——它们是<b>纯劳力</b>：下地浇水、劈柴、砸石、收获，或者当坐骑。想凑齐奶蛋毛蜜那一套，得先认准这 ${prod3.length} 只里的那几种。</div>
+        <p class="p">四项农活里，<b>砸石最难练到「优」</b>（只有 ${lv(6)} 只），<b>浇水与收获</b>各有 ${lv(4)} 只和 ${lv(7)} 只；劈柴在中间，${lv(5)} 只。四项全是「-」的只有 ${dash.length} 只，那是连农活都不干的。</p>
+        ${ftableOwn(['名字', '地点', '生产物', '捕捉率', '浇水', '劈柴', '砸石', '收获', '骑乘'],
+            ['6.4rem', '10rem', '10rem', '4.2rem', '3.4rem', '3.4rem', '3.4rem', '3.4rem', '4.4rem'],
+            W3.map(r => [r[0], [
+                r[0], r[1], r[2] === '-' ? '<span class="mon-no">—</span>' : r[2], r[3],
+                r[4], r[5], r[6], r[7],
+                r[8] === '可骑乘' ? '<span class="mon-yes">可骑</span>' : '<span class="mon-no">—</span>',
+            ]]),
+            { ph: '输入名字、地点或生产物', cls: 'rf3work' })}
+        <div class="note">三处照录不修：<b>生产物</b>一列有 ${multi.length} 只写了 2～3 件（如「${multi[0] ? multi[0][2] : ''}」），源表就是一格多件，本页不拆行；<b>捕捉率</b>是 ${pMin}～${pMax} 的整数，源表没写单位，也不说明是百分比还是档位；<b>地点</b>栏有多处用「、」并了三四个地名，原样保留。</div>
+        <div class="note">特别版（RF3SP）沿用本表——源页只有一份 <code>RF3farm</code>，<b>没有单列特别版的差异</b>，所以这里不假装两作数值不同。</div>`;
+    }
+
     /* ================= 边境 ================= */
     if (!PD.length) return '<p class="p">这一作暂时没有宠物产出数据。</p>';
 
@@ -4738,10 +4889,12 @@ const PAGES = [
             <div class="note">杂草与石头会占格，每天顺手清掉。别把清杂草当成杂活——它直接决定你当天能种多少。</div>
             ${g.id === 'azuma' ? cropAzumaHtml()
             : g.id.indexOf('rf1') === 0 ? crop1Html()
-                : g.id.indexOf('rf5') === 0 ? crop5Html()
-                    : g.id.indexOf('rf4') === 0 ? crop4Html()
-                        : g.id === 'rff' ? cropRffHtml()
-                            : ''}
+                : g.id.indexOf('rf2') === 0 ? crop2Html()
+                    : g.id.indexOf('rf3') === 0 ? crop3Html()
+                        : g.id.indexOf('rf5') === 0 ? crop5Html()
+                            : g.id.indexOf('rf4') === 0 ? crop4Html()
+                                : g.id === 'rff' ? cropRffHtml()
+                                    : ''}
         `
     },
     {
@@ -7128,11 +7281,11 @@ const PAGES = [
     /* ================= 宠物产出（派它干什么，它给你什么） ================= */
     {
         key: 'produce', group: 'life', title: '宠物产出', icon: 'pot',
-        gms: ['rf1', 'rff'],
+        gms: ['rf1', 'rf3', 'rf3sp', 'rff'],
         body: g => {
-            if (g.id === 'rf1' || g.id === 'rff') return produceHtml(g);
+            if (g.id === 'rf1' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff') return produceHtml(g);
             return `<p class="p">这一作暂时没有「派魔物干活／收产物」的表。</p>
-            <div class="note">源站给得出产出表的只有初代（<code>RF1petfarm</code> 32 只魔物工作表）与边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）。RF2／海洋的宠物页只有抚摸次数与喜好作物，RF5 的「同伴怪物生产道具一览」是一张残页，所以这几作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
+            <div class="note">源站给得出产出表的有三作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）。RF2／海洋的宠物页只有抚摸次数与喜好作物，RF5 的「同伴怪物生产道具一览」是一张残页，所以这几作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
         }
     },
 
@@ -7933,6 +8086,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十八次：农作补上 RF2／RF3——60 种作物全表＋六档土质，「宠物产出」顺带扩到九作</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是两作空白</b>：「农作」页的 <code>body</code> 只对 azuma／rf1／rf4／rf5／rff 分流，<b>RF2 与 RF3 点进来只有页首那两段通用文案</b>（流程三型、品质与等级），一句本作的话都没有。本次补齐：新增顶层函数 <code>crop2Html()</code>／<code>crop3Html()</code>，数据由 <code>_build_crop_more.py</code> 从 <code>RF2farmdata</code>／<code>RF3farm</code> 解析成 <code>js/crop_more.js</code>。农作页至此覆盖 7 作（还差海洋）。</li>
+                <li class="li"><b>RF2：六十种作物，十三个字段</b>。按种类分蔬菜 <b>24</b>、花卉 <b>16</b>、草 <b>14</b>、水果 <b>6</b>；其中 <b>43 种有生长天数</b>（4 天到 120 天，相差 30 倍），<b>17 种没有</b>——葡萄／苹果／橘子是树上结的，药草与杂草系列是野生的，牧草是饲料，都不走「播种→成熟」，本页不替它们编一个天数。</li>
+                <li class="li"><b>RF2 三个能直接用的结论</b>：① <b>连续收获只有 9 种</b>，间隔 2～6 天（草莓与青椒每 2 天最快、黄瓜每 6 天最慢）；② 季节栏写「全」的 <b>8 种全是草</b>，四季可种——这就解释了药草类为什么从不用囤；③ 作物等级<b>只值 +10% 与 +20%</b>（Lv5／Lv10 相对 Lv1），59 种里 <b>52 种</b>严丝合缝，剩下 7 种另有一套（樱芜菁·月落草·粉红猫是 ×1.5／×2，洋葱·黄瓜·马铃薯·芜菁是 ×1.15／×1.5）——<b>堆等级远不如扩地</b>。</li>
+                <li class="li"><b>两列价格不换算</b>：源表的「作物买价」与「Lv1 卖价」<b>不是固定倍数</b>——45 种正好 2 倍，14 种不是（草类 6～43 倍，竹笋 42.9 倍）。两列并排照录，不拿它推利润率。另有 <b>4 种「金色」作物</b>种子买价栏写着「<b>买不到</b>」（金卷心菜 316、金南瓜 324、金马铃薯 278、金芜菁 196），数值照录，不替它解释成在哪换。</li>
+                <li class="li"><b>一处源页笔误照录</b>：<code>RF2farmdata</code> 的表格标题写的是「<b>符文工厂1</b>农作物数据」，可页名、价格档、作物构成全是 RF2 的。本页把表头原样写出并在注里点明是笔误，<b>不替源页改字</b>。</li>
+                <li class="li"><b>RF3 没有作物总表，给的是田</b>：源页 <code>RF3farm</code> 里没有「作物 × 季节 × 价格」那种表，只有<b>六档土质</b>（营养值 0～46 连续覆盖、成长速度 0.125～3 倍）、<b>四种农药</b>、<b>宠物好感 0～10 与四季作物</b>。所以 RF3 段不列作物，只回答「田怎么变好」。最差一档的速度源表写作 <b>0.375～0.125 倍</b>，取下限时会把 8 天的作物拖成 64 天——<b>把地推过 30 就从 2 倍以下跳到 2～3 倍</b>。</li>
+                <li class="li"><b>农药与宠物的两处细节</b>：四种农药<b>营养值全是 16</b>，差别只在健康值（8／8／24／40）——「极速长」不比「枯草」更能养地；源表里<b>「枯草」与「很会长」两行数值完全相同</b>（16／8），名字却是两样，照录两行不合并。宠物种地的 11 档<b>实际只有 9 组</b>：好感 0／1／2 三档作物一模一样（樱芜菁·粉红猫·马铃薯·葱），<b>刷到 3 才开始有回报</b>，从 3 起每升 1 档换一批，好感 10 四季各自收到当季最贵的那件（少女蜜瓜·南瓜·番薯·白菜）。</li>
+                <li class="li"><b>「宠物产出」顺带扩到 RF3</b>：<code>RF3farm</code> 还有一张 <b>90 只</b>的宠物工作表（名字／地点／生产物／捕捉率／浇水／劈柴／砸石／收获／骑乘），正是「宠物产出」该管的事，于是 <code>produce</code> 页 <code>gms</code> 从 2 项扩到 4 项（rf1／rf3／rf3sp／rff）。其中<b>能产东西的只有 34 只（38%）</b>，其余 56 只生产物栏是「-」，纯劳力；<b>可骑乘 31 只</b>；捕捉率 1～5；农活等级源表只写「中／良／优」，<b>没有数字，本页不折算成百分比</b>；四项农活都标「-」的只有 3 只。</li>
+                <li class="li"><b>照录三处、特别版不硬造</b>：生产物一列有 3 只写了 2～3 件（「软软毛、软绒毛、毛茸茸的软软毛」），一格多件不拆行；捕捉率是整数、源表未给单位，不标注百分比；地点多处用「、」并了三四个地名，原样保留。<b>RF3SP 沿用同一张表</b>——源站只有一份 <code>RF3farm</code>，没有单列特别版差异，页面写明不假装两作数值不同。</li>
+                <li class="li"><b>版面与自查纠错</b>：新增 <code>.table.crop2</code>（6～7 列，min-width 34rem）与 <code>.table.rf3work</code>（9 列，min-width 46rem，地点与生产物两列垫 9rem）。初稿两处写错、自查改掉：农药小标题原写「三种只加健康值」，实际<b>四种营养值都是 16</b>；宠物好感原写「之后每 2 档换一次」，实际<b>从 3 起每档都换</b>。1100 与 520px 截图逐页核对（9 列表在 520px 下容器内横滑，与站内同类表一致）。<code>_verify</code> <b>395 实例</b>（新增 2）／0 异常／头像 214 张缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百三十七次：新开「宠物产出」页——魔物上班给你什么，只有两作给得出表</h2>
             <ul class="ul">
                 <li class="li"><b>补的是个空页</b>：站内一直有「魔物与伙伴」讲怎么抓、「魔物图鉴」列名录，但<b>「抓回来派它干什么、它每天给你什么」没有独立一页</b>。<code>beast</code> 页里只有一段通用文字（「派去照顾农田：1 只每天约消耗 1 份牧草」），给不出任何一作的数值。本次新开 <b>「宠物产出」</b>（<code>key: 'produce'</code>，归「牧场生活」，<code>gms: ['rf1','rff']</code>），新增顶层函数 <code>produceHtml()</code>。数据由 <code>_build_produce.py</code> 从 <code>RF1petfarm</code>／<code>RFFpet</code> 两份 wikitext 解析成 <code>js/produce.js</code>。</li>

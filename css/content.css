@@ -673,6 +673,43 @@
     min-width: 6.4rem;
 }
 
+/* RF2 作物表（6～7 列）与 RF3 宠物工作表（9 列）：默认 nowrap 会把长列挤出屏幕，
+   这两类放开换行、给首列与长文本列下限 */
+.content .table.crop2 table {
+    width: 100%;
+    min-width: 34rem;
+}
+
+.content .table.crop2 .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.crop2 tbody td:first-child {
+    white-space: nowrap;
+    min-width: 5.6rem;
+}
+
+.content .table.rf3work table {
+    width: 100%;
+    min-width: 46rem;
+}
+
+.content .table.rf3work .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rf3work tbody td:first-child {
+    white-space: nowrap;
+    min-width: 5.6rem;
+}
+
+.content .table.rf3work tbody td:nth-child(2),
+.content .table.rf3work tbody td:nth-child(3) {
+    min-width: 9rem;
+}
+
 .content .table.gfill table {
     width: 100%;
     /* 手机宽度下 4 列铺开会把「春12日」「斗牛的角」逐字拆行，这里兜一个下限，
