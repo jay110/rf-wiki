@@ -788,3 +788,71 @@
     white-space: normal;
     word-break: break-word;
 }
+
+/* 海洋（RFO）农作三段表格：默认 nowrap 会把长列挤出屏幕，
+   这里放开换行，并给首列与长文本列下限；超宽按站内约定横滑 */
+.content .table.rfoisle table {
+    width: 100%;
+    min-width: 44rem;
+}
+
+.content .table.rfoisle .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rfoisle tbody td:first-child {
+    white-space: nowrap;
+    min-width: 6rem;
+}
+
+.content .table.rfocrop table {
+    width: 100%;
+    min-width: 24rem;
+}
+
+.content .table.rfocrop .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rfocrop tbody td:first-child {
+    white-space: nowrap;
+    min-width: 6rem;
+}
+
+.content .table.rfotree table {
+    width: 100%;
+    min-width: 46rem;
+}
+
+.content .table.rfotree .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rfotree tbody td:first-child,
+.content .table.rfotree tbody td:nth-child(2) {
+    white-space: nowrap;
+    min-width: 6rem;
+}
+
+.content .table.rfomon table {
+    width: 100%;
+    min-width: 52rem;
+}
+
+.content .table.rfomon .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rfomon tbody td:first-child {
+    white-space: nowrap;
+    min-width: 6.4rem;
+}
+
+/* 海洋表里的「—」、空值、纯劳力等占位标注：弱化显示，不与数据混淆 */
+.content .mon-no {
+    color: #9aa3ad;
+}

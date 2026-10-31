@@ -851,6 +851,123 @@ function crop3Html() {
    表结构：[季节, 作物名, [种,芽,叶,花], 十级出货额, 繁荣参考, 备注]
    数据来自 RFF各作物各阶段所需时间.xls，另有 5 条原表说明存于 RFF_TIPS。
    ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   符文工厂 海洋（RFO）农作段
+   这一作没有锄头、没有洒水壶、也买不到种子：种地靠「精灵杖 + 岛上的宠物」。
+   数据 js/crop_rfo.js ← _build_crop_rfo.py 解析源页 RFOfarm 的三张表
+   （种地列表 4 岛、精灵石树分布 39 处、魔物农作物列表 92 只）。
+   ------------------------------------------------------------ */
+function cropRfoHtml() {
+    const S = (typeof RFO_SOIL !== 'undefined') ? RFO_SOIL : [];
+    const T = (typeof RFO_TREE !== 'undefined') ? RFO_TREE : [];
+    const M = (typeof RFO_MONCROP !== 'undefined') ? RFO_MONCROP : [];
+    const cnt = f => M.filter(f).length;
+    const isleCrop = new Set();
+    S.slice(0, 3).forEach(r => r.crop.forEach(c => isleCrop.add(c)));
+    const plantCrop = new Set();
+    M.filter(r => r[1] === '作物').forEach(r => r[3].forEach(c => plantCrop.add(c[0])));
+    const kinds = {};
+    M.forEach(r => r[3].forEach(c => { kinds[c[0]] = (kinds[c[0]] || 0) + 1; }));
+    const top = Object.keys(kinds).sort((a, b) => kinds[b] - kinds[a] || a.localeCompare(b)).slice(0, 6);
+    const brushMax = M.filter(r => r[4] === '12');
+    const brushMin = M.filter(r => r[4] === '4');
+    const giant = {};
+    M.forEach(r => { giant[r[2]] = (giant[r[2]] || 0) + 1; });
+    const n4 = M.filter(r => r[3].length === 4).length;
+    const n3 = M.filter(r => r[3].length === 3).length;
+    const n2 = M.filter(r => r[3].length === 2).length;
+    const n1 = M.filter(r => r[3].length === 1).length;
+    const none = M.filter(r => !r[3].length).length;
+    const dash = v => (v === '' || v === '-' || v === undefined || v === null)
+        ? '<span class="mon-no">—</span>' : v;
+    const cropCell = r => r[3].length
+        ? r[3].map(c => (c[2] ? '<b>' : '') + c[0] +
+            '<span class="txc"> ' + (c[1] === '' ? '—' : c[1]) + '</span>' +
+            (c[2] ? '</b>' : '')).join(' · ')
+        : '<span class="mon-no">无（纯劳力）</span>';
+    const dom = r => {
+        const v = [r[4], r[5], r[6], r[7]].map(x => Number(x) || 0);
+        const mx = Math.max.apply(null, v);
+        return v.map((x, i) => (x === mx && mx > 0) ? '<b>' + dash(r[4 + i]) + '</b>' : dash(r[4 + i]));
+    };
+    const isleRows = S.map(r => [r.n, r.se, r.loc, r.sp, dash(r.germ), dash(r.treeg), dash(r.ore),
+        (r.plant.length + r.tree.length + r.harv.length) + ' 只']);
+    const cropRows = S.map(r => [r.n, r.crop.length ? r.crop.join('、') : '<span class="mon-no">—</span>']);
+    const treeRows = T.map(r => {
+        const d = dom(r);
+        return [r[0] + r[1], [r[0], r[1], dash(r[2]), dash(r[3]), d[0], d[1], d[2], d[3], dash(r[8])]];
+    });
+    const monRows = M.map(r => [r[0], [r[0], r[1], dash(r[2]), cropCell(r), dash(r[4]),
+        r[5] || '<span class="mon-no">—</span>']]);
+    const winter = S[3] || null;
+    const sum4 = r => [4, 5, 6, 7].reduce((a, k) => a + (Number(r[k]) || 0), 0);
+    const badSum = T.filter(r => sum4(r) !== 100);
+
+    return `
+        <h2 class="h2">${S.length} 座农业岛：没有锄头、没有洒水壶，也买不到种子</h2>
+        <p class="p">海洋的种地和别的作品不是一套操作。源页开头就把它和常规流程隔开了：<b>只能在 4 个主线解锁的岛上种地和采矿</b>；<b>没有洒水壶、没有锄头、无法购买种子</b>；锄头的位置由<b>精灵杖</b>顶替（幼小的／鲜嫩的／成长中的／发青的／成熟的精灵杖共五档）；农业岛上有<b>发芽点</b>。</p>
+        <div class="key">最要紧的一条：<b>用精灵魔法播完种，岛上必须有对应的宠物，才会真的播种</b>。所以「能种什么」不是由你手里的种子决定，而是由<b>这座岛上养了哪几只魔物</b>决定——这也是本页把「岛」和「魔物」放在一起讲的原因。</div>
+        <p class="p">另两条机制：杂货店买的<b>宠物曲奇</b>会直接送到饲料槽里；<b>树木成熟时有概率获得符文结晶</b>。</p>
+        <div class="note">本页顶部那两段「翻土 → 播种 → 每天浇水」「施肥提升品级」是系列通用说明，<b>对本作不成立</b>——RFO 没有浇水这一环，也没有买种子这一步。</div>
+
+        ${stat([
+        ['农业岛', S.length + ' 座'],
+        ['可种作物', isleCrop.size + ' 种'],
+        ['精灵石树', T.length + ' 处'],
+        ['魔物', M.length + ' 只'],
+    ])}
+        <h2 class="h2">三座岛种作物，第四座其实是矿场</h2>
+        ${tbl(['岛', '季节', '坐标', '对应精灵', '农作物芽', '树木芽', '矿石', '可派宠物'], isleRows, {
+        leftFirst: true, cls: 'rfoisle', colw: ['6rem', '3.4rem', '3.8rem', '7.4rem', '5rem', '4.6rem', '4rem', '4.4rem'],
+    })}
+        <p class="p"><b>农作物芽</b>三岛分别是 ${S.slice(0, 3).map(r => r.germ).join(' / ')}，秋实岛最高；<b>树木芽</b> ${S.slice(0, 3).map(r => r.treeg).join(' / ')}。<b>这几个数源页没给单位，也没解释含义</b>，这里只把栏名和数字照录。</p>
+        ${winter ? `<p class="p">第四座<b>${winter.n}</b>是个例外：农作物芽与树木芽都是「-」，矿石那一栏却是 <b>${winter.ore}</b>，作物栏写的不是作物名而是「所有矿石、宝石、结晶」。它的五只宠物在魔物表里的「自然育成」栏也确实是<b>矿石</b>——这一座不是农田，是矿区。</p>` : ''}
+        <div class="key">精灵的对应关系不是「季节色」：春芽岛配黄精灵、常夏岛配红精灵、<b>秋实岛配绿精灵</b>、冬冰岛配蓝精灵。而绿精灵就是<b>风</b>精灵（见下节，风之精灵殿出绿），所以「秋」在这作对应的是风属性，不是木。</div>
+
+        <h2 class="h2">每座岛能种什么</h2>
+        ${tbl(['岛', '作物'], cropRows, { leftFirst: true, cls: 'rfocrop', colw: ['6rem'] })}
+        <div class="note">冬冰岛那一行原文就是「所有矿石、宝石、结晶」，<b>不是三件具体作物</b>，照录不替它列清单。<br>
+        三座作物岛合计 <b>${isleCrop.size} 种</b>，而魔物表里 ${cnt(r => r[1] === '作物')} 只「作物」类魔物能种的也正好是 <b>${plantCrop.size} 种</b>——两个集合逐项比对<b>完全相同，双向都没有多出来的</b>。换句话说：这作能种的东西就这 ${isleCrop.size} 种，没有第 ${isleCrop.size + 1} 种，而每一种都得先抓到会对的那只魔物。</div>
+
+        <h2 class="h2">精灵石树 ${T.length} 处：四个精灵殿各偏自己的颜色</h2>
+        <p class="p">精灵石树的作用是刷精灵。每处石树给一个<b>精灵量</b>（一次出多少只）和四个颜色的<b>概率</b>；<b>再次采集</b>是隔多久能再采一次（天数）。把每个地点拆开看，规律很干脆：</p>
+        <ul class="ul">
+            <li class="li"><b>土之精灵殿</b>：黄 ${T.filter(r => /^土/.test(r[0])).map(r => r[4]).join('／')}%——几乎只出黄。</li>
+            <li class="li"><b>炎之精灵殿</b>：红为主（最高 ${Math.max.apply(null, T.filter(r => /^炎/.test(r[0])).map(r => Number(r[5]) || 0))}%），层数越深越偏红。</li>
+            <li class="li"><b>水之精灵殿</b>：蓝 ${T.filter(r => /^水/.test(r[0])).map(r => r[7]).join('／')}%。</li>
+            <li class="li"><b>风之精灵殿</b>：<b>绿</b>为主（最高 ${Math.max.apply(null, T.filter(r => /^风/.test(r[0])).map(r => Number(r[6]) || 0))}%）。绿精灵即风精灵，和上一节秋实岛的配置对得上。</li>
+            <li class="li"><b>野外岛</b>（艾利岛、热沙岛、密林岛、封冰岛、神殿岛、石像岛、空中庭院、触礁沉船）：四色都在 20～30% 之间，差别只有几个百分点，属于「随便刷」。<b>无名岛 D-6／E-8 与神殿 C-3</b> 三处最特殊：只给一种颜色 <b>10%</b>，其余三色全是「-」。</li>
+        </ul>
+        ${ftableOwn(['地点', '场所', '精灵量', '±%', '黄', '红', '绿', '蓝', '再次采集'],
+        ['9rem', '6rem', '4.2rem', '3.4rem', '3.2rem', '3.2rem', '3.2rem', '3.2rem', '4.6rem'],
+        treeRows, { ph: '输入地点或场所', cls: 'rfotree' })}
+        <p class="p">精灵量最小 <b>${Math.min.apply(null, T.map(r => Number(r[2]) || 99))}</b>、最大 <b>${Math.max.apply(null, T.map(r => Number(r[2]) || 0))}</b>（风之精灵殿 5F／6F）；再次采集只有 <b>${[...new Set(T.map(r => r[8]).filter(Boolean))].sort().join(' / ')}</b> 天四档。四色相加，${T.length - badSum.length} 处正好 100%，${badSum.length} 处不到：${badSum.map(r => r[0] + r[1] + '（' + sum4(r) + '%）').join('、')}。<b>源页没解释缺的那部分，这里照录不补。</b></p>
+        <div class="note">表里加粗的是该处概率最高的颜色，一眼能看出哪个殿偏什么色。风之精灵殿 5F 的「再次采集」源表是空格，本页记作「—」，<b>不推测成 0、也不继承上一行</b>。</div>
+
+        <h2 class="h2">魔物 ${M.length} 只：只有 ${cnt(r => r[1] === '作物')} 只能种作物</h2>
+        <p class="p">源表把每只魔物的「自然育成」分成六类，其中只有<b>作物</b>和<b>树木</b>会真的种出东西，<b>矿石</b>是挖矿，<b>收获</b>是替你收，<b>产出／生产</b>给的是牛奶鸡蛋这类副产品——后 ${none} 只的作物栏全是「-」，不是漏填。</p>
+        ${stat([
+        ['作物', cnt(r => r[1] === '作物') + ' 只'],
+        ['树木', cnt(r => r[1] === '树木') + ' 只'],
+        ['矿石', cnt(r => r[1] === '矿石') + ' 只'],
+        ['收获', cnt(r => r[1] === '收获') + ' 只'],
+        ['产出／生产', (cnt(r => r[1] === '产出') + cnt(r => r[1] === '生产')) + ' 只'],
+    ])}
+        <p class="p">「作物」类里出现最多的是<b>${top[0]}</b>（${kinds[top[0]]} 只），其后是 ${top.slice(1, 5).map(k => k + '（' + kinds[k] + ' 只）').join('、')}。<b>${top[0]}</b>同时也是「魔物图鉴」海洋段「喜好作物」栏里出现次数最多的那件，两张表在这一点上对得上。</p>
+        <p class="p">作物件数：带满四件的 <b>${n4} 只</b>，三件 ${n3} 只、两件 ${n2} 只、一件 ${n1} 只。好感门槛从 0 到 7，其中<b>门槛为 0 的条目有 ${M.reduce((a, r) => a + r[3].filter(c => c[1] === '0').length, 0)} 件</b>——这些一上岛就能种，越往后门槛越高。</p>
+        <p class="p"><b>巨大化率</b>：只有四只精灵给到 <b>30%</b>（黄／红／蓝／绿精灵），全场最高；其余是 5%（${giant['5'] || 0} 只）、8%（${giant['8'] || 0} 只）、12%（${giant['12'] || 0} 只），陆龟独占 <b>15%</b>，甲虫是唯一的 <b>0%</b>；另有 <b>${giant['-'] || 0} 只</b>写「-」。<b>毛刷次数</b>最少只要 4 次（${brushMin.map(r => r[0]).join('、')}），最多 ${brushMax.length} 只只要 12 次，而且<b>12 次那批全是高阶怪</b>——独角兽王、金龙、小飞龙、黑色独角兽、狰狞死神、恶魔一系、狼王、松鼠王、巨人王都在里面。</p>
+        <div class="note">「作物」那列括号里的<b>数字是好感门槛</b>：好感刷到这个数，它才会种这一件。<b>加粗的作物</b>是源表用 <code>&lt;font color=red&gt;</code> 标过的——源页正文没有说明红字代表什么，本站只保留「被标红」这个事实（${M.filter(r => r[3].some(c => c[2])).length} 只各有一件），<b>不当成「最爱」或「最好」来解读</b>。<br>
+        源表在「自然育成」里同时用了<b>「产出」与「生产」</b>两种写法：只有咕咕鸡、水牛哞哞写「生产」，其余 ${cnt(r => r[1] === '产出')} 只都写「产出」。两词是否指同一件事，源页没说明，这里照录成两类、<b>不合并</b>。</div>
+        ${ftableOwn(['魔物', '自然育成', '巨大化率', '作物（数字＝好感门槛）', '毛刷次数', '出现点'],
+        ['6.4rem', '4.4rem', '4.8rem', '19rem', '4.4rem', '15rem'],
+        monRows, { ph: '输入魔物名、作物名或出现点', cls: 'rfomon' })}
+
+        <h2 class="h2">两处源表用的不是同一套译名</h2>
+        <p class="p">站内「魔物图鉴」的海洋段（<code>MON_RFO</code>）取自《最强攻略》怪日表，本页取自 wiki 的 <code>RFOfarm</code>——<b>两份独立表，同一件东西常有不同叫法</b>：马铃薯／土豆、金刚花／金剛花、白金／铂、绿宝石／翡翠、粉红猫／粉色猫咪、托伊药草／玩具香草、白萝卜／萝卜、原之焰火／野之花火、红叶花／花紅葉、树形草／树草。</p>
+        <p class="p">条数也对不上：本页 <b>${Object.keys(kinds).length} 种</b>（含 19 种矿石类），图鉴页 <b>55 种</b>；逐项比还有几处差一（金 ${kinds['金'] || 0} 对 9、铁 ${kinds['铁'] || 0} 对 7、红宝石 ${kinds['红宝石'] || 0} 对 3）。<b>源站没给对照表，本页不与图鉴页相加、也不做自动对齐</b>——要用的时候以各自页面的表为准。</p>
+    `;
+}
+
 function cropRffHtml() {
     const R = (typeof RFF_CROP !== 'undefined') ? RFF_CROP : [];
     const TIPS = (typeof RFF_TIPS !== 'undefined') ? RFF_TIPS : [];
@@ -4893,8 +5010,9 @@ const PAGES = [
                     : g.id.indexOf('rf3') === 0 ? crop3Html()
                         : g.id.indexOf('rf5') === 0 ? crop5Html()
                             : g.id.indexOf('rf4') === 0 ? crop4Html()
-                                : g.id === 'rff' ? cropRffHtml()
-                                    : ''}
+                                : g.id === 'rfo' ? cropRfoHtml()
+                                    : g.id === 'rff' ? cropRffHtml()
+                                        : ''}
         `
     },
     {
@@ -8086,6 +8204,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百三十九次：农作补上最后一作——海洋（RFO）的「精灵杖＋岛上宠物」种地法</h2>
+            <ul class="ul">
+                <li class="li"><b>填补农作页最后一块</b>：之前覆盖 7 作（缺海洋）。本作机制和其他九作完全不同——<b>没有锄头、没有洒水壶、也买不到种子</b>，种地靠「精灵杖魔法播种 + 岛上对应的宠物才会真种」。新增顶层函数 <code>cropRfoHtml()</code>，数据由 <code>_build_crop_rfo.py</code> 从 <code>RFOfarm</code> 一遍抓全的三张表解析成 <code>js/crop_rfo.js</code>（种地列表 4 岛、精灵石树 39 处、魔物农作物 92 只）。农作页至此覆盖全部 10 作。</li>
+                <li class="li"><b>三座作物岛 + 一座矿场</b>：春芽岛（黄精灵）／常夏岛（红精灵）／秋实岛（绿=风精灵）三岛能种，冬冰岛农作物芽与树木芽都是「-」、矿石栏却是 20，且五只宠物自然育成全是「矿石」——<b>那座不是农田是矿区</b>。三岛合计 <b>28 种</b>作物，与 40 只「作物」类魔物能种的集合逐项比对<b>完全相同、双向无多出</b>。</li>
+                <li class="li"><b>精灵石树 39 处</b>：四色概率，四个精灵殿各偏本色（土→黄、炎→红、水→蓝、风→绿），野外岛四色 20～30% 随便刷；无名岛 D-6／E-8、神殿 C-3 三处只给一种色 10%，其余三色「-」。四色相加 35 处正好 100%、4 处不到（炎4F=90%、三处各 10%），源页没解释缺的部分，照录不补。</li>
+                <li class="li"><b>魔物 92 只</b>：自然育成分六类——作物 40／树木 8／矿石 16／收获 9／产出 17／生产 2（只有咕咕鸡、水牛哞哞写「生产」，其余写「产出」，两词不合并）。带满四件作物 32 只、三件 21、两件 5、一件 6；好感门槛 0～7，门槛 0 的条目 65 件一上岛就能种。巨大化率只有四精灵 30% 最高，甲虫独 0%；毛刷最少 4 次（风鸟、黄蜂）、最多 12 次 15 只且全是高阶怪（独角兽王、金龙、小飞龙、恶魔一系…）。</li>
+                <li class="li"><b>两处源表译名不一致</b>：本页取自 wiki <code>RFOfarm</code>，图鉴页 <code>MON_RFO</code> 取自《最强攻略》，同一件东西常两叫法（马铃薯／土豆、金刚花／金剛花、白金／铂、粉红猫／粉色猫咪…）；条数也对不上（本页含 19 种矿石类共 ? 种，图鉴 55 种）。<b>源站无对照表，两页不相加、不自动对齐</b>，各自以本页表为准（本页含 19 种矿石类共 49 种，图鉴 55 种；金 8 对 9、铁 6 对 7、红宝石 2 对 3，各差一）。</li>
+                <li class="li"><b>照录不修</b>：作物栏括号里的数字是好感门槛，不是「最好」；加粗的作物是源表 <code>&lt;font color=red&gt;</code> 标过的，正文没说明红字含义，只保留「被标红」事实，不当成最爱解读。风之精灵殿 5F「再次采集」空格记作「—」，不推成 0 也不继承上一行。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> 0 异常；1100／520px 逐表截图核对（九列石树表、六列魔物表均横排对齐、作物列正常换行、窄屏按站内约定横滑）。<code>index.html</code> 已引用 <code>js/crop_rfo.js</code>，新增 <code>.table.rfoisle</code>／<code>.table.rfocrop</code>／<code>.table.rfotree</code>／<code>.table.rfomon</code> 四个样式类。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百三十八次：农作补上 RF2／RF3——60 种作物全表＋六档土质，「宠物产出」顺带扩到九作</h2>
             <ul class="ul">
                 <li class="li"><b>补的是两作空白</b>：「农作」页的 <code>body</code> 只对 azuma／rf1／rf4／rf5／rff 分流，<b>RF2 与 RF3 点进来只有页首那两段通用文案</b>（流程三型、品质与等级），一句本作的话都没有。本次补齐：新增顶层函数 <code>crop2Html()</code>／<code>crop3Html()</code>，数据由 <code>_build_crop_more.py</code> 从 <code>RF2farmdata</code>／<code>RF3farm</code> 解析成 <code>js/crop_more.js</code>。农作页至此覆盖 7 作（还差海洋）。</li>
