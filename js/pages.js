@@ -1959,6 +1959,139 @@ function recipeRf3Html() {
 }
 
 /* ------------------------------------------------------------
+   配方大全：符文工房1 / 符文工房2 —— 本站只有「药学」这一类
+   源：biligame RF1recipepharmacy／RF2recipepharmacy（本地快照 _RF1recipepharmacy.txt 等），
+   由 _build_recipe_rf12.py 生成 js/recipe_rf12.js。两作列位完全不同，各按表头找列、不合并列。
+   ------------------------------------------------------------ */
+function recipeRf12Html(g) {
+    const D = (typeof RECIPE_RF12 !== 'undefined') ? RECIPE_RF12 : null;
+    const id = (g && g.id === 'rf2') ? 'rf2' : 'rf1';
+    if (!D || !D[id] || !D[id].rows.length) return '';
+    const T = D[id], H = T.head, R = T.rows;
+    const O = (id === 'rf1') ? D.rf2 : D.rf1;
+    const nm = (id === 'rf1') ? '符文工房1' : '符文工房2';
+    const oNm = (id === 'rf1') ? '符文工房2' : '符文工房1';
+    const dash = '<span class="mon-no">—</span>';
+    const idx = kw => H.findIndex(x => String(x).indexOf(kw) >= 0);
+    const num = v => /^\d+$/.test(String(v)) ? +String(v) : null;
+    const blank = v => (v == null || v === '' || v === '-' || v === '—') ? '' : v;
+    const money = v => num(v) == null ? (blank(v) ? String(v) : dash) : num(v).toLocaleString() + 'G';
+    const mats = r => H.map((h, i) => i).filter(i => String(H[i]).indexOf('材料') === 0)
+        .map(i => blank(r[i])).filter(Boolean);
+
+    const iL = idx('配方等级'), iB = idx('买价'), iS = idx('卖价'), iShop = idx('店铺');
+    const lv = R.map(r => num(r[iL])).filter(v => v != null);
+    const lvLo = Math.min.apply(null, lv), lvHi = Math.max.apply(null, lv);
+    const buyable = R.filter(r => num(r[iB]) != null).length;
+    const matCnt = {};
+    R.forEach(r => mats(r).forEach(m => { matCnt[m] = (matCnt[m] || 0) + 1; }));
+    const matTop = Object.keys(matCnt).sort((a, b) => matCnt[b] - matCnt[a]).slice(0, 6);
+    const sTop = R.filter(r => num(r[iS]) != null).slice().sort((a, b) => num(b[iS]) - num(a[iS]))[0];
+    const bTop = R.filter(r => num(r[iB]) != null).slice().sort((a, b) => num(b[iB]) - num(a[iB]))[0];
+    const slot = {};
+    R.forEach(r => { slot[mats(r).length] = (slot[mats(r).length] || 0) + 1; });
+    const slotKeys = Object.keys(slot).map(Number).sort((a, b) => a - b);
+
+    /* 两作同名的药：等级与效果各按各自源表列，不做换算 */
+    const oMap = {};
+    O.rows.forEach(r => { oMap[r[0]] = { lv: num(r[1]), eff: r[1] }; });
+    const both = R.map(r => r[0]).filter(n => oMap[n]);
+    const lvDiff = both.filter(n => { const a = num(R.filter(r => r[0] === n)[0][iL]); return a != null && oMap[n].lv != null; });
+
+    /* ---------- 两作各一套行：列位不同，不合并 ---------- */
+    const iHp = idx('HP恢复'), iRp = idx('RP恢复'), iMhp = idx('最大HP'), iEff = idx('效果'), iBook = idx('配方书');
+    const iEff2 = idx('使用总效果'), iCourse = idx('配方课程'), iSrc2 = idx('其它来源');
+    const ENH = ['STR', 'INT', 'DEX', 'VIT', '属性攻击', '属性防御', '持续时间']
+        .map(k => [k, idx(k)]).filter(x => x[1] >= 0);
+    const hpCell = r => {
+        const ps = [];
+        if (blank(r[iHp])) ps.push('HP ' + blank(r[iHp]));
+        if (blank(r[iRp])) ps.push('RP ' + blank(r[iRp]));
+        if (blank(r[iMhp])) ps.push('最大HP ' + blank(r[iMhp]));
+        return ps.length ? ps.join('／') : dash;
+    };
+    const enhCell = r => {
+        const on = ENH.map(x => [x[0], blank(r[x[1]])]).filter(x => x[1]);
+        return on.length ? on.map(x => x[1] === '1' ? x[0] : x[0] + '（' + x[1] + '）').join('、') : dash;
+    };
+
+    const lvCell = r => num(r[iL]) == null ? dash : 'Lv' + num(r[iL]);
+    const matCell = r => mats(r).length ? mats(r).join('＋') : dash;
+
+    /* 拆两张：主表放「怎么做、做出什么」，副表放「多少钱、从哪来」。
+       十列并一张在手机宽度下只能横滑，拆开后主表六列、副表四～五列，各自都能读。 */
+    const rows1a = R.map(r => [r[0] + ' ' + mats(r).join(' ') + ' ' + (blank(r[iEff]) || ''), [
+        r[0], lvCell(r), matCell(r), hpCell(r), blank(r[iEff]) || dash, enhCell(r)]]);
+    const rows1b = R.map(r => [r[0] + ' ' + (blank(r[iShop]) || ''), [
+        r[0], money(r[iB]), money(r[iS]), blank(r[iShop]) || dash]]);
+    const rows2a = R.map(r => [r[0] + ' ' + mats(r).join(' ') + ' ' + (blank(r[iEff2]) || ''), [
+        r[0], lvCell(r), matCell(r), blank(r[iEff2]) || dash, blank(r[iCourse]) || dash]]);
+    const rows2b = R.map(r => [r[0] + ' ' + (blank(r[iSrc2]) || ''), [
+        r[0], money(r[iB]), money(r[iS]), blank(r[iShop]) || dash, blank(r[iSrc2]) || dash]]);
+
+    const cmpRows = (id === 'rf1')
+        ? both.map(n => {
+            const a = R.filter(r => r[0] === n)[0], b = O.rows.filter(r => r[0] === n)[0];
+            return [n, ['Lv' + num(a[iL]), 'Lv' + num(b[1])]];
+        })
+        : both.map(n => {
+            const a = R.filter(r => r[0] === n)[0], b = O.rows.filter(r => r[0] === n)[0];
+            return [n, ['Lv' + num(b[1]), 'Lv' + num(a[iL])]];
+        });
+
+    return `
+        <p class="p">这一页对<b>${nm}</b>只收「药学」一类：<b>${R.length} 条</b>，等级 Lv${lvLo}–${lvHi}。不是本站偷懒——两作的配方页在源站上<b>只有药学这一张表</b>，武器、防具、农具没有可核实的逐条配方，拿别作的表凑过来只会把材料写错。</p>
+        <div class="key">配方等级不是「你能做它的等级」：<b>它决定的是技能等级门槛</b>——等级不到，材料齐了也调不出来。等级越高也不代表越强：${bTop ? '源表给了买价的 <b>' + buyable + ' 条</b>里最贵的是 <b>' + bTop[0] + '（' + money(bTop[iB]) + '）</b>，' : ''}卖价最高的是 <b>${sTop ? sTop[0] + '（' + money(sTop[iS]) + '）' : '—'}</b>。</div>
+        ${stat([
+        ['配方条数', R.length + ' 条'],
+        ['等级跨度', 'Lv' + lvLo + '–' + lvHi],
+        ['有买价', buyable + ' 条'],
+        ['材料种类', Object.keys(matCnt).length + ' 种'],
+    ])}
+
+        <h2 class="h2">全部 ${R.length} 条药学配方</h2>
+        <p class="p">按源表原顺序排列，未按等级重排——方便拿着源表对行。搜药名、材料或效果都能筛；<b>材料用「＋」连起来</b>，是源表 6 个材料位的实际内容，空位不占格。</p>
+        ${(id === 'rf1') ? ftableOwn(['名称', '等级', '材料（＋分隔）', 'HP／RP／最大HP', '效果', '强化项'],
+        ['7rem', '4rem', 'auto', '8.6rem', 'auto', '8rem'],
+        rows1a, { ph: '搜药名、材料或效果', cls: 'rec12', left: [2, 4, 5] })
+            : ftableOwn(['名称', '等级', '材料（＋分隔）', '使用总效果', '配方课程'],
+                ['7rem', '4rem', 'auto', 'auto', '7.6rem'],
+                rows2a, { ph: '搜药名、材料或效果', cls: 'rec12', left: [2, 3] })}
+        <div class="note">${(id === 'rf1')
+            ? '「强化项」列是把源表的 <b>STR／INT／DEX／VIT／属性攻击／属性防御／持续时间</b> 七个格子并成一列：源表在这些格里<b>打「1」表示这项有效</b>，并不是「+1 点」，所以这里只列项名、不写数字，免得被读成加成量。'
+            : '「配方课程」是源表的课名，做这味药之前得在学院上过对应的课——<b>上课时选错配方，材料对了也会失败</b>，这条是源页开头写明的机制，不是本站推断。'}</div>
+
+        <h2 class="h2">买价、卖价与来源</h2>
+        <p class="p">同一批药，另一面：<b>能买到多少、卖掉回多少、剩下的只能去哪找</b>。源表把价格与来源放在同一行里，这里单独列一张，免得和材料挤在一格。</p>
+        ${(id === 'rf1') ? ftableOwn(['名称', '买价', '卖价', '店铺／掉落'],
+        ['7rem', '5.6rem', '5.2rem', 'auto'],
+        rows1b, { ph: '搜药名或来源', cls: 'rec12', left: [3] })
+            : ftableOwn(['名称', '买价', '卖价', '店铺', '其它来源'],
+                ['7rem', '5.6rem', '5.2rem', '6rem', 'auto'],
+                rows2b, { ph: '搜药名或来源', cls: 'rec12', left: [4] })}
+        <div class="note">${(id === 'rf1')
+            ? '买价只有医院卖的那几瓶有（' + buyable + ' 条），其余是「-」，即店里不卖。来源列写「某某掉落」的，意思是这瓶药<b>只能靠打怪掉</b>，不是店里卖，别拿买价去找。'
+            : '买价写「无法交易」的是源表原话，照录——这类只能自己调合，或按「其它来源」去换。「其它来源」里的「第一章某某比赛」指获奖奖励，不是商店。'}</div>
+
+        <h2 class="h2">材料：${matTop.slice(0, 4).map(m => m + '（' + matCnt[m] + '）').join('、')} 出现最多</h2>
+        <p class="p">出现次数最多的几样：<b>${matTop.map(m => m + ' ' + matCnt[m] + ' 次').join('、')}</b>。药草与各色草是底座——这也是为什么前期在田边多薅几把草，比攒钱买药划算。</p>
+        ${tbl(['占用材料位', '条数'], slotKeys.map(k => [k + ' 格', '<b>' + slot[k] + '</b> 条']), { leftFirst: true, colw: ['7rem', '6rem'] })}
+
+        <h2 class="h2">两作都有的 ${both.length} 味药：等级各算各的</h2>
+        <p class="p">${nm}与${oNm}共 <b>${both.length} 味同名药</b>（占本作 ${Math.round(100 * both.length / R.length)}%）。同名不等于同一条：<b>两作的配方等级、材料与效果各按各自源表</b>，下面的对照只并排放等级，<b>不做换算、不假设哪一作更高</b>——${lvDiff.length} 味两边都有等级可比的，其余有一边源表没给。</p>
+        ${tbl([id === 'rf1' ? '符文工房1' : '符文工房2', id === 'rf1' ? '符文工房2' : '符文工房1'], cmpRows, { leftFirst: true, colw: ['9rem', '5.6rem', '5.6rem'], cls: 'txt' })}
+
+        <h2 class="h2">这一页为什么这么短</h2>
+        <p class="p">前几作的配方大全动不动几百条，是因为那些作品的锻造／装饰／调合都有成表的攻略页可核。<b>RF1 与 RF2 在源站只有药学一张表</b>：武器、防具、农具的逐条配方本站没有第二份能对上的来源，所以不写——页面短，但每一条都能回到源表。</p>
+        <div class="note">数据源：biligame 符文工厂 wiki 的 <code>RF1recipepharmacy</code>／<code>RF2recipepharmacy</code> 两页，<code>_build_recipe_rf12.py</code> 解析本地快照生成 <code>js/recipe_rf12.js</code>。这是<b>网络 wiki，非官方解包</b>，数值以游戏内为准；源表空格写「-」的，本页一律显示破折号。<b>「調合白書」是源文原文（日文汉字写法）</b>，未转成简体，以免与站内其它译名混起来；RF2 的 <b>ZOKKON</b> 也是源表原样（拉丁字母写法），同样没有替它另起中文名。</div>
+        <div class="jump">
+            <a href="#/page/cook"><div class="jp-t">料理</div><div class="jp-s">这一作的料理配方与食用效果</div></a>
+            <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">配方等级与技能门槛的关系</div></a>
+        </div>
+    `;
+}
+
+/* ------------------------------------------------------------
    素材出处与掉落：边境（RFF）
    源：js/rffmon.js 的 RFF_MON[8]「总掉落物」，每段形如「白金Lv1 100%」。
    中间那个 Lv 是<b>物品等级</b>，不是件数；同一素材常按等级分档各占一段，
@@ -6734,8 +6867,9 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
         body: g => {
+            if (g.id === 'rf1' || g.id === 'rf2') return recipeRf12Html(g);
             if (g.id === 'rff') return recipeRffHtml();
             if (g.id === 'rfo') return recipeRfoHtml();
             if (g.id === 'azuma') return recipeAzumaHtml();
@@ -7210,6 +7344,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百三十三次：配方大全补上 RF1／RF2 的药学——24 条＋27 条，只补能核实的那一类</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是什么</b>：配方大全此前只覆盖边境、海洋、RF3、RF4、RF5 与龙之天地，<b>RF1／RF2 根本没有这一页</b>（<code>gms</code> 里没有这两作；就算手输地址进来，渲染的是 RF5 那张表）。本次两作各补一类：<b>RF1 药学 24 条、RF2 药学 27 条</b>，数据由 <code>_build_recipe_rf12.py</code> 从本地 wikitext 快照（<code>_RF1recipepharmacy.txt</code>／<code>_RF2recipepharmacy.txt</code>）解析成 <code>js/recipe_rf12.js</code>。</li>
+                <li class="li"><b>为什么只有一类</b>：两作在源站上<b>只有药学这一张配方表</b>，武器／防具／农具没有可逐条核对的页。所以本页短，但短得诚实——页上直接写明「只有这一类、为什么」，不拿别作的配方凑数。这也是本站一贯的规矩。</li>
+                <li class="li"><b>两作列位完全不同，不合并</b>：RF1 是 23 列（买价／卖价／店铺／材料 6 格／HP 恢复／RP 恢复／最大HP／效果／STR／INT／DEX／VIT／属性攻击／属性防御／持续时间／配方书），RF2 是 14 列（材料 6 格／配方课程／使用总效果／店铺／卖价／买价／其它来源），连买卖价的先后都相反。渲染时<b>按表头找列</b>，不按下标硬取。</li>
+                <li class="li"><b>十列并一张看不清，拆成两张</b>：主表放「怎么做、做出什么」（名称／等级／材料／数值／效果／强化项），副表放「多少钱、从哪来」（名称／买价／卖价／店铺）。RF2 同理拆成「名称／等级／材料／使用总效果／配方课程」＋「名称／买价／卖价／店铺／其它来源」。拆完两张都能整屏读完，不用为了看价格横滑。</li>
+                <li class="li"><b>RF1 的「强化项」不写成 +1</b>：源表在 STR／INT／DEX／VIT／属性攻击／属性防御／持续时间 这七个格子里<b>打「1」只表示这项有效</b>，不是「+1 点」。所以这一列只列项名；属性攻击／属性防御两格源表写的是「火+1」这类，就照它的写法括注元素，不自己换算数值。「最大HP」只有两行有值（心之饮料 3、超级营养药 3），已并进「HP／RP／最大HP」一格，不单占一列。</li>
+                <li class="li"><b>RF2 的机制照源文</b>：源页开头写明「上课时必须选对配方，选错就算材料正确也会失败」，这句是源文结论，页上照写并注明出处，不扩展。价格列里「无法交易」也是源表原话。</li>
+                <li class="li"><b>两作同名的 18 味药单列一张对照</b>：RF1 与 RF2 共 <b>18 味同名药</b>（占 RF1 的 75%、RF2 的 67%），等级却各算各的——只并排放两边的等级，不做换算、不假设哪一作更高；有一边源表没给等级的就留空。</li>
+                <li class="li"><b>原文照录两处</b>：RF1 的配方书列 24 条全是「<b>調合白書</b>」（日文汉字写法，未转简体，也不单列一列）；RF2 有一味药名就叫「<b>ZOKKON</b>」（源表拉丁字母写法），同样没替它另起中文名。</li>
+                <li class="li"><b>版面</b>：新增 <code>.table.rec12</code>（min-width 56rem、放开换行、首列锁单行）——不锁首列时「蛋・白・质」会被逐字拆成三行。1100 与 520px 截图核对，窄屏按既有约定横向滑动。<code>_verify</code> <b>385 实例</b>（新增 2）／0 异常／头像 214 张缺 0。</li>
+            </ul>
             <h2 class="h2">2026-10-31　第一百三十二次：龙之天地三页收口——图鉴不再说「还没整理」，伙伴页不再套七作的牧场流程</h2>
             <ul class="ul">
                 <li class="li"><b>先修一处数据缺陷</b>：魔物表里 <b>23 只可骑乘的魔物，名字末尾都多了一个「能」字</b>（「旋风天狗兽能」「土佐马能」「温罗王能」…），页面上的名称列就直接这么显示。查下来的解释是<b>解析时骑乘标记被并进了名称格</b>：同一份数据里 99 只不可骑乘的一个都没沾上，而站内另一份独立来源的掉落表里，这 23 只<b>全部</b>以不带「能」的名字出现、带「能」的一次都没有。源页原件已不在本地，没法再回头看那一个单元格，所以按两侧证据指向的一方修正（23 只全部改掉），并把依据写进 <code>js/azuma.js</code> 的文件头，免得日后有人照「原名含能」再还原回去。</li>

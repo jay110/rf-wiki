@@ -580,6 +580,21 @@
     text-align: left;
 }
 
+/* RF1／RF2 药学配方：RF1 十列（材料 6 格并成一格后仍长），RF2 九列且「其它来源」是整句。
+   列多又都是文本，把最小宽度放到 68rem，并把药名列锁成单行——否则「蛋・白・质」会被逐字拆行 */
+.content .table.rec12 table {
+    min-width: 56rem;
+}
+
+.content .table.rec12 .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.rec12 tbody td:first-child {
+    white-space: nowrap;
+}
+
 /* RF3 配方大全：材料与「其它特效」都是长文本。默认 td 是 nowrap，
    长特效会把表撑到两屏宽、只能横滑才看得全——这里放开换行 */
 .content .table.rec3 table {
