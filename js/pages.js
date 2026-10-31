@@ -737,6 +737,155 @@ function cropRffHtml() {
     `;
 }
 
+/* ------------------------------------------------------------
+   龙之天地（AZUMA）作物与花木段
+   表结构：[名, 种子买价, 种子卖价, 卖价, 买价, 生长天数, 适宜季节, 不适季节, 解锁, 商店]
+   数据来自 gametoeasy post/1808（82 条）。原表把「没有」写成 ×、「不适用」写成 —，
+   两种一律照录；原表没有单株产量与品质等级，所以本页不推算日收益。
+   ------------------------------------------------------------ */
+function cropAzumaHtml() {
+    const A = (typeof CROP_AZUMA !== 'undefined') ? CROP_AZUMA.rows : [];
+    const N = v => /^\d+$/.test(String(v)) ? +v : null;
+    const dash = '<span class="mon-no">—</span>';
+    const pv = v => /^\d+$/.test(String(v)) ? String(v) : '<span class="mon-no">' + v + '</span>';
+    /* 长名单列默认居中会参差不齐，单独拉成左对齐 */
+    const L = s => '<span style="display:block;text-align:left">' + s + '</span>';
+    const byName = {};
+    A.forEach(r => { byName[r[0]] = r; });
+    /* 名字成对：前缀 大／超级／惊悚／帝王／凯撒／甘草／巨，后缀 王。
+       源表没有「变种」这一列——这是本站按名字做的归并，不是原表结构。 */
+    const PRE = ['超级', '惊悚', '帝王', '凯撒', '甘草', '大', '巨'];
+    const baseOf = n => {
+        for (let i = 0; i < PRE.length; i++) {
+            const p = PRE[i];
+            if (n.indexOf(p) === 0 && n.length > p.length && byName[n.slice(p.length)]) return n.slice(p.length);
+        }
+        if (n.slice(-1) === '王' && byName[n.slice(0, -1)]) return n.slice(0, -1);
+        return null;
+    };
+    const pairs = [];
+    A.forEach(r => {
+        const b = baseOf(r[0]);
+        if (!b) return;
+        const bs = N(byName[b][3]), vs = N(r[3]);
+        pairs.push({ b: b, v: r[0], seed: byName[b][1], day: byName[b][5], bs: bs, vs: vs, r: (bs && vs) ? vs / bs : null });
+    });
+    const rat = pairs.map(p => p.r).filter(x => x != null);
+    const rMin = Math.min.apply(null, rat), rMax = Math.max.apply(null, rat);
+
+    const withDay = A.filter(r => N(r[5]) != null);
+    const dMin = Math.min.apply(null, withDay.map(r => N(r[5])));
+    const dMax = Math.max.apply(null, withDay.map(r => N(r[5])));
+    const dayCnt = {};
+    A.forEach(r => { dayCnt[r[5]] = (dayCnt[r[5]] || 0) + 1; });
+    const dayKeys = Object.keys(dayCnt).filter(k => k !== '—').sort((a, b) => +a - +b);
+    const dayMode = dayKeys.slice().sort((a, b) => dayCnt[b] - dayCnt[a])[0];
+    const noDay = A.filter(r => r[5] === '—');
+
+    const half = A.filter(r => { const s = N(r[1]), v = N(r[3]); return s && v && v * 2 === s; });
+    const nearHalf = A.filter(r => { const s = N(r[1]), v = N(r[3]); return s && v && v * 2 !== s && Math.abs(v * 2 - s) <= 2; });
+    const sap = A.filter(r => N(r[3]) === 1 && N(r[4]) === 1);
+    const noSeed = A.filter(r => r[1] === '×');
+
+    const season = {}; A.forEach(r => { season[r[6]] = (season[r[6]] || 0) + 1; });
+    const badS = {}; A.forEach(r => { badS[r[7]] = (badS[r[7]] || 0) + 1; });
+    const badFilled = A.filter(r => r[7] !== '×');
+    const SE = ['春', '夏', '秋', '冬'];
+
+    const shop = {}; A.forEach(r => { shop[r[9]] = (shop[r[9]] || 0) + 1; });
+    const shopKeys = Object.keys(shop).filter(k => k !== '—').sort((a, b) => shop[b] - shop[a]);
+    const shopNames = k => A.filter(r => r[9] === k).map(r => r[0]).join('、');
+
+    const unl = {}; A.forEach(r => { unl[r[8]] = (unl[r[8]] || 0) + 1; });
+    const unlKeys = Object.keys(unl).filter(k => k !== '—').sort((a, b) => unl[b] - unl[a]);
+    const lvN = A.filter(r => /村等级/.test(r[8])).length;
+
+    /* 金作物：种子价 400 的那批（金刚花种子 500，不会被带进来） */
+    const gold = A.filter(r => N(r[1]) === 400);
+    const goldBase = gold.filter(r => !baseOf(r[0]));
+    const goldVar = gold.filter(r => baseOf(r[0]));
+    const goldIsle = goldBase.map(r => r[8]).join('／');
+
+    const sortBySell = A.filter(r => N(r[3])).slice().sort((a, b) => N(b[3]) - N(a[3]));
+    const topSell = sortBySell.slice(0, 8);
+    const over1k = A.filter(r => N(r[3]) >= 1000).length;
+    const nextSell = N(sortBySell[over1k][3]);
+    const maxSeed = A.filter(r => N(r[1])).sort((a, b) => N(b[1]) - N(a[1]))[0];
+    const dblBuy = A.filter(r => { const b = N(r[4]), v = N(r[3]); return b && v && b === v * 2; }).length;
+
+    const mainRows = A.map(r => [(r[0] + ' ' + r[6] + r[7] + r[8] + r[9]), [
+        r[0], pv(r[1]), pv(r[2]), pv(r[3]), pv(r[4]),
+        N(r[5]) != null ? r[5] + ' 天' : dash,
+        r[6] === '×' ? dash : r[6],
+        r[7] === '×' ? dash : r[7],
+        r[8] === '—' ? dash : r[8],
+        r[9] === '—' ? dash : r[9],
+    ]]);
+
+    return `
+        <h2 class="h2">${A.length} 种作物与花木：${withDay.length} 种写了生长天数，最长 ${dMax} 天</h2>
+        <p class="p">龙之天地的种子表比前几作平铺得多——<b>这张源表里没有四阶段天数、没有土壤系数、也没有品质等级列</b>，只有「种子多少钱、长几天、哪季是适宜季／不适季、哪家店卖、怎么解锁」这几列。表是源站按<b>种子</b>列的，所以同一株作物的花、果、树苗会各占一行：橘子与橘子树、樱花与樱花树都分开记。原表把「没有」写成 <b>×</b>、「不适用」写成 <b>—</b>，两种照录，本页不改。</p>
+        ${stat([
+        ['收录', A.length + ' 行'],
+        ['写了生长天数', withDay.length + ' 行'],
+        ['最短／最长', dMin + ' / ' + dMax + ' 天'],
+        ['名字成对的', pairs.length + ' 组'],
+    ])}
+        <p class="p">四列价格按字面读：<b>种子买价／种子卖价</b>是种子本身的两个价，<b>卖价／买价</b>是收下来的成品（花、蔬菜、竹子）的两个价——卖价是出货所得，买价是买入要付的钱。这两对价之间还有一处很整齐的地方：<b>${dblBuy} 行的买价正好是卖价的 2 倍</b>。表按源站原顺序排，未按价格重排——方便你拿着源表对行。</p>
+        ${ftableOwn(['名称', '种子买', '种子卖', '卖价', '买价', '生长天', '适宜季', '不适季', '解锁', '商店'],
+        ['6.8rem', '5.2rem', '5.2rem', '5rem', '5rem', '4.8rem', '4.2rem', '4.2rem', '13rem', '11rem'],
+        mainRows, { ph: '输入作物名、季节或商店', cls: 'crop' })}
+
+        <h2 class="h2">卖价刚好是种子价一半的，有 ${half.length} 种</h2>
+        <p class="p">把「种子买价」与「卖价」并排比，会发现一件很整齐的事：<b>${half.length} 种作物的出货价恰好是种子价的一半</b>——马铃薯 72 买、36 卖，番茄 44 买、22 卖，草莓 100 买、50 卖，金芜菁 400 买、200 卖，大米 120 买、60 卖。<b>${nearHalf.length} 种差 2G</b>（${nearHalf.map(r => r[0]).join('、')}，都是 50 买 24 卖）。按这张表的价目，买种子、种出来、原价出货，只能拿回种子钱的一半。</p>
+        <div class="key">只要一颗种子对应一份收成，按这张表的价目，买种子种出来再原价出货就只能拿回一半——源表没给单株产量，所以这句话只在这个前提下成立。<b>真正让作物值钱的是下面那 ${pairs.length} 组成对的名字</b>：卖价一下抬到 5～6 倍，而种子价和生长天数一字不差。另外 ${sap.length} 种树苗的卖价与买价都写着「1」，那是观赏树，出货本来就不值钱，不在这一列里算。</div>
+
+        <h2 class="h2">${pairs.length} 组同名作物：多个前缀或后缀，卖价 ${rMin.toFixed(1)}～${rMax.toFixed(1)} 倍</h2>
+        <p class="p">表里有一批名字只差一两个字：芜菁／大芜菁、马铃薯／超级马铃薯、南瓜／惊悚南瓜、胡萝卜／帝王胡萝卜、黄瓜／凯撒黄瓜、草莓／甘草莓、葱／巨葱、少女蜜瓜／少女蜜瓜王。<b>每一组的种子买价与生长天数完全相同，只有卖价不同</b>——最低 ${rMin.toFixed(2)} 倍（金芜菁→大金芜菁，200→1,000），最高 ${rMax.toFixed(2)} 倍（青椒→大青椒，27→166）。</p>
+        ${tbl(['基准', '升级版', '种子买价', '生长天', '基准卖价', '升级版卖价', '倍数'], pairs.slice().sort((a, b) => b.r - a.r).map(p => [
+        p.b, '<b>' + p.v + '</b>', p.seed, p.day === '—' ? dash : p.day + ' 天',
+        p.bs, '<b>' + p.vs + '</b>', p.r.toFixed(2) + ' 倍',
+    ]), { leftFirst: true, colw: ['7rem', '9rem', '5.6rem', '5rem', '5.6rem', '6.4rem', '5.4rem'], cls: 'spot' })}
+        <div class="note">这 ${pairs.length} 组是<b>本站按名字归的</b>（前缀「大／超级／惊悚／帝王／凯撒／甘草／巨」、后缀「王」），源表里并没有「升级版」这一列，也没有写升级版怎么拿到。所以这一页只列价差，不猜获得方式——要确认怎么种出来，得看游戏里或别的资料。</div>
+
+        <h2 class="h2">生长天数：${dMin}～${dMax} 天，${dayMode} 天的最多</h2>
+        <p class="p">写了天数的 ${withDay.length} 种里，${dayMode} 天成熟的就有 ${dayCnt[dayMode]} 种，占了快一半；最快的 ${dMin} 天（${A.filter(r => r[5] === String(dMin)).map(r => r[0]).join('、')}），最慢 ${dMax} 天。</p>
+        ${tbl(['生长天数', '种数', '对应作物'], dayKeys.map(k => [k + ' 天', '<b>' + dayCnt[k] + '</b>', L(A.filter(r => r[5] === k).map(r => r[0]).join('、'))]), { leftFirst: true, colw: ['5.4rem', '4.2rem', 'auto'] })}
+        <p class="p">另有 <b>${noDay.length} 种写「—」</b>，没给天数。看名单就知道不是漏填：${noDay.map(r => r[0]).join('、')}——这里面是<b>树</b>（橘子／葡萄／苹果／栗子／桃子及各自的树苗）、<b>花木</b>（樱花、梅花、紫藤）、以及红薯、葱、少女蜜瓜、菠萝、金南瓜、金卷心菜这几个，还有大米与糯米。源表没写它们几天成熟，本页不替它填。</p>
+
+        <h2 class="h2">季节：适宜季 ${A.length - season['×']} 种，不适季只有 ${badFilled.length} 种填了</h2>
+        <p class="p">「适宜季节」这一列 ${A.length - season['×']} 种有标注，其余 ${season['×']} 种写 ×（${A.filter(r => r[6] === '×').map(r => r[0]).join('、')} 这些花木、观赏树与金作物）。「不适季节」则大部分空着——<b>${badFilled.length} 种填了，${badS['×']} 种写 ×</b>。</p>
+        ${tbl(['季节', '写在「适宜季节」', '写在「不适季节」'], SE.map(s => [s, (season[s] || 0) + ' 种', (badS[s] || 0) + ' 种']).concat([['×（未标注）', season['×'] + ' 种', badS['×'] + ' 种']]), { leftFirst: true, colw: ['8rem', '8rem', '8rem'] })}
+        <div class="key">这张表里有一处很干净：<b>「不适季节」填过冬 ${badS['冬'] || 0} 次、夏 ${badS['夏'] || 0} 次、秋 ${badS['秋'] || 0} 次，春一次都没出现</b>。也就是说没有一种作物把春天列为「不适」——但源表本来就没填满这一列，所以只能说「表里如此」，不能当规律推。</div>
+
+        <h2 class="h2">种子在谁家卖：春之里 伊吕波茶屋 ${shop[shopKeys[0]]} 种居首</h2>
+        <p class="p">按「商店」列数，${A.length} 行里 <b>${A.filter(r => r[9] === '—').length} 行写「—」</b>，即源表没给出购买地点（树苗、野采果实、部分蔬菜）。剩下的集中在几处：</p>
+        ${tbl(['商店／地点', '种数', '名单'], shopKeys.map(k => [k, '<b>' + shop[k] + '</b>', L(shopNames(k))]), { leftFirst: true, colw: ['13rem', '4.6rem', 'auto'] })}
+        <div class="key">三座村子的店分工很清楚：<b>春之里 伊吕波茶屋</b>卖基础蔬菜与草莓（${shop['春之里 伊吕波茶屋'] || 0} 种），<b>夏之里 常夏杂货店</b>管玉米与番茄，<b>秋之里 八千代居酒屋</b>只有大米与糯米两种，<b>花店</b>卖全部 ${shop['花店'] || 0} 种花，<b>旅商</b>只卖 ${shop['旅商'] || 0} 种 400G 种子。想买齐种子，三个村子都得跑一遍，花店还得先建起来。</div>
+
+        <h2 class="h2">解锁条件：${unl['—']} 行不用解锁，${lvN} 行卡村等级</h2>
+        <p class="p">「解锁」列写的是「怎么才能买到这种种子」。<b>${unl['—']} 行写「—」</b>，也就是开局直接能买；其余按条件分：</p>
+        ${tbl(['解锁条件', '行数', '名单'], unlKeys.map(k => [k, '<b>' + unl[k] + '</b>', L(A.filter(r => r[8] === k).map(r => r[0]).join('、'))]), { leftFirst: true, colw: ['15rem', '4.6rem', 'auto'] })}
+        <div class="key">村等级是主要门槛，${lvN} 行要推村等级，其中<b>春之里 5 级（${A.filter(r => /达到5/.test(r[8])).length} 行）与 6 级（${A.filter(r => /6可购买/.test(r[8])).length} 行）最多</b>；另有 ${A.filter(r => r[8] === '建造花店后可购买').length} 行要先把花店建起来，${A.filter(r => /岛|小径/.test(r[8])).length} 行要在岛上或野地里拿（${A.filter(r => /岛|小径/.test(r[8])).map(r => r[0] + '＝' + r[8]).join('、')}）。</div>
+
+        <h2 class="h2">种子价 400G 的 ${gold.length} 种：${goldBase.length} 种基础款卖了刚好赔一半</h2>
+        <p class="p">种子买价全是 400G 的这 ${gold.length} 种是另一套体系：种子只在<b>旅商</b>手上，而且要先去特定岛屿才拿得到。</p>
+        ${tbl(['名称', '种子买价', '卖价', '生长天', '解锁', '商店'], gold.map(r => [
+        (baseOf(r[0]) ? '<b>' + r[0] + '</b>' : r[0]), r[1], r[3], r[5] === '—' ? dash : r[5] + ' 天',
+        r[8] === '—' ? dash : r[8], r[9] === '—' ? dash : r[9],
+    ]), { leftFirst: true, colw: ['8rem', '6rem', '5rem', '5rem', 'auto', '5rem'] })}
+        <div class="key">算式摆在这儿：种子 400G，${goldBase.length} 种基础金作物（${goldBase.map(r => r[0]).join('、')}）只卖 200G，<b>买种子种一茬再出货，正好赔掉 200G</b>；换成升级版（${goldVar.map(r => r[0]).join('、')}）卖 1,000G，才变成每茬净赚 600G。这四种的解锁点分别在 ${goldIsle}——想靠金作物赚钱，顺序是「先去岛上拿到种子 → 再考虑怎么弄到升级版」。</div>
+
+        <h2 class="h2">卖价最高的 ${topSell.length} 种</h2>
+        <p class="p">不看倍数看绝对值：卖价到 1,000G 的只有 ${over1k} 种，全是这套里四个升级版；再往下一档直接掉到 ${nextSell}G（${sortBySell[over1k][0]}），差了一半还多。种子最贵的一种是 <b>${maxSeed[0]}（${maxSeed[1]}G）</b>，而它只卖 ${maxSeed[3]}G。</p>
+        ${tbl(['名称', '卖价', '种子买价', '生长天', '商店'], topSell.map(r => [
+        r[0], '<b>' + N(r[3]).toLocaleString() + '</b>', r[1], r[5] === '—' ? dash : r[5] + ' 天', r[9] === '—' ? dash : r[9],
+    ]), { leftFirst: true, colw: ['9rem', '6rem', '6rem', '5.4rem', 'auto'] })}
+        <div class="note">${noSeed.length} 种种子没有买价（${noSeed.map(r => r[0]).join('、')}）：源表这几行的「种子买价／种子卖价」都写 ×，也就是表里查不到买种子的价。<br><b>本页没算「每天赚多少」</b>：源表没有单株产量，也没有品质等级，拿卖价除以天数再减种子钱，等于替它假设「一颗种子只出一个、还按最高价出货」——那两步都是编的。要按天算收益，得先有产量这一列。</div>
+        <div class="note">数据取自 ${(typeof CROP_AZUMA !== 'undefined') ? CROP_AZUMA.src : ''}，共 ${A.length} 行，逐行照录。原表没有出售概率、没有掉落、没有料理用量，本页不补。</div>
+    `;
+}
+
 /* ---------- RF4 配方大全（锻造 / 工艺 / 料理·药学 三表） ---------- */
 function recipe4Html() {
     const rec = (typeof RECIPE4 !== 'undefined') ? RECIPE4 : [];
@@ -3441,7 +3590,12 @@ const PAGES = [
             <h2 class="h2">品质与等级</h2>
             <p class="p">作物有等级，等级越高单价越高，也是料理与委托的要求。提升等级靠施肥与连续在同一块地上种植优良品。想稳定产出高等级作物，就要固定一块「种苗田」，专门循环优等品。</p>
             <div class="note">杂草与石头会占格，每天顺手清掉。别把清杂草当成杂活——它直接决定你当天能种多少。</div>
-            ${g.id.indexOf('rf1') === 0 ? crop1Html() : (g.id.indexOf('rf5') === 0 ? crop5Html() : (g.id.indexOf('rf4') === 0 ? crop4Html() : (g.id === 'rff' ? cropRffHtml() : '')))}
+            ${g.id === 'azuma' ? cropAzumaHtml()
+            : g.id.indexOf('rf1') === 0 ? crop1Html()
+                : g.id.indexOf('rf5') === 0 ? crop5Html()
+                    : g.id.indexOf('rf4') === 0 ? crop4Html()
+                        : g.id === 'rff' ? cropRffHtml()
+                            : ''}
         `
     },
     {
@@ -6589,6 +6743,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-10-31　第一百二十五次：「农作」补上龙之天地——种子表平铺成一列，没有阶段天数也没有土壤系数</h2>
+            <ul class="ul">
+                <li class="li"><b>补的是哪一块</b>：「农作」页此前有四段作物表（边境／RF1／RF4／RF5），<b>缺龙之天地</b>。新增顶层函数 <code>cropAzumaHtml()</code>，<code>crop</code> 条目的 <code>body</code> 末段分流里加 <code>azuma</code> 分支（写在各作之前，避免落进 RF 系分支）。</li>
+                <li class="li"><b>数据源</b>：gametoeasy.com《符文工房:龙之天地》种地攻略丨种子获取方式（post/1808），<code>_build_crop_azuma.py</code> 生成 <code>js/crop_azuma.js</code>（<code>CROP_AZUMA</code>，<b>82 行 × 10 列</b>：名称／种子买价／种子卖价／卖价／买价／生长天数／适宜季节／不适季节／解锁／商店）。原表的「没有」写 <b>×</b>、「不适用」写 <b>—</b>，两种都照录。</li>
+                <li class="li"><b>和前几作的根本差别</b>：RF4 给的是四阶段天数和五项土壤系数，RF5 给「最好季／最坏季」，<b>龙之天地这张表是平铺的</b>——没有阶段拆分、没有土壤系数、也没有品质等级列；而且它是<b>按种子列</b>的，所以同一株作物的花、果、树苗各占一行（橘子与橘子树、樱花与樱花树分开记）。</li>
+                <li class="li"><b>从数据里算出来、和直觉不一样的几条</b>：① <b>25 种作物的卖价恰好是种子买价的一半</b>（马铃薯 72→36、番茄 44→22、草莓 100→50、金芜菁 400→200），另有 4 种花是 50→24；② 表里有 <b>22 组名字只差一个字</b>的作物（芜菁／大芜菁、洋葱／超级洋葱、胡萝卜／帝王胡萝卜、少女蜜瓜／少女蜜瓜王……），<b>种子价与生长天数完全相同，只有卖价不同</b>，倍数从 <b>5.00 倍</b>（金芜菁→大金芜菁）到 <b>6.15 倍</b>（青椒→大青椒）；③ <b>46 种</b>写了生长天数、集中在 <b>2～8 天</b>，5 天一种就有 21 个，最快的菠菜 2 天；④ 「不适季节」这一列<b>只有 18 种填了</b>，且填过冬 10／夏 4／秋 4，<b>春一次都没出现</b>——只能说表里如此，不当规律推；⑤ 商店列有 <b>46 行是「—」</b>，剩下的以春之里 伊吕波茶屋 10 种最多，花店 9 种、旅商只卖那 4 种 400G 种子。</li>
+                <li class="li"><b>踩坑一：金作物按名字筛，漏掉三个升级版</b>。初稿用「名字以『金』开头 + 种子 400G」来选这批，结果<b>大金芜菁／超级金马铃薯／惊悚金南瓜 三条升级版不以「金」开头，全被筛掉了</b>，表里只剩 1 个升级版，正文就写成「卖价到 1,000G 的只有 1 种」。改成<b>只按种子价 400G</b> 筛，8 种齐全（4 基础 + 4 升级），结论才对得上：基础款 400 买、200 卖，<b>种一茬正好赔 200G</b>；升级版卖 1,000G 才净赚 600G。</li>
+                <li class="li"><b>踩坑二：「种了直接卖是亏的」这句得带前提</b>。这句话读起来像个结论，但它只在<b>一颗种子对应一份收成</b>时成立，而源表没有单株产量这一列。已改成把这个前提写进句子里，并在页尾说明为什么不按天算收益——与 RF1 作物段同一口径：没有产量就不推算日收益。</li>
+                <li class="li"><b>照录不补</b>：<b>4 种写「×」的种子价</b>（梅花（红）／梅花（白）／红梅树／白梅树）照录为 ×；<b>14 种观赏树</b>的卖价与买价都写着「1」，照录；36 种没给生长天数的（树、花木、大米、红薯、葱、少女蜜瓜、菠萝、金南瓜、金卷心菜等）照录为「—」，不替它填。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>379 实例</b>／0 异常／头像 214 张缺 0（crop 页面向所有作品渲染，不新增实例数）；1100px 与 520px 两档 headless 截图核对，82 行主表与各小表都在容器内正常横滑。</li>
+            </ul>
+
             <h2 class="h2">2026-10-31　第一百二十四次：「配方大全」补上龙之天地——十二张表列位各不相同，只能按表头找列</h2>
             <ul class="ul">
                 <li class="li"><b>补的是哪一块</b>：「配方大全」此前只覆盖边境／海洋／RF4／RF4S／RF5，<b>缺龙之天地</b>。新增顶层函数 <code>recipeAzumaHtml()</code>，<code>recipe</code> 条目 <code>gms</code> 加 <code>azuma</code> 并在 <code>body</code> 最前面分流。</li>
