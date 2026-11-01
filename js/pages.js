@@ -2963,7 +2963,7 @@ function giftRf12Html(g) {
 
     const SEAS = '春夏秋冬';
     const bdKey = s => {
-        const m = /^([春夏秋冬])(\d+)日/.exec(s || '');
+        const m = /^([春夏秋冬])月?(\d+)日/.exec(s || '');
         return m ? SEAS.indexOf(m[1]) * 100 + Number(m[2]) : 9999;
     };
     const dash = '<span class="mon-no">—</span>';
@@ -3135,7 +3135,7 @@ function giftPage(g, arr) {
 
 
     const bdKey = s => {
-        const m = /^([春夏秋冬])(\d+)日/.exec(s || '');
+        const m = /^([春夏秋冬])月?(\d+)日/.exec(s || '');
         return m ? GIFT_SEAS.indexOf(m[1]) * 100 + Number(m[2]) : 9999;
     };
     const hasList = f => A.some(x => x[f] && x[f].length);
@@ -8261,6 +8261,18 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十七：更正「龙之天地无钓鱼」的臆断（实有 42 种），并做生日全量比对</h2>
+            <ul class="ul">
+                <li class="li"><b>纠错起因</b>：有人问「龙之天地没有钓鱼吗？」——这一问戳中了第一百四十二条里的一句错话。原文写「<b>龙之天地无传统钓鱼</b>，<code>FISH_AZUMA</code> 为空、鱼种数记 0」，还把「只有乌贼／公鱼捕捉小游戏」当作理由。<b>这是臆断，站内本来就有该作的钓鱼数据</b>。</li>
+                <li class="li"><b>根因</b>：<code>FISH_AZUMA</code>（<code>js/fish_azuma.js</code>）是「<b>鱼类图鉴任务奖励</b>」对象（<code>rewards</code> 五档 ＋ <code>full</code> 全满奖励），<b>不是鱼种数组</b>，取 <code>.length</code> 永远取不到值（返回空）；真正的鱼种在 <code>SPOT_AZUMA.fishes</code>（<code>js/fishspot_azuma.js</code>，钓鱼攻略：鱼名／买价／卖价／钓点／在售商店／解锁条件）。把一个奖励表当成图鉴来数，才得出 0。</li>
+                <li class="li"><b>更正</b>：<code>fishN('azuma')</code> 改读 <code>SPOT_AZUMA.fishes.length</code> = <b>42 种</b>；对照页第三表「龙之天地」由 0 改为 <b>42</b>；第四部分钓鱼条改写为「有钓鱼——42 种鱼／钓物，表是『鱼 → 钓点』目录，无逐钓点出现率；另有图鉴任务 10／20／30／40／45 档奖励与全图鉴鱼笼」。原条目留删除线并注明更正处，不悄悄抹掉。</li>
+                <li class="li"><b>连带校正海洋（RFO）</b>：原写「28 钓点、30 种鱼」，实测 <code>SPOT_RFO</code> 为 <b>257 条</b>「地点 × 区域 × 季节 × 时段」记录、<b>20 个地点</b>（地点＋区域拆为 39 处）、去重鱼名 <b>29 种</b>。数字全部改为实测值。</li>
+                <li class="li"><b>生日解析容错</b>：<code>AZUMA_GIFT</code> 里「铃」「翡翠」两人的生日源表写作「<b>秋月3日</b>／<b>秋月9日</b>」（其余 168 条都是「秋N日」）。数据按原文照录，但 5 处解析器写成 <code>^([春夏秋冬])(\\d+)日</code>，遇到多出的「月」字全部失配——排序键返回 9999（被排到最后），行程页更会解析不出而<b>把整个人漏掉</b>。改为 <code>^([春夏秋冬])月?(\\d+)日</code>，只在解析层容错，<b>不动数据原文</b>。</li>
+                <li class="li"><b>生日全量比对</b>（外部可解析源只有两套）：<b>边境</b>取《RFF 新手篇＋人物喜好＋星座》docx（日文名＋日文生日，26 人），<b>RF1／RF2／边境／RF3</b>取《Memoirs》角色攻略（民间译本，11＋13＋12＋11 人）。逐人核对结果：<b>46 人全部一致、0 处冲突</b>；唯一缺口是 <b>RF1 莉妮特</b>——站内没写生日，外部记「秋之月 25 日」。</li>
+                <li class="li"><b>另外两组交叉核对</b>：两套外部源在边境重合的 12 人<b>完全一致</b>（互相验证）；站内<b>跨作同名角色</b> 14 组里 12 组生日相同（如 ミスト 秋1日、ロゼッタ 秋21日、タバサ 秋12日 跨 RF1／边境／海洋 一致），2 组不同——<b>サラ</b>（RF1 冬4日／海洋 春3日）、<b>キャンディ</b>（边境 春27日／海洋 秋27日），因海洋的サラ是「花嫁候补·海之家相关」，疑为同名不同角，<b>照录不合并、不判对错</b>。</li>
+                <li class="li"><b>核实群里两条质疑</b>：①「芙缇本职是骑士不是药草商」——站内本就写「守护赛尔菲亚的女骑士」（<code>npcfull.js</code>），角色页身份栏亦为「骑士」，<b>无此错</b>；②「商店货架三排是上限、跟出货率没关系」——站内<b>根本没有「货架」「出货率」任何表述</b>，既未写错也未收录，属空白。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>408 实例／0 异常／头像 214 张缺 0</b>；<code>_test_index_health</code> 仅剩「操作方式」平台串等合理长格；<code>node --check</code> 通过。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十六：修搜索索引「名字被辅助文字污染」</h2>
             <ul class="ul">
                 <li class="li"><b>体检发现</b>：跑全部自检脚本时，<code>_test_index_health</code> 报 rf2 有 <b>80 条超长名</b>，样例是「奥库伊奇 稍微有些笨拙的魔物。好奇心旺盛…」——即<b>魔物名和整段简介被当成同一个名字</b>。这些条目在搜索结果里会以超长串作标题，影响可读性。</li>
@@ -8291,9 +8303,9 @@ const PAGES = [
             <ul class="ul">
                 <li class="li"><b>新开 <code>seriescmp</code> 页</b>（归「设定」、<b>常驻页</b>，不挂 <code>gms</code>，故在十作导航各出现一次）：把十部作品放进一张表并排看。出发点——系统补表已到尽头（可解析源都吃完了，剩余 ✗ 全是源不存在类缺口），转向「聚合已核实事实」的对照页，<b>不跨作换算、不替没核实的填数字</b>。</li>
                 <li class="li"><b>三张真实条数表</b>：①基础信息（发售日／平台／主角／舞台，取自 <code>GAMES</code>）；②结婚候补与角色规模（<code>chars[].role</code> 含「候补」者计为结婚候补：RF1 6、RF2 11、RF3/SP 11、边境 12、海洋 10、RF4/SP 12、RF5 12、龙之天地 14）；③内容体量（料理条数取各作 cook 数组真实长度：RF1 184／RF2 190／RF3 145／边境 228／海洋 181／RF4 170／RF5 184／龙之天地 313；鱼与钓物种数取 <code>FISH_*</code> 条目数）。</li>
-                <li class="li"><b>两处数据口径如实标注</b>：<b>RF3 SP／RF4 SP 与本体共用同一份数据</b>，条数直接取本体（145/170、45/38），不单列 0；<b>龙之天地无传统钓鱼</b>，<code>FISH_AZUMA</code> 为空、鱼种数记 0（第四节省已说明该作只有乌贼／公鱼捕捉小游戏）。</li>
+                <li class="li"><b>两处数据口径如实标注</b>：<b>RF3 SP／RF4 SP 与本体共用同一份数据</b>，条数直接取本体（145/170、45/38），不单列 0；<s>龙之天地无传统钓鱼，<code>FISH_AZUMA</code> 为空、鱼种数记 0</s>——<b>此说错误，见第一百四十七次更正</b>：站内 <code>SPOT_AZUMA.fishes</code> 本就有 42 种鱼，是把「图鉴任务奖励」对象 <code>FISH_AZUMA</code> 误当鱼种数组所致。</li>
                 <li class="li"><b>修了两个真实 bug</b>：海洋鱼种原写成 <code>SPOT_RFO.fishes.length</code>，但 <code>SPOT_RFO</code> 是扁平数组 <code>[地点,区域,季节,时间,[[鱼名,概率],...]]</code>、根本没有 <code>.fishes</code> 字段，会得 0——改为按钓点展开、对鱼名去重，得 <b>29 种</b>（与鱼类图鉴页一致）；SP 版原因无独立 cook 数组而显示 0，已映射回本体。</li>
-                <li class="li"><b>第四部分：系统机制差异</b>，逐作核实的发现，每条标出处作——钓鱼（RF4/5 有概率矩阵、RF1~3/边境只有目录、海洋 28 钓点 29 种、龙之天地无传统钓鱼）、农作（海洋靠精灵杖＋宠物、龙之天地机制迥异）、魔物收服（RF1 无喜好道具、海洋唯一给喜好作物）、符文魔法（RF4 符文能力 54 个、龙之天地改守护者体系）、节日战斗（属性抗性量纲各作不同、跨作比数字无意义）。</li>
+                <li class="li"><b>第四部分：系统机制差异</b>，逐作核实的发现，每条标出处作——钓鱼（RF4/5 有概率矩阵、RF1~3/边境只有目录、海洋 20 地点 39 处 257 条 29 种、龙之天地 42 种鱼——<b>原文误记「龙之天地无传统钓鱼」，第一百四十七次更正</b>）、农作（海洋靠精灵杖＋宠物、龙之天地机制迥异）、魔物收服（RF1 无喜好道具、海洋唯一给喜好作物）、符文魔法（RF4 符文能力 54 个、龙之天地改守护者体系）、节日战斗（属性抗性量纲各作不同、跨作比数字无意义）。</li>
                 <li class="li"><b>校验</b>：<code>_verify</code> <b>408 实例</b>（新增 10，常驻页 × 十作导航）／0 异常／头像 214 张缺 0。数字经 node 脚本直接加载真实数据文件复算、并渲染 <code>seriesCmpHtml()</code> 抓取文本二次核对，与页面展示一致。</li>
             </ul>
             <h2 class="h2">2026-11-01　第一百四十一次：龙之天地（azuma）补全「料理配方」页——313 道</h2>
@@ -9689,7 +9701,7 @@ function azumaNpcHtml() {
     if (!A.length) return '';
     const SEA = ['春', '夏', '秋', '冬'];
     const bdKey = c => {
-        const m = /^([春夏秋冬])(\d+)日$/.exec(c.bd || '');
+        const m = /^([春夏秋冬])月?(\d+)日$/.exec(c.bd || '');
         return m ? SEA.indexOf(m[1]) * 100 + Number(m[2]) : 9999;
     };
     const list = A.slice().sort((a, b) => bdKey(a) - bdKey(b) || a.n.localeCompare(b.n));
@@ -10044,6 +10056,13 @@ function seriesCmpHtml() {
             SPOT_RFO.forEach(r => { (r[4] || []).forEach(f => { set[f[0]] = 1; }); });
             return Object.keys(set).length;
         }
+        if (b === 'azuma') {
+            // 注意：FISH_AZUMA 是「图鉴任务奖励」对象（rewards/full），不是鱼种数组，
+            // 取 .length 会得 undefined。鱼种在 SPOT_AZUMA.fishes
+            // （钓鱼攻略：鱼名／买价／卖价／钓点／商店／解锁条件）。
+            return (typeof SPOT_AZUMA !== 'undefined' && SPOT_AZUMA.fishes)
+                ? SPOT_AZUMA.fishes.length : 0;
+        }
         return ({
             rf1: typeof FISH_RF1 !== 'undefined' ? FISH_RF1.length : 0,
             rf2: typeof FISH_RF2 !== 'undefined' ? FISH_RF2.length : 0,
@@ -10052,7 +10071,6 @@ function seriesCmpHtml() {
             rff: typeof FISH_RFF !== 'undefined' ? FISH_RFF.length : 0,
             rf4: typeof FISH_RF4 !== 'undefined' ? FISH_RF4.length : 0,
             rf5: typeof FISH_RF5 !== 'undefined' ? FISH_RF5.length : 0,
-            azuma: typeof FISH_AZUMA !== 'undefined' ? FISH_AZUMA.length : 0,
         }[b] || 0);
     };
     const marryN = g => (g.chars || []).filter(c => /候补/.test(c.role || '')).length;
@@ -10094,7 +10112,7 @@ function seriesCmpHtml() {
     ${tbl(['作品', '结婚候补', '角色总数'], marryRows, { colw: ['9rem', '5rem', '5rem'], leftFirst: true })}
 
     <h2 class="h2">三、内容体量（真实条数）</h2>
-    <p class="p">料理条数为各作料理／药学数据表条目数：RF3／RF4／RF5 此处是料理主表（药品单列、未计入）；RF1／RF2／RFF／RFO 的主表含药学，数字略高。<b>RF3 SP／RF4 SP 与对应本体共用同一份数据</b>，条数与本体一致。鱼与钓物种数为 <code>FISH_*</code> 数据条目数（海洋 rfo 取钓点表去重后的鱼名，共 29 种）；<b>龙之天地（azuma）无传统钓鱼系统</b>，<code>FISH_AZUMA</code> 为空、记为 0。这些数字只说明「这一作有多少可查的条目」，不代表品质高低。</p>
+    <p class="p">料理条数为各作料理／药学数据表条目数：RF3／RF4／RF5 此处是料理主表（药品单列、未计入）；RF1／RF2／RFF／RFO 的主表含药学，数字略高。<b>RF3 SP／RF4 SP 与对应本体共用同一份数据</b>，条数与本体一致。鱼与钓物种数为各作钓鱼表的去重鱼名数（海洋 rfo 取钓点表展开去重，共 29 种；<b>龙之天地 azuma 取钓鱼攻略 <code>SPOT_AZUMA.fishes</code>，共 42 种</b>）。这些数字只说明「这一作有多少可查的条目」，不代表品质高低。</p>
     ${tbl(['作品', '料理条数', '鱼与钓物种数'], scaleRows, { colw: ['9rem', '6rem', '8rem'], leftFirst: true })}
 
     <h2 class="h2">四、系统机制差异（逐作核实）</h2>
@@ -10103,8 +10121,8 @@ function seriesCmpHtml() {
     <ul class="ul">
         <li class="li"><b>RF4／RF5</b>：有「钓点 × 季节 × 概率」的解包表，能做成百分比矩阵（第 119 次核实）。</li>
         <li class="li"><b>RF1／RF2／RF3／边境</b>：是「钓点 × 鱼」目录，原表<b>没有逐钓点出现率</b>，只做索引不推概率（第 119／120 次）。</li>
-        <li class="li"><b>海洋（RFO）</b>：有 28 钓点、30 种鱼／钓物的数据（第 120 次）。</li>
-        <li class="li"><b>龙之天地（azuma）</b>：<b>无传统钓鱼</b>，只有「乌贼捕捉比赛／公鱼捕捉比赛」小游戏，没有钓点×鱼×概率表（第 122 次）。</li>
+        <li class="li"><b>海洋（RFO）</b>：钓点表 <b>257 条</b>「地点 × 区域 × 季节 × 时段」记录，覆盖 <b>20 个地点</b>（按「地点＋区域」拆为 39 处），去重鱼名 <b>29 种</b>，每条带出现概率（第 120 次收录，第 147 次校正条数）。</li>
+        <li class="li"><b>龙之天地（azuma）</b>：<b>有钓鱼</b>——钓鱼攻略收录 <b>42 种鱼／钓物</b>，附买价／卖价／钓点（含季节、雨天限定）／在售商店／解锁条件；表是「鱼 → 钓点」目录，<b>没有逐钓点出现率</b>。另有「鱼类图鉴」任务按累计 10／20／30／40／45 档给钓竿与料理，全图鉴给鱼笼（第 122 次收录数据，第 147 次更正「无钓鱼」的错误说法）。</li>
     </ul>
 
     <h3 class="h3">农作</h3>

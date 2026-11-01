@@ -430,7 +430,7 @@ function roleGroup(r) {
 
 const SEASON_I = { '春': 0, '夏': 1, '秋': 2, '冬': 3 };
 function bdayKey(s) {
-    const m = /^([春夏秋冬])(\d+)/.exec(s || '');
+    const m = /^([春夏秋冬])月?(\d+)/.exec(s || '');
     return m ? SEASON_I[m[1]] * 100 + Number(m[2]) : 9999;
 }
 
@@ -914,7 +914,7 @@ function viewTodo() {
     /* 用人物档案的生日（覆盖 7 部作品 173 人），比 GAMES[].chars 里的零散几条完整得多 */
     const withBday = npcOf(g).filter(c => c.bd);
     const parsed = withBday.map(c => {
-        const m = c.bd.match(/([春夏秋冬])\s*(\d+)/);
+        const m = c.bd.match(/([春夏秋冬])月?\s*(\d+)/);
         if (!m) return null;
         return { c, s: SEASON_NAMES.indexOf(m[1]), d: Number(m[2]) };
     }).filter(Boolean);
