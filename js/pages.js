@@ -8270,6 +8270,12 @@ const PAGES = [
                 <li class="li"><b>第四部分：系统机制差异</b>，逐作核实的发现，每条标出处作——钓鱼（RF4/5 有概率矩阵、RF1~3/边境只有目录、海洋 28 钓点 29 种、龙之天地无传统钓鱼）、农作（海洋靠精灵杖＋宠物、龙之天地机制迥异）、魔物收服（RF1 无喜好道具、海洋唯一给喜好作物）、符文魔法（RF4 符文能力 54 个、龙之天地改守护者体系）、节日战斗（属性抗性量纲各作不同、跨作比数字无意义）。</li>
                 <li class="li"><b>校验</b>：<code>_verify</code> <b>408 实例</b>（新增 10，常驻页 × 十作导航）／0 异常／头像 214 张缺 0。数字经 node 脚本直接加载真实数据文件复算、并渲染 <code>seriesCmpHtml()</code> 抓取文本二次核对，与页面展示一致。</li>
             </ul>
+            <h2 class="h2">2026-11-01　第一百四十三：打磨 seriescmp——新增「结婚候补名单（真实姓名）」段</h2>
+            <ul class="ul">
+                <li class="li"><b>第一百四十二选定方向 A（继续打磨 seriescmp）</b>。在原有四节基础上新增<b>第五节「结婚候补名单（真实姓名）」</b>：仅从本站已核实的 <code>GAMES</code> 数据里取 <code>chars[].role</code> 标为「花嫁候补／花婿候补」的<b>真实姓名</b>，按作品并排成「作品／花嫁候补／花婿候补」三列表，<b>零臆造</b>；与第二节「结婚候补」计数一一对应（RF1 6、RF2 11、RF3/SP 11、边境 12、海洋 10、RF4/SP 12、RF5 12、龙之天地 14）。</li>
+                <li class="li"><b>口径如实标注</b>：海洋的索妮娅同时是女主角兼候补，按数据原文列入花嫁列；龙之天地花婿候补多为东国诸神，属该作设定。</li>
+                <li class="li"><b>校验</b>：node 脚本加载真实数据渲染 <code>seriesCmpHtml()</code>，确认十作所有花嫁／花婿姓名<b>全部命中</b>；Edge 无头截图核对第五节表格——长名单（RF2 7 人、RF3/边境/海洋 11~12 人、龙之天地花婿 7 人）均<b>自动换行、无拆字、无横向溢出</b>。<code>_verify</code> 仍 <b>408 实例／0 异常／头像 214 张缺 0</b>。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十一次：龙之天地（azuma）补全「料理配方」页——313 道</h2>
             <ul class="ul">
                 <li class="li"><b>新开 <code>azuma_cook</code> 页</b>（归「生活」、<code>gms:['azuma']</code>，与 azuma_skill／mon／boss 并列）：龙之天地此前在「料理」页完全空白——这一作<b>没有厨具分类、也没有料理等级门槛</b>，按「品类」分五块：<b>菜肴 162／便当 33／加工品 6／甜点 107／酒 5</b>，共 <b>313 道</b>可制作物。</li>
@@ -10039,6 +10045,12 @@ function seriesCmpHtml() {
     ]);
     const scaleRows = G.map(g => [nm(g), String(ckN(g.id)), String(fishN(g.id))]);
     const marryRows = G.map(g => [nm(g), String(marryN(g)), String((g.chars || []).length)]);
+    const candRows = G.map(g => {
+        const cs = (g.chars || []).filter(c => /候补/.test(c.role || ''));
+        const F = cs.filter(c => /花嫁/.test(c.role)).map(c => c.name);
+        const M = cs.filter(c => /花婿/.test(c.role)).map(c => c.name);
+        return [nm(g), F.length ? F.join('、') : '—', M.length ? M.join('、') : '—'];
+    });
 
     return `
     <h2 class="h2">跨作机制对照</h2>
@@ -10092,6 +10104,10 @@ function seriesCmpHtml() {
         <li class="li"><b>节日</b>：七作全覆盖年度节日日程；azuma 无传统节日，只列名称（第 132 次）。</li>
         <li class="li"><b>属性抗性</b>：量纲各作不同——一代点数、二代克制、三代倍率、四五代百分比，<b>跨作直接比数字无意义</b>（第 ③ 类缺口核实）。</li>
     </ul>
+
+    <h2 class="h2">五、结婚候补名单（真实姓名）</h2>
+    <p class="p">仅列本站数据文件 <code>chars[].role</code> 标为「花嫁候补／花婿候补」的角色真实姓名，与表二的「结婚候补」计数一一对应。RFO 的索妮娅同时是女主角兼候补，按数据原文列入花嫁列；azuma 的花婿候补多为东国诸神，属该作设定。</p>
+    ${tbl(['作品', '花嫁候补', '花婿候补'], candRows, { colw: ['7.5rem', '', ''], left: [1, 2] })}
 
     <div class="note">本页只做「并排看」与「逐作核实发现」的汇总，不构成跨作评测。某项在某作显示 0 或空白，多半是「该作此系统与前作机制不同、或本站尚未收录」，不是「没有」。具体数据请进对应作品的相关条目页查看。</div>
     `;
