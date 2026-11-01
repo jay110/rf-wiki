@@ -4248,6 +4248,11 @@ const PAGES = [
         body: () => rfoMapHtml()
     },
     {
+        key: 'rfosail', group: 'basic', title: '岛屿与打捞', icon: 'compass',
+        gms: ['rfo'],
+        body: () => rfosailHtml()
+    },
+    {
         key: 'rffevent', group: 'basic', title: '主线与角色事件', icon: 'scroll',
         gms: ['rff'],
         body: () => rffEventHtml()
@@ -4675,6 +4680,11 @@ const PAGES = [
         }
     },
     /* ================= BOSS 战 ================= */
+    {
+        key: 'rfotip', group: 'basic', title: '攻略本技巧', icon: 'star',
+        gms: ['rfo'],
+        body: () => rfotipHtml()
+    },
     {
         key: 'boss', group: 'basic', title: 'BOSS 战', icon: 'skull',
         gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rfo', 'rf4', 'rf4sp', 'rf5', 'rff'],
@@ -8335,6 +8345,24 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-02　第一百五十五：海洋攻略本最后两张表用完——「岛屿与打捞」33 处岛＋日版 30 行、16 条玩家技巧照录</h2>
+            <ul class="ul">
+                <li class="li"><b>海洋的攻略本 xls 只剩「岛屿」「技巧」两张没用</b>，这一轮全用掉：海洋<b>不再有未使用的源表</b>。新页两张，都挂在基础组：<code>rfosail</code>「岛屿与打捞」紧跟地图页，<code>rfotip</code>「攻略本技巧」放在基础组末尾。</li>
+                <li class="li"><b>岛屿表其实是两份整理拼在一张工作表里</b>：上半中文（固定 12 座＋打捞 21 处），下半写着「以下↓为日版」的日文表 30 行。两份坐标对得上、写法与魔物栏不同，<b>并列照录、不合并</b>。</li>
+                <li class="li"><b>每座岛都有一个「光球」</b>，打掉掉 BOSS，等级跟着岛屿走：<b>lv10（无名岛 D-4 的莫可王）到 lv75</b>，最高的 lv75 共 6 处（a-5、b-4、b-7、e-3、e-4、f-9，全是打捞岛，清一色小龙）。光球 BOSS 共 <b>16 种</b>，小龙出现 7 次最多，其次红松鼠王 6 次、莫可王与巨魔王各 5 次。四座精灵神殿的光球是两三只一起上。</li>
+                <li class="li"><b>精灵木共 25 棵、只在 12 座岛上</b>：三棵的四座正好是四季岛（热沙 B-3、艾利 E-5、密林 E-8、封冰 G-2），其余 1～2 棵。这一列只有日版表有，<b>跟地图页的精灵石树逐岛对得上</b>——3 棵 4 处、2 棵 4 处、1 棵 3 处，一棵不差；唯一多出来的是<b>圆形竞技场 2 棵</b>，地图页的精灵石表里没有这一处。</li>
+                <li class="li"><b>鉴定箱 21 处</b>（打捞岛特有，开出随机一件）：2～5 件不等，<b>3 件的最多（15 处）</b>——和地图页宝箱表里「不明物品」的件数分布一模一样，两处其实是同一个机制。</li>
+                <li class="li"><b>日版表的价值在两列</b>：魔物栏带日文原名（哥布林（ゴブリン）、怪物箱（モンスターボックス）），以及精灵木数。魔物去重后 <b>65 种</b>，出得最广的是哥布林（7 处）；不明品 32 种，超栄水给得最多（6 处）。日文原文里「風の結晶」「超栄水」没翻，原样留着，方便对日文攻略。</li>
+                <li class="li"><b>照录不改的三处矛盾</b>：① <b>空中庭院</b>中文表标 h-4、日版表标 H-3，而 h-4 在日版表里是另一处沉没船；② <b>圆形竞技场</b>只有日版表有，魔物与不明品都写「-」、精灵木数却写 2，地图页那边又写「14~99／混合」，三处说法全留着；③ <b>石床庭園</b>在中文表里写成 ancient ruins（a-5、c-3），到 g-3 又写成「ancient ruins古代遗址」，「古代石像」也有 ancient statue 与「古代雕像」两种写法。</li>
+                <li class="li"><b>技巧页 16 条玩家投稿，帖体原样</b>：口语、错别字、（偷笑）（拖）这类自嘲一处没改，只按原文顺序分成四节——钱与技能（1～3）、上手小技巧（4～9）、结婚与生子（10～11）、系统杂项（12～16）。<b>页头就写明它是玩家经验、不是数值表</b>：像「卖价 7 个价位 0.4～1.6」「怀孕 20 天」站内没有第二来源可核，只当「有人这么玩」照录。</li>
+                <li class="li"><b>技巧里最实用的是三条</b>：讨价还价只有<b>前三次有效</b>、卖价七档里最高是原价 ×1.6；刷钱四条路线（牛奶煮料理翻倍、刷跑腿依赖拿蛋糕、铁→锤→战斗锤顺手刷锻造、300G 的布做 60 级窗帘卖 8000G）；五个制作技能各自的<b>初期借用地点</b>（旅馆厨房、豪宅一楼左屋、武器店、教堂旁空房）。</li>
+                <li class="li"><b>帖里的名字有 5 处跟站内定稿不同</b>：丽丽→莉莉、撒拉→莎拉、爱丽丝→艾伊利斯、阿奈特→阿涅多、乔伊→乔，页尾列了对照表；<b>罗伊德／红毛男站内没有能对上的条目，原样留着不猜</b>。</li>
+                <li class="li"><b>「爱丽丝」在帖里其实指两个人</b>：方法④的「爱丽丝（小护士）」是护士艾伊利斯；第 12 条的「爱丽丝（男主，选择女主是詹姆斯）」讲的是委托委托人随主角性别换人（男主线爱丽丝、女主线詹姆斯），两位都是结婚候补——页尾专门点明，免得读者以为是「主角可以改名」。</li>
+                <li class="li"><b>踩坑一：单元格里带换行，正则匹配整格会静默漏条</b>。「技巧」表第 9 条起正文里有换行，<code>^(\d+)\.</code> 配 <code>$</code> 对整格匹配失败——16 条只解析出 8 条，脚本没报错、是断言「编号必须是 1～16」才拦住。改成先按行拆、只看首行。</li>
+                <li class="li"><b>踩坑二：浮点 0 被当空值清掉</b>。精灵木数在 xls 里是 0.0／1.0／2.0／3.0 的浮点，第一版把 0.0 转成空串，18 座岛的「0 棵」全变破折号。改成一律 <code>%g</code> 输出。</li>
+                <li class="li"><b>踩坑三：页面注册插错了行</b>。我把新条目插在 <code>key: 'boss'</code> 那一行之前，正好把对象开头的 <code>{</code> 与 <code>key</code> 拆开，<code>node --check</code> 立刻报「Unexpected token '{'」。注册要插在 <b>整段 <code>{ ... },</code> 之前</b>，不是插在某一行字段前。</li>
+                <li class="li"><b>校验</b>：424 实例（新增 2）／0 异常／头像 8 作 214 张缺 0；rfo 索引 4815 行（+83）、数字名 0、超长名 0；520px 下三张表在容器内横滑，正文不溢出。</li>
+            </ul>
             <h2 class="h2">2026-11-02　第一百五十四：海洋「地图与出没」补成页——55 个区域的魔物、39 处精灵石、28 个海域的海怪、189 处宝箱陶壶，四张表一次落地</h2>
             <ul class="ul">
                 <li class="li"><b>这是海洋最大的一块空白</b>：此前站内只有钓点、掉落、抗性、委托，<b>「哪张图刷什么怪、精灵石在哪、哪个海域撞哪种海怪」一页都没有</b>。源是 biligame《RFOMAP》（法米通攻略书地图整理），与站内魔物图鉴、钓点页同源，<code>_build_rfo_map.py</code> 解析成 <code>js/rfomap.js</code>。</li>
@@ -10416,6 +10444,216 @@ function rfoMapHtml() {
                 <li class="li"><b>「再采集」的单位本站没有补</b>：源表只写 2～6 这样的数字，没写是天、小时还是次数，表格照原样只放数字。</li>
             </ul>
             <div class="note">数据源：biligame 符文工厂 wiki《RFOMAP》（法米通攻略书地图整理），与站内魔物图鉴、钓点页同源。魔物名、物品名沿用该站写法，与站内其他页的中文译名可能有一两个字的出入，各页各自照录、不强行统一。</div>`;
+}
+/* ------------------------------------------------------------
+   符文工房 海洋 —— 岛屿与打捞（RFO_SAIL）
+   来源：《符文工厂海洋（最强攻略）》xls「岛屿」工作表。
+   上半是中文整理（固定 12 座 + 打捞 21 处），下半「以下↓为日版」
+   是另一份日文整理（30 行，带精灵木数与魔物日文原名）。
+   两份坐标对得上、写法与魔物栏并不一致，两表并列照录，不合并。
+   ------------------------------------------------------------ */
+function rfosailHtml() {
+    const D = (typeof RFO_SAIL !== 'undefined') ? RFO_SAIL : null;
+    if (!D || !D.fix || !D.salv) return '<p class="p">岛屿数据未加载。</p>';
+    const esc = t => String(t === undefined || t === null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = v => (v === '' || v === '-' || v == null) ? '<span class="mon-no">—</span>' : esc(v);
+    const FIX = D.fix, SALV = D.salv, JP = D.jp;
+
+    /* 等级写成「lv1-2」「lv4-9」「约lv70」三种，比大小取上限 */
+    const lvHi = s => {
+        const m = String(s || '').match(/(\d+)(?:\s*[-–~]\s*(\d+))?/);
+        return m ? +(m[2] || m[1]) : 0;
+    };
+
+    /* 光球 BOSS：一格里可能并列好几只（四座精灵殿就是三只），等级写在末尾的括号里 */
+    const bossName = s => s.replace(/（[^）]*）/g, '').split('，').map(x => x.trim()).filter(Boolean);
+    const bossLv = s => {
+        const all = s.match(/（lv(\d+)(?:\s*[-–]\s*(\d+))?）/g);
+        if (!all) return 0;
+        const d = all[all.length - 1].match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+        return +(d[2] || d[1]);
+    };
+    const all = FIX.concat(SALV);
+    const lvNums = all.map(r => bossLv(r[3])).filter(v => v > 0);
+    const bossMax = Math.max.apply(null, lvNums);
+    const bossMin = Math.min.apply(null, lvNums);
+    const bossMaxRows = all.filter(r => bossLv(r[3]) === bossMax);
+    const bossKind = {};
+    all.forEach(r => bossName(r[3]).forEach(n => { bossKind[n] = (bossKind[n] || 0) + 1; }));
+    const bossKinds = Object.keys(bossKind).sort(function (a, b) { return bossKind[b] - bossKind[a]; });
+
+    /* 中文表的等级台阶 */
+    const fixHi = FIX.map(r => lvHi(r[2]));
+    const fixMax = Math.max.apply(null, fixHi);
+    const fixTop = FIX.filter(r => lvHi(r[2]) === fixMax);
+    const fixBottom = FIX.filter(r => lvHi(r[2]) === Math.min.apply(null, fixHi));
+    const salvHi = SALV.map(r => lvHi(r[2]));
+    const salvMin = Math.min.apply(null, salvHi.filter(v => v > 0));
+    const salvLow = SALV.filter(r => lvHi(r[2]) === salvMin);
+    const salvTop = SALV.filter(r => lvHi(r[2]) === Math.max.apply(null, salvHi));
+
+    /* 鉴定箱：打捞岛特有，开出随机一件 */
+    const boxed = SALV.filter(r => r[5]);
+    const boxN = boxed.map(r => r[5].split('，').length);
+    const boxMin = Math.min.apply(null, boxN), boxMax = Math.max.apply(null, boxN);
+
+    /* 精灵木数只在日版表里；跟地图页「精灵石树」是同一件事 */
+    const WOOD = JP.filter(r => r[4] && r[4] !== '0');
+    const woodSum = WOOD.reduce((a, r) => a + parseInt(r[4], 10), 0);
+    const WOOD_MAP = WOOD.filter(r => r[0] !== 'b-4');   /* 圆形竞技场在地图页的精灵石表里没有这一处 */
+
+    /* 日版表的魔物栏把光球 BOSS 也算在里面，统计时去掉括号里的日文原名 */
+    const monKind = {};
+    JP.forEach(r => r[2].forEach(m => {
+        const n = m.replace(/（[^）]*）/g, '').trim();
+        if (n && n !== '-') monKind[n] = (monKind[n] || 0) + 1;
+    }));
+    const monKindN = Object.keys(monKind).length;
+    const monTop = Object.keys(monKind).sort(function (a, b) { return monKind[b] - monKind[a]; })[0] || '';
+    const unkKind = {};
+    JP.forEach(r => r[3].forEach(u => { if (u && u !== '-') unkKind[u] = (unkKind[u] || 0) + 1; }));
+    const unkKindN = Object.keys(unkKind).length;
+    const unkTop = Object.keys(unkKind).sort(function (a, b) { return unkKind[b] - unkKind[a]; })[0] || '';
+
+    const M = (typeof RFO_MAP_MON !== 'undefined') ? RFO_MAP_MON : [];
+    const floorN = k => M.filter(r => r[0].indexOf(k) === 0).length;
+    const TEMPLE = [['土', '土之精灵殿'], ['炎', '炎之精灵殿'], ['水', '水之精灵殿'], ['风', '风之精灵殿']];
+
+    /* 中文表与日版表指的是同一座岛时，站内地图页用的是哪个名字（按坐标对上的才有） */
+    const ALIAS = [
+        ['e-5', 'verde island', 'アイリーランド', '艾利岛'],
+        ['f-6', 'shrine island', '神殿の島', '神殿岛'],
+        ['d-3', '沉船岛', '岩礁の沈没船', '岩礁上的沉船'],
+        ['b-3', '沙漠岛 desert island', 'マーグスランド', '热沙岛'],
+        ['e-8', 'jungle island', 'ラフレシアンランド', '密林岛'],
+        ['g-6', 'statue island', '石像の島', '石像岛'],
+        ['h-4（日版写 H-3）', 'mystic ruins 空中庭院', '空中庭園', '空中庭院'],
+        ['g-2', 'frost island', 'ブリザールランド', '封冰岛'],
+        ['e-7', '土精灵神殿', '土の精霊殿', '土之精灵殿·' + floorN('土之精灵殿') + ' 层'],
+        ['b-6', '火精灵神殿', '火の精霊殿', '炎之精灵殿·' + floorN('炎之精灵殿') + ' 层'],
+        ['h-5', '水精灵神殿', '水の精霊殿', '水之精灵殿·' + floorN('水之精灵殿') + ' 层'],
+        ['e-2', '风精灵神殿', '風の精霊殿', '风之精灵殿·' + floorN('风之精灵殿') + ' 层']
+    ];
+
+    return `
+            <p class="p">海洋的地图不是一张画，而是<b>一片海加一堆岛</b>——岛有的本来就在那儿（四季岛、四座精灵神殿、空中庭院），有的是骑巨人优米尔从海底<b>整座捞上来</b>的（沉船、遗迹、无名岛）。这一页把攻略本《最强攻略》里那张「岛屿」表摊平成三张：<b>固定岛 ${FIX.length} 座、打捞岛 ${SALV.length} 处，外加日版原始表 ${JP.length} 行</b>。</p>
+            ${stat([['固定岛', FIX.length + ' 座'], ['打捞岛', SALV.length + ' 处'], ['精灵木', woodSum + ' 棵 / ' + WOOD.length + ' 岛'], ['光球 BOSS', bossKinds.length + ' 种']])}
+            <div class="note"><b>每座岛都有一个「光球」。</b>打掉光球会掉出 BOSS，等级跟着岛屿等级走，全表从 <b>lv${bossMin}</b> 到 <b>lv${bossMax}</b>；最高的 lv${bossMax} 一共 ${bossMaxRows.length} 处（${bossMaxRows.map(r => esc(r[0])).join('、')}）。四座精灵神殿的光球不只一只，是两三只一起上。</div>
+
+            <h2 class="h2">一、固定岛：${FIX.length} 座，出海就能去</h2>
+            <p class="p">这一批不用捞，坐标就是海图上的位置。等级最低的是 <b>${fixBottom.map(r => esc(r[0]) + '（' + esc(r[2]) + '）').join('、')}</b>，开局落脚处；最高的是 <b>${fixTop.map(r => esc(r[0]) + ' ' + esc(r[1]) + '（' + esc(r[2]) + '）').join('、')}</b>。名字是中文表原样，英文名与中文名混着写也没统一——「沙漠岛 desert island」这种一行里两种写法的情况，原表就是这么记的。</p>
+            ${ftableOwn(['坐标', '岛名（原表写法）', '等级', '光球 BOSS（等级照原文）', '常见魔物'], ['4.4rem', '11rem', '5.2rem', '15rem', ''],
+        FIX.map(r => [r[0] + ' ' + r[1], [esc(r[0]), esc(r[1]), dash(r[2]), esc(r[3]), esc(r[4].join('、'))]]),
+        { ph: '搜坐标或岛名', cls: 'rfosail' })}
+
+            <h2 class="h2">二、打捞岛：${SALV.length} 处，得靠巨人捞</h2>
+            <p class="p">沉船、遗迹、无名岛都在海底，捞上来才能上岸。等级跨度比固定岛大得多：<b>${salvLow.map(r => esc(r[0]) + ' ' + esc(r[1]) + '（' + esc(r[2]) + '）').join('、')}</b> 还在新手段，<b>${salvTop.map(r => esc(r[0]) + '（' + esc(r[2]) + '）').join('、')}</b> 已经是通关后才打得动的段位。最后列是<b>鉴定箱</b>——打捞岛特有的箱子，开出来随机给一件，${boxed.length} 处都有记，${boxMin}～${boxMax} 件不等。</p>
+            ${ftableOwn(['坐标', '名称', '等级', '光球 BOSS', '常见魔物', '鉴定箱（随机给一件）'], ['4.4rem', '9rem', '5.2rem', '13rem', '', '12rem'],
+        SALV.map(r => [r[0] + ' ' + r[1], [esc(r[0]), esc(r[1]), dash(r[2]), esc(r[3]), esc(r[4].join('、')), dash(r[5])]]),
+        { ph: '搜坐标或岛名', cls: 'rfosail' })}
+
+            <h2 class="h2">三、同一座岛，三个名字：中文表 / 日版表 / 站内地图页</h2>
+            <p class="p">中文表写 <code>verde island</code>，日版表写 <code>アイリーランド</code>，站内「地图与出没」页写<b>艾利岛</b>——同一座。下面这张对照只收<b>坐标对得上、名字能落定</b>的 ${ALIAS.length} 处；对不上的不猜。</p>
+            ${tbl(['坐标', '中文表写法', '日版表写法', '站内地图页写法'], ALIAS.map(a => [esc(a[0]), esc(a[1]), esc(a[2]), esc(a[3])]),
+        { left: [1, 2, 3], colw: ['7rem', '12rem', '11rem', ''] })}
+            <p class="p">四座精灵神殿在日版表里<b>没有整岛行</b>，因为它们按层拆在地图页里：${TEMPLE.map(t => t[1] + ' ' + floorN(t[1]) + ' 层').join('、')}。中文表反倒给它们各记一行，等级写成 <b>${FIX.filter(r => /精灵神殿/.test(r[1])).map(r => esc(r[2])).join(' / ')}</b>——四殿的推荐等级台阶一目了然。</p>
+
+            <h2 class="h2">四、日版原始表：${JP.length} 行，带精灵木数</h2>
+            <p class="p">这张表的独有价值是两列：<b>魔物栏带日文原名</b>（哥布林（ゴブリン）、怪物箱（モンスターボックス）），以及<b>精灵木数</b>——那座岛上能采几棵精灵木。${JP.length} 行里只有 <b>${WOOD.length} 座岛有精灵木，合计 ${woodSum} 棵</b>：三棵的四座全是四季岛（热沙 B-3、艾利 E-5、密林 E-8、封冰 G-2），其余是 1～2 棵。</p>
+            <div class="note"><b>精灵木数跟地图页的「精灵石树」逐岛对得上。</b>除圆形竞技场外的 ${WOOD_MAP.length} 处，棵数与地图页海岛部分的精灵石数量一字不差：<b>3 棵的 ${WOOD_MAP.filter(r => r[4] === '3').length} 处、2 棵的 ${WOOD_MAP.filter(r => r[4] === '2').length} 处、1 棵的 ${WOOD_MAP.filter(r => r[4] === '1').length} 处</b>。唯一多出来的是<b>圆形竞技场 2 棵</b>——地图页的精灵石表里没有这一处。</div>
+            ${ftableOwn(['坐标', '名称', '魔物（含日文原名，光球 BOSS 也列在这里）', '不明品', '精灵木数'], ['4.4rem', '8.5rem', '', '12rem', '5.4rem'],
+        JP.map(r => [r[0] + ' ' + r[1], [esc(r[0]), esc(r[1]), r[2].map(esc).join('、'), r[3].map(dash).join('、'), dash(r[4])]]),
+        { ph: '搜坐标、岛名或魔物', cls: 'rfosail rfosail-jp' })}
+            <p class="p">魔物栏去重后 <b>${monKindN} 种</b>，出得最广的是<b>${esc(monTop)}</b>（${monKind[monTop]} 处）——跟地图页「哥布林一族刷得最广」的结论同向。不明品共 <b>${unkKindN} 种</b>，给得最多的是 <b>${esc(unkTop)}</b>（${unkKind[unkTop]} 处），其次是水之结晶与橡木。</p>
+
+            <h2 class="h2">五、两张表对不上的地方（照录，不合并）</h2>
+            <ul class="ul">
+                <li class="li"><b>空中庭院的坐标打架</b>：中文表标 <b>h-4</b>，日版表标 <b>H-3</b>；而 h-4 在日版表里是另一处「沉没船」。两处都留着，没替谁改。</li>
+                <li class="li"><b>行数本来就不等</b>：中文表 ${FIX.length + SALV.length} 行、日版表 ${JP.length} 行。差在<b>四座精灵神殿</b>（只有中文表有整岛行）与<b>圆形竞技场</b>（只有日版表有，B-4）。</li>
+                <li class="li"><b>圆形竞技场那行很空</b>：日版表的魔物、不明品都写「-」，精灵木数却写 2；地图页那边写的是「14~99／混合」。三处说法各不相同，全部原样保留。</li>
+                <li class="li"><b>同一个地方两种叫法</b>：中文表把「石床庭園」写成 <code>ancient ruins</code>（a-5、c-3），到 g-3 又写成「ancient ruins古代遗址」；「古代石像」有的写 <code>ancient statue</code>、有的写「古代雕像」。日版表一律用汉字原名。</li>
+                <li class="li"><b>魔物栏粒度不同</b>：中文表只列常见怪（3～10 只），把光球 BOSS 单列一栏；日版表把 BOSS 也算进魔物（例如 E-5 的莫可王）。所以两边「几只怪」不能直接比。</li>
+                <li class="li"><b>各有一半信息</b>：等级只有中文表有，精灵木数只有日版表有。想要完整的一岛一档，得把两张表并排看。</li>
+                <li class="li"><b>日版表保留日文原名</b>：魔物与物品都是「中文（日文）」的写法，日文原文里还有「風の結晶」「超栄水」这种没翻的。原样留着，方便对着日文攻略或游戏内图鉴找。</li>
+            </ul>
+
+            <div class="note">来源：《符文工厂海洋（最强攻略）》xls「岛屿」工作表（上半中文整理、下半「以下↓为日版」）。本站只做了分列、去多余空格、把日版表的 <code>/</code> 分隔改成顿号；措辞、错字、混写的英文名一处未改。</div>
+            <div class="jump">
+                <a href="#/page/rfomap">
+                    <div class="jp-t">地图与出没</div>
+                    <div class="jp-s">每一层刷什么怪、精灵石概率、海怪三选一</div>
+                </a>
+                <a href="#/page/mbook">
+                    <div class="jp-t">魔物图鉴</div>
+                    <div class="jp-s">表里的译名与图鉴对不上时，去这里对日文名</div>
+                </a>
+            </div>
+    `;
+}
+
+/* ------------------------------------------------------------
+   符文工房 海洋 —— 攻略本「技巧」页（RFO_SAIL.tips）
+   16 条玩家投稿帖，帖体原样：口语、错字、括号里的自嘲都不动。
+   ------------------------------------------------------------ */
+function rfotipHtml() {
+    const D = (typeof RFO_SAIL !== 'undefined') ? RFO_SAIL : null;
+    const T = (D && D.tips) ? D.tips : null;
+    if (!T || !T.length) return '<p class="p">技巧数据未加载。</p>';
+    const esc = t => String(t === undefined || t === null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const SECTIONS = [
+        { t: '一、钱与技能：前三条都在讲「怎么把 RP 换成钱」', from: 1, to: 3 },
+        { t: '二、上手小技巧：魔杖、敲门、换 BGM', from: 4, to: 9 },
+        { t: '三、结婚与生子：分开之后才开始', from: 10, to: 11 },
+        { t: '四、系统杂项：书架、星标、作息', from: 12, to: 16 }
+    ];
+
+    /* 原帖把「【料理】」当成小标题用，冒号在括号外，所以照原样接一个全角冒号 */
+    const paraHtml = t => t.paras.map(p => p[0]
+        ? `<p class="p"><b class="rfotip-lb">${esc(p[0])}</b>${esc(p[1])}</p>`
+        : `<p class="p">${esc(p[1])}</p>`).join('');
+
+    const body = SECTIONS.map(s => {
+        const list = T.filter(t => t.n >= s.from && t.n <= s.to);
+        return `<h2 class="h2">${esc(s.t)}</h2>` + list.map(t =>
+            `\n            <h3 class="h3">${t.n}. ${esc(t.t)}</h3>\n            ${paraHtml(t)}`).join('');
+    }).join('\n');
+
+    const ALIAS = [
+        ['丽丽', '莉莉（リリ）', '旅店三姐妹的老大'],
+        ['撒拉', '莎拉（サラ）', ''],
+        ['爱丽丝（小护士）', '艾伊利斯（アイリス）', '旅店三姐妹的老幺，在医院当护士'],
+        ['詹姆斯', '詹姆斯（ジェームス）', '花婿候补，牛仔行商'],
+        ['奥黛特', '奥黛特（オデット）', '旅店二姐、厨娘'],
+        ['阿奈特（アネット）', '阿涅多', '每月 4 日来访的邮差'],
+        ['乔伊', '乔（ジョー）', '宝藏猎人'],
+        ['罗伊德／红毛男', '（站内没有能对上的条目）', '原样保留，不猜']
+    ];
+
+    return `
+            <p class="p">这 ${T.length} 条是攻略本收录的<b>玩家投稿</b>：讲讨价还价的 7 档价位、四条刷钱路线、五个制作技能的刷法，也有「在开始菜单发呆能看到女主 MV」这种纯玩心。文字是帖体，口语、错别字、括号里的自嘲<b>一处没改</b>。</p>
+            <div class="note">这一页跟站内其他页的性质不同：<b>它是玩家经验，不是游戏内数值表。</b>像「卖价一共 7 个价位 0.4～1.6」「怀孕 20 天」这类说法，站内没有第二来源可核，所以只当「有人这么玩」照录，不当定论；真按这个刷，结果以游戏内显示为准。</div>
+            <p class="p">四条刷钱路线里，作者自己标了来源的一条是方法②（<b>由 bus 会员 kw2179053 提供</b>）——原帖连这个都写着，照录。方法③④是「顺手」型的：刷锻造时顺便刷钱、拿 300G 的布做成 60 级窗帘卖 8000G。</p>
+${body}
+
+            <h2 class="h2">五、帖里的名字对不上站内译名时看这里</h2>
+            <p class="p">原帖是民间汉化年代的写法，跟站内定稿译名有几处不同。下面只收<b>能确定是同一个人的</b>，对不上的原样留着。</p>
+            ${tbl(['帖中写法', '站内条目', '备注'], ALIAS.map(a => [esc(a[0]), esc(a[1]), esc(a[2])]),
+        { left: [0, 1, 2], colw: ['9rem', '11rem', ''] })}
+            <div class="note"><b>「爱丽丝」在帖里出现两次，指的不是同一个人。</b>方法④里的「爱丽丝（小护士）」是护士艾伊利斯，在她那儿买白草；第 12 条里的「爱丽丝（男主，选择女主是詹姆斯）」讲的是一个委托的委托人——按帖里的说法，走男主线由爱丽丝委托你，走女主线换成詹姆斯。两位都是结婚候补，不是「主角可以改名」的意思。</div>
+            <div class="jump">
+                <a href="#/page/request">
+                    <div class="jp-t">委托任务</div>
+                    <div class="jp-s">方法②刷的那个「配達のアルバイト」在 188 条委托里</div>
+                </a>
+                <a href="#/page/love">
+                    <div class="jp-t">恋爱与结婚</div>
+                    <div class="jp-s">第 10、11 条讲的约会与生子流程</div>
+                </a>
+            </div>
+    `;
 }
 function rfoSysHtml() {
     const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;

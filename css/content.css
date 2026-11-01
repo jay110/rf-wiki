@@ -964,3 +964,29 @@
 .content .table.rfomap-sea tbody td:first-child {
     white-space: nowrap;
 }
+
+/* 海洋「岛屿与打捞」三张表：文本列放开换行，窄屏在容器内横滑。
+   日版表魔物一栏最长，给更大的 min-width。 */
+.content .table.rfosail table { min-width: 44rem; }
+.content .table.rfosail-jp table { min-width: 52rem; }
+
+.content .table.rfosail .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.65;
+}
+
+.content .table.rfosail tbody td:first-child {
+    white-space: nowrap;
+}
+
+/* 海洋「攻略本技巧」：16 条帖体，条目之间留白大一点，小标题加一道竖线 */
+.content .rfotip-lb {
+    display: inline-block;
+    margin-right: 0.15rem;
+    padding: 0 0.35rem;
+    border-radius: 0.25rem;
+    background: #eef3f0;
+    color: #3d6b58;
+    font-weight: 600;
+}
