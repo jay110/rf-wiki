@@ -2271,6 +2271,122 @@ function runeAllHtml(g) {
             </a>
         </div>`;
 }
+/* RF5 魔物抗性三表：属性抗性／异常抗性／暴击眩晕吹飞。
+   FX5 由 _build_fx5.py 从 biligame 源表生成，三张表行号一一对应。 */
+function fx5Html(g) {
+    const F = (typeof FX5 !== 'undefined') ? FX5 : null;
+    if (!F || !F.elem || !F.elem.length) return `<p class="p">这一作暂时没有魔物抗性的数据。</p>`;
+    const EK = ['火', '水', '土', '风', '光', '暗', '爱', '无'];
+    const AK = ['毒', '封印', '麻痹', '睡眠', '疲劳', '感冒', '即死', '吸收'];
+    const CK = ['暴击率', '暴击抵抗', '击晕率', '眩晕抵抗', '吹飞抵抗', '硬直'];
+    const E = F.elem, A = F.ail, C = F.crit, n = E.length;
+
+    /* 负值＝弱点（源表用蓝字负号写，这里改标红）；0 压成浅灰，让有数的格子自己跳出来 */
+    const v = x => (x < 0 ? `<span class="dn">−${-x}%</span>`
+        : (x === 0 ? '<span class="mon-no">0%</span>' : x + '%'));
+    const col = (arr, i) => arr.map(r => r[i]);
+    const cntIf = (arr, i, f) => col(arr, i).filter(f).length;
+    const mxOf = arr => arr.reduce((a, b) => (b > a ? b : a), arr[0]);
+    const mnOf = arr => arr.reduce((a, b) => (b < a ? b : a), arr[0]);
+
+    const imm = EK.map((_, i) => cntIf(E, i + 1, x => x >= 100));
+    const wk = EK.map((_, i) => cntIf(E, i + 1, x => x <= -100));
+    const mx = EK.map((_, i) => mxOf(col(E, i + 1)));
+    const mn = EK.map((_, i) => mnOf(col(E, i + 1)));
+    const wuPos = cntIf(E, 8, x => x > 0), wuNeg = cntIf(E, 8, x => x < 0);
+    const zeroE = E.filter(r => EK.every((_, i) => r[i + 1] === 0)).length;
+    const immRows = E.filter(r => EK.some((_, i) => r[i + 1] >= 100)).length;
+    const capRows = E.filter(r => EK.some((_, i) => r[i + 1] === 200)).length;
+
+    const aNz = AK.map((_, i) => cntIf(A, i + 1, x => x !== 0));
+    const aFull = AK.map((_, i) => cntIf(A, i + 1, x => x >= 100));
+    const aZero = A.filter(r => AK.every((_, i) => r[i + 1] === 0)).length;
+
+    const cZero = CK.map((_, i) => cntIf(C, i + 1, x => x === 0));
+    const cMax = CK.map((_, i) => mxOf(col(C, i + 1)));
+    const stunImm = cntIf(C, 4, x => x >= 100);
+    const stunTenK = cntIf(C, 4, x => x >= 10000);
+    const stiff0 = cntIf(C, 6, x => x === 0);
+    const stiffBoth = C.filter(r => r[6] === 0 && r[4] >= 100).length;
+    const stiffOnly = C.filter(r => r[6] === 0 && r[4] < 100).map(r => r[0]);
+
+    const nameCnt = {};
+    E.forEach(r => { nameCnt[r[0]] = (nameCnt[r[0]] || 0) + 1; });
+    const dups = Object.keys(nameCnt).filter(k => nameCnt[k] > 1);
+    const dupRows = dups.reduce((s, k) => s + nameCnt[k], 0);
+    const dupSame = dups.filter(k =>
+        new Set(E.filter(r => r[0] === k).map(r => r.slice(1).join('|'))).size === 1).length;
+    const feiRows = E.filter(r => r[0].indexOf('废案') >= 0).length;
+
+    const eStat = tbl(['属性', '免疫（≥100%）', '弱点（≤−100%）', '最高', '最低'],
+        EK.map((k, i) => [k, imm[i] + ' 条', wk[i] + ' 条', v(mx[i]), v(mn[i])]),
+        { leftFirst: true, colw: ['4rem', '7rem', '7.4rem', '4.4rem', '4.4rem'] });
+
+    const aStat = tbl(['状态', '有数值', '满 100%', '全 0%'],
+        AK.map((k, i) => [k, aNz[i] + ' 条', aFull[i] + ' 条', (n - aNz[i]) + ' 条']),
+        { leftFirst: true, colw: ['4.4rem', '5.6rem', '5.6rem', '4.6rem'] });
+
+    const cStat = tbl(['项目', '为 0 的条目', '最高值'],
+        CK.map((k, i) => [k, cZero[i] + ' 条', v(cMax[i])]),
+        { leftFirst: true, colw: ['6.4rem', '7rem', '4.4rem'] });
+
+    const W9 = ['8.6rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem'];
+    const headOf = h => ['怪物名字'].concat(h.slice(1));
+    const rowsOf = arr => arr.map(r => [r[0], r.map((c, i) => (i === 0 ? c : v(c)))]);
+
+    const tE = ftableOwn(headOf(F.elemHead), W9, rowsOf(E), { ph: '输入魔物名，如「幽灵」', cls: 'fx5' });
+    const tA = ftableOwn(headOf(F.ailHead), W9, rowsOf(A), { ph: '输入魔物名，如「龙」', cls: 'fx5' });
+    const tC = ftableOwn(headOf(F.critHead), W9, rowsOf(C), { ph: '输入魔物名，如「传送门」', cls: 'fx5' });
+
+    return `
+    <p class="p">本页是《符文工房5》<b>魔物那一侧</b>的底牌：打它该用什么属性、状态挂不挂得上、能不能打晕打飞。源站给的是一组三张表，共 ${n} 行，三张表行号一一对应——同一行就是同一只怪。</p>
+    <p class="p">4 代那一版（切到「符文工房4」）看的是<b>装备</b>：面板上不显示、却真实生效的附加率与抗性。5 代这里换了一侧，讲的是<b>魔物</b>。两边口径不同，所以按作分开写，不硬合成一张表。</p>
+    <p class="p">站内「魔物图鉴」其实已经收着其中两张（属性、暴击眩晕吹飞）。这一页把它们与第三张<b>异常抗性</b>并排放，顺便把两份数据逐格核了一遍——同源、数值零差异，只有名字写法与两行重复的区别，写在最后。</p>
+    ${stat([['魔物条目', n + ' 条'], ['属性', EK.length + ' 项'], ['异常', AK.length + ' 项'], ['至少一项属性免疫', immRows + ' 条']])}
+
+    <h2 class="h2">八项属性：正抗、负弱</h2>
+    <p class="p">火、水、土、风、光、暗、爱、无。<b>正数是抗性，负数就是弱点</b>——源表把负号写成蓝字，本页统一标红；<b>0%</b> 压成浅灰，让有数的格子自己跳出来。抗性百分比怎么折算成实际伤害，源表没有给公式，本页不替它算。</p>
+    ${eStat}
+    <div class="key">被<b>光</b>克的条目最多（${wk[4]} 条落在 ≤−100%），其次风 ${wk[3]} 条、土 ${wk[2]} 条；反过来免疫<b>暗</b>的最多（${imm[5]} 条），<b>爱</b>只有 ${imm[6]} 条、<b>无</b>只有 ${imm[7]} 条。<b>无</b>这一栏本身也冷门：全表只有 ${wuPos} 行给出正数、${wuNeg} 行是负的（树魔人 −15%），其余 ${n - wuPos - wuNeg} 行一律 0%。</div>
+    <p class="p">幽灵系把两头都拉满：<b>火幽灵</b> 火 +200／水 −200，<b>冰幽灵</b> 水 +200／火 −200，<b>风幽灵</b> 风 +200／土 −200，<b>大地幽灵</b> 土 +200／风 −100。同一只怪，本属性满额、克它的属性双倍吃伤。全表 <b>−200%</b> 只有 4 行（火幽灵同名占两行），<b>+200%</b> 有 ${capRows} 行，以幽灵、龙、传送门这三类为主。</p>
+    <p class="p">另一头是<b>八项全 0</b>：${zeroE} 行，属性这一侧完全平。巨人、大锤巨人、凯撒巨人、终极巨人、巨魔领主、杀戮巨人这一串近亲都在里面；同族的泰坦却是风 −100%，不是整族都平。</p>
+    ${tE}
+
+    <h2 class="h2">八项异常：一格负数都没有</h2>
+    <p class="p">毒、封印、麻痹、睡眠、疲劳、感冒、即死、吸收。表头和 4 代那张不是一套：这里没有会心／击飞／晕眩（那三项挪到第三张表去了），第 6～8 栏写作<b>感冒</b>、<b>即死</b>、<b>吸收</b>——4 代那张表同位置是「病」「昏厥」「吸血」。名字不一样，本页照录各自的表头，不统一改写。</p>
+    <p class="p">${n} 行 × ${AK.length} 栏，<b>一格负数都没有</b>。魔物这一侧只有「抗」和「不抗」两档，没有「更怕某种状态」这回事。</p>
+    ${aStat}
+    <div class="key">挑几个数：<b>即死</b>满 100% 的 ${aFull[6]} 行，幽灵、龙、箱子、传送门几乎一个不落；<b>吸收</b>满 100% 的 ${aFull[7]} 行，另有 ${cntIf(A, 8, x => x === 0)} 行是 0%。反过来八项全 0% 的 ${aZero} 行里，哥布林、摩可摩可一族（摩可摩可、莫夫莫夫、摩奇摩奇）这类常见杂兵基本都在。</div>
+    ${tA}
+
+    <h2 class="h2">暴击、眩晕、吹飞、硬直</h2>
+    <p class="p">六栏的列名如上：暴击率、暴击抵抗、击晕率、眩晕抵抗、吹飞抵抗、硬直。源表没给每列一句释义，本页只把数字搬过来，「是它打你、还是你打它」这一层不猜。能直接看出来的是这几处：</p>
+    ${cStat}
+    <div class="key">眩晕抵抗 ≥100% 的 ${stunImm} 行，其中 ${stunTenK} 行直接写 <b>10000%</b>——Boss、龙、传送门基本都在这一批，打晕这条路对它们不通。硬直 <b>0%</b> 的 ${stiff0} 行里，${stiffBoth} 行正好也在那批眩晕免疫的里面，剩下 ${stiffOnly.length} 行不免疫眩晕却硬直 0%。</div>
+    <div class="note">补两处极值：暴击抵抗最高 ${v(cMax[1])}，只有 3 条（奥德姆拉、利维坦、提阿玛特），没有一条到 100%；暴击率最高 ${v(cMax[0])}（贪食箱、惊喜箱），击晕率最高 ${v(cMax[2])}（死亡菌菇）。硬直 0% 但不免疫眩晕的那 ${stiffOnly.length} 行是：${stiffOnly.join('、')}。</div>
+    ${tC}
+
+    <h2 class="h2">看表之前的四件事</h2>
+    ${tbl(['情形', '怎么处理'], [
+        ['同名出现两行', `${n} 行里有 ${dups.length} 个名字不止出现一次（合计 ${dupRows} 行），其中 ${dupSame} 个是同名两行数值完全一样——同一只怪的另一种出场版本。源表排了两行，本页照录不合并；搜名字时两行会一起出来`],
+        ['第 210 行名字写法不同', '三张表行号对齐，只有这一行不一致：属性表写「巨型奥德姆拉(废案换皮奥德姆拉)」，异常表与暴击表写「巨型奥德姆拉(废案奥德姆拉)」。照录原样，不改名'],
+        [`带「(废案换皮××)」的 ${feiRows} 条`, '源表自己把这些标成废案换皮的残留条目。本页不删、不改名——留着，是为了让这一行还能和其它表对上号'],
+        ['站内另有一份，已逐格核过', '「魔物图鉴」的 RF5 抗性栏（<code>RES_RF5</code>，269 行）与本页同源。267 行一一对上，<b>属性八项与暴击六项零差异</b>；差别只有两点：那边用简名（「黑暗鹈鹕」而不是「黑暗鹈鹕(废案换皮鲸头鹳)」），并且多出两行重复的「绿凯撒熊」「阿拉克涅」。<b>异常那八栏只有本页有</b>，图鉴里没有'],
+    ], { leftFirst: true, cls: 'txt', colw: ['9.4rem'] })}
+    <div class="note">数据取自 biligame 符文工厂 wiki 的 <code>RF5monsterresist</code> 页所引三张模板表，原始出处是 therunefactory.fandom.com 论坛的 <b>RF5 Datamine Spreadsheet（GentlemanBones）</b>；正文只有三行模板引用，表本身在 <code>RF5怪物抗性表_0</code> 等三页。由 <code>_build_fx5.py</code> 解析成 <code>js/fx5.js</code>。数值为解包初版，后续补丁若调过平衡，以游戏内为准；<b>列多放不下时，表格可以左右滑动</b>。</div>
+
+    <div class="jump">
+        <a href="#/page/weapon">
+            <div class="jp-t">武器</div>
+            <div class="jp-s">全武器攻击、魔攻与属性一览</div>
+        </a>
+        <a href="#/page/mbook">
+            <div class="jp-t">魔物图鉴</div>
+            <div class="jp-s">出现地点、等级与掉落</div>
+        </a>
+    </div>`;
+}
+
 function gearBestHtml(g) {
     const id = (g && g.id === 'rf3sp') ? 'rf3' : (g && g.id);
     const D = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST[id] : null;
@@ -6865,8 +6981,11 @@ const PAGES = [
     },
     {
         key: 'fx', group: 'item', title: '状态与抗性', icon: 'bolt',
-        gms: ['rf4', 'rf4sp'],
+        gms: ['rf4', 'rf4sp', 'rf5'],
         body: g => {
+            /* 5 代这一栏在源站是魔物抗性三张表（属性／异常／暴击眩晕吹飞），
+               与 4 代那套装备隐藏数值不是一套，分头渲染 */
+            if (g && g.id === 'rf5') return fx5Html(g);
             const D = (typeof FX_RF4 !== 'undefined') ? FX_RF4 : [];
             const ST = (typeof FX_ST !== 'undefined') ? FX_ST : [];
             const RS = (typeof FX_RS !== 'undefined') ? FX_RS : [];
@@ -8447,6 +8566,21 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-02　第一百五十八：「状态与抗性」补上 5 代——不是同一套东西，源站给的其实是魔物侧的三张表</h2>
+            <ul class="ul">
+                <li class="li"><b>这一页原先只有 4 代，而且看的是装备侧</b>：面板上不显示、却真实生效的附加率与抗性（11 项附加率／18 项抗性，422 件装备里收 180 件）。查 5 代源页时发现<b>它讲的完全是另一面</b>——魔物的属性抗性、异常抗性、暴击眩晕吹飞，三张表。口径不同，所以这次不是「扩一作」，是给 <code>fx</code> 加一条分支：<code>gms</code> 加 <code>rf5</code>，<code>body</code> 里 5 代走新写的 <code>fx5Html(g)</code>，<b>4 代那段一字未动</b>。</li>
+                <li class="li"><b>源页正文只有三行模板引用</b>：<code>RF5monsterresist</code> 通篇是 <code>{{:RF5怪物抗性表_0}}</code> 这样的引用，数据在另外三个主空间页里。第一次抓只拿到 10 行目录，第二次按表名单独抓才拿到 267 行 × 3 张表。这一层「页面上看不出有数据」的坑，跟上一轮 <code>RF5runeability</code> 那个空壳页是同一类。</li>
+                <li class="li"><b>三张表行号一一对应，267 行</b>。唯有一处名字不同：第 210 行属性表写「巨型奥德姆拉(废案换皮奥德姆拉)」，异常表与暴击表写「巨型奥德姆拉(废案奥德姆拉)」。照录，不改名。另有 29 个名字出现两次（合计 60 行），其中 24 个同名两行数值完全一样——同一只怪的另一种出场版本，源表排了两行，不合并。</li>
+                <li class="li"><b>属性八项：正抗、负弱，负号在源表里是蓝字</b>。本站改标红、把 0% 压成浅灰。<b>免疫暗的最多（16 条）、爱只有 3 条、无只有 1 条</b>；被光克的条目最多（22 条 ≤−100%），其次风 20、土 15。<b>+200% 有 32 行、−200% 只有 4 行</b>——幽灵系把两头拉满：火幽灵 火 +200／水 −200、冰幽灵 水 +200／火 −200、风幽灵 风 +200／土 −200。</li>
+                <li class="li"><b>38 行八项全 0</b>：巨人、大锤巨人、凯撒巨人、终极巨人、巨魔领主、杀戮巨人这一串近亲都在里面，<b>但同族的泰坦是风 −100%</b>。差一点就写成「巨人一族全平」，核对单行才发现例外——这类「整族如何」的话，一格一格看才敢写。</li>
+                <li class="li"><b>异常八栏，267 行 × 8 栏一格负数都没有</b>。魔物这一侧只有「抗」和「不抗」，没有「更怕某种状态」。即死满 100% 的 120 行、吸收满 100% 的 68 行（另 118 行是 0%）、八项全 0 的 37 行。表头第 6～8 栏写作<b>感冒／即死／吸收</b>，4 代那张表同位置是「病／昏厥／吸血」——名字不一样，照录各自表头，不统一改写。</li>
+                <li class="li"><b>暴击那六栏，只搬数字不猜方向</b>。源表没给每列一句释义，所以「是它打你、还是你打它」这一层不写。能直接看出的是：眩晕抵抗 ≥100% 的 89 行里有 80 行写的是 <b>10000%</b>（Boss、龙、传送门基本都在），打晕这条路对它们不通；硬直 0% 的 116 行里 89 行正好也在那批眩晕免疫里，<b>剩下 27 行不免疫眩晕却硬直 0%</b>，名单在页面上逐个列出。暴击抵抗最高 99%，只有奥德姆拉、利维坦、提阿玛特三条，没有一条到 100。</li>
+                <li class="li"><b>顺手把站内另一份数据核了一遍</b>：「魔物图鉴」的 RF5 抗性栏（<code>RES_RF5</code>，269 行）与本页同源。<b>267 行一一对上，属性八项与暴击六项零差异</b>；差别只有两点——那边用简名（「黑暗鹈鹕」而不是「黑暗鹈鹕(废案换皮鲸头鹳)」），且多出两行重复的「绿凯撒熊」「阿拉克涅」。<b>异常那八栏只有新页有</b>，图鉴里从来没有。这段核对结论写进了页面，因为读者一定会问「图鉴里不是已经有抗性了吗」。</li>
+                <li class="li"><b>踩坑一：表格最后一行会把结束符粘进最后一格</b>。源 wikitext 末行是 <code>|慈爱之传送门（吸收）||…||0%||}</code>，按 <code>||</code> 切完最后多一个空串，7 列变 8 列。解析器里的列数断言当场拦下，否则整行错位且不会报错。<code>while cells and cells[-1]=='' : pop</code> 即可。</li>
+                <li class="li"><b>踩坑二：<code>tbl</code> 的 <code>colw</code> 少给最后一列，那一列会吃掉全部余宽</b>。五列的统计表只给了 4 个宽度，渲染出来「最低」一列占掉半张表、数值看着像错位到别列。补上第 5 个宽度就正常——这类「看起来像数据错、其实是 CSS」的问题，只截大图看不出来，得裁到表头逐列数。</li>
+                <li class="li"><b>踩坑三（差一步就错）：两套数据的列序注释与实际不符</b>。<code>resist.js</code> 头注释写 <code>a=[火,水,土,风,光,暗,无,爱]</code>，照注释交换后两列去比对，立刻冒出 <b>313 处「不一致」</b>——全是「无」和「爱」互换位置造成的假差异。改成按实际排列直接比，前 191 行当场变成零差异。<b>注释里的列序不能当结论用，得拿两行能区分的数据倒推。</b></li>
+                <li class="li"><b>校验</b>：<b>438 实例（+1）／0 异常／头像 8 作 214 张缺 0</b>；四代页重新截图对照，与原版一致；520px 下三张表在容器内横滑，正文不溢出；<code>js/fx5.js</code> 44 KB、<code>page</code> 渲染 267 行三表无空值。</li>
+            </ul>
             <h2 class="h2">2026-11-02　第一百五十七：「符文能力」从 2 代扩到 7 作——五作的表长得完全不一样，各自一份；顺手翻掉两处自己写错的话</h2>
             <ul class="ul">
                 <li class="li"><b>上一次扩覆盖是（第一百五十六）毕业套，这一次轮到符文能力</b>：<code>rune</code> 此前只有 RF4／RF4S 两版，站内其余八作切过去是空的。源站其实每作都有 <code>runeability</code> 条目——RF1／2／3／5／海洋五页都在，只是<b>五页的表头与列数完全不同</b>，不是同一张表换个名字。新数据落 <code>js/runeall.js</code>（<code>RUNE_ALL</code>，五作各存一份 head／rows），渲染走通用函数 <code>runeAllHtml(g)</code>，四代那一版带筛选的专属版式原样保留。</li>

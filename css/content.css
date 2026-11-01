@@ -1027,3 +1027,13 @@
     word-break: break-word;
     min-width: 6rem;
 }
+
+/* RF5 魔物抗性三表（9／9／7 列）：窄屏靠容器内横滑；
+   首列魔物名允许折行——有「铁钳・寄居蟹(废案换皮地狱•寄居蟹)」这种长名 */
+.content .table.fx5 table { min-width: 42rem; }
+
+.content .table.fx5 tbody td:first-child {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 7.6rem;
+}
