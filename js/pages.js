@@ -2271,6 +2271,111 @@ function runeAllHtml(g) {
             </a>
         </div>`;
 }
+function fx4sHtml(g) {
+    const F = (typeof FX4S !== 'undefined') ? FX4S : null;
+    if (!F || !F.elem || !F.elem.length) return `<p class="p">这一作暂时没有魔物与村民抗性的数据。</p>`;
+    const EK = ['火', '水', '土', '风', '光', '暗', '无', '爱'];
+    const AK = ['毒', '封印', '麻痹', '睡眠', '疲劳', '感冒', '即死', '吸收'];
+    const CK = ['暴击率', '暴击抗', '眩晕抗', '攻击硬直', '攻击吹飞', '吹飞抗'];
+    const E = F.elem, A = F.ail, C = F.crit, n = E.length;
+
+    /* 数值原样保留（含小数），全部非负——4 代没有「弱点」概念。0% 压浅灰 */
+    const fnum = s => { const m = String(s).match(/(-?\d+\.?\d*)%/); return m ? parseFloat(m[1]) : 0; };
+    const v4 = s => {
+        if (s === '0%') return '<span class="mon-no">0%</span>';
+        if (String(s).indexOf('-') >= 0) return '<span class="dn">−' + String(s).replace('-', '') + '</span>';
+        return s;
+    };
+    const col = (arr, i) => arr.map(r => fnum(r[i]));
+    const cntIf = (arr, i, f) => col(arr, i).filter(f).length;
+    const mxOf = arr => arr.reduce((a, b) => (b > a ? b : a), arr[0]);
+    const mnOf = arr => arr.reduce((a, b) => (b < a ? b : a), arr[0]);
+
+    const imm = EK.map((_, i) => cntIf(E, i + 1, x => x >= 100));
+    const cap = EK.map((_, i) => cntIf(E, i + 1, x => x === 200));
+    const wk = EK.map((_, i) => cntIf(E, i + 1, x => x <= -100));
+    const ez = EK.map((_, i) => cntIf(E, i + 1, x => x === 0));
+    const emx = EK.map((_, i) => mxOf(col(E, i + 1)));
+    const emn = EK.map((_, i) => mnOf(col(E, i + 1)));
+    const zeroAll = E.filter(r => EK.every((_, i) => fnum(r[i + 1]) === 0)).length;
+    const capAll = E.filter(r => EK.every((_, i) => fnum(r[i + 1]) === 200)).length;
+    const negAny = E.filter(r => EK.some((_, i) => fnum(r[i + 1]) < 0)).length;
+    const aFull = AK.map((_, i) => cntIf(A, i + 1, x => x >= 100));
+    const aZeroAll = A.filter(r => AK.every((_, i) => fnum(r[i + 1]) === 0)).length;
+    const cZero = CK.map((_, i) => cntIf(C, i + 1, x => x === 0));
+    const cMax = CK.map((_, i) => mxOf(col(C, i + 1)));
+
+    const nameCnt = {};
+    E.forEach(r => { nameCnt[r[0]] = (nameCnt[r[0]] || 0) + 1; });
+    const dups = Object.keys(nameCnt).filter(k => nameCnt[k] > 1);
+
+    const eStat = tbl(['属性', '免疫（≥100%）', '满抗（=200%）', '弱点（≤−100%）', '全 0%', '最高', '最低'],
+        EK.map((k, i) => [k, imm[i] + ' 条', cap[i] + ' 条', wk[i] + ' 条', ez[i] + ' 条', v4(emx[i] + '%'), v4(emn[i] + '%')]),
+        { leftFirst: true, colw: ['4rem', '7rem', '7.4rem', '7.4rem', '4.4rem', '4.4rem', '4.4rem'] });
+
+    const aStat = tbl(['状态', '满 100%', '该属性 0%'],
+        AK.map((k, i) => [k, aFull[i] + ' 条', (n - cntIf(A, i + 1, x => x !== 0)) + ' 条']),
+        { leftFirst: true, colw: ['4.4rem', '5.6rem', '5.6rem'] });
+
+    const cStat = tbl(['项目', '为 0 的条目', '最高值'],
+        CK.map((k, i) => [k, cZero[i] + ' 条', v4(cMax[i] + '%')]),
+        { leftFirst: true, colw: ['6.4rem', '7rem', '4.4rem'] });
+
+    const rowsOf = arr => arr.map(r => [r[0], r.map((c, i) => (i === 0 ? c : v4(c)))]);
+    const W9 = ['9.2rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem', '2.4rem'];
+    const W7 = ['9.2rem', '2.6rem', '2.6rem', '2.6rem', '2.6rem', '2.6rem', '2.6rem'];
+    const tE = ftableOwn(F.elemHead, W9, rowsOf(E), { ph: '输入名字，如「幽灵」或「雷斯特」', cls: 'fx5' });
+    const tA = ftableOwn(F.ailHead, W9, rowsOf(A), { ph: '输入名字，如「龙」或「芙缇」', cls: 'fx5' });
+    const tC = ftableOwn(F.critHead, W7, rowsOf(C), { ph: '输入名字，如「传送门」或「比修奈尔」', cls: 'fx5' });
+
+    return `
+    <p class="p">本页是《符文工房4 特别版》<b>魔物与村民那一侧</b>的底牌：打它该用什么属性、状态挂不挂得上、能不能打晕打飞。源站 <code>RF4Smonsterresist</code> 把数据拆成<b>三张独立模板表</b>，本页照原样分三张列出来——三张表的名字顺序并不一致，所以不强行拼成一张。</p>
+    <p class="p">4 代那一版（切到「符文工房4」）讲的是<b>装备</b>面板上看不到的附加率与抗性。本页换了一侧，讲的是<b>魔物与村民</b>。两边口径不同，按作分开写。</p>
+    <p class="p">这份表最特别的地方是<b>含村民</b>：雷斯特、芙缇、比修奈尔、库洛丽嘉、沃尔卡农这些可操作角色和重要 NPC 也在里面——其它作的抗性表只列魔物，没有这一份。和 5 代一样，数值<b>有正也有负</b>：源表把弱点用蓝字负号写（如 −25%、−200%），本页统一标红；<b>0%</b> 压成浅灰。百分比还带小数（如 2.98%），原样保留。难度选择会影响<b>天堂之门</b>等魔物的抗性，困难难度的天堂之门只能受到弱点属性伤害。</p>
+    ${stat([['属性表', n + ' 条'], ['异常表', A.length + ' 条'], ['暴击表', C.length + ' 条']])}
+
+    <h2 class="h2">八项属性：正抗、负弱</h2>
+    <p class="p">火、水、土、风、光、暗、无、爱。<b>正数是抗性，负数就是弱点</b>——源表用蓝字负号写，本页统一标红；<b>0%</b> 压成浅灰，让有数的格子自己跳出来。抗性百分比怎么折算成实际伤害，源表没给公式，本页不替它算。</p>
+    ${eStat}
+    <div class="key"><b>风</b>免疫（≥100%）最多（${imm[3]} 条），<b>无</b>抗最少（${imm[6]} 条）；<b>水</b>满抗（=200%）最多（${cap[1]} 条）。弱点（≤−100%）也最多落在<b>风</b>（${wk[3]} 条）——风这一栏两极分化最明显；<b>无</b>属性零弱点（${wk[6]} 条，从不被克）。全表 <b>${negAny}</b> 行至少有一项负抗性，最深的像<b>幻想的雾香</b>爱 −200%、<b>兽人</b>族风 −150%。同时有 <b>${zeroAll}</b> 条八项全 0（完全平），没有八项全满抗的。</div>
+    ${tE}
+
+    <h2 class="h2">八项异常：一格负数也没有</h2>
+    <p class="p">毒、封印、麻痹、睡眠、疲劳、感冒、即死、吸收。${A.length} 行 × 8 栏，<b>一格负数也没有</b>——和属性那张一样，只有「抗」和「不抗」两档。</p>
+    ${aStat}
+    <div class="key">挑几个数：<b>即死</b>满 100% 最多（${aFull[6]} 条），几乎把幽灵、龙、箱子、传送门扫了一遍；<b>吸收</b>最少（${aFull[7]} 条）。反过来八项全 0% 的 ${aZeroAll} 行里，常见杂兵和一干村民基本都在。</div>
+    ${tA}
+
+    <h2 class="h2">暴击、眩晕、吹飞、硬直</h2>
+    <p class="p">六栏的列名如上：暴击率、暴击抗、眩晕抗、攻击硬直、攻击吹飞、吹飞抗。源表没给每列一句释义，本页只把数字搬过来。能直接看出来的是这几处：</p>
+    ${cStat}
+    <div class="key"><b>攻击硬直</b>这一栏最空——${cZero[3]} 条是 0%，真正有值的只有二十来条；<b>攻击吹飞</b>反而全部有值、最高 ${v4(cMax[4] + '%')}。<b>暴击抗</b>最高 ${v4(cMax[1] + '%')}（没到 100%），<b>眩晕抗</b>最高 ${v4(cMax[2] + '%')}。</div>
+    ${tC}
+
+    <h2 class="h2">看表之前的三件事</h2>
+    ${tbl(['情形', '怎么处理'], [
+        ['三张表各自独立', `属性表 ${n} 条、异常表 ${A.length} 条、暴击表 ${C.length} 条，名字顺序各表不完全一致（名字集也有小出入，比如宝珠类只在属性表，天堂之门在三张表写法不同）。本页照源顺序分三张列，搜名字时各表各自搜，不强行拼成一张对照表`],
+        ['天堂之门写法不同', '属性表写「天堂之门(抗性变化)」，异常表与暴击表写「天堂之门」（且后者出现多行，对应不同难度／形态）。难度确实会改变它的抗性，所以源站这么标；本页照录不改名'],
+        [`${dups.length} 个名字出现两次`, `属性表里 ${dups.length} 个名字不止出现一次（合计 ${dups.reduce((s, k) => s + nameCnt[k], 0)} 行），是同一只怪的另一种出场版本。源表排了两行，本页照录不合并`],
+    ], { leftFirst: true, cls: 'txt', colw: ['9.4rem'] })}
+    <div class="note">数据取自 biligame 符文工厂 wiki 的 <code>RF4Smonsterresist</code> 页所引三张模板表，原始出处是 reddit r/runefactory 的 <b>RF4 Datamining Compendium（Values for Everything）</b>；正文只有三行模板引用，表本身在 <code>RF4S村民与怪物抗性表_0</code> 等三页。由 <code>_build_fx4s.py</code> 解析成 <code>js/fx4s.js</code>。数值为解包初版，后续补丁若调过平衡，以游戏内为准；<b>列多放不下时，表格可以左右滑动</b>。</div>
+
+    <div class="jump">
+        <a href="#/page/weapon">
+            <div class="jp-t">武器</div>
+            <div class="jp-s">全武器攻击、魔攻与属性一览</div>
+        </a>
+        <a href="#/page/mbook">
+            <div class="jp-t">魔物图鉴</div>
+            <div class="jp-s">出现地点、等级与掉落</div>
+        </a>
+        <a href="#/page/armor">
+            <div class="jp-t">防具</div>
+            <div class="jp-s">盾、铠甲、头饰、鞋与饰品的防御数值</div>
+        </a>
+    </div>`;
+}
+
 /* RF5 魔物抗性三表：属性抗性／异常抗性／暴击眩晕吹飞。
    FX5 由 _build_fx5.py 从 biligame 源表生成，三张表行号一一对应。 */
 function fx5Html(g) {
@@ -6986,6 +7091,7 @@ const PAGES = [
             /* 5 代这一栏在源站是魔物抗性三张表（属性／异常／暴击眩晕吹飞），
                与 4 代那套装备隐藏数值不是一套，分头渲染 */
             if (g && g.id === 'rf5') return fx5Html(g);
+            if (g && g.id === 'rf4sp') return fx4sHtml(g);
             const D = (typeof FX_RF4 !== 'undefined') ? FX_RF4 : [];
             const ST = (typeof FX_ST !== 'undefined') ? FX_ST : [];
             const RS = (typeof FX_RS !== 'undefined') ? FX_RS : [];
@@ -8566,6 +8672,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百五十九：「状态与抗性」补上 4sp 的魔物＋村民侧三表</h2>
+<ul class="ul">
+<li class="li"><b>fx 现在覆盖 rf4／rf4sp／rf5，但三者口径各不同</b>：rf4 看装备面板隐藏数值（附加率与抗性，422 件收 180 件），rf4sp 与 rf5 看魔物侧。这一轮给 rf4sp 补的源站数据是 <code>RF4Smonsterresist</code>——<b>含村民</b>的一份：雷斯特、芙缇、比修奈尔、库洛丽嘉、沃尔卡农这些可操作角色与重要 NPC 也在表里，其它作的抗性表只列魔物，没有这一份。4 代那一版（切到「符文工房4」）讲装备，本页讲魔物与村民，按作分开写。</li>
+<li class="li"><b>三张表各自独立、名字顺序不一致</b>。源站把数据拆成属性抗性（279 条）、异常抗性（280 条）、暴击吹飞眩晕（276 条）三个模板表，名字顺序各表不同、名字集有小出入（宝珠类只在属性表，天堂之门在三张表写法不同）。本页照源顺序分三张列，各带搜索框，不强行拼成一张对照表。</li>
+<li class="li"><b>和 5 代一样有负数弱点，但源站把负号写在 HTML 标签里</b>。属性表的弱点本是 <code>&lt;font color=blue&gt;-&lt;/font&gt;25%</code> 这种编码，第一版解析只看到数字、当成正数，统计与文案整段写错（误成「全非负、没有弱点」）。修正后确认：全表 <b>177 行至少有一项负抗性</b>，最深的像<b>幻想的雾香 爱 −200%、兽人族 风 −150%</b>；<b>异常八栏与暴击六栏则全非负</b>。列序按源：属性 火水土风光暗无爱（无在爱前，与 5 代相反）、异常 毒封印麻痹睡眠疲劳感冒即死吸收、暴击 暴击率／暴击抗／眩晕抗／攻击硬直／攻击吹飞／吹飞抗。</li>
+<li class="li"><b>新数据 _build_fx4s.py → js/fx4s.js（约 60KB）</b>；<code>index.html</code> 加引用；<code>fx</code> 页 <code>gms</code> 不变，<code>body</code> 里 rf4sp 走新 <code>fx4sHtml(g)</code>、rf4 仍走装备侧、rf5 走魔物侧。校验 438 实例（＋0，rf4sp 本就在 gms 里）／0 异常／头像 8 作 214 张缺 0；520px 下三表容器内横滑、正文不溢出。</li>
+</ul>
+
             <h2 class="h2">2026-11-02　第一百五十八：「状态与抗性」补上 5 代——不是同一套东西，源站给的其实是魔物侧的三张表</h2>
             <ul class="ul">
                 <li class="li"><b>这一页原先只有 4 代，而且看的是装备侧</b>：面板上不显示、却真实生效的附加率与抗性（11 项附加率／18 项抗性，422 件装备里收 180 件）。查 5 代源页时发现<b>它讲的完全是另一面</b>——魔物的属性抗性、异常抗性、暴击眩晕吹飞，三张表。口径不同，所以这次不是「扩一作」，是给 <code>fx</code> 加一条分支：<code>gms</code> 加 <code>rf5</code>，<code>body</code> 里 5 代走新写的 <code>fx5Html(g)</code>，<b>4 代那段一字未动</b>。</li>
