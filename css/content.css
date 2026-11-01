@@ -1007,3 +1007,23 @@
 .content .table.gearbest tbody td:first-child {
     white-space: nowrap;
 }
+
+/* 符文能力（RF1／2／3／5／海洋）：五张表列数从 3 到 11 不等。
+   窄屏一律改为容器内横滑；文本列放开换行，首列（名字／类别／日文名）不折行。 */
+.content .table.runeall table { min-width: 42rem; }
+
+/* RF2 十列、RF3 十一列：42rem 装不下，会把「获取」「倍率分解」压成一字一行 */
+.content .table.runeall-w table { min-width: 68rem; }
+
+.content .table.runeall .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.65;
+}
+
+.content .table.runeall tbody td:first-child {
+    /* 不锁 nowrap：海洋有几个片假名名字（ラピッドスパイク）比列宽还长，锁死会压到相邻列 */
+    white-space: normal;
+    word-break: break-word;
+    min-width: 6rem;
+}
