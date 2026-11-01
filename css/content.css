@@ -877,3 +877,18 @@
 .content .mon-no {
     color: #9aa3ad;
 }
+
+/* 龙之天地料理表：九列宽表，窄屏按站内约定整表横滑。
+   材料／特效／获取等长文本列 body 换行（保留列宽），表头 nowrap 锁宽不拆字。 */
+.content .table.mon-table.azcook table {
+    min-width: 53rem;
+}
+
+.content .table.mon-table.azcook .td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.content .table.mon-table.azcook tbody td:first-child {
+    white-space: nowrap;
+}

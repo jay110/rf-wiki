@@ -8257,7 +8257,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
-            <h2 class="h2">2026-11-01　第一百四十次：新开「符文能力」页——RF4／RF4S 的 54 个符文去哪拿</h2>
+            <h2 class="h2">2026-11-01　第一百四十一次：龙之天地（azuma）补全「料理配方」页——313 道</h2>
+            <ul class="ul">
+                <li class="li"><b>新开 <code>azuma_cook</code> 页</b>（归「生活」、<code>gms:['azuma']</code>，与 azuma_skill／mon／boss 并列）：龙之天地此前在「料理」页完全空白——这一作<b>没有厨具分类、也没有料理等级门槛</b>，按「品类」分五块：<b>菜肴 162／便当 33／加工品 6／甜点 107／酒 5</b>，共 <b>313 道</b>可制作物。</li>
+                <li class="li"><b>源</b>：gametoeasy.com《符文工房：龙之天地》料理配方（post/1810）。原表无逐道星级／难度，本站不补；材料格式照录（如「芜菁×1」，缺项写「—」）；「恢复HP／恢复RP」两列源表分固定值与百分比两格，本页合并为一格（如「280(+11%)」）；「获取」合并源表「解锁条件／宝箱获取／商店获取」三列，任一为空即不显示该来源。<b>译名沿用 gametoeasy 中文</b>，与站内七作 biligame 译名不完全一致。</li>
+                <li class="li"><b>渲染</b>：九列宽表（名称／品类／材料／买价／卖价／恢复HP／恢复RP／特效／获取），复用站内 <code>ftableOwn</code> 搜索框（可搜菜名、品类、食材反查、地名找青蛙石）；长文本列在列宽内换行、窄屏按站内约定整表横滑。整表 <code>min-width:53rem</code>，1100px 完整放下、520px 横滑。<code>_verify</code> 398 实例／0 异常。</li>
+            </ul>
+<h2 class="h2">2026-11-01　第一百四十次：新开「符文能力」页——RF4／RF4S 的 54 个符文去哪拿</h2>
             <ul class="ul">
                 <li class="li"><b>补的是个新门类</b>：站内一直有「武器／防具／状态与抗性（fx）」，但<b>符文能力</b>与<b>符文魔法</b>这一套（RF4 把效果装到武器符文槽、魔法书能升级 Lv）没有独立一页。新开 <code>rune</code>（<code>key: 'rune'</code>，归「物品」，<code>gms: ['rf4','rf4sp']</code>），数据由 <code>_build_rune.py</code> 从 biligame 符文工厂 wiki 的 <code>RF4runeability</code>／<code>RF4Sruneability</code> 解析成 <code>js/rune.js</code>（两版共用同一张本体获取表，故只存一份）。</li>
 <li class="li"><b>54 个，两类二分</b>：<b>符文能力 29 个</b>（横扫千军、升龙拳、无心剑、云裂、一心一刀……装武器槽、不可升级）＋<b>符文魔法 25 个</b>（螺旋石锥、彗星暴雨、大治愈、黑洞……来自魔法书、可逐 Lv 强化）。<b>20 个有等级门槛</b>（参数栏写 Lv2／Lv3），其余装上即用。</li>
@@ -9419,7 +9425,51 @@ const PAGES = [
         gms: ['azuma'],
         body: () => azumaBossHtml(),
     },
+    {
+        key: 'azuma_cook', group: 'life', title: '料理配方', icon: 'pot',
+        gms: ['azuma'],
+        body: () => azumaCookHtml(),
+    },
 ];
+
+/* 龙之天地（azuma）专属：料理配方（313 道，五类，不混入七作「料理」页的厨具/等级模板）
+ * 数据 AZUMA_COOK（js/azuma_cook.js）：cats=[{k,rows}]，rows 每行 15 字段见 _build_azuma_cook.py */
+function azumaCookHtml() {
+    const A = (typeof AZUMA_COOK !== 'undefined') ? AZUMA_COOK : null;
+    if (!A || !A.cats.length) return '';
+    const cell = v => (v == null || v === '' || v === '—') ? '—' : v;
+    const money = v => (v === '—' || v === '') ? '<span class="mon-no">—</span>' : v + 'G';
+    const cats = A.cats;
+    const total = cats.reduce((s, c) => s + c.rows.length, 0);
+    const kindRows = cats.map(c => {
+        const head = c.rows.slice(0, 3).map(r => r[0]).join('、');
+        return [c.k, c.rows.length + ' 道', head + (c.rows.length > 3 ? '…' : '')];
+    });
+    const all = [];
+    cats.forEach(c => c.rows.forEach(r => {
+        const mats = [r[1], r[2], r[3], r[4]].filter(x => x && x !== '—').join('、') || '—';
+        const hp = (r[7] && r[7] !== '—') ? (r[8] && r[8] !== '—' ? r[7] + '(+' + r[8] + '%)' : r[7]) : '—';
+        const rp = (r[9] && r[9] !== '—') ? (r[10] && r[10] !== '—' ? r[9] + '(+' + r[10] + '%)' : r[9]) : '—';
+        const eff = cell(r[11]);
+        const get = [r[12], r[13], r[14]].map((x, i) => (x && x !== '—') ? (['解锁:', '宝箱:', '商店:'][i] + x) : null)
+            .filter(Boolean).join('；') || '—';
+        const key = r[0] + ' ' + c.k + ' ' + mats + ' ' + eff + ' ' + get;
+        all.push([key, [r[0], c.k, mats, money(r[5]), money(r[6]), hp, rp, eff, get]]);
+    }));
+    return `
+        <h2 class="h2">共 ${total} 道可制作物</h2>
+        <p class="p">龙之天地的料理按<b>品类</b>分成五块：<b>菜肴、便当、加工品、甜点、酒</b>。和前作按「厨具 / 料理等级」组织不同，这一作<b>没有厨具分类、也没有料理等级门槛</b>——只要拿到食谱（任务奖励、青蛙石、商店购买），就能做。下面把「怎么做、要什么材料、吃了回多少、从哪拿」一次列全。</p>
+        ${stat([['可制作物', total + ' 道'], ['品类', cats.length + ' 类'], ['菜肴', cats[0].rows.length + ' 道'], ['甜点', cats[3].rows.length + ' 道']])}
+        <h2 class="h2">五类先看分类</h2>
+        <p class="p">菜肴与甜点是大头（共 ${cats[0].rows.length + cats[3].rows.length} 道），便当和酒偏少。加工品是调味料与半成品（蛋黄酱、番茄酱、奶酪等），是做菜的上游——先备齐它们，后面的菜才做得出来。</p>
+        ${tbl(['品类', '道数', '代表'], kindRows, { leftFirst: true, cls: 'txt', colw: ['4.4rem', '3rem', 'auto'] })}
+        <h2 class="h2">全部 ${total} 道（可搜索）</h2>
+        <p class="p">按品类排序。搜菜名找做法，<b>搜食材名反查能做什么菜</b>（例如搜「米饭」能列出所有用到米饭的便当）；搜「青蛙石」或具体地名，能找出在那处青蛙石能捡到的菜谱。</p>
+        ${ftableOwn(['名称', '品类', '材料', '买价', '卖价', '恢复HP', '恢复RP', '特效', '获取'],
+                ['5rem', '3rem', '11rem', '3rem', '3rem', '4.6rem', '4.6rem', '8rem', '11rem'],
+                all, { cls: 'azcook', ph: '搜菜名、品类、食材或地名' })}
+        <div class="note">取自 gametoeasy.com《符文工房：龙之天地》料理配方（post/1810）。原表<b>没有逐道菜的星级或难度</b>，本站不补。材料格式照录（如「芜菁×1」，缺项写「—」）；「恢复HP / 恢复RP」两列源表分固定值与百分比两格，本页合并为一格（如「280(+11%)」）。「获取」一栏合并了源表的「解锁条件 / 宝箱获取 / 商店获取」三列，任一为空即不显示该来源。<b>命名沿用 gametoeasy 中文译名</b>，与站内七作的 biligame 译名不完全一致。</div>`;
+}
 
 /* 龙之天地（azuma）专属：村民技能表（502 行，两套解锁体系，不混入七作模板） */
 function azumaSkillHtml() {
