@@ -8261,6 +8261,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十五：打磨 seriescmp——新增「原名与主角结构」小节</h2>
+            <ul class="ul">
+                <li class="li"><b>第一百四十四继续方向 A</b>。把 <code>GAMES</code> 里仍未在本页使用的真实字段——<code>jp</code>（日文原名）、<code>en</code>（英文原名）、<code>tagline</code>（一句话定位）——聚合成<b>第七节「原名与主角结构」</b>：十作并排「作品／日文原名／英文原名／一句话定位／主角结构」五列表，<b>零臆造</b>。</li>
+                <li class="li"><b>「主角结构」为数据派生的跨作事实</b>：由 <code>hero</code> 字段与主角人数派生——含「／」者为开局可选男／女（RF4／RF4 SP／RF5／龙之天地）；海洋（RFO）为数据原文记载的「一体两魂」（双魂共用一躯）；RF2 因含父代＋子代共三名主角列为「跨代多主角（3 名）」；RF1／RF3／RF3 SP／边境为固定单人。逻辑在 <code>seriesCmpHtml()</code> 的 <code>heroStruct()</code> 内，按 rfo → 含「／」→ 主角人数 的顺序判定，改数据即随动。</li>
+                <li class="li"><b>不采用 candF／candM 的原因</b>：该字段与 <code>chars</code> 实点名单对不上（如 RF1 记 <code>candF:10</code> 但角色里只有 6 名花嫁候补），若拿来作数会与第二节／第五节自相矛盾，故不据此出数、不臆造。</li>
+                <li class="li"><b>校验</b>：node 渲染 <code>seriesCmpHtml()</code> 确认十作 jp／en／tagline／主角结构<b>全部命中</b>、分类正确；Edge 无头截图核对第七节表格——长日／英标题自动换行、第五列固定 9.5rem 与定位列清晰分列、无拆字无横向溢出。<code>_verify</code> 仍 <b>408 实例／0 异常／头像 214 张缺 0</b>。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十四：打磨 seriescmp——新增「制作与世界观核心」小节</h2>
             <ul class="ul">
                 <li class="li"><b>第一百四十三继续方向 A</b>。利用 <code>GAMES</code> 里已存在但本页尚未使用的真实字段——<code>dev</code>（开发商）、<code>pub</code>（发行商）、<code>god</code>（世界观核心：幻龙／神）——新增<b>第六节「制作与世界观核心」</b>：十作并排「作品／开发商／发行商／世界观核心」四列表，<b>零臆造</b>。</li>
@@ -10058,6 +10065,15 @@ function seriesCmpHtml() {
         return [nm(g), F.length ? F.join('、') : '—', M.length ? M.join('、') : '—'];
     });
     const prodRows = G.map(g => [nm(g), g.dev || '—', g.pub || '—', g.god || '—']);
+    // 主角结构：由 hero 字段与主角人数派生，不臆造
+    const heroStruct = g => {
+        if (g.id === 'rfo') return '一体两魂（双魂共用一躯）';
+        if ((g.hero || '').indexOf('／') >= 0) return '可选性别（开局选男／女）';
+        const mc = (g.chars || []).filter(c => c.role === '主角').length;
+        if (mc > 1) return '跨代多主角（' + mc + ' 名）';
+        return '固定单人主角';
+    };
+    const nameRows = G.map(g => [nm(g), g.jp || '—', g.en || '—', g.tagline || '—', heroStruct(g)]);
 
     return `
     <h2 class="h2">跨作机制对照</h2>
@@ -10119,6 +10135,10 @@ function seriesCmpHtml() {
     <h2 class="h2">六、制作与世界观核心</h2>
     <p class="p">开发商／发行商取自数据文件 <code>GAMES</code> 的 <code>dev</code>／<code>pub</code>；「世界观核心」取各作的幻龙或神明设定（<code>god</code> 字段）。这部分是系列「并排看」的制作与设定背景，与前面几节的玩法机制互为参照。</p>
     ${tbl(['作品', '开发商', '发行商', '世界观核心'], prodRows, { colw: ['7rem', '6rem', '8rem', ''], left: [3] })}
+
+    <h2 class="h2">七、原名与主角结构</h2>
+    <p class="p">「日文原名／英文原名」取数据文件 <code>GAMES</code> 的 <code>jp</code>／<code>en</code>；「一句话定位」取各作 <code>tagline</code>。「主角结构」由 <code>hero</code> 字段与主角人数派生：含「／」为开局可选男／女（RF4 起），海洋（RFO）为数据原文记载的「一体两魂」，RF2 因含父代＋子代共三名主角列为跨代多主角，其余为固定单人。均不臆造。</p>
+    ${tbl(['作品', '日文原名', '英文原名', '一句话定位', '主角结构'], nameRows, { colw: ['6rem', '10rem', '10rem', '', '9.5rem'], left: [3] })}
 
     <div class="note">本页只做「并排看」与「逐作核实发现」的汇总，不构成跨作评测。某项在某作显示 0 或空白，多半是「该作此系统与前作机制不同、或本站尚未收录」，不是「没有」。具体数据请进对应作品的相关条目页查看。</div>
     `;
