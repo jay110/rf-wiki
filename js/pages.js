@@ -2220,6 +2220,56 @@ function recipeRf3Html() {
    源：biligame RF1recipepharmacy／RF2recipepharmacy（本地快照 _RF1recipepharmacy.txt 等），
    由 _build_recipe_rf12.py 生成 js/recipe_rf12.js。两作列位完全不同，各按表头找列、不合并列。
    ------------------------------------------------------------ */
+/* 毕业装备（RF5 以外八作）：把 js/gearbest.js 的数据铺成页。
+   各作源页的完成度差得很远——RF1 两张表填满、RF3 整篇文字没有表、
+   RF2／边境／海洋的配方表在源站就是空壳——所以页面按「简介 → 搭配表 → 正文分块 →
+   源站空壳 → 照录不改」的固定顺序铺，缺哪段跳过哪段，空壳单独点名。 */
+function gearBestHtml(g) {
+    const id = (g && g.id === 'rf3sp') ? 'rf3' : (g && g.id);
+    const D = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST[id] : null;
+    if (!D) return '';
+    const B = D.blocks || [];
+    const nTbl = (D.sets ? 1 : 0) + B.filter(b => b.tbl).length;
+    const nEmpty = (D.stub || []).length;
+    const li = x => Array.isArray(x) ? `<b>${x[0]}</b>：${x[1]}` : x;
+    const blockHtml = b => {
+        let h = `<h2 class="h2">${b.h}</h2>`;
+        if (b.p) h += b.p.map(t => `<p class="p">${t}</p>`).join('');
+        if (b.ul) h += `<ul class="ul">${b.ul.map(x => `<li class="li">${li(x)}</li>`).join('')}</ul>`;
+        if (b.tbl) h += tbl(b.tbl.head, b.tbl.rows, { colw: b.tbl.widths || [], left: b.tbl.head.map((_, i) => i), cls: 'gearbest' + (b.tbl.w ? ' gearbest-w' : '') });
+        if (b.note) h += `<div class="key">${b.note}</div>`;
+        return h;
+    };
+
+    return `
+        <p class="p">源站这一页的标题是<b>「毕业装备」</b>，但各作的完成度完全不是一回事：有的把配方和材料都算好了，有的只写了几段「往哪个方向堆」，还有几页的表格<b>在源站就是空的</b>。本站照实分节，空的地方就写明是空的。</p>
+        ${(nTbl || nEmpty) ? stat([['表格', nTbl + ' 张'], ['源站缺项', nEmpty ? nEmpty + ' 处' : '无'], ['性质', '社区／wiki 整理，非官方数值']]) : ''}
+        <div class="note">源：<b>${D.src}</b>。${D.tag}。</div>
+
+        <p class="p">${(D.intro || []).join('')}</p>
+        ${D.sets ? tbl(D.sets.head, D.sets.rows, { colw: D.sets.widths || [], left: D.sets.head.map((_, i) => i), cls: 'gearbest' }) : ''}
+        ${B.map(blockHtml).join('')}
+
+        ${nEmpty ? `<h2 class="h2">源站缺的部分</h2>
+        <p class="p">下面这些，要么在源条目里<b>只有表头、没有一行数据</b>，要么是源站用模板挂在别处的表、本站没有并进来。空着的地方没有替它补——补出来的每一条都是编的。</p>
+        <ul class="ul">${D.stub.map(t => `<li class="li">${t}</li>`).join('')}</ul>` : ''}
+
+        ${(D.keeps || []).length ? `<h2 class="h2">照录不改的地方</h2>
+        <ul class="ul">${D.keeps.map(t => `<li class="li">${t}</li>`).join('')}</ul>` : ''}
+
+        <div class="note">这一页只搬源站写了的东西：没给数值的地方留空，没写的表留空表。RF5 的毕业套不在这一页——它的倍率算法（倍铁、10 倍铁、不明物体）是独立一篇，在该作品下切到「符文工房5」才看得到。</div>
+        <div class="jump">
+            <a href="#/page/craft">
+                <div class="jp-t">锻造与药学</div>
+                <div class="jp-s">强化格子怎么开、素材效果怎么叠</div>
+            </a>
+            <a href="#/page/weapon">
+                <div class="jp-t">武器</div>
+                <div class="jp-s">这一作武器本身的数值与招式</div>
+            </a>
+        </div>
+    `;
+}
 function recipeRf12Html(g) {
     const D = (typeof RECIPE_RF12 !== 'undefined') ? RECIPE_RF12 : null;
     const id = (g && g.id === 'rf2') ? 'rf2' : 'rf1';
@@ -6086,11 +6136,13 @@ const PAGES = [
     },
     {
         key: 'gear', group: 'life', title: '装备打造·毕业套', icon: 'sword',
-        gms: ['rf5'],
-        body: () => `
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
+        body: g => {
+            if (g.id !== 'rf5') return gearBestHtml(g);
+            return `
             <h2 class="h2">「毕业套」不是一把更强的武器</h2>
             <p class="p">终端装备的面板能到配方表上限的好几倍，靠的不是更好的配方，而是<b>把强化栏填满、并且让每一格的效果都乘到最大</b>。这套算法只在 RF5 的终盘成立，理解了这条链，你自己也能算出来。</p>
-            <div class="note">本页<b>只对应《符文工房5》</b>，且只在 RF5 的作品目录里出现——其他作品的终盘装备素材与数值都不同，不做跨作套用。</div>
+            <div class="note">这一页<b>只写《符文工房5》</b>：倍率铁这套算法是五代特有的。其他作品的毕业配装在同一个条目下各有各的一页，素材与数值都不同，不做跨作套用。</div>
 
             <h2 class="h2">核心：倍率是三块铁</h2>
             <p class="p">有三样素材不提供任何属性，它们只做一件事——<b>修改紧挨着它前面那一格</b>的强化效果。</p>
@@ -6215,7 +6267,8 @@ const PAGES = [
                 <li class="li"><b>这是终盘内容</b>。需要天之村丛云剑、10 倍铁、各色核这类深层素材，正常流程要打到隐藏迷宫。前期别照着这个练，先把锻造等级和配方开出来。</li>
             </ul>
             <div class="note">本页数值来自玩家社区「里格巴斯武器商」的实测整表（RF4S／RF5 各一份），并非官方公开数据。倍率规则、材料效果在游戏内可复现，但具体成品数值会受锻造等级、素材品质与版本补丁影响，可能与表列有出入。原表给的是「这样做能达到这个量级」，不是「每一件都精确等于这个数」。</div>
-        `
+        `;
+        }
     },
     {
         key: 'decorate', group: 'life', title: '装饰与家具', icon: 'chair',
@@ -8345,6 +8398,23 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-02　第一百五十六：「装备打造·毕业套」从只覆盖 5 代扩到九作——顺手发现源站这八页里有一半是空壳</h2>
+            <ul class="ul">
+                <li class="li"><b>这是全站最后一个「只覆盖一作」的缺口</b>：<code>gear</code> 此前只有 RF5。biligame 每作都有「equipmentbest」条目，抓下来一看，<b>完成度差得极远</b>——RF1／4 豪华版有整张表，RF3 是整篇文字没有表，RF2／边境／海洋的「配方」「材料准备」两张表<b>在源站就只剩表头</b>。本站按「有什么写什么、空的地方点名说空」落成 <code>js/gearbest.js</code> ＋ 通用渲染 <code>gearBestHtml(g)</code>，RF5 原页不动。</li>
+                <li class="li"><b>RF1：唯一一个配方与材料都算好的</b>。最强武器「天之村云之剑」要<b>风、水两条线各升到顶再合体</b>（风之剑→大气锋刃→气旋剑；水星剑→海洋切割者→死亡之剑），配方表 <b>7 行</b>逐格照录；材料准备 <b>7 项</b>（阔剑 2、水之结晶 4、风之结晶 4、铁 4、银 2、鸟羽毛 2、魔人的角 1），七项里只有鸟羽毛与魔人的角要打怪。</li>
+                <li class="li"><b>RF2：毕业武器是六把，不是一把</b>。因为属性克制是乘法级差——同一条地属性魔物，无属性武器 70 伤害、地属性 50、风属性 100。搭配表 5 行（武器／盾牌／饰品 2／符文能力）是真的，但配方表与材料表各 0 行。</li>
+                <li class="li"><b>RF3：全篇没有表，全是结论</b>。3 代最终迷宫怪物等级等于玩家等级、魔物攻击远大于角色防御，所以配装全是抗性与距离：元素盾（四属性抗性 +1）、火箭之翼、魔女耳饰、隐形剑（攻击距离 +1）；攻击距离更长的武器源站列了 <b>14 把</b>（6 个武器种）；蓝名装备自带两个随机强化效果、<b>能随机到两个相同材料</b>。</li>
+                <li class="li"><b>RF3 有一处源站自相矛盾，照录</b>：一边写「异常状态抗性 126 满」，一边写「100% 满」，然后按 +6 算出「要 11 个坏掉的木箱」、按 +5% 算出「要 10 个」。两句并存，本站不替它选一个。</li>
+                <li class="li"><b>边境：八组「极限」是八套不同配装</b>。攻击 87、暴击 47%、防御 470、魔法 420、HP 95、全属性攻 21、全属性防 39，另有一组「全异常状态抗性」源站只给三件、不给数字——照样只列三件，不凑第四件。</li>
+                <li class="li"><b>海洋：三段话 + 一行没写完的配方</b>。最强武器神之杖、极限魔法攻击（祈祷十字／魔法之道的秘诀／宝石胸针）、极限防御（四件毛茸茸）。这一作真正要记的只有一句原理：<b>材料带星，做出来的装备带星概率更高</b>。</li>
+                <li class="li"><b>4 豪华版：唯一一张「前期素材表」</b>。用调味料当强化素材、拿负面抗性换正面抗性（混合香料 −10% 风抗 12 个、酸味香料 −10% 地抗 12 个……），盾／鞋／头／衣<b>四个部位用一模一样的十格</b>，每件提供光 25／地 25／风 25／水 25／火 20，首饰补最后 20% 火抗；最终五件的逐格清单也照录入表。</li>
+                <li class="li"><b>4 原版这一页是空的，而且写明为什么空</b>。源站只有「4 豪华版」的条目，提到四幻龙、辟邪护符这些本站没有原版（3DS）资料可核；两版共用同一套强化规则，但能拿到什么素材、上限多少并不一样，<b>把豪华版清单搬到原版等于替原版编一套数据</b>，故留空并指路。</li>
+                <li class="li"><b>照录不改的四处</b>：① RF1 简介「初始武器也可<b>其实</b>通关」是源站错字，读作「可以」，不代改；② RF1 配方表最后一行的名字栏只有一个「·」，与上一行的 SOMA 版名「death」对不上，保留；③ RF3 同一页讲 RF3 与 RF3S（能不能变身村民、走无属性还是爱属性、白金戒指是否推荐），本站同页呈现、差异逐条标；④「四幻龙」源站与头装备／乌龟盾／重靴／钻石胸针并列，但没写它属于哪个部位，<b>不替它填部位名</b>。</li>
+                <li class="li"><b>踩坑一：跨行替换第四次栽在 CRLF 上</b>。改「源站这几张表是空的」那一段时按 LF 写匹配串，<code>count</code> 直接 0，是 <code>assert n==1</code> 拦住的——这次没有静默跑过去。<b>两条替换里第一条只有一行、侥幸成功，第二条跨行就 0</b>，正好说明这个坑只咬多行。</li>
+                <li class="li"><b>踩坑二：七列表在窄屏被压成一字一行</b>。520px 下 RF1 配方表的「材料」四列变成竖排单字——因为前三列写死了 7+8+11rem，34rem 的 min-width 把它们挤没了。加 <code>gearbest-w</code>（min-width 54rem），窄屏改容器内横滑。</li>
+                <li class="li"><b>踩坑三：空白页的统计块没意义</b>。4 原版那张留空页原先顶着「表格 0 张／源站空壳 无」三格，等于把「什么都没有」当成绩展示。改成没有任何表格且没有缺项时整块不渲染。</li>
+                <li class="li"><b>校验</b>：<b>432 实例（+8）／0 异常／头像 8 作 214 张缺 0</b>；九作 <code>gear</code> 逐个渲染过一遍，没有空值与模板残留；520px 与 1440px 下无页面级溢出。</li>
+            </ul>
             <h2 class="h2">2026-11-02　第一百五十五：海洋攻略本最后两张表用完——「岛屿与打捞」33 处岛＋日版 30 行、16 条玩家技巧照录</h2>
             <ul class="ul">
                 <li class="li"><b>海洋的攻略本 xls 只剩「岛屿」「技巧」两张没用</b>，这一轮全用掉：海洋<b>不再有未使用的源表</b>。新页两张，都挂在基础组：<code>rfosail</code>「岛屿与打捞」紧跟地图页，<code>rfotip</code>「攻略本技巧」放在基础组末尾。</li>

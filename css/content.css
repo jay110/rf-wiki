@@ -990,3 +990,20 @@
     color: #3d6b58;
     font-weight: 600;
 }
+
+/* 毕业装备（RF5 以外八作）：这几张表是文字型，列少但字多。
+   窄屏改为容器内横滑，首列（部位／格位／目标）不折行。 */
+.content .table.gearbest table { min-width: 34rem; }
+
+/* 七列的关卡表（RF1 配方）：34rem 装不下，材料列会被压成一字一行 */
+.content .table.gearbest-w table { min-width: 54rem; }
+
+.content .table.gearbest .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.65;
+}
+
+.content .table.gearbest tbody td:first-child {
+    white-space: nowrap;
+}
