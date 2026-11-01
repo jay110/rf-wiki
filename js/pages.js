@@ -8259,8 +8259,23 @@ const PAGES = [
         body: () => seriesCmpHtml()
     },
     {
+        key: 'bdcheck', group: 'life', title: '生日核对', icon: 'users',
+        body: () => bdCheckHtml()
+    },
+    {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十八：新开「生日核对」页（bdcheck）——站内 173 人 × 外部 61 人逐人对照</h2>
+            <ul class="ul">
+                <li class="li"><b>方向 C</b>。上一轮把生日全量比对了一遍，但结论只留在对话记录里，站上没有留下任何痕迹。这次把它做成<b>常驻页</b>（<code>bdcheck</code>，归「牧场生活」，不挂 <code>gms</code>，十作导航各出现一次）：外部资料说什么、站内写什么、对不上一律摆出来，<b>不替任何一方改数字</b>。</li>
+                <li class="li"><b>两个外部源，性质分开标</b>：<b>边境人物表</b>＝《RFF 新手篇＋人物喜好＋星座》docx，日文原名＋日文生日（「秋の1日」），<b>一手日文原表</b>，26 条；<b>Memoirs</b>＝《Rune Factory Official Memoirs》角色攻略 txt，中文民间翻译（「诞生日：秋之月的25日」），<b>二手</b>，47 条。两份去重后 <b>61 位</b>（边境 26 其中 12 人两源均载 ＋ RF1 11 ＋ RF2 13 ＋ RF3 11）。</li>
+                <li class="li"><b>两边对齐只认「同一个角色」</b>：靠日文名（docx 直接对 <code>NPC_FULL[].j</code>）、站内别名 <code>al</code>，再加一张<b>人工逐个核对过的译名表</b>（如 Memoirs 的「托娜」＝站内「多娜」、「梅萝蒂」＝「美乐蒂」、「琳」＝「凌」）。三步都失败的记录<b>直接不收</b>——宁可少十个人，也不拿生日相近去猜谁是谁。<b>不靠生日反推身份</b>，否则整件事就成了循环论证。</li>
+                <li class="li"><b>新增数据文件 <code>js/bd_ext.js</code></b>（<code>BD_EXT</code>，由 <code>_build_bd.py</code> 从上面两份原件直接提取生成）。每条记录除合并后的生日外，另存<b>两源各自的原始值</b>（<code>sv</code>）与<b>各自的名字写法</b>（<code>onv</code>）——所以第三节那张交叉表里「边境人物表」与「Memoirs」两列是<b>两个真实读到的值</b>，不是同一个值复制两遍。</li>
+                <li class="li"><b>结果：61 条里 60 一致、1 站内缺、0 冲突</b>。缺的是 <b>RF1 莉妮特</b>（站内 <code>bd</code> 为空，Memoirs 记秋 25 日）。<b>不往 <code>NPC_FULL</code> 里补</b>：她只有一份民间译本说过这个数，没有第二份源能对，单源孤证一旦写进数据文件，后面所有人都会当既定事实。页面照录并标出来源，等拿到日文原表再定。</li>
+                <li class="li"><b>另外四个小节</b>：① 两源交叉的 12 人（日文原表与中文译本<b>互不相干却完全一致</b>，且都与站内相同——三个独立记录指向同一天）；② 覆盖率表（边境 <b>100%</b>、RF1 42%、RF2 54%、RF3 46%，<b>RF4／RF5／海洋 0%</b>——这三作外部生日只在攻略本扫描件里，本站没做 OCR，所以是「核不了」不是「核过没问题」）；③ 站内 <code>bd</code> 为空的 <b>23 位</b>（含各作主角）名单，把「本站缺什么」的边界写清楚；④ 顺带的同日生日表（173 人分布在 96 个日期，<b>20 天挤了 3 人以上</b>）。</li>
+                <li class="li"><b>两处口径写在页面上，不留给读者猜</b>：同日表按<b>条目数</b>算、不跨作合并（初代与边境是重制关系，美乐蒂／拉碧丝／塔巴莎两边都有，同名两行是同一角色在两作出场）；龙之天地的 26 位角色另有独立档案表，与这七作零重叠，<b>没有并进本页</b>。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>418 实例（408＋常驻页 ×10）／0 异常／头像 214 张缺 0</b>；<code>_test_search</code>、<code>_test_index_health</code> 未见新增污染；截图逐节核对排版，长名（索菲娅·哈拉佩纽·薇薇安）不挤列。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十七：更正「龙之天地无钓鱼」的臆断（实有 42 种），并做生日全量比对</h2>
             <ul class="ul">
                 <li class="li"><b>纠错起因</b>：有人问「龙之天地没有钓鱼吗？」——这一问戳中了第一百四十二条里的一句错话。原文写「<b>龙之天地无传统钓鱼</b>，<code>FISH_AZUMA</code> 为空、鱼种数记 0」，还把「只有乌贼／公鱼捕捉小游戏」当作理由。<b>这是臆断，站内本来就有该作的钓鱼数据</b>。</li>
@@ -10030,6 +10045,165 @@ function pageVis(p, g) {
 /* 跨作机制对照：把十部作品放在一张表里并排看。
    所有数字取自已加载的数据全局（GAMES / 各作料理与钓鱼数据表），零臆造；
    系统机制差异是建站过程中逐作核实过的发现，每条都标了出处，不跨作换算。*/
+/* 生日核对：站内七作的人物生日 × 外部两份资料，逐人对照。
+
+   外部两个源，性质不同，页面里分开标：
+     docx = 《RFF 新手篇+人物喜好+星座》（docx，日文名 + 日文生日「秋の1日」），一手日文原表，边境 26 人；
+     mem  = 《Rune Factory Official Memoirs》角色攻略（txt，民间翻译，逐人「诞生日：秋之月的25日」），二手，47 人。
+   两份合并去重 61 人：边境 26（其中 12 人两源均载，可交叉印证）+ RF1 11 + RF2 13 + RF3 11。
+
+   对齐只认「同一个角色」，靠站内别名 al 与人工核对过的译名表（见 _build_bd.py 的 ALIAS），
+   对不上的记录直接不收——宁可少 10 个人，也不拿生日相近去猜谁是谁。
+   数据由 _build_bd.py 生成 js/bd_ext.js，本函数只做比对与渲染。 */
+function bdCheckHtml() {
+    const N = (typeof NPC_FULL !== 'undefined') ? NPC_FULL : {};
+    const B = (typeof BD_EXT !== 'undefined') ? BD_EXT : {};
+    const GM = (typeof GAMES !== 'undefined') ? GAMES : [];
+    const SEA = '春夏秋冬';
+    const ORDER = ['rf1', 'rf2', 'rf3', 'rff', 'rf4', 'rf5', 'rfo'];
+    /* 本页统一用「RF1／RF2…边境／海洋」，不取 GAMES.short——那里 rf1 写作「新牧场物语」，
+       摆在表头会让人以为多了个作品。 */
+    const SHORT = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rf4: 'RF4', rf5: 'RF5', rfo: '海洋' };
+    const nmOf = id => SHORT[id] || id;
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const norm = s => String(s || '').replace(/[月日]/g, '');
+    const bdK = s => { const m = /^([春夏秋冬])月?(\d+)/.exec(s || ''); return m ? SEA.indexOf(m[1]) * 100 + Number(m[2]) : 9999; };
+    const dash = '<span class="mon-no">—</span>';
+    const SRC = { docx: '边境人物表', mem: 'Memoirs' };
+
+    const siteOf = (id, n) => ((N[id] || []).filter(x => x.n === n)[0] || {}).bd || '';
+    const siteN = id => (N[id] || []).filter(x => x.bd).length;
+    const extN = id => (B[id] || []).length;
+
+    /* 逐人比对：state = ok 一致 / miss 站内缺 / bad 冲突 */
+    const all = [];
+    ORDER.forEach(id => (B[id] || []).forEach(v => {
+        const s = siteOf(id, v.n);
+        const st = !s ? 'miss' : (norm(s) === v.bd ? 'ok' : 'bad');
+        all.push({ g: id, n: v.n, on: v.on, e: v.bd, s: s, src: v.s, st: st, sv: v.sv, onv: v.onv });
+    }));
+    const tot = all.length;
+    const nOk = all.filter(x => x.st === 'ok').length;
+    const nMiss = all.filter(x => x.st === 'miss').length;
+    const nBad = all.filter(x => x.st === 'bad').length;
+    const nBoth = all.filter(x => x.src.length > 1).length;
+    const nSite = ORDER.reduce((a, id) => a + siteN(id), 0);
+    const nDocx = all.filter(x => x.src.indexOf('docx') >= 0).length;
+    const nMem = all.filter(x => x.src.indexOf('mem') >= 0).length;
+
+    const tagOf = st => st === 'ok' ? '<span class="tag g">一致</span>'
+        : st === 'miss' ? '<span class="tag y">站内缺</span>'
+            : '<span class="tag r">不一致</span>';
+    const srcOf = s => s.length > 1
+        ? '<span class="tag b">两源均载</span>'
+        : (s[0] === 'docx' ? '边境人物表' : 'Memoirs');
+
+    const rowOf = x => [
+        npcLink(x.g, x.n),
+        x.s ? x.s : dash,
+        x.e + '日',
+        x.on === x.n ? dash : esc(x.on),
+        srcOf(x.src),
+        tagOf(x.st)
+    ];
+
+    const blocks = ORDER.filter(id => (B[id] || []).length).map(id => {
+        const rows = (B[id] || []).map(v => all.filter(a => a.g === id && a.n === v.n)[0]).map(rowOf);
+        const n = rows.length;
+        const ok = (B[id] || []).filter(v => (all.filter(a => a.g === id && a.n === v.n)[0] || {}).st === 'ok').length;
+        return `<h3 class="h3">${nmOf(id)}：可核 ${n} 人，${ok} 人一致</h3>
+        ${tbl(['角色', '站内', '外部', '外部写法', '来源', '结论'], rows,
+            { colw: ['7rem', '4.6rem', '4.6rem', '9rem', '6.6rem', '4.6rem'], leftFirst: true, left: [3] })}`;
+    }).join('');
+
+    /* 两源交叉：同一人两份资料都写了生日，还对得上 */
+    const miss = all.filter(x => x.st === 'miss');
+    const both = all.filter(x => x.src.length > 1).sort((a, b) => bdK(a.e) - bdK(b.e) || a.n.localeCompare(b.n));
+    const bothOk = both.filter(x => x.st === 'ok').length;
+
+    /* 站内缺生日的人（不含外部也没写的） */
+    const noBd = [];
+    ORDER.forEach(id => (N[id] || []).forEach(x => { if (!x.bd) noBd.push([id, x.n, x.r || '']); }));
+
+    /* 覆盖边界：每作多少人、外部能核多少 */
+    const covRows = ORDER.map(id => {
+        const s = siteN(id), e = extN(id);
+        return [nmOf(id), String(s), String(e),
+            s ? (e ? Math.round(e / s * 100) + '%' : '<span class="mon-no">0%</span>') : dash];
+    });
+
+    /* 顺带：全站同日生日（3 人及以上） */
+    const cal = {};
+    ORDER.forEach(id => (N[id] || []).forEach(x => {
+        if (!x.bd) return;
+        const k = bdK(x.bd);
+        if (k === 9999) return;
+        (cal[k] = cal[k] || []).push([id, x.n, x.bd]);
+    }));
+    const calKeys = Object.keys(cal).map(Number).sort((a, b) => a - b);
+    const day3 = calKeys.filter(k => cal[k].length >= 3);
+    const day2 = calKeys.filter(k => cal[k].length === 2);
+
+    return `
+    <h2 class="h2">生日核对</h2>
+    <p class="p">这一页只做一件事：把<b>本站人物档案里的生日</b>和<b>外部资料里的生日</b>摆在一起，逐人看对不对。站内 ${ORDER.length} 部作品共 <b>${nSite} 位</b>角色登记了生日；外部两份资料能对上的有 <b>${tot} 位</b>——其余 ${nSite - nOk} 位<b>外部根本没有可比对的记录</b>，本页不替他们编一个。</p>
+    ${stat([['站内有生日', nSite + ' 位'], ['外部可核', tot + ' 位'],
+        ['逐人一致', nOk + ' 位'], ['站内缺', nMiss + ' 位'], ['互相冲突', nBad + ' 位']])}
+
+    <h2 class="h2">一、两份外部资料是什么</h2>
+    ${tbl(['来源', '文件', '性质', '逐人记录'], [
+        ['边境人物表', 'RFF 新手篇＋人物喜好＋星座（docx）', '日文原表，格式「秋の1日」', '26 条（边境 26 人）'],
+        ['Memoirs', 'Rune Factory Official Memoirs·角色攻略（txt）', '中文民间翻译，格式「诞生日：秋之月的25日」', '47 条（RF1／2／3／边境）']
+    ], { colw: ['6.4rem', '', '13rem', '11rem'], leftFirst: true, left: [1, 2, 3] })}
+    <div class="note">两份合并去重后 <b>${tot} 位</b>：边境 26（其中 <b>${nBoth} 位</b>两源都写了）＋ RF1 11 ＋ RF2 13 ＋ RF3 11。<b>「边境人物表」是日文原表，属一手；「Memoirs」是民间翻译的中文版，属二手</b>——两者结论完全一致，这本身是最强的一条证据。RF4／RF5／海洋三作的外部生日只散在攻略本扫描件里，本站没做 OCR，所以那三作<b>一条外部记录都没有</b>，不是「核过没问题」。</div>
+
+    <h2 class="h2">二、逐人对照（${tot} 位）</h2>
+    <p class="p">按作品分组，组内按生日先后排。「外部写法」一列有两种含义：<b>边境那组是日文原表的日文名</b>（拿去对日站原文最省事），<b>Memoirs 那组是译本里的中文名</b>，与站内同名的不重复写。同一角色两三种译名，本来就是这个资料圈最常见的事。</p>
+    ${blocks}
+
+    <h2 class="h2">三、两份资料互相印证的 ${both.length} 位</h2>
+    <p class="p">这 ${both.length} 位在日文原表和中文译本里都写了生日，${bothOk === both.length ? `而且<b>两份写的完全一样</b>，同时又和站内一致——三个独立记录指向同一天，这基本没有出错的空间` : `其中 ${both.length - bothOk} 位对不上，已在第二节标出`}。</p>
+    ${tbl(['角色', '边境人物表（日文名 · 生日）', 'Memoirs（中译名 · 生日）', '站内'],
+        both.map(x => [npcLink(x.g, x.n),
+            esc(x.onv.docx) + ' · <b>' + x.sv.docx + '日</b>',
+            esc(x.onv.mem) + ' · <b>' + x.sv.mem + '日</b>',
+            '<b>' + x.s + '</b>']),
+        { colw: ['7rem', '11rem', '11rem', '6rem'], leftFirst: true, left: [1, 2] })}
+    <div class="note">同一人在两源里写法不同（日文「秋の1日」／中文「秋之月的1日」），生日是同一天，只是表达方式不同。本表统一折成「秋1日」这种简写。</div>
+
+    <h2 class="h2">四、站内缺的 ${nMiss} 条</h2>
+    <p class="p">${nMiss ? `<b>${miss.map(x => nmOf(x.g) + '「' + x.n + '」').join('、')}</b> 在站内人物档案里 <code>bd</code> 为空（源站页面本身没写），而外部资料记的是 <b>${miss.map(x => x.e + '日').join('、')}</b>。` : '没有「外部有、站内缺」的记录。'}</p>
+    <p class="p">处理方式：<b>不往数据文件里补</b>。理由很直接——Memoirs 是民间翻译，RF1 的生日在原版攻略本、日文 wiki 上有没有同一说法，本站没有第二份源可对；单源记录一旦写进 <code>NPC_FULL</code>，后面所有人都会当它是既定事实。所以这条只在本页照录，标明出处，等你哪天拿到日文原表再定。</p>
+    <div class="note">对照着看：同作其他人在<b>站内</b>都登记了生日，外部的 Memoirs 也对得上，等于两条腿站着；只有莉妮特是「站内空着、外部只有一份中文译本说了个数」——<b>单源孤证</b>。她本来就是隐藏角色（要先通关古里多洞窟、全镇友好度 8 以上才登场），资料少也是这个原因。</div>
+
+    <h2 class="h2">五、外部为什么核不了另外 ${nSite - nOk} 位</h2>
+    <p class="p">不是这些人的生日有问题，是<b>手上没有能比对的第二份记录</b>。按作看覆盖率：</p>
+    ${tbl(['作品', '站内有生日', '外部可核', '覆盖率'], covRows, { colw: ['8rem', '7rem', '7rem', '6rem'], leftFirst: true })}
+    <div class="note">本页统计只含 <code>NPC_FULL</code> 里这七作。<b>龙之天地</b>的角色存在另一套表（角色详情 16 位＋村民喜好 10 位共 26 人有生日），与这七作零重叠、外部也没有可比记录，<b>没有并进本页</b>，想知道它的生日请进该作人物页。</div>
+    <p class="p">边境覆盖率 100%——26 位有生日的人，外部 26 条全对上，一位不差。RF1／RF2／RF3 只覆盖到 Memoirs 挑出来讲的那批（多为结婚候补）。<b>RF4／RF5／海洋是 0%，这三作的生日只有站内一个来源</b>，也就是说：它们对错，本页验不了。</p>
+
+    <h2 class="h2">六、站内还没登记生日的 ${noBd.length} 位</h2>
+    <p class="p">这些人在人物档案里 <code>bd</code> 字段是空的——源站页面本身没写，不是本站漏抄。名单列出来，是为了让「本站缺什么」这件事有个明确的边界：</p>
+    ${tbl(['作品', '角色', '身份'], noBd.map(x => [nmOf(x[0]), npcLink(x[0], x[1]), x[2] ? x[2] : dash]), { colw: ['6rem', '8rem', ''], leftFirst: true, left: [2] })}
+
+    <h2 class="h2">七、顺带核出来的：同日生日</h2>
+    <p class="p">${nSite} 位角色分布在 <b>${calKeys.length} 个日期</b>上，其中 <b>${day3.length} 天挤了 3 人以上</b>，另有 ${day2.length} 天是两人同天。同一天生日的角色，礼物准备一份就够两三个人用——这是这份数据最实用的一处副产品。</p>
+    <p class="p">口径先说清楚：<b>按各作人物档案里的条目数算，不跨作合并</b>。初代和边境本来就是重制关系，同名角色两边都有（美乐蒂、拉碧丝、塔巴莎……），所以表里会看到同一个名字出现两次、前面挂两个不同作品名——那是<b>同一角色在两作出场</b>，不是重名，也不是数据错了。</p>
+    ${tbl(['日期', '同一天生日的人'], day3.map(k => {
+        const d = cal[k][0][2].replace(/\d+日$/, '');
+        const n = cal[k][0][2].replace(/^[春夏秋冬]/, '');
+        return [d + n, cal[k].map(x => `<span class="tag">${nmOf(x[0])}</span>${npcLink(x[0], x[1])}`).join('　')];
+    }), { colw: ['6rem', ''], leftFirst: true, left: [1] })}
+    <div class="note">只有 3 人及以上的 ${day3.length} 天在这张表里；两人同天的 ${day2.length} 天不列，太散。每个名字前面的小标签是<b>作品</b>，不是称号。想确认某位到底在哪一作登场、什么身份，点名字进人物页看。</div>
+
+    <div class="jump">
+        <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">生日当天送什么最划算</div></a>
+        <a href="#/page/seriescmp"><div class="jp-t">跨作机制对照</div><div class="jp-s">十作并排看</div></a>
+    </div>
+    <div class="note">本页不判断「哪个生日才是对的」：站内数据照录源站，外部数据照录两份资料，两边一致就记一致，不一致就记不一致，<b>不替任何一方改数字</b>。想查某位的完整档案（喜好、住址、求婚条件），点名字进人物页。</div>
+    `;
+}
+
 function seriesCmpHtml() {
     const G = (typeof GAMES !== 'undefined') ? GAMES : [];
     // SP 版与本体共用同一份数据文件，映射回本体以取真实条数
