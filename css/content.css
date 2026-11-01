@@ -943,3 +943,24 @@
 .content .table.rfosys tbody td:first-child {
     white-space: nowrap;
 }
+
+/* 海洋「地图与出没」四张表：窄屏下容器内横滑，不把文本列压成一条缝。
+   数值型两张（精灵石／海怪）不折行，文本型两张（魔物／宝箱）放开换行。 */
+.content .table.rfomap-mon table { min-width: 40rem; }
+.content .table.rfomap-sp table { min-width: 38rem; }
+.content .table.rfomap-sea table { min-width: 26rem; }
+.content .table.rfomap-chest table { min-width: 30rem; }
+
+.content .table.rfomap-mon .td,
+.content .table.rfomap-chest .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.65;
+}
+
+.content .table.rfomap-mon tbody td:first-child,
+.content .table.rfomap-chest tbody td:first-child,
+.content .table.rfomap-sp tbody td:first-child,
+.content .table.rfomap-sea tbody td:first-child {
+    white-space: nowrap;
+}

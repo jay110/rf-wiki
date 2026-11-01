@@ -4243,6 +4243,11 @@ const PAGES = [
         body: () => rfoMainHtml()
     },
     {
+        key: 'rfomap', group: 'basic', title: '地图与出没', icon: 'compass',
+        gms: ['rfo'],
+        body: () => rfoMapHtml()
+    },
+    {
         key: 'rffevent', group: 'basic', title: '主线与角色事件', icon: 'scroll',
         gms: ['rff'],
         body: () => rffEventHtml()
@@ -8330,6 +8335,20 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-02　第一百五十四：海洋「地图与出没」补成页——55 个区域的魔物、39 处精灵石、28 个海域的海怪、189 处宝箱陶壶，四张表一次落地</h2>
+            <ul class="ul">
+                <li class="li"><b>这是海洋最大的一块空白</b>：此前站内只有钓点、掉落、抗性、委托，<b>「哪张图刷什么怪、精灵石在哪、哪个海域撞哪种海怪」一页都没有</b>。源是 biligame《RFOMAP》（法米通攻略书地图整理），与站内魔物图鉴、钓点页同源，<code>_build_rfo_map.py</code> 解析成 <code>js/rfomap.js</code>。</li>
+                <li class="li"><b>魔物分布 55 个区域</b>：<b>84 种常见 + 17 种稀有</b>，平均等级 <b>Lv1（艾利岛）到 Lv60（创世纪之战・序曲／无名岛F-9）</b>。刷得最广的是哥布林一族——<b>19 个区域</b>有哥布林（含队长、海盗、大哥布林）。<b>10 个区域一只稀有怪都没有</b>（神殿顶层、终局区域、外洋），<b>14 种魔物全作只在一个区域出</b>。</li>
+                <li class="li"><b>精灵石 39 处</b>：<b>四色的平均概率几乎持平</b>（黄 27%／红 24%／绿 29%／蓝 23%），不存在「某色天生难出」；真正的差别在单点极值（黄 100%、红 80%、绿 80%、蓝 75%）。<b>精灵量最高 14，全在风之精灵殿 5F／6F</b>，风殿自下而上是 7／7／7／10／10／14／14，<b>越往上越多</b>。有 4 处只出单色。</li>
+                <li class="li"><b>海怪 28 个海域</b>：原表一只怪一行共 84 行，本站按海域合成一行三只。<b>概率全表只有 70／20／10 三档，一个例外都没有</b>。最有用的结论是<b>三只怪的组合只由海域字母决定</b>：A 区永远是巨大鱿鱼／绿斯拉／粉色吞噬者，B 区巨角魔兽／巨大黄鱿鱼／黄色吞噬者，C 区蓝斯拉／黄角魔兽／蓝色吞噬者，D 区红斯拉／巨大黑鱿鱼／暴角魔兽——<b>同区内换的只是「谁占 70%」</b>。</li>
+                <li class="li"><b>宝箱与陶壶 189 处</b>：宝箱 98、陶壶 88，另 3 处被记成「—」或「奖励」。<b>四座精灵殿占 150 处（79%）</b>，水殿、风殿各 47 处并列最多，土殿只有 22 处——跟四殿的层数同向（土 4／炎 5／水 5／风 6 层）。<b>21 处是「不明物品」</b>（打开时从括注的三件里随机给一件）。金币银铜是开出来最多的三样。</li>
+                <li class="li"><b>照录不改的五处</b>：① <b>「大海原」整行都是「-」</b>——外洋是航行中随机遭遇，攻略本没按区域统计，不填不猜；② <b>「圆形竞技场」写「14~99／混合」</b>，按轮次出不同对手，不拆成平均值；③ <b>两处容器名是「-」</b>（土殿・入口的绿色核心、水殿・入口的蓝色核心），攻略本没说它是宝箱还是陶壶；④ 精灵石「再采集」<b>有 1 格空着</b>（风之精灵殿5F）；⑤ 四色概率写「-」的格子<b>显示成破折号，没有当成 0%</b>——「这色不出」与「源表没记」是两件事。</li>
+                <li class="li"><b>「不明物品」不是固定三选一</b>：21 处里<b>3 件 15 处、2 件 1 处、4 件 3 处、5 件 2 处</b>——件数不固定。页面照原样列出每处的括注清单，不补成三件、也不合并。</li>
+                <li class="li"><b>踩坑一：<code>[[页面|显示名]]</code> 要取<b>第二个</b></b>。第一版取了第一个，整张表的地点全变成日文（土の精霊殿1F），渲染出来才发现。第二版改对，189 行地点一次性变中文。</li>
+                <li class="li"><b>踩坑二：多行替换又栽在行尾上</b>。这次两处替换的匹配串按 LF 换行写、而文件是 CRLF，<code>count</code> 直接 0，但脚本没报错、继续往下跑，结果页面里 <code>zoneTriple</code> 还在返回数组、宝箱表还是平铺。<b>凡是跨行替换，先套 <code>crlf()</code></b>——这是第三次踩，写进规则里。</li>
+                <li class="li"><b>踩坑三：固定列宽会把文本列压没</b>。窄屏 520px 下，魔物表「常见魔物」一列被压到零宽、只剩地点与稀有两列。给四张表各加 min-width（40／38／26／30rem），窄屏改为容器内横滑，文本列不再消失。</li>
+                <li class="li"><b>宝箱表默认折叠</b>：189 行占整页六成高度，收进「展开 189 处容器清单」，前三张表直接铺开。表格仍带搜索框，展开后可按地点或物品名筛。</li>
+            </ul>
             <h2 class="h2">2026-11-02　第一百五十三：RF5 掉率与抗性逐条核完，发现攻略本的抗性表「爱／无」两列标反了；边境 270 条主线与角色事件补成页</h2>
             <ul class="ul">
                 <li class="li"><b>RF5 掉率 223 只</b>：拿《RF5掉率表Hyperwiki》逐条对<b>地点一、地点二、四件掉落物、四个概率</b>，<b>0 处差异</b>。原表 224 行里有一行是「黑暗来客与后续boss」的汇总行，本站没收录，其余全在。</li>
@@ -10199,6 +10218,205 @@ function requestRffHtml() {
 
 /* 符文工房 海洋（RFO）奖杯·回忆·许愿·巨人操作：单一来源 xls「其他」工作表。
    奖杯等级、日文名、条件三项原表分列写的，照录；回忆影像与许愿、巨人操作是原表的段落，逐条摊开。 */
+/* 符文工房 海洋（RFO）地图分布：单一来源 biligame《RFOMAP》，内容为法米通攻略书地图整理。
+   四张表原样落库（宝箱陶罐 189 处 / 魔物 55 区 / 精灵石 39 处 / 海怪 28 海域），
+   本页只做「换一种更紧凑的读法」，数值、空档与「-」全部照录：不推算、不归一化、不去重。 */
+function rfoMapHtml() {
+    const C = (typeof RFO_MAP_CHEST !== 'undefined') ? RFO_MAP_CHEST : [];
+    const M = (typeof RFO_MAP_MON !== 'undefined') ? RFO_MAP_MON : [];
+    const S = (typeof RFO_MAP_SPIRIT !== 'undefined') ? RFO_MAP_SPIRIT : [];
+    const E = (typeof RFO_MAP_SEA !== 'undefined') ? RFO_MAP_SEA : [];
+    if (!C.length || !M.length || !S.length || !E.length) return '<p class="p">地图数据未加载。</p>';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /* 源表用「-」与空串表示「这一格没有」，统一显示成破折号，不当作 0 或「无此物」 */
+    const dash = v => (v === '' || v === '-' || v === '?' || v == null) ? '—' : esc(v);
+
+    /* ---------- 一、魔物分布 ---------- */
+    const monAll = [];
+    M.forEach(r => r[2].split('、').forEach(x => {
+        const t = x.trim();
+        if (t && t !== '-' && t !== '混合') monAll.push(t);
+    }));
+    const monWiki = {};
+    monAll.forEach(t => { monWiki[t] = (monWiki[t] || 0) + 1; });
+    const monUniq = Object.keys(monWiki).length;
+    const rareAll = [];
+    M.forEach(r => r[3].split('、').forEach(x => {
+        const t = x.trim();
+        if (t && t !== '-') rareAll.push(t);
+    }));
+    const rareWiki = {};
+    rareAll.forEach(t => { rareWiki[t] = (rareWiki[t] || 0) + 1; });
+    const rareUniq = Object.keys(rareWiki).length;
+    const rareTop = Object.keys(rareWiki).sort((a, b) => rareWiki[b] - rareWiki[a])[0] || '';
+    const noRare = M.filter(r => r[3] === '-' || r[3] === '');
+    const wideTop = Object.keys(monWiki).sort((a, b) => monWiki[b] - monWiki[a]).slice(0, 3);
+    const onlyOne = Object.keys(monWiki).filter(k => monWiki[k] === 1);
+    const lvRows = M.filter(r => r[1] !== '-' && /^\d+$/.test(r[1]));
+    const lvMax = lvRows.reduce((a, r) => Math.max(a, +r[1]), 0);
+    const lvMin = lvRows.reduce((a, r) => Math.min(a, +r[1]), 999);
+    const lvTop = lvRows.filter(r => +r[1] === lvMax);
+    const lvBottom = lvRows.filter(r => +r[1] === lvMin);
+    const gob = M.filter(r => /哥布林/.test(r[2]));
+
+    /* ---------- 二、精灵石树 ---------- */
+    const spNum = v => (v === '' || v === '-' || v == null) ? 0 : (parseInt(v, 10) || 0);
+    const spQty = S.reduce((a, r) => a + spNum(r[2]), 0);
+    const spMax = S.reduce((a, r) => Math.max(a, spNum(r[2])), 0);
+    const spTop = S.filter(r => spNum(r[2]) === spMax);
+    const spPlaces = {};
+    S.forEach(r => { spPlaces[r[0]] = 1; });
+    const COLOR = [[4, '黄'], [5, '红'], [6, '绿'], [7, '蓝']];
+    const colStat = COLOR.map(function (c) {
+        const vs = S.map(r => r[c[0]]).filter(v => v !== '' && v !== '-').map(v => parseInt(v, 10));
+        return {
+            n: c[1], cnt: vs.length,
+            avg: vs.length ? Math.round(vs.reduce((a, b) => a + b, 0) / vs.length) : 0,
+            max: vs.length ? Math.max.apply(null, vs) : 0
+        };
+    });
+    const oneColor = S.filter(r => COLOR.filter(c => r[c[0]] !== '' && r[c[0]] !== '-').length === 1);
+    const reVals = S.map(r => spNum(r[8])).filter(v => v > 0);
+    const reMax = reVals.reduce((a, b) => Math.max(a, b), 0);
+    const reMin = reVals.reduce((a, b) => Math.min(a, b), 99);
+    const emptyRe = S.filter(r => r[8] === '');
+    const wind = S.filter(r => r[0].indexOf('风之精灵殿') === 0);
+
+    /* ---------- 三、海怪：按海域重排成一行三只 ---------- */
+    const seaOrder = [];
+    const seaMap = {};
+    E.forEach(r => {
+        if (!seaMap[r[0]]) { seaMap[r[0]] = []; seaOrder.push(r[0]); }
+        seaMap[r[0]].push(r);
+    });
+    const seaZones = {};
+    seaOrder.forEach(k => {
+        const z = k.charAt(0);
+        (seaZones[z] = seaZones[z] || []).push(k);
+    });
+    const seaPct = {};
+    E.forEach(r => { seaPct[r[2]] = (seaPct[r[2]] || 0) + 1; });
+    const seaPctKeys = Object.keys(seaPct).sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+    /* 每片海域的三只怪（按概率从高到低），以及「同一字母区是否恒为同样三只」 */
+    /* 同区三只怪的「集合」是否一致；展示时按该区第一个海域的 70/20/10 顺序 */
+    const zoneTriple = z => {
+        const set = {};
+        seaZones[z].forEach(k => {
+            set[seaMap[k].map(x => x[1]).sort().join('／')] = 1;
+        });
+        const first = seaMap[seaZones[z][0]].slice().sort((a, b) => parseInt(b[2], 10) - parseInt(a[2], 10));
+        return Object.keys(set).length > 1
+            ? Object.keys(set).map(x => x.replace(/／/g, ' / ')).join(' 或 ')
+            : first.map(x => x[1]).join(' / ');
+    };
+    const zLetters = Object.keys(seaZones).sort();
+
+    /* ---------- 四、宝箱与陶壶 ---------- */
+    const kindOf = r => /宝箱/.test(r[1]) ? '宝箱' : (/陶壶/.test(r[1]) ? '陶壶' : '其他');
+    const kCnt = { 宝箱: 0, 陶壶: 0, 其他: 0 };
+    C.forEach(r => { kCnt[kindOf(r)]++; });
+    const TEMPLE = ['土之精灵殿', '炎之精灵殿', '水之精灵殿', '风之精灵殿'];
+    const FIXED = ['艾利岛', '热沙岛', '密林岛', '封冰岛', '神殿岛', '石像岛', '岩礁上的沉船', '空中庭院'];
+    const zOf = p => {
+        for (let i = 0; i < TEMPLE.length; i++) if (p.indexOf(TEMPLE[i]) === 0) return TEMPLE[i];
+        if (FIXED.indexOf(p) >= 0) return '固定岛／固定区域';
+        if (/^(无名岛|神殿[A-Z]-|沉没船|古代石像|石床庭院)/.test(p)) return '打捞点';
+        return '其他';
+    };
+    const zones = {};
+    C.forEach(r => { const z = zOf(r[0]); zones[z] = (zones[z] || 0) + 1; });
+    const zKeys = Object.keys(zones).sort((a, b) => zones[b] - zones[a]);
+    const templeSum = TEMPLE.reduce((a, k) => a + (zones[k] || 0), 0);
+    const itemAll = [];
+    C.forEach(r => r[2].split('、').forEach(x => { const t = x.trim(); if (t) itemAll.push(t); }));
+    const itemWiki = {};
+    itemAll.forEach(t => { itemWiki[t] = (itemWiki[t] || 0) + 1; });
+    const itemUniq = Object.keys(itemWiki).length;
+    const itemTop = Object.keys(itemWiki).sort((a, b) => itemWiki[b] - itemWiki[a]).slice(0, 5);
+    const mystery = C.filter(r => /不明物品/.test(r[2]));
+    /* 「不明物品（A、B、C）」括注里给几件就是几件，件数并不固定，按件数统计 */
+    const mystCount = k => mystery.filter(r => {
+        const a = r[2].indexOf('（'), z = r[2].lastIndexOf('）');
+        if (a < 0 || z < a) return false;
+        return r[2].slice(a + 1, z).split('、').length === k;
+    }).length;
+    const multi = C.filter(r => r[1] && /、/.test(r[1]));
+    const noKind = C.filter(r => r[1] === '-');
+    const depth = { '土之精灵殿': 4, '炎之精灵殿': 5, '水之精灵殿': 5, '风之精灵殿': 6 };
+
+    return `
+            <p class="p">这一页是海洋的<b>地图侧数据</b>：哪个区域刷什么怪、精灵石在哪、哪个海域会遇哪种海怪、哪一格能开出什么。四张表原本各占攻略本一页，本站按「进图前想知道什么」的顺序重排，<b>数值一格未改</b>。</p>
+            ${stat([
+        ['地图区域', M.length + ' 个'], ['容器', C.length + ' 处'],
+        ['精灵石', S.length + ' 处'], ['海域', seaOrder.length + ' 个']
+    ])}
+
+            <h2 class="h2">魔物分布：${M.length} 个区域</h2>
+            <p class="p">每个区域给三样东西：<b>平均等级</b>（该区怪的大致水平，不是逐只数值）、<b>常见魔物</b>、<b>稀有魔物</b>。海洋的稀有怪不是「低概率替换」，而是<b>单独一档、会在同区一起出现</b>的强敌——表里写的是「这区也会出」，不是出现率。</p>
+            ${stat([
+        ['常见魔物（去重）', monUniq + ' 种'], ['稀有魔物（去重）', rareUniq + ' 种'],
+        ['平均等级跨度', 'Lv' + lvMin + ' ～ ' + lvMax], ['没有稀有怪的区域', noRare.length + ' 个']
+    ])}
+            <p class="p"><b>刷得最广的三只</b>：${wideTop.map(k => esc(k) + '（' + monWiki[k] + ' 区）').join('、')}。哥布林这一族（含队长、海盗、大哥布林等）一共占了 <b>${gob.length}</b> 个区域，是海洋分布最广的一族。<b>${onlyOne.length} 种</b>魔物全作只在一个区域出现——想找某只特定的怪，直接在表里搜名字即可。</p>
+            <p class="p">稀有怪里 <b>${esc(rareTop)}</b> 最广（${rareWiki[rareTop] || 0} 个区域）。全表 <b>${noRare.length} 个区域一只稀有怪都没有</b>：${noRare.map(r => esc(r[0])).join('、')}——多是神殿顶层、终局区域与外洋，本来就不安排稀有。</p>
+            ${ftableOwn(['地点', '平均Lv', '常见魔物', '稀有魔物'], ['14rem', '5rem', '', '15rem'],
+        M.map(r => [r[0], [esc(r[0]), dash(r[1]), dash(r[2]), dash(r[3])]]),
+        { ph: '搜地点或魔物名', cls: 'rfomap-mon' })}
+            <div class="key"><b>等级跨度 ${lvMin}～${lvMax}</b>：最高的是 ${lvTop.map(r => esc(r[0])).join('、')}，最低的是 ${lvBottom.map(r => esc(r[0])).join('、')}。海洋没有「等级墙」，打不过就换海域，不必原地练。</div>
+
+            <h2 class="h2">精灵石树：${S.length} 处采集点</h2>
+            <p class="p">精灵是海洋的核心资源，四个颜色分别对应四种属性。<b>「精灵量」是一次采集能给多少</b>，<b>「±%」是浮动幅度</b>，四色列是<b>出该色的概率</b>，最后一列是<b>隔多久能再采</b>（源表只给数字，没写单位）。</p>
+            ${stat([
+        ['采集点', S.length + ' 处 / ' + Object.keys(spPlaces).length + ' 个地点'],
+        ['单次精灵量', Math.min.apply(null, S.map(r => spNum(r[2]))) + ' ～ ' + spMax],
+        ['四色平均概率（%）', colStat.map(c => c.n + ' ' + c.avg).join(' · ')],
+        ['再采集间隔', reMin + ' ～ ' + reMax]
+    ])}
+            <p class="p"><b>四色的平均概率几乎持平</b>（黄 ${colStat[0].avg}%／红 ${colStat[1].avg}%／绿 ${colStat[2].avg}%／蓝 ${colStat[3].avg}%），不存在「某色天生难出」。真正拉开差距的是单点极值：黄最高 ${colStat[0].max}%、红 ${colStat[1].max}%、绿 ${colStat[2].max}%、蓝 ${colStat[3].max}%。<b>要哪种颜色就找那种颜色的高概率点，而不是反复刷同一个石树。</b></p>
+            <p class="p"><b>精灵量最高的是 ${spMax}</b>，共 ${spTop.length} 处：${spTop.map(r => esc(r[0]) + '·' + esc(r[1])).join('、')}——都在风之精灵殿，而且都在高层。风殿自下而上的精灵量是 ${wind.map(r => esc(r[0]).replace('风之精灵殿', '') + ' ' + esc(r[2])).join('、')}，<b>越往上越多</b>，这是全作刷精灵最集中的一段路。</p>
+            <p class="p"><b>${oneColor.length} 处只出单色</b>：${oneColor.map(r => {
+        const hit = COLOR.filter(c => r[c[0]] !== '' && r[c[0]] !== '-');
+        return esc(r[0]) + '·' + esc(r[1]) + '（' + hit.map(c => c[1] + ' ' + esc(r[c[0]]) + '%').join(' ') + '）';
+    }).join('、')}。其中 ${oneColor.filter(r => COLOR.filter(c => r[c[0]] !== '' && r[c[0]] !== '-').some(c => r[c[0]] === '100')).length} 处直接给到 100%，其余几处只有 10%。<b>没列的颜色是「不出」还是「源表没记」，原表没区分，本站也不替它区分</b>。</p>
+            ${tbl(['地点', '采集点', '精灵量', '±%', '黄%', '红%', '绿%', '蓝%', '再采集'], S.map(r => [
+        esc(r[0]), esc(r[1]), esc(r[2]), dash(r[3]),
+        dash(r[4]), dash(r[5]), dash(r[6]), dash(r[7]), r[8] === '' ? '—' : esc(r[8])
+    ]), { leftFirst: true, cls: 'rfomap-sp', colw: ['11rem', '6rem', '4rem', '3.4rem', '3.4rem', '3.4rem', '3.4rem', '3.4rem', '4.2rem'] })}
+
+            <h2 class="h2">海怪：${seaOrder.length} 个海域</h2>
+            <p class="p">海图上的 A／B／C／D 是四片海域，每片里再编号。原表<b>一只怪一行</b>共 ${E.length} 行，本站按海域合成一行三只，方便「到这片海域会撞上谁」一眼看完。概率<b>全表只有 70／20／10 三档</b>（分别 ${seaPct[seaPctKeys[0]] || 0}／${seaPct[seaPctKeys[1]] || 0}／${seaPct[seaPctKeys[2]] || 0} 行），<b>没有一个例外</b>。</p>
+            ${tbl(['海域', '70%（主）', '20%', '10%'], seaOrder.map(k => {
+        const g = seaMap[k].slice().sort((a, b) => parseInt(b[2], 10) - parseInt(a[2], 10));
+        return [esc(k), g[0] ? esc(g[0][1]) : '—', g[1] ? esc(g[1][1]) : '—', g[2] ? esc(g[2][1]) : '—'];
+    }), { leftFirst: true, cls: 'rfomap-sea', colw: ['4.6rem', '', '', ''] })}
+            <div class="key"><b>三只怪的组合只由海域字母决定</b>：${zLetters.map(z => z + ' 区 ' + zoneTriple(z) + '（' + seaZones[z].length + ' 个海域）').join('；')}。<b>同一区内换的只是「谁占 70%」</b>——想刷哪只，先看它在哪个字母的区，再挑它当主怪的那几号海域。</div>
+
+            <h2 class="h2">宝箱与陶壶：${C.length} 处容器</h2>
+            <p class="p">这一张是攻略本最琐碎的一页：<b>逐格标出每个容器里有什么</b>。宝箱 ${kCnt.宝箱} 处、陶壶 ${kCnt.陶壶} 处，另有 ${kCnt.其他} 处被记成「—」或「奖励」。「总物品」列写几件就是几件，<b>原表没给数量与概率，本站不补</b>。</p>
+            ${stat([
+        ['容器', C.length + ' 处'], ['物品条目', itemAll.length + ' 条 / ' + itemUniq + ' 种'],
+        ['不明物品', mystery.length + ' 处'], ['最多的一区', zKeys[0] + ' ' + zones[zKeys[0]] + ' 处']
+    ])}
+            <p class="p"><b>按区域看密度</b>：${zKeys.slice(0, 5).map(k => k + ' ' + zones[k] + ' 处').join('、')}。四座精灵殿合计 ${templeSum} 处，占全表 ${Math.round(templeSum * 100 / C.length)}%；其中水殿 ${zones['水之精灵殿'] || 0} 处、风殿 ${zones['风之精灵殿'] || 0} 处最多，土殿只有 ${zones['土之精灵殿'] || 0} 处——<b>跟四殿的层数同向</b>（${TEMPLE.map(k => k.replace('之精灵殿', '殿') + ' ' + depth[k] + ' 层').join('、')}）——层数越多、容器越多，前期不必指望靠翻箱发财。</p>
+            <p class="p"><b>开出来最多的是 ${itemTop.map(k => esc(k) + '（' + itemWiki[k] + ' 次）').join('、')}</b>——货币与强化素材占了大头，前期靠翻箱凑第一笔钱是可行的。<b>${mystery.length} 处是「不明物品」</b>：打开时从括注的清单里随机给一件，不是固定掉落。清单<b>件数不固定</b>——3 件 ${mystCount(3)} 处最多，另有 2 件 ${mystCount(2)} 处、4 件 ${mystCount(4)} 处、5 件 ${mystCount(5)} 处，本站把括注原样列出。另有 <b>${multi.length} 处</b>一个容器记了多只（如「陶壶1、2、3、4」合写一份内容），源表原本就是这么合的，照录。</p>
+            <details class="mon-fold">
+                <summary>展开 ${C.length} 处容器清单（点一下）</summary>
+                ${ftableOwn(['地点', '容器', '内容'], ['12rem', '8rem', ''],
+        C.map(r => [r[0] + ' ' + r[1], [esc(r[0]), dash(r[1]), esc(r[2])]]),
+        { ph: '搜地点或物品名', cls: 'rfomap-chest' })}
+            </details>
+
+            <h2 class="h2">照录不改的地方</h2>
+            <ul class="ul">
+                <li class="li"><b>「大海原」整行是破折号</b>：平均等级、常见魔物、稀有魔物三格源表都写「-」。外洋是航行中随机遭遇，攻略本没有按区域统计，本站不填、不推测。</li>
+                <li class="li"><b>「圆形竞技场」写「14~99／混合」</b>：等级是区间、魔物写「混合」，因为竞技场按轮次出不同对手。照录，不拆成平均值。</li>
+                <li class="li"><b>两处容器名是「-」</b>：${noKind.map(r => esc(r[0]) + '（' + esc(r[2]) + '）').join('、')}——攻略本没写它是宝箱还是陶壶。照录成「—」，<b>不猜它是箱子</b>。</li>
+                <li class="li"><b>精灵石「再采集」有 ${emptyRe.length} 格空着</b>：${emptyRe.map(r => esc(r[0]) + '·' + esc(r[1])).join('、')}，源表这一格没填，显示「—」。</li>
+                <li class="li"><b>四色概率写「-」的那几格</b>显示成「—」，<b>没有当成 0%</b>——「这色不出」与「源表没记」是两件事，不合并。</li>
+                <li class="li"><b>「再采集」的单位本站没有补</b>：源表只写 2～6 这样的数字，没写是天、小时还是次数，表格照原样只放数字。</li>
+            </ul>
+            <div class="note">数据源：biligame 符文工厂 wiki《RFOMAP》（法米通攻略书地图整理），与站内魔物图鉴、钓点页同源。魔物名、物品名沿用该站写法，与站内其他页的中文译名可能有一两个字的出入，各页各自照录、不强行统一。</div>`;
+}
 function rfoSysHtml() {
     const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;
     if (!M) return '<p class="p">数据未加载。</p>';
