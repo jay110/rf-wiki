@@ -740,6 +740,25 @@
     line-height: 1.7;
 }
 
+/* 海洋委托任务：任务名是日文长名、发生条件与任务内容都是长句（120 字的都有），
+   难度列只有一两个字符。默认 nowrap 会把表撑得极宽，这里放开换行并给难度列收窄 */
+.content .table.rfoq table {
+    min-width: 52rem;
+}
+
+.content .table.rfoq .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.7;
+}
+
+.content .table.rfoq .td:nth-child(3) {
+    white-space: nowrap;
+    text-align: center;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+}
+
 /* RF3 魔物表：两张 ftableOwn（数值 7 列 / 抗性掉落 4 列），列宽已定，
    给最小宽度避免数字被压成竖排，超宽时容器横滑 */
 .content .table.mon-aux table {

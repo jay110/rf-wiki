@@ -6359,6 +6359,8 @@ const PAGES = [
             /* 龙之天地有六篇专属的东国任务（post/1831–1836），走专用分支，
                不再套下面这段七作通用的委托机制说明 */
             if (g && g.id === 'azuma') return requestAzumaHtml();
+            /* 海洋的委托表在《符文工厂海洋（最强攻略）》xls 里是完整的 188 条，单独分支 */
+            if (g && g.id === 'rfo') return requestRfoHtml();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -8265,6 +8267,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十九：海洋（RFO）委托任务补成 188 条真表，并修两处错</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：上一轮把海洋的三份可解析资料（<code>RFO 符文海洋攻略.txt</code>、<code>符文工厂海洋（最强攻略）.xls</code>、日版 docx）与站内 40 个条目逐项对了一遍，查出 3 处问题和 1 个大缺口。这一轮做的是其中的<b>①②两个修正</b>与<b>「委托任务」补全</b>。</li>
+                <li class="li"><b>修正①「凯蒂」生日：秋 27 日 → 春 27 日</b>。<code>NPC_FULL.rfo</code> 里「糖糖（キャンディ）」原写秋 27 日，而外部两份资料<b>各自独立</b>都写<b>春 27 日</b>：xls「喜好」表作「春27日[男女主角分离后，每周二来访]」，txt 第 1544 行同样的字；更关键的是<b>站内边境（rff）的同名角色糖糖本来就写春 27 日</b>，那个值此前已经过 docx 与 Memoirs 双源核对。<b>三对一，且错的一方是孤证</b>，据此改正。</li>
+                <li class="li"><b>修正② 海洋主角译名不统一</b>：<code>data.js</code> 里海洋简介正文写「青梅竹马的<b>阿杰尔</b>与索妮娅」，「一体两魂」那条也写「共用<b>阿杰尔</b>的身体」，而同一文件的人物表、<code>cnterm.js</code> 汉化定稿术语表、<code>NPC_FULL.rfo</code> 档案全是「<b>亚赛尔</b>」。正文两处改为主名「亚赛尔」；「阿杰尔」作为<b>另译</b>继续保留在人物档案的备注里（那里本来就写着「另译阿杰尔」），不删。</li>
+                <li class="li"><b>没改的一处</b>：莎拉的「最喜欢」。站内写「太阳坠饰」，txt 写「星星吊坠（星星のペンダント）」，xls 写「心之吊坠」——<b>外部两份自己就不一致</b>，没有第三方可裁，所以三条并存、站内不动。这条留在下次有日文原表时再定。</li>
+                <li class="li"><b>补全「委托任务」页</b>：这一页此前十作共用一段 316 字的通用说明，<b>一条真任务都没有</b>。xls 的「任务」工作表其实是一张<b>完整大表</b>：18 位委托人各占一列、16 个任务批上下堆叠，合计 <b>188 条</b>。本次新增 <code>js/rfoquest.js</code>（<code>RFO_QUEST</code>，由 <code>_rfoq_extract.py</code>／<code>_rfoq_build.py</code> 从原表直接摊平生成，20 KB），并给 <code>request</code> 页加 <code>rfo</code> 分支（与龙之天地那句 <code>requestAzumaHtml()</code> 并列）。</li>
+                <li class="li"><b>页内五节</b>：① 18 位委托人一览（任务数、组内难度分布、给配方条数）；② <b>★ 与 ☆ 是两套记法</b>；③ <b>任务链 14 处前置关系</b>（12 处跨委托人）；④ 原表自己的不确定（<b>124 条</b>发生条件带问号）；⑤ 188 条按委托人分节的全表。</li>
+                <li class="li"><b>四处「不替原表圆」的克制</b>：<b>任务名不译</b>——攻略本没给中文译名，站内不代翻，日文原名照录；<b>★ 不当难度读</b>——表头只写一句「★为主线任务」，可表里 4 条 ☆☆☆ 的任务内容同样是「挖岛／挖沉船后报告」，★ 系里又混着「对话即可」的收尾任务，图例与表对不齐，<b>照录这个矛盾</b>，只报每记号多少条、分别是什么任务；<b>问号不删</b>——「友好度5？」是攻略本当年就没确认，占全表 66%；<b>不补占位</b>——爱丽丝那条任务名与条件都是「???」（报酬粉红猫、内容是捡 10 处杂草），不从奖励反推它叫什么。</li>
+                <li class="li"><b>任务链怎么算的</b>：只认「发生条件里用「」括起来、且与表内某条任务名<b>一字不差</b>」的引用，对不上就不认。全表只有 1 处引用了表外的名字（绮尔托的「くだものちょうだい！」引用了「お野菜ちょうだい！」，后者本表未收）。另有大批任务的条件只写「友好度N？」，那些隐含关系<b>不猜</b>。</li>
+                <li class="li"><b>两处细节写在页面上</b>：7 条任务名被攻略本直接写成了中文（「我没有足够的..」「一个非常严肃的打怪请求」「来和我说说话」等），报酬还改用星号（<code>卷心菜蛋糕*1</code>）而不是「×」，两种写法都照录；<b>尼特的「えっと……（可重复接取）」在原表出现两次</b>（报酬分别是ふわ毛与青椒），分属两个任务块，<b>按两条收、不去重</b>。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>418 实例／0 异常／头像 214 张缺 0</b>；<code>_test_index_health</code>：rfo <b>4421 行、数字名 0、超长名 0</b>（首格是日文任务名，短于 20 字，不会像 mon-desc 那样被连成一长串）；<code>_test_search</code> 中文可检索（搜「药草」在委托页命中 3 条、「可重复接取」命中 20 条）；截图逐节核对，长条件句正常换行不溢出。新增样式 <code>.content .table.rfoq</code>（放开换行、难度列收窄并居中）。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十八：新开「生日核对」页（bdcheck）——站内 173 人 × 外部 61 人逐人对照</h2>
             <ul class="ul">
                 <li class="li"><b>方向 C</b>。上一轮把生日全量比对了一遍，但结论只留在对话记录里，站上没有留下任何痕迹。这次把它做成<b>常驻页</b>（<code>bdcheck</code>，归「牧场生活」，不挂 <code>gms</code>，十作导航各出现一次）：外部资料说什么、站内写什么、对不上一律摆出来，<b>不替任何一方改数字</b>。</li>
@@ -9885,6 +9900,160 @@ function azumaBossHtml() {
         <h3>主线剧情 BOSS</h3>
         <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站音译定名（中文攻略站无权威译名，保留英文名对照）。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>英文名</th><th>Lv</th><th>武器弱点</th><th>属性弱点</th><th>定位／备注</th></tr></thead><tbody>${mainRows}</tbody></table></div>`;
+}
+
+/* 符文工房 海洋（RFO）委托任务：单一来源《符文工厂海洋（最强攻略）》xls「任务」工作表。
+   原表是 18 位委托人各占一列、16 个任务批上下堆叠的块状表，本站只做「摊平成一任务一记录」，
+   任务名与报酬里的物品名保留攻略本的日文原文（攻略本自己没给译名，本页不代为翻译），
+   发生条件与任务内容里的「？」「???」也是原表自带的，一律照录。 */
+function requestRfoHtml() {
+    const Q = (typeof RFO_QUEST !== 'undefined') ? RFO_QUEST : null;
+    if (!Q || !Q.quests.length) return '';
+    const all = Q.quests;
+    const ppl = Q.people;
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + esc(s) + '</span>';
+
+    /* ---- 基础计数，全部现算，不手写数字 ---- */
+    const nAll = all.length;
+    const nPpl = ppl.length;
+
+    /* 难度符号按原表照录。★ 系（★/★★/★★★）与 ☆ 系（☆/☆☆/☆☆☆）是两套记法，
+       表头图例只写了一句「★为主线任务」，没有解释 ☆ 系是什么，本页不替它解释。 */
+    const starOf = d => (d.indexOf('★') >= 0 ? '★' : (d.indexOf('☆') >= 0 ? '☆' : ''));
+    const nStar = all.filter(q => starOf(q.d) === '★').length;
+    const nCirc = nAll - nStar;
+    const DIFF_ORDER = ['☆', '☆☆', '☆☆☆', '★', '★★', '★★★'];
+    const diffCnt = {};
+    all.forEach(q => { const k = q.d || '（空）'; diffCnt[k] = (diffCnt[k] || 0) + 1; });
+    const diffKeys = DIFF_ORDER.filter(k => diffCnt[k]) 
+        .concat(Object.keys(diffCnt).filter(k => DIFF_ORDER.indexOf(k) < 0));
+
+    const isRecipe = q => /配方|レシピ/.test(q.r);
+    const nRecipe = all.filter(isRecipe).length;
+    const nRepeat = all.filter(q => q.n.indexOf('可重复') >= 0).length;
+    const nNoReward = all.filter(q => !q.r || q.r === '无').length;
+    const nQ = all.filter(q => /[？?]/.test(q.c)).length;
+    const nPlace = all.filter(q => /^\?+$/.test(q.n) || /^\?+$/.test(q.c)).length;
+
+    /* ---- 任务名集合：用来把「发生条件」里引号括起来的其他任务名认成前置任务 ---- */
+    const nameIdx = {};
+    all.forEach((q, i) => { if (!nameIdx[q.n]) nameIdx[q.n] = []; nameIdx[q.n].push(i); });
+    const links = [];          // {to, from, same}
+    const cited = {};          // 被引用次数
+    const outside = [];        // 引用了但不在表里
+    all.forEach(q => {
+        const re = /「([^」]+)」/g;
+        let m;
+        while ((m = re.exec(q.c))) {
+            const t = m[1];
+            if (nameIdx[t]) {
+                nameIdx[t].forEach(i => {
+                    if (i === all.indexOf(q)) return;
+                    links.push({ to: q, from: all[i], same: all[i].w === q.w });
+                    cited[t] = (cited[t] || 0) + 1;
+                });
+            } else if (!outside.some(x => x.t === t && x.q === q)) {
+                outside.push({ t: t, q: q });
+            }
+        }
+    });
+    const nSame = links.filter(l => l.same).length;
+    const nCross = links.length - nSame;
+
+    /* ---- 每位委托人的汇总 ---- */
+    const byWho = {};
+    ppl.forEach(p => { byWho[p.n] = []; });
+    all.forEach(q => { (byWho[q.w] = byWho[q.w] || []).push(q); });
+    const whoRows = ppl.map(p => {
+        const list = byWho[p.n] || [];
+        const dc = {};
+        list.forEach(q => { dc[q.d] = (dc[q.d] || 0) + 1; });
+        const dcTxt = diffKeys.filter(k => dc[k]).map(k => k + '×' + dc[k]).join(' ');
+        return {
+            n: p.n, j: p.j, list: list, cnt: list.length, dc: dcTxt,
+            nStar: list.filter(q => starOf(q.d) === '★').length,
+            nRec: list.filter(isRecipe).length,
+        };
+    }).sort((a, b) => b.cnt - a.cnt);
+    const maxCnt = whoRows[0].cnt;
+
+    /* 任务名绝大多数是日文原名，但有少数几条被攻略本写成了中文。
+       纯汉字日文（依頼／購入希望…）与中文靠「简体高频字」区分，不靠有没有汉字。 */
+    const cnName = all.filter(q => /[你请这说愿怪兽个把够]/.test(q.n));
+    const nameCnt = {};
+    all.forEach(q => { nameCnt[q.n] = (nameCnt[q.n] || 0) + 1; });
+    const dups = Object.keys(nameCnt).filter(k => nameCnt[k] > 1).map(k => ({ n: k, list: all.filter(q => q.n === k) }));
+
+    /* ---- 18 张分组表 ---- */
+    const groupHtml = whoRows.map(w => {
+        const rows = w.list.map(q => [
+            '<b>' + esc(q.n) + '</b>',
+            Lf(q.c || '—'),
+            q.d || dash,
+            Lf(q.r || '—'),
+            Lf(q.t || '—'),
+        ]);
+        return `<h3>${w.n}${w.j ? '（' + esc(w.j) + '）' : ''}　${w.cnt} 条　<span class="mon-no" style="font-size:0.86em">${w.dc}</span></h3>
+        ${tbl(['任务名（日文原文）', '发生条件', '难度', '报酬', '任务内容'], rows, {
+            colw: ['12rem', '9.4rem', '3.6rem', '11.6rem', 'auto'],
+            left: [0, 1, 3, 4], cls: 'rfoq',
+        })}`;
+    }).join('\n');
+
+    return `
+        <div class="note">海洋的委托没有一块统一的任务板，任务分散在 <b>18 位委托人</b>手里。本页把攻略本那张「18 列 × 16 块」的大表<b>摊平成 ${nAll} 条记录</b>，一位委托人一节。<b>任务名与报酬里的物品名保留日文原文</b>——攻略本本身没给中文译名，本站不代为翻译；<b>发生条件与任务内容是攻略本自带的中文</b>，照录不改，里面那些「友好度5？」的问号也是原表就有的（它自己就没把握）。</div>
+        ${stat([
+        ['委托任务', nAll + ' 条'],
+        ['委托人', nPpl + ' 位'],
+        ['给配方', nRecipe + ' 条'],
+        ['可重复接取', nRepeat + ' 条'],
+        ['无报酬', nNoReward + ' 条'],
+    ])}
+
+        <h2 class="h2">一、18 位委托人，任务数从 ${whoRows[whoRows.length - 1].cnt} 到 ${maxCnt} 条</h2>
+        <p class="p">任务最多的是<b>${whoRows[0].n}</b>（${whoRows[0].cnt} 条），最少的是<b>${whoRows[whoRows.length - 1].n}</b>（${whoRows[whoRows.length - 1].cnt} 条）。十八个人的任务加起来 ${nAll} 条，平均每人 ${(nAll / nPpl).toFixed(1)} 条——分布相当平，没有谁是「任务大户」。</p>
+        ${tbl(['委托人', '日文名', '任务数', '难度分布', '给配方'], whoRows.map(w => [
+        '<b>' + w.n + '</b>', w.j ? esc(w.j) : dash, String(w.cnt),
+        w.dc ? w.dc : dash, w.nRec ? w.nRec + ' 条' : dash,
+    ]), { colw: ['6rem', '8rem', '4.4rem', '', '5rem'], leftFirst: true })}
+
+        <h2 class="h2">二、★ 和 ☆ 是两套记法，不是难度递增</h2>
+        <p class="p">原表表头只写了一行图例：<b>「★为主线任务」</b>，再没有第二句解释。照表面读，难度列里 ★ 系共 <b>${nStar} 条</b>、☆ 系共 <b>${nCirc} 条</b>，两套各分三档。</p>
+        ${tbl(['记号', '条数', '表里是什么任务'], diffKeys.map(k => {
+        const list = all.filter(q => q.d === k);
+        const sample = list.slice(0, 3).map(q => esc(q.n)).join('、');
+        return [k, String(diffCnt[k]), '<span class="mon-no" style="display:block;text-align:left">例：' + sample + (list.length > 3 ? ' 等' : '') + '</span>'];
+    }), { colw: ['5rem', '4.4rem', ''], left: [2] })}
+        <div class="key"><b>图例和表对不齐，本站照录这个矛盾，不替它圆。</b>按「★为主线任务」这句读，★ 系 ${nStar} 条应该都是推进剧情的关键任务，可表里有 ${diffCnt['☆☆☆'] || 0} 条 <b>☆☆☆</b> 的任务内容同样是「挖岛／挖沉船后报告」，和 ★★ 那批干的是同一件事；反过来，★ 系里也混着「与某人对话即可」这种零门槛的收尾任务。所以本页<b>只报每个记号有多少条、分别是什么任务</b>，不把记号翻译成「难度等级」——照表读才是最安全的。</div>
+
+        <h2 class="h2">三、任务链：${links.length} 处前置关系，${nCross} 处跨委托人</h2>
+        <p class="p">「发生条件」列里凡是用「」括起来的，多半是另一条任务的名字。全表能这样接上的有 <b>${links.length} 处</b>，其中 <b>${nSame} 处</b>是同一个人自己串的，<b>${nCross} 处</b>要跑到别人那儿先做完再回来。</p>
+        ${tbl(['要先做完', '才能接', '委托人', '同人'], links.map(l => [
+        '<span class="mon-no">' + esc(l.from.n) + '</span>',
+        '<b>' + esc(l.to.n) + '</b>',
+        esc(l.to.w) + (l.from.w !== l.to.w ? '（前置在' + esc(l.from.w) + '）' : ''),
+        l.same ? '是' : '<b>否</b>',
+    ]), { colw: ['11rem', '', 'auto', '3.8rem'], left: [0, 1, 2] })}
+        <div class="note">这条链是按<b>任务名精确匹配</b>算出来的：条件里引号内的字串要跟表里某条任务名一字不差才算数，对不上就<b>不认</b>。全表只有 ${outside.length} 处引用了表外的名字${outside.length ? '（' + outside.map(x => '「' + esc(x.t) + '」（' + esc(x.q.w) + '的任务）').join('、') + '，这几条任务本表没收' : ''}。另外还有 ${nQ} 条任务的条件只写「友好度N？」这类描述、不引用别的任务名，那些关系本页不猜。</div>
+
+        <h2 class="h2">四、原表自己的不确定，占了 ${nQ} 条</h2>
+        <p class="p">${nQ} 条任务的发生条件带问号（「友好度5？」「无？」「友好度3？潘多拉复活后」这种），占全表 <b>${(nQ / nAll * 100).toFixed(0)}%</b>。这不是本站打错，是攻略本当年就没确认——它把「大概是这样」直接写成了带问号的条目。</p>
+        <div class="note">另有 <b>${nPlace} 条</b>连任务名都是占位：${all.filter(q => /^\?+$/.test(q.n)).map(q => '<b>' + esc(q.w) + '</b>的「' + esc(q.n) + '」（报酬 ' + esc(q.r) + '，内容「' + esc(q.t).slice(0, 26) + '…」）').join('、')}。原表只留了问号，本站<b>不替它补任务名</b>，也不从奖励反推它叫什么。</div>
+
+        <h2 class="h2">五、${nAll} 条任务，按委托人分节</h2>
+        <p class="p">下面十八节就是原表的十八列。每节的顺序是攻略本<b>从上到下</b>的顺序，不是游戏里的解锁顺序——原表没有给解锁序号，本站不排。</p>
+        <p class="p">任务名绝大多数是日文原名，但有 <b>${cnName.length} 条被攻略本直接写成了中文</b>：${cnName.map(q => '「' + esc(q.n) + '」').join('、')}。这几条大多标着「可重复接取」，报酬也改用了星号写法（「卷心菜蛋糕*1」），跟其余各条的「×」不一样。<b>两种写法都照录</b>，本站不把星号改成乘号，也不把手写的中文名翻回日文。</p>
+        <div class="note">有一处会让人以为数据重复：<b>${dups.map(d => d.list[0].w).join('、')}</b>的「${dups.map(d => esc(d.n)).join('、')}」在原表里出现了 <b>${dups.map(d => d.list.length).join('、')} 次</b>，报酬分别是 ${dups.map(d => d.list.map(q => '「' + esc(q.r) + '」').join('与')).join('、')}。两条都落在同一列里，分属原表上下的两个任务块，本站<b>按两条收，没有合并、没有去重</b>——合并掉就凭空少了一条可接的任务。</div>
+        ${groupHtml}
+        <div class="jump">
+            <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">交东西之前先看谁爱吃什么</div></a>
+            <a href="#/page/source"><div class="jp-t">素材出处</div><div class="jp-s">任务要的素材去哪打</div></a>
+            <a href="#/page/fish"><div class="jp-t">鱼类图鉴</div><div class="jp-s">委托里点名的鱼</div></a>
+            <a href="#/page/recipe"><div class="jp-t">配方大全</div><div class="jp-s">任务奖励里的那些配方</div></a>
+        </div>
+        <div class="note">数据取自 ${esc(Q.src)}，单一来源，无第二份资料可交叉核对，所以本页<b>只搬运不解释</b>：任务名不译、报酬不折算、难度记号不改写成等级、条件里的问号不删。<b>有 ${nNoReward} 条任务的报酬在原表里就是「无」</b>，不是本站漏填。</div>`;
 }
 
 /* 龙之天地（azuma）专属：东国任务（gametoeasy post/1831–1836 六篇）
