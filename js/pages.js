@@ -8255,8 +8255,21 @@ const PAGES = [
         }
     },
     {
+        key: 'seriescmp', group: 'lore', title: '跨作机制对照', icon: 'compass',
+        body: () => seriesCmpHtml()
+    },
+    {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十二：新开「跨作机制对照」页（seriescmp）——十作并排看</h2>
+            <ul class="ul">
+                <li class="li"><b>新开 <code>seriescmp</code> 页</b>（归「设定」、<b>常驻页</b>，不挂 <code>gms</code>，故在十作导航各出现一次）：把十部作品放进一张表并排看。出发点——系统补表已到尽头（可解析源都吃完了，剩余 ✗ 全是源不存在类缺口），转向「聚合已核实事实」的对照页，<b>不跨作换算、不替没核实的填数字</b>。</li>
+                <li class="li"><b>三张真实条数表</b>：①基础信息（发售日／平台／主角／舞台，取自 <code>GAMES</code>）；②结婚候补与角色规模（<code>chars[].role</code> 含「候补」者计为结婚候补：RF1 6、RF2 11、RF3/SP 11、边境 12、海洋 10、RF4/SP 12、RF5 12、龙之天地 14）；③内容体量（料理条数取各作 cook 数组真实长度：RF1 184／RF2 190／RF3 145／边境 228／海洋 181／RF4 170／RF5 184／龙之天地 313；鱼与钓物种数取 <code>FISH_*</code> 条目数）。</li>
+                <li class="li"><b>两处数据口径如实标注</b>：<b>RF3 SP／RF4 SP 与本体共用同一份数据</b>，条数直接取本体（145/170、45/38），不单列 0；<b>龙之天地无传统钓鱼</b>，<code>FISH_AZUMA</code> 为空、鱼种数记 0（第四节省已说明该作只有乌贼／公鱼捕捉小游戏）。</li>
+                <li class="li"><b>修了两个真实 bug</b>：海洋鱼种原写成 <code>SPOT_RFO.fishes.length</code>，但 <code>SPOT_RFO</code> 是扁平数组 <code>[地点,区域,季节,时间,[[鱼名,概率],...]]</code>、根本没有 <code>.fishes</code> 字段，会得 0——改为按钓点展开、对鱼名去重，得 <b>29 种</b>（与鱼类图鉴页一致）；SP 版原因无独立 cook 数组而显示 0，已映射回本体。</li>
+                <li class="li"><b>第四部分：系统机制差异</b>，逐作核实的发现，每条标出处作——钓鱼（RF4/5 有概率矩阵、RF1~3/边境只有目录、海洋 28 钓点 29 种、龙之天地无传统钓鱼）、农作（海洋靠精灵杖＋宠物、龙之天地机制迥异）、魔物收服（RF1 无喜好道具、海洋唯一给喜好作物）、符文魔法（RF4 符文能力 54 个、龙之天地改守护者体系）、节日战斗（属性抗性量纲各作不同、跨作比数字无意义）。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>408 实例</b>（新增 10，常驻页 × 十作导航）／0 异常／头像 214 张缺 0。数字经 node 脚本直接加载真实数据文件复算、并渲染 <code>seriesCmpHtml()</code> 抓取文本二次核对，与页面展示一致。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十一次：龙之天地（azuma）补全「料理配方」页——313 道</h2>
             <ul class="ul">
                 <li class="li"><b>新开 <code>azuma_cook</code> 页</b>（归「生活」、<code>gms:['azuma']</code>，与 azuma_skill／mon／boss 并列）：龙之天地此前在「料理」页完全空白——这一作<b>没有厨具分类、也没有料理等级门槛</b>，按「品类」分五块：<b>菜肴 162／便当 33／加工品 6／甜点 107／酒 5</b>，共 <b>313 道</b>可制作物。</li>
@@ -9974,5 +9987,113 @@ PAGES.forEach(p => { PAGE_MAP[p.key] = p; });
 /* 条目可见性：带 gms 的条目只在指定作品下出现 */
 function pageVis(p, g) {
     return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
+}
+
+/* 跨作机制对照：把十部作品放在一张表里并排看。
+   所有数字取自已加载的数据全局（GAMES / 各作料理与钓鱼数据表），零臆造；
+   系统机制差异是建站过程中逐作核实过的发现，每条都标了出处，不跨作换算。*/
+function seriesCmpHtml() {
+    const G = (typeof GAMES !== 'undefined') ? GAMES : [];
+    // SP 版与本体共用同一份数据文件，映射回本体以取真实条数
+    const baseOf = { rf3sp: 'rf3', rf4sp: 'rf4' };
+    const baseId = id => baseOf[id] || id;
+    const ckN = id => ({
+        rf1: typeof RF1_COOK !== 'undefined' ? RF1_COOK.length : 0,
+        rf2: typeof RF2_COOK !== 'undefined' ? RF2_COOK.length : 0,
+        rf3: typeof RF3_COOK !== 'undefined' ? RF3_COOK.length : 0,
+        rf4: typeof RF4_COOK !== 'undefined' ? RF4_COOK.length : 0,
+        rf5: typeof RF5_COOK !== 'undefined' ? RF5_COOK.length : 0,
+        rff: typeof RFF_COOK !== 'undefined' ? RFF_COOK.length : 0,
+        rfo: typeof RFO_COOK !== 'undefined' ? RFO_COOK.length : 0,
+        azuma: typeof AZUMA_COOK !== 'undefined'
+            ? AZUMA_COOK.cats.reduce((s, c) => s + (c.rows ? c.rows.length : 0), 0) : 0
+    }[baseId(id)] || 0);
+    const fishN = id => {
+        const b = baseId(id);
+        if (b === 'rfo') {
+            // SPOT_RFO 是扁平数组 [地点, 区域, 季节, 时间, [[鱼名, 概率], ...]]，
+            // 按钓点展开、对鱼名去重得到「鱼与钓物种数」
+            if (typeof SPOT_RFO === 'undefined' || !SPOT_RFO.length) return 0;
+            const set = {};
+            SPOT_RFO.forEach(r => { (r[4] || []).forEach(f => { set[f[0]] = 1; }); });
+            return Object.keys(set).length;
+        }
+        return ({
+            rf1: typeof FISH_RF1 !== 'undefined' ? FISH_RF1.length : 0,
+            rf2: typeof FISH_RF2 !== 'undefined' ? FISH_RF2.length : 0,
+            rf3: (typeof FISH_RF3 !== 'undefined' ? FISH_RF3.length : 0)
+                + (typeof FISH_RF3_RESORT !== 'undefined' ? FISH_RF3_RESORT.length : 0),
+            rff: typeof FISH_RFF !== 'undefined' ? FISH_RFF.length : 0,
+            rf4: typeof FISH_RF4 !== 'undefined' ? FISH_RF4.length : 0,
+            rf5: typeof FISH_RF5 !== 'undefined' ? FISH_RF5.length : 0,
+            azuma: typeof FISH_AZUMA !== 'undefined' ? FISH_AZUMA.length : 0,
+        }[b] || 0);
+    };
+    const marryN = g => (g.chars || []).filter(c => /候补/.test(c.role || '')).length;
+    const nm = g => (g.short || g.name || g.id);
+
+    const infoRows = G.map(g => [
+        nm(g), g.date || '—', g.plat || '—',
+        (g.hero || '—') + (g.heroJp ? '（' + g.heroJp + '）' : ''),
+        g.stage || '—'
+    ]);
+    const scaleRows = G.map(g => [nm(g), String(ckN(g.id)), String(fishN(g.id))]);
+    const marryRows = G.map(g => [nm(g), String(marryN(g)), String((g.chars || []).length)]);
+
+    return `
+    <h2 class="h2">跨作机制对照</h2>
+    <p class="p">把十部作品放在一张表里并排看。基础信息、结婚候补、角色数直接取自本站数据文件（<code>GAMES</code>）；料理与钓鱼规模是各作数据表的<b>真实条数</b>；系统机制差异是建站过程中逐作核实过的发现，每条都标了出处作，<b>不跨作换算、不替没核实的填数字</b>。</p>
+
+    <h2 class="h2">一、基础信息</h2>
+    ${tbl(['作品', '发售日', '平台', '主角', '舞台'], infoRows, { colw: ['6.4rem', '6.6rem', '7.2rem', '9rem', ''], left: [3, 4] })}
+
+    <h2 class="h2">二、结婚候补与角色规模</h2>
+    <p class="p">「结婚候补」＝花嫁候补＋花婿候补的人数（取自数据文件 <code>chars[].role</code>）；「角色总数」含主角、候补与居民。</p>
+    ${tbl(['作品', '结婚候补', '角色总数'], marryRows, { colw: ['9rem', '5rem', '5rem'], leftFirst: true })}
+
+    <h2 class="h2">三、内容体量（真实条数）</h2>
+    <p class="p">料理条数为各作料理／药学数据表条目数：RF3／RF4／RF5 此处是料理主表（药品单列、未计入）；RF1／RF2／RFF／RFO 的主表含药学，数字略高。<b>RF3 SP／RF4 SP 与对应本体共用同一份数据</b>，条数与本体一致。鱼与钓物种数为 <code>FISH_*</code> 数据条目数（海洋 rfo 取钓点表去重后的鱼名，共 29 种）；<b>龙之天地（azuma）无传统钓鱼系统</b>，<code>FISH_AZUMA</code> 为空、记为 0。这些数字只说明「这一作有多少可查的条目」，不代表品质高低。</p>
+    ${tbl(['作品', '料理条数', '鱼与钓物种数'], scaleRows, { colw: ['9rem', '6rem', '8rem'], leftFirst: true })}
+
+    <h2 class="h2">四、系统机制差异（逐作核实）</h2>
+
+    <h3 class="h3">钓鱼</h3>
+    <ul class="ul">
+        <li class="li"><b>RF4／RF5</b>：有「钓点 × 季节 × 概率」的解包表，能做成百分比矩阵（第 119 次核实）。</li>
+        <li class="li"><b>RF1／RF2／RF3／边境</b>：是「钓点 × 鱼」目录，原表<b>没有逐钓点出现率</b>，只做索引不推概率（第 119／120 次）。</li>
+        <li class="li"><b>海洋（RFO）</b>：有 28 钓点、30 种鱼／钓物的数据（第 120 次）。</li>
+        <li class="li"><b>龙之天地（azuma）</b>：<b>无传统钓鱼</b>，只有「乌贼捕捉比赛／公鱼捕捉比赛」小游戏，没有钓点×鱼×概率表（第 122 次）。</li>
+    </ul>
+
+    <h3 class="h3">农作</h3>
+    <ul class="ul">
+        <li class="li"><b>RF1～5／边境</b>：传统种地——锄头、洒水壶、买种子、按季播收。</li>
+        <li class="li"><b>海洋（RFO）</b>：<b>无锄头／洒水壶／买种子</b>，种地靠「精灵杖魔法播种」＋岛上对应宠物才真种（第 139 次）。</li>
+        <li class="li"><b>龙之天地（azuma）</b>：动作 RPG，农作页有专属分支（82 行）但机制与前七作根本不同（第 125 次）。</li>
+    </ul>
+
+    <h3 class="h3">魔物收服</h3>
+    <ul class="ul">
+        <li class="li"><b>RF1</b>：靠掉落物＋雇佣能力，<b>没有「喜好道具」这一栏</b>（第 136 次）。</li>
+        <li class="li"><b>RF2／边境</b>：靠友好手套／毛刷刷到固定次数收服（第 136 次）。</li>
+        <li class="li"><b>海洋（RFO）</b>：旧四作里<b>唯一给「喜好作物」</b>的（第 136 次）。</li>
+        <li class="li"><b>RF4／RF5／azuma</b>：各有收服／骑乘体系（azuma 的魔物喜好与可骑乘已单独成页）。</li>
+    </ul>
+
+    <h3 class="h3">符文／魔法</h3>
+    <ul class="ul">
+        <li class="li"><b>RF4</b>：有独立「符文能力」系统——效果装到武器符文槽、魔法书能升级 Lv（第 140 次新开 <code>rune</code> 页，54 个符文）。</li>
+        <li class="li"><b>龙之天地（azuma）</b>：改「守护者（Guardians）」系统，火／水／光／地元素关联，无 RF4／RF5 式数值抗性表（第 132 次）。</li>
+        <li class="li"><b>RF1～3</b>：符文文字／符文瓶颈等系列共通设计。</li>
+    </ul>
+
+    <h3 class="h3">节日与战斗</h3>
+    <ul class="ul">
+        <li class="li"><b>节日</b>：七作全覆盖年度节日日程；azuma 无传统节日，只列名称（第 132 次）。</li>
+        <li class="li"><b>属性抗性</b>：量纲各作不同——一代点数、二代克制、三代倍率、四五代百分比，<b>跨作直接比数字无意义</b>（第 ③ 类缺口核实）。</li>
+    </ul>
+
+    <div class="note">本页只做「并排看」与「逐作核实发现」的汇总，不构成跨作评测。某项在某作显示 0 或空白，多半是「该作此系统与前作机制不同、或本站尚未收录」，不是「没有」。具体数据请进对应作品的相关条目页查看。</div>
+    `;
 }
 
