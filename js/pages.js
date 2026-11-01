@@ -4242,6 +4242,11 @@ const PAGES = [
         gms: ['rfo'],
         body: () => rfoMainHtml()
     },
+    {
+        key: 'rffevent', group: 'basic', title: '主线与角色事件', icon: 'scroll',
+        gms: ['rff'],
+        body: () => rffEventHtml()
+    },
 
     /* ================= 牧场生活 ================= */
     {
@@ -6414,6 +6419,8 @@ const PAGES = [
             if (g && g.id === 'azuma') return requestAzumaHtml();
             /* 海洋的委托表在《符文工厂海洋（最强攻略）》xls 里是完整的 188 条，单独分支 */
             if (g && g.id === 'rfo') return requestRfoHtml();
+            /* 边境没有依赖板，委托走邮件 + 角色事件链，单独说明 */
+            if (g && g.id === 'rff') return requestRffHtml();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -8323,6 +8330,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-02　第一百五十三：RF5 掉率与抗性逐条核完，发现攻略本的抗性表「爱／无」两列标反了；边境 270 条主线与角色事件补成页</h2>
+            <ul class="ul">
+                <li class="li"><b>RF5 掉率 223 只</b>：拿《RF5掉率表Hyperwiki》逐条对<b>地点一、地点二、四件掉落物、四个概率</b>，<b>0 处差异</b>。原表 224 行里有一行是「黑暗来客与后续boss」的汇总行，本站没收录，其余全在。</li>
+                <li class="li"><b>RF5 属性抗性 269 条</b>：与《RF5全怪物属性抗性表》逐条对八项系数，<b>0 处差异</b>；其中 33 行是「（废案换皮XX）」的重复名，本站剥掉后缀后与本体合并成同名两条，所以按名字去重是 236 种。</li>
+                <li class="li"><b>核出一个真问题，方向却相反</b>：那张外部表的表头写「…暗抗性、<b>爱</b>抗性、<b>无</b>抗性」，但数据里<b>这两列是反的</b>。反证在「爱之传送门／深爱之传送门／慈爱之传送门」：按表头的顺序读，三只传送门的爱抗性是 0／0／0；按反过来的顺序读，是 0.5／0.7／1——名字叫「爱」，抗性依次递增，这才讲得通。<b>站内的读法是对的，外部表的表头错了</b>，不改数据。</li>
+                <li class="li"><b>边境补了两页</b>：新页「<b>主线与角色事件</b>」（<code>key: 'rffevent'</code>）把《边境主线支线流程机翻》整份摊平——<b>主线 37 步 + 角色事件 210 条（22 人）+ 鲸鱼／遗迹／结婚 23 条，共 270 条</b>，条件与结果照机翻原文，一句没改。页内另摘<b>七次做梦</b>（主线 3／8／10／18／19／28／31 步，条件都是「早上 5 点之前在自家睡觉」）与<b>九处不是「说句话就过」的节点</b>（等日期、种月落草、好感 40%、爱情度 4、桃乐普与莘迪登场、背包留空、12 位花嫁候补、进虚无世界不可回头）。</li>
+                <li class="li"><b>「委托任务」页补边境分支</b>：边境<b>没有依赖板</b>，委托是「依赖信件」随邮件送到，物品直接交给派送员。邮件分四种（问候／依赖／需回信／不可思议），最后一种是随机送来、要回特定单词才给礼物，攻略资料没列词表，本站不猜。事件链里明写「依赖」的 10 条按人统计：卡侬 8 条、斯黛拉 1 条、迦娜莎／马鲁克 1 条。</li>
+                <li class="li"><b>机翻照录，不润色</b>：这一页的文字是机器翻译，语句不通、译名与站内定稿不一致（蜜斯特／罗洁塔／梅罗迪…对密丝特／萝赛塔／美乐蒂…）一律不改，只在页尾给 12 组对照表——改了就没法按原文回查。「卡侬」「布兰迪克」两位站内「居民」页没有收录，日文名这份机翻也没标，照机翻名字放着，不猜。</li>
+                <li class="li"><b>照录的原表毛病</b>：遗迹那组有<b>两个「遗迹·6」</b>（一条是蔓草遗迹可进，一条是雪草遗迹可进），是原整理者漏改号；「艾莉丝-06?」原标签自带问号；斯黛拉的链条第 5 条条件写「【斯黛拉-4】」用半角 4，与其余「01／02」写法不一。三处都照原样，只在旁边点一句。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>421 实例／0 异常／头像 214 张缺 0</b>；边境索引 5485 行，超长名 0。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百五十二：其余六作的硬数据拉去跟外部攻略逐条对——数据是干净的，问题又出在模板句上</h2>
             <ul class="ul">
                 <li class="li"><b>做法</b>：沿用核海洋那套思路，不看站内自己怎么写，直接拿外部资料当尺子。<b>RF1／RF3／RF4／RF5／边境</b>五作逐条比对，共七组硬数据。</li>
@@ -10057,6 +10075,124 @@ function rfoMainHtml() {
                 <a href="#/page/rfosys">
                     <div class="jp-t">奖杯与许愿</div>
                     <div class="jp-s">38 个奖杯、龙庭四项许愿、巨人怎么开</div>
+                </a>
+            </div>`;
+}
+
+/* ---------- 边境（RFF）主线与角色事件 ----------
+   数据只有一份来源：《边境主线支线流程机翻.txt》（机翻，GB18030，原文 20,896 字）。
+   RFF_EVENT 由 _build_rff_event.py 生成：主线 37 条 + 角色事件 210 条 + 特殊 23 条。
+   文本是机翻，本页只做「分节 + 可检索」，不改写、不润色、不补全。 */
+function rffEventHtml() {
+    const E = (typeof RFF_EVENT !== 'undefined') ? RFF_EVENT : null;
+    if (!E) return '<p class="p">边境的事件数据未加载。</p>';
+    const esc = t => String(t === undefined || t === null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const M = E.main;
+    const OTHERS = ['鲸鱼', '遗迹', '结婚'];
+    const CG = E.groups.filter(x => OTHERS.indexOf(x.who) < 0);
+    const OG = E.groups.filter(x => OTHERS.indexOf(x.who) >= 0);
+    const sumOf = arr => arr.reduce((a, x) => a + x.list.length, 0);
+    const nChar = sumOf(CG), nOther = sumOf(OG);
+    const all = M.concat.apply(M, E.groups.map(x => x.list));
+    const nQ = all.filter(x => x.q).length;
+
+    /* 七次做梦：全主线里唯一贯穿始终的叙事线，条件都是「早上 5 点之前在自家睡觉」 */
+    const dreams = M.filter(x => /做梦/.test(x.c + x.r));
+    /* 不是「上一步发生过 + 找谁说话」就能推进的节点，逐条挑出来 */
+    const GATE = [5, 7, 11, 14, 19, 23, 29, 30, 36].map(n => M.filter(x => x.n === n)[0]).filter(Boolean);
+    /* 角色组按条数排，最多的放前面 */
+    const CGsort = CG.slice().sort((a, b) => b.list.length - a.list.length || a.who.localeCompare(b.who));
+
+    /* 机翻名 → 站内「居民」页定稿译名（能一一对上的才列） */
+    const NAME_MAP = [
+        ['蜜斯特', '密丝特', 'ミスト'], ['罗洁塔', '萝赛塔', 'ロゼッタ'],
+        ['梅罗迪', '美乐蒂', 'メロディ'], ['塔巴萨', '塔芭莎', 'タバサ'],
+        ['尤妮', '尤尼', 'ユーニ'], ['桃乐普', '多洛普', 'ドロップ'],
+        ['阿奈特', '阿涅多', 'アネット'], ['赛露菲', '赛尔菲', 'セルフィ'],
+        ['迦娜莎', '甘妮萨', 'ガネーシャ'], ['马鲁克', '马尔科', 'マルコ'],
+        ['罗兰', '罗兰德', 'ローランド'], ['拉格纳', '拉格那', 'ラグナ'],
+    ];
+
+    return `
+            <p class="p">边境的主线与支线在游戏里<b>没有任何列表可查</b>——不显示条件、不记录进度，触发全靠碰。这一页把攻略资料里的 <b>${all.length} 条事件</b>摊平成两张表：主线 ${M.length} 步，角色与结局支线 ${nChar + nOther} 条。</p>
+            ${stat([['主线', M.length + ' 步'], ['角色事件', nChar + ' 条 / ' + CG.length + ' 人'], ['结局与遗迹', nOther + ' 条'], ['合计', all.length + ' 条']])}
+            <div class="note"><b>这一页的文字是机翻，照录。</b>来源《边境主线支线流程机翻.txt》（20,896 字）只有这一份，没有第二个来源可校，所以语句不通、译名与站内定稿不一致的地方<b>一处都没有改</b>——改了就成了本站自己写的东西。译名对照放在页尾，找人对不上时先看那张表。</div>
+
+            <h2 class="h2">主线：${M.length} 步，从踏上鲸鱼岛到虚无世界</h2>
+            <p class="p">一步一行，条件与结果都照原文。整条主线只有一处真正的分支：<b>第 14 步触发过，第 19 步就能回避与黑艾莉丝的战斗</b>；不打也可以，原表专门补了一句「这个事件不发生也没关系」，代价是少一段艾莉丝的剧情。</p>
+            ${tbl(['步', '条件', '结果'], M.map(x => ['第 ' + x.n + ' 步', esc(x.c), esc(x.r)]),
+        { left: [1, 2], cls: 'rfomain', colw: ['5.6rem', '19rem', ''] })}
+
+            <h2 class="h2">七次做梦，是主线真正的骨架</h2>
+            <p class="p">主线里有一类步骤，条件永远写着同一句：<b>早上 5 点之前在自家睡觉</b>。睡着之后是梦，梦醒之后剧情才往前走——艾莉丝那条线几乎全靠这个推。共 ${dreams.length} 次，漏掉不会立刻卡住，但会一直等下去。</p>
+            ${tbl(['步', '这一觉醒来'], dreams.map(x => ['第 ' + x.n + ' 步', esc(x.r)]),
+            { left: [1], cls: 'rfomain', colw: ['5.6rem', ''] })}
+
+            <h2 class="h2">九个不是「说句话就过」的节点</h2>
+            <p class="p">其余步骤的条件基本都是「上一步已经发生，然后找某人说话」。下面这 ${GATE.length} 条不是——它们要等日期、要种地、要好感、要别人先登场，或者要背包留空。卡住的时候先看这里。</p>
+            ${tbl(['步', '原表条件'], GATE.map(x => ['第 ' + x.n + ' 步', esc(x.c)]),
+                { left: [1], cls: 'rfomain', colw: ['5.6rem', ''] })}
+
+            <h2 class="h2">角色事件：${CG.length} 人、${nChar} 条</h2>
+            <p class="p">按条数从多到少排。每个人的事件链都是一条线：前一条不发生，后一条不会出现。表里「条件」一栏写的「【某某-N】已经发生」就是这条线的锁。<b>点人名展开</b>。</p>
+            ${CGsort.map(g => `
+                <details class="mon-fold">
+                    <summary>${esc(g.who)}　${g.list.length} 条</summary>
+                    ${tbl(['事件', '条件', '结果'], g.list.map(x => [
+                    (g.who + '·' + x.n) + (x.sub ? '<span class="mon-desc">' + esc(x.sub) + '</span>' : ''),
+                    esc(x.c), esc(x.r)]),
+                    { left: [1, 2], cls: 'rfomain', colw: ['7.4rem', '18rem', ''] })}
+                </details>`).join('')}
+
+            <h2 class="h2">另外三块：鲸鱼、遗迹、结婚</h2>
+            <p class="p">这三块在原文里不是某个人的事件链，而是<b>另一套流程</b>——鲸鱼岛的对话与许愿、四座遗迹依次开放的顺序、以及从告白到结婚的步骤。</p>
+            ${OG.map(g => `
+                <h3 class="h3">${esc(g.who)}（${g.list.length} 条）</h3>
+                ${tbl(['#', '条件', '结果'], g.list.map(x => [
+                    (g.who + '·' + x.n) + (x.sub ? '<span class="mon-desc">' + esc(x.sub) + '</span>' : ''),
+                    esc(x.c), esc(x.r)]),
+                    { left: [1, 2], cls: 'rfomain', colw: ['7.4rem', '18rem', ''] })}`).join('')}
+            <div class="note">「遗迹」这 7 条里<b>有两个「遗迹·6」</b>——原文的编号就是这么写的（一条是「蔓草遗迹可以进入」，一条是「雪草遗迹可以进入」），照录不改。这两条不是重复，是原整理者漏了改号。</div>
+
+            <h2 class="h2">机翻名与站内译名对照</h2>
+            <p class="p">页面正文里的名字沿用机翻写法（蜜斯特、罗洁塔、梅罗迪…），站内「居民」页用的是定稿译名（密丝特、萝赛塔、美乐蒂…）。同一人两套写法，这里给对照，<b>正文不改</b>——改了就没法按原文回查。</p>
+            ${tbl(['机翻（本页）', '站内定稿', '日文'], NAME_MAP.map(([a, b, j]) => [esc(a), esc(b), esc(j)]),
+                { leftFirst: true, cls: 'txt', colw: ['9rem', '9rem'] })}
+            <div class="note"><b>「卡侬」「布兰迪克」两位，站内「居民」页没有收录</b>——前者是教拉格纳魔法的人（火球杖、燃烧之杖、深红之杖都从他这儿拿，等级门槛 2／10／20／30／65），后者是村里那个专门找麻烦的人（弄乱田地、堵家门、若草遗迹决斗，16 条）。两人的日文名在这份机翻里没有标，本站不猜，先照机翻名字放着。
+            ${nQ ? '<br>原文里有 <b>' + nQ + ' 条标签带问号</b>（如「艾莉丝-06?」），是原整理者自己也不确定的，照录。' : ''}</div>`;
+}
+
+/* 边境（RFF）的「委托」：不像别作有依赖板，走的是邮件 + 角色事件链。
+   来源：《RFF 攻略.txt》（邮件三种分法）＋ 站内 RFF_EVENT（依赖在事件里的位置）。 */
+function requestRffHtml() {
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const E = (typeof RFF_EVENT !== 'undefined') ? RFF_EVENT : null;
+    const all = E ? E.main.concat.apply(E.main, E.groups.map(x => x.list.map(y => ({ ...y, who: x.who })))) : [];
+    const dep = all.filter(x => /依赖/.test(x.r));
+    const byWho = {};
+    dep.forEach(x => { byWho[x.who] = (byWho[x.who] || 0) + 1; });
+    const whoList = Object.keys(byWho).map(k => [k, byWho[k]]);
+
+    return `
+            <h2 class="h2">边境的委托不走公告板，走邮筒</h2>
+            <p class="p">和别的作品不同，边境<b>没有依赖板</b>。委托是以<b>「依赖信件」</b>的形式随邮件一起送到的：信里写明要什么，把东西准备好之后<b>直接交给派送员</b>就行，不必跑回委托人那里。</p>
+            ${tbl(['邮件类型', '里面是什么'], [
+                ['一般问候', '日常寒暄，读了不亏但也没奖励'],
+                ['依赖信件', '要某样东西。<b>物品直接交给派送员</b>，不用自己送到委托人手上'],
+                ['需要回信的信件', '要写字回复，不回就一直挂着'],
+                ['不可思议信件', '随机送到，回某些特定单词能拿到礼物'],
+            ], { leftFirst: true, cls: 'txt', colw: ['9rem'] })}
+            <div class="key">容易漏的是第四种：<b>不可思议信件是随机的</b>，收信时不留神就过去了；回信内容还得答对特定词，答错没有第二封。攻略资料只写了「回某些特定单词可以拿到不可思议的礼物」，没有列词表，本站也不猜。</div>
+
+            <h2 class="h2">大部分「依赖」其实是角色事件的一环</h2>
+            <p class="p">边境的依赖不全是随机刷的——很多是<b>某人事件链里的固定一步</b>：先要一样东西，交了之后再要下一样，中间还夹着等级或好感门槛。这类依赖在本站「主线与角色事件」页里按人排好，条件与结果都照原文。</p>
+            ${dep.length ? `${tbl(['谁', '事件链里的依赖条数'], whoList.map(([k, v]) => [esc(k), '<b>' + v + '</b> 条']), { leftFirst: true, cls: 'txt', colw: ['9rem', '8rem'] })}
+            <div class="note">原表里明写「依赖」二字的共 ${dep.length} 条。其余「被委托找某物」「拿来某物」的写法没算进这张表——它们算同一种东西，但原文用词不统一，本站按字面统计，不合并。</div>` : ''}
+            <div class="jump">
+                <a href="#/page/rffevent">
+                    <div class="jp-t">主线与角色事件</div>
+                    <div class="jp-s">${all.length} 条事件：主线 ${E ? E.main.length : 0} 步，角色与结局支线 ${all.length - (E ? E.main.length : 0)} 条</div>
                 </a>
             </div>`;
 }
