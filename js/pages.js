@@ -3867,6 +3867,27 @@ function produceHtml(g) {
         <div class="note">特别版（RF3SP）沿用本表——源页只有一份 <code>RF3farm</code>，<b>没有单列特别版的差异</b>，所以这里不假装两作数值不同。</div>`;
     }
 
+    /* ================= RF2 ================= */
+    if (id === 'rf2') {
+        const PR = (typeof PETPROD_RF2 !== 'undefined') ? PETPROD_RF2 : [];
+        const JB2 = (typeof PETJOB_RF2 !== 'undefined') ? PETJOB_RF2 : [];
+        const byMon = {};
+        PR.forEach(r => { (byMon[r[0]] = byMon[r[0]] || []).push(r); });
+        const monNames = Object.keys(byMon);
+        return `
+        <h2 class="h2">RF2：${monNames.length} 种魔物按好感度分三档给你东西</h2>
+        <p class="p">RF2 的宠物产出比初代精细：初代是一天固定一样，RF2 是<b>好感度越高、产出的尺寸越大</b>。软软毛、牛奶、鸡蛋都分 S／M／L 三档，只有蜂蜜不分（黄蜂全程给蜂蜜）。把同一只养到 8~10 好感，拿到的货明显更大。</p>
+        ${stat([['会产出的魔物', monNames.length + ' 种'], ['产出档位', '3 档（S／M／L）'], ['工作时段', JB2.length + ' 种']])}
+        <div class="key">${monNames.length} 种产出魔物：${monNames.join('、')}。其余魔物在 RF2 只干活（浇水／收获／伐木／砸石）不产出——它们按「友好手套抚摸次数」收服，清单在<a class="link" href="#/page/gift">魔物喜好</a>的「RF2 收服」表里。</div>
+        ${tbl(['魔物', '好感度', '产物'], PR.map(r => [r[0], r[1], '<b>' + r[2] + '</b>']), { leftFirst: true })}
+        <div class="note">尺寸写法（软软毛S／牛奶M／鸡蛋L 等）取自源表日文原名（ふわ毛Ｓサイズ 等），按站内通用译名显示。黄蜂的好感度区间是 1~10（其余三种从 0 起），源表如此，照录不统一。</div>
+
+        <h2 class="h2">四种工作，各有固定时段</h2>
+        <p class="p">派去干活的时段是写死的：浇水从凌晨 4 点干到午夜，收获从下午 4 点到午夜，伐木和砸石只在白天（上午 8 点~下午 4 点）。想让一只魔物兼顾多项，得按时段排班，或干脆多养几只。</p>
+        ${tbl(['工作', '可工作时段'], JB2.map(r => [r[0], r[1]]), { leftFirst: true })}
+        <div class="note">时段取自 biligame「RF2pet」页的「宠物工作」表。源表的「上午0点」指当日午夜（24:00），本站照录不折算。源表只给了这四种工作的起止时间，没有写「产出」与「工作」之间的好感门槛差异，本页不另作换算。</div>`;
+    }
+
     /* ================= 边境 ================= */
     if (!PD.length) return '<p class="p">这一作暂时没有宠物产出数据。</p>';
 
@@ -7857,11 +7878,11 @@ const PAGES = [
     /* ================= 宠物产出（派它干什么，它给你什么） ================= */
     {
         key: 'produce', group: 'life', title: '宠物产出', icon: 'pot',
-        gms: ['rf1', 'rf3', 'rf3sp', 'rff'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff'],
         body: g => {
-            if (g.id === 'rf1' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff') return produceHtml(g);
+            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff') return produceHtml(g);
             return `<p class="p">这一作暂时没有「派魔物干活／收产物」的表。</p>
-            <div class="note">源站给得出产出表的有三作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）。RF2／海洋的宠物页只有抚摸次数与喜好作物，RF5 的「同伴怪物生产道具一览」是一张残页，所以这几作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
+            <div class="note">源站给得出产出表的有四作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF2（<code>RF2pet</code> 的宠物生产＋宠物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）。海洋的宠物页只有喜好作物，RF5 的「同伴怪物生产道具一览」是一张残页（只有七行散句加一句「待补充」、没有完整表），所以这两作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
         }
     },
 
@@ -8672,6 +8693,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十：「宠物产出」补上 RF2 的宠物生产＋工作表</h2>
+<ul class="ul">
+<li class="li"><b>produce 现覆盖五作</b>：<code>gms</code> 由 <code>['rf1','rf3','rf3sp','rff']</code> 加 <code>rf2</code>。RF2 源站「RF2pet」页有干净的「宠物生产」「宠物工作」两表，此前 produce 页的旧说明错称「RF2 只有抚摸次数与喜好作物」——其实那是收服（gift 页）的口径，产出数据一直就在，本轮补正。</li>
+<li class="li"><b>宠物生产：4 种魔物按好感度分档产出</b>——摩可摩可→软软毛 S/M/L、水牛哞哞→牛奶 S/M/L、咕咕鸡→鸡蛋 S/M/L、黄蜂→蜂蜜（1~10 全程）。好感度越高尺寸越大，比初代「一天固定一样」精细；黄蜂的好感度区间从 1 起（其余三种从 0 起），源表如此照录。</li>
+<li class="li"><b>宠物工作：四种固定时段</b>——浇水（上午4点~上午0点）、收获（下午4点~上午0点）、伐木与砸石（上午8点~下午4点）。源表的「上午0点」指当日午夜（24:00），本站照录不折算。</li>
+<li class="li"><b>数据直接落 js/produce.js</b>（<code>PETPROD_RF2</code>／<code>PETJOB_RF2</code>），复用站内表格样式。RF2 两表列少（3 列／2 列），去掉强制 38rem 最小宽，<b>520px 下不再出现无意义横滑</b>；旧说明里「RF2／海洋」并列留空已更正为「海洋／RF5（残页）」留空（RF5 那张只有七行散句加「待补充」，不据此编表）。</li>
+<li class="li"><b>校验 439 实例（＋1）／0 异常／头像 8 作 214 张缺 0</b>；520 与 1100px 截图确认两表无横滑、时间栏不截断。</li>
+</ul>
+
 <h2 class="h2">2026-11-02　第一百五十九：「状态与抗性」补上 4sp 的魔物＋村民侧三表</h2>
 <ul class="ul">
 <li class="li"><b>fx 现在覆盖 rf4／rf4sp／rf5，但三者口径各不同</b>：rf4 看装备面板隐藏数值（附加率与抗性，422 件收 180 件），rf4sp 与 rf5 看魔物侧。这一轮给 rf4sp 补的源站数据是 <code>RF4Smonsterresist</code>——<b>含村民</b>的一份：雷斯特、芙缇、比修奈尔、库洛丽嘉、沃尔卡农这些可操作角色与重要 NPC 也在表里，其它作的抗性表只列魔物，没有这一份。4 代那一版（切到「符文工房4」）讲装备，本页讲魔物与村民，按作分开写。</li>
