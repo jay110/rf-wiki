@@ -480,60 +480,79 @@ function fishspot4Html() {
 
     /* ------------------------------------------------------------
        RFO 钓点与季节（fishspot 页的 RFO 段）
-       数据 SPOT_RFO：[地点, 区域, 季节, 时间, [[鱼名, 概率], ...]]
-       源：biligame RFOfishing（地点 × 区域 × 季节 × 时间 × 4 鱼概率）
+       数据 RFO_FISH_SPOT：[岛, 地点, 季节, 时段, [[鱼名, 稀有], ...]]
+       源：攻略本《符文工厂海洋（最强攻略）》xls「鱼群」表（玩家实测，无概率）
+       ------------------------------------------------------------ */
+    /* ------------------------------------------------------------
+       RFO 钓点与鱼（fishspot 页的 RFO 段）
+       数据 RFO_FISH_SPOT：[岛, 地点, 季节, 时段, [[鱼名, 是否稀有], ...]]
+       源：《符文工厂海洋（最强攻略）.xls》「鱼群」工作表（玩家实测，作者署「威亚尔」）
+       原表没有概率，本段也不写概率；只有芬尼斯岛按春夏秋冬分，其余岛原表未分季。
        ------------------------------------------------------------ */
     function fishspotRfoHtml() {
-        const R = (typeof SPOT_RFO !== 'undefined') ? SPOT_RFO : [];
+        const R = (typeof RFO_FISH_SPOT !== 'undefined') ? RFO_FISH_SPOT : [];
         if (!R.length) return '';
-        const show = r => r[0] + (r[1] ? ' ' + r[1] : '');
-        const locSet = {}; R.forEach(r => locSet[show(r)] = 1);
-        const locs = Object.keys(locSet);
-        const fishSet = {}; R.forEach(r => r[4].forEach(f => fishSet[f[0]] = 1));
-        const fishes = Object.keys(fishSet).sort();
-        const byFish = {};
-        R.forEach(r => r[4].forEach(f => { (byFish[f[0]] = byFish[f[0]] || new Set()).add(show(r)); }));
-        const cell = v => v > 0 ? v + '%' : '<span class="mon-no">—</span>';
-        const fc = f => f[0] + ' <b>' + f[1] + '%</b>';
-        const pad = arr => { const a = arr.slice(); while (a.length < 4) a.push(null); return a; };
-        /* 源表里季节为「-」的钓点（9 座岛，见下方说明），显示成「全年」好读 */
-        const seasonTxt = s => (s === '-' ? '全年' : s);
 
-        const rows = R.map(r => {
-            const sc = pad(r[4]);
-            return [show(r) + ' ' + seasonTxt(r[2]) + r[3], [
-                show(r), seasonTxt(r[2]), r[3],
-                sc[0] ? fc(sc[0]) : cell(0), sc[1] ? fc(sc[1]) : cell(0),
-                sc[2] ? fc(sc[2]) : cell(0), sc[3] ? fc(sc[3]) : cell(0),
-            ]];
+        const islandOrder = [];
+        const locSet = new Set();
+        const fishMap = {};          /* 鱼名 → {rare, where:Set} */
+        R.forEach(r => {
+            if (islandOrder.indexOf(r[0]) < 0) islandOrder.push(r[0]);
+            locSet.add(r[0] + '|' + r[1] + '|' + r[2]);
+            (r[4] || []).forEach(f => {
+                const o = fishMap[f[0]] = fishMap[f[0]] || { rare: false, where: new Set() };
+                if (f[1]) o.rare = true;
+                o.where.add(r[0] + (r[1] ? '·' + r[1] : ''));
+            });
         });
-        const fishRows = fishes.map(n => {
-            const ls = Array.from(byFish[n]);
-            return [n, [n, ls.length + ' 处', ls.slice(0, 4).join('、') + (ls.length > 4 ? '…' : '')]];
+        const fishNames = Object.keys(fishMap).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+        const rareN = fishNames.filter(n => fishMap[n].rare).length;
+
+        /* 反查：鱼 → 出没地点 */
+        const fishRows = fishNames.map(n => {
+            const o = fishMap[n];
+            const ls = Array.from(o.where);
+            return [
+                n + (o.rare ? ' <span class="txc">稀有</span>' : ''),
+                ls.length + ' 处',
+                ls.slice(0, 3).join('、') + (ls.length > 3 ? ' 等' : ''),
+            ];
         });
-        /* 不分季节的岛屿钓点（季节栏为 -），以及源表里合计就不满 100 的条数 */
-        const yearRound = new Set(R.filter(r => r[2] === '-').map(show)).size;
-        const partial = R.filter(r => r[4].reduce((s, f) => s + f[1], 0) !== 100).length;
+
+        /* 全表：按 岛 → 地点 → 季节 → 时段 的原始顺序 */
+        const seenR = new Set();
+        const rows = R.filter(r => {
+            const k = [r[0], r[1], r[2], r[3]].join('|');
+            if (seenR.has(k)) return false;
+            seenR.add(k);
+            return true;
+        }).map(r => [
+            r[0] + (r[1] ? ' ' + r[1] : '') + (r[2] ? ' ' + r[2] : '') + ' ' + r[3],
+            [r[0], r[1] || '—', r[2] || '—', r[3],
+                (r[4] || []).map(f => f[0] + (f[1] ? '<span class="mon-no">*</span>' : '')).join('、')]
+        ]);
+
+        const seasonOnly = R.filter(r => r[2]).length ? new Set(R.filter(r => r[2]).map(r => r[0])) : new Set();
 
         return `
-        <h2 class="h2">海洋的钓鱼是「地点 × 季节 × 时间」三重坐标</h2>
-        <p class="p">和 RF4（环境列平铺）、RF5（钓点 × 季节）都不同，海洋把概率拆成了<b>地点、区域、季节、时段（昼／夜）四层</b>。同一个地点，白天和晚上出的鱼可能完全不一样——白沙海滩春天白天是沙丁鱼、针鱼、鲽鱼、比目鱼，夜里换成乌贼领头。每一格是一份独立的概率分布，格子之间既不能相加也不能比。</p>
-        ${stat([['钓点', locs.length + ' 处'], ['鱼与钓物', fishes.length + ' 种'], ['有效条目', R.length + ' 条']])}
-        <div class="key">最省事的用法是<b>反向查</b>：想钓某种鱼，直接去「鱼种 → 钓点」那张表看它常出没在哪，再对照本页的时间。三个容易记错的地方：<b>虾</b>在 14 个点都能出，但只有<b>海边的洞窟 2 池</b>是 95% 的纯虾场，其余多在 20~35%；<b>金枪鱼</b>只在外洋、封冰岛、触礁沉船、圆形竞技场这类远海与深水，以及鱼群 A，概率 3~15%，海边的洞窟 1 池只在冬天的白天有；<b>西太公鱼</b>铜分布 6 处、银只有 3 处、<b>金</b>只在封冰岛 2 池一处。</div>
+        <h2 class="h2">海洋的钓鱼：岛 × 地点 × 时段，原表没有概率</h2>
+        <p class="p">海洋的地图是一整片芬迪海域，能钓的地方分散在<b>岛与海面坐标</b>上，所以这一页的查法和 RF4／RF5 都不一样：先认岛（或坐标），再看岛上的哪一处水（外滩、内流、瀑布、石潭、泉水……），最后看<b>白天还是夜里</b>。同一处水昼夜出的鱼常常完全不同——白沙海滩春天白天是比目鱼、针鱼、沙丁鱼、多宝鱼，入夜就换成针鱼、章鱼加一条心跳鲷鱼。</p>
+        ${stat([['岛与海面', islandOrder.length + ' 处'], ['钓位（岛×地点×季）', locSet.size + ' 处'], ['鱼种', fishNames.length + ' 种'], ['记录', R.length + ' 条']])}
+        <div class="key">本页数据<b>不含概率</b>：原表是玩家一趟趟钓出来的「这里有什么鱼」，不是解包出来的权重表。所以别指望它告诉你「金枪鱼几成」——它只保证<b>这一格里有这几条</b>。想要概率，得等有解包数据的那天。</div>
 
-        <h2 class="h2">全部 ${R.length} 条：地点 × 季节 × 时间</h2>
-        <p class="p">百分比是该地点在该季节该时段的占比，绝大多数格子内部加起来是 100%。空缺（—）是这个组合完全不出。「鱼1~4」按源表顺序，概率由高到低大致排列；<b>季</b>列写「全年」的是不分季节的岛屿钓点。</p>
-        ${ftableOwn(['钓点', '季', '时', '鱼1', '鱼2', '鱼3', '鱼4'],
-            ['9rem', '2.4rem', '2.4rem', 'auto', 'auto', 'auto', 'auto'],
-            rows, { ph: '输入钓点或鱼名筛选' })}
+        <h2 class="h2">反查：${fishNames.length} 种鱼，各在哪出</h2>
+        <p class="p">带 <span class="txc">稀有</span> 的是原表作者自己标星的那几样。它们不是「另一个池子」，而是同一格里的小概率成员——所以稀有鱼那一格通常只有两三样，普通鱼则满满四条。</p>
+        ${tbl(['鱼种', '出没处', '举个例子'], fishRows, { colw: ['8rem', '5rem', ''], leftFirst: true, left: [2] })}
 
-        <h2 class="h2">${fishes.length} 种鱼：去哪钓</h2>
-        <p class="p">下表按鱼种列出它出现过的钓点数量，并给出前几处。某鱼只在「鱼群 B」这类特殊点出现，说明它是乌贼系专属；只在封冰岛 2 池出现的，多为西太公鱼高阶变种。</p>
-        ${ftableOwn(['鱼', '出现钓点', '常出没'], ['6rem', '4rem', 'auto'], fishRows, { ph: '输入鱼名筛选' })}
+        <h2 class="h2">全表：${R.length} 条，按岛排</h2>
+        <p class="p">顺序照原表：先近海与海岛，再芬尼斯岛本岛的四季，最后是几处特殊钓位。芬尼斯岛的七处水按季重复四遍（春／夏／秋／冬），其余各岛原表<b>没分季节</b>，季节栏写「—」——不是漏了，是那几座岛的鱼本来就与季节无关。</p>
+        ${ftableOwn(['岛／地点／季／时', '岛', '地点', '季', '时段', '鱼种'],
+            ['11rem', '8rem', '8rem', '2.6rem', '3rem', 'auto'],
+            rows, { ph: '输入岛名、地点或鱼名筛选' })}
 
-        <div class="note"><b>为什么有「全年」</b>：春芽岛、常夏岛、秋实岛、冬冰岛这 4 座岛各分 1 海与 2 池，共 ${yearRound} 处钓点，源表里季节栏是「-」，也就是四季出鱼相同，所以每处只有昼／夜两条，不是漏了春夏秋冬。</div>
-        <div class="note"><b>有 ${partial} 条合计不到 100%</b>：海边的洞窟 1 池（4 鱼共 90%）、不是鱼群的海 2 沿岸（90%）、鱼群 A 的部分时段（90%）是源表原样，本页照录未做归一化。这几格的百分比仍然只能内部比，别拿来和合计 100% 的格子横比。</div>
-        <div class="note">源表来自 biligame 符文工厂 wiki《RFOfishing》。原表为「地点·区域·季节·时间·四鱼概率」的二维表，本页逐条录入共 ${R.length} 条、${locs.length} 个钓点、${fishes.length} 种鱼（含西太公鱼／铜／银／金 四种进阶变种）。概率栏为源表原值（百分比）。时间分昼（06:00–18:00）与夜（18:00–06:00）。</div>
+        <div class="note"><b>时段只有两档</b>：原表写「6:00am~4:59pm」与「5:00pm~4:59am」，也就是白天与夜里各 11 小时，中间那一小时作者认为你该睡了，没有数据。有几处特殊钓位（无名岛那一组坐标）标「全天」，昼夜不分。</div>
+        <div class="note"><b>稀有鱼的记号是原表加的</b>，作者原话是「个人看法而已，欧皇请无视」，所以这不是官方稀有度。带 * 的鱼种在表里一格只出现一两样，与它同格的普通鱼仍然占满其余位置。</div>
+        <div class="note">数据来自《符文工厂海洋（最强攻略）》的「鱼群」工作表，是一篇<b>玩家实测记录</b>（作者署「威亚尔」），不是解包表。作者自己写明<b>没有收全</b>：「鱼群不一定每天都会出现，收集完所有鱼群不现实，所以只收集了部分」。本站原样收录 ${R.length} 条、${islandOrder.length} 处岛与海面、${locSet.size} 个钓位、${fishNames.length} 种鱼（含 ${rareN} 种稀有）。原表两处笔误照录不改：芬尼斯岛秋季瀑布一栏的「鲷鱼（Char）」（Char 是鲑鱼）、附录里 Lobster 一行误写作「灯章鱼」。</div>
 
         <div class="jump">
             <a href="#/page/mine">
@@ -2942,7 +2961,7 @@ const GIFT_DIFF = {
     rf2: '<b>没有「最喜欢」档</b>，取而代之的是每人指定一件「生日礼物」，只在生日当天送才吃满收益。讨厌档齐备，这一作的雷区反而最值得记。',
     rf3: '四档里<b>讨厌档特别整齐</b>，另有每位候补的<b>喜欢的香水</b>——香水是独立于料理与素材的一条加成线，本作独有。',
     rff: '<b>没有「最讨厌」档</b>，只有最喜欢／喜欢／讨厌三份。人物与初代重叠很多，生日也大半沿用了初代的日期。',
-    rfo: '<b>没有「最讨厌」档</b>。这一作的喜好清单偏长，几乎人人二十样起步，查的时候按人翻比按物品找快。',
+    rfo: '<b>没有「最讨厌」档</b>，只有最喜欢／喜欢／讨厌三份。清单照攻略本「喜好」表原文：原表常把一类东西写成一条（「全部甜点」「全部烤鱼」「除宝石外的全部饰品素材」），本页就照这个粒度写，<b>不拿别作的道具名去替它展开</b>——展开出来的往往是别的作品才有的东西。',
     azuma: '这一作（龙之天地）的送礼体系和前作<b>骨架一致、细节多出四条线</b>：最喜欢／喜欢／讨厌／最讨厌四档都齐，但多了<b>话题</b>、<b>回礼</b>、<b>泡澡后的乐子</b>、<b>给你的生日礼物</b>（本页在折叠区单列，前作没有）。源站给的生日只覆盖 10 位——剩下 7 位（空／海／陆／花／露／夜／摩可绒，多为精灵系）源表本就未列，本页留「—」，不替它编一个。'
 };
 
@@ -3117,7 +3136,9 @@ function giftRf12Html(g) {
 
 function giftPage(g, arr) {
     const k = GIFT_KEY[g.id] || g.id;
-    const A = arr || ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
+    const A0 = arr || ((typeof NPC_FULL !== 'undefined') && NPC_FULL[k]) || [];
+    /* 「非居民」是海洋的巨人优米尔：会出现在人物页，但不是村民，没有生日与喜好，不进这张表 */
+    const A = A0.filter(x => !/非居民/.test(x.r || ''));
     if (!A.length) return '<div class="note">这一作的人物喜好数据尚未收录。</div>';
 
     /* azuma（龙之天地）的村民数据不进 npcfull 的七作模板，单独成表，且比前作多了
@@ -3223,7 +3244,7 @@ function giftPage(g, arr) {
 
     ${HAS_L ? `<details class="mon-fold">
         <summary>展开全部 ${A.length} 人的「喜欢」清单（共 ${totL} 条）</summary>
-        <p class="p" style="padding:.2rem 0 .8rem">平均一人 ${avgL.toFixed(1)} 条${longest && (longest.l || []).length > CUT ? `，最长的是 <b>${longest.n}</b>，一个人 ${longest.l.length} 样` : ''}。这一档宽到没有筛选价值——基本等于"这一类他都吃"，送礼时按类别挑就行。</p>
+        <p class="p" style="padding:.2rem 0 .8rem">平均一人 ${avgL.toFixed(1)} 条${longest && (longest.l || []).length > CUT ? `，最长的是 <b>${longest.n}</b>，一个人 ${longest.l.length} 样` : ''}。${avgL >= 10 ? '这一档宽到没有筛选价值——基本等于"这一类他都吃"，送礼时按类别挑就行。' : '这一作的原表本来就是把一类东西写成一条（「全部甜点」「全部矿石」这种），所以条数少不代表清单短。'}</p>
         <div class="txt-list">${A.map(x => `<p><b>${x.n}</b>：${(x.l || []).join('、') || '<span class="mon-no">源表无记录</span>'}</p>`).join('')}</div>
         ${k === 'rf2' ? '<div class="note" style="margin-top:.6rem">RF2 的源表把两代分开记，个别条目带着「第一章：」「第二章无喜好物」这样的前缀，本页照原文保留、不删不改——那句话本身就是信息。</div>' : ''}
     </details>` : ''}
@@ -6343,6 +6364,7 @@ const PAGES = [
             ], { leftFirst: true })}
             <h2 class="h2">本作候补规模</h2>
             ${stat([['花嫁候补', g.candF ? g.candF + ' 位' : '见居民页'], ['花婿候补', g.candM ? g.candM + ' 位' : '见居民页'], ['同性婚', (g.id === 'rf5' || g.id === 'azuma' || g.id === 'rf4sp') ? '可选' : '视版本']])}
+            ${g.id === 'rfo' ? `<div class="note"><b>海洋的候补是成对算的</b>：花嫁 10 位里包括索妮娅（灵魂与主角共处一室的青梅竹马），花婿 4 位里包括亚赛尔——通关后可以选择以索妮娅的身份继续，这时亚赛尔就变成对象。所以两边都各含主角之一，合计 14 位，名单与分组照攻略本「喜好」表原样。</div>` : ''}
             <div class="key">送礼的正确做法：<b>先找出「最喜欢」的那一件，而不是每天换着花样送</b>。同一件最爱的礼物每天送，好感增长远高于随机送五件普通礼物。</div>
             <h2 class="h2">生日</h2>
             <p class="p">每位居民都有固定生日。生日当天送礼，好感加成显著。把「本周谁过生日」写进日程，比每天盲送效率高得多——本站「提醒」页就是为此做的。</p>
@@ -7898,14 +7920,16 @@ const PAGES = [
             </tr>`;
 
             /* 数字现场算，别写死：钓点表补过数据后这里会自动跟上 */
+            /* 数字现场算，别写死：海洋那份换成了攻略本「鱼群」实测表（无概率） */
             const rfoSpotStat = (() => {
-                const R = (typeof SPOT_RFO !== 'undefined') ? SPOT_RFO : [];
-                const L = new Set(R.map(r => r[0] + (r[1] ? ' ' + r[1] : '')));
-                const F = new Set(); R.forEach(r => r[4].forEach(f => F.add(f[0])));
-                return `共 ${L.size} 处钓点、${F.size} 种鱼`;
+                const R = (typeof RFO_FISH_SPOT !== 'undefined') ? RFO_FISH_SPOT : [];
+                const I = new Set(R.map(r => r[0]));
+                const L = new Set(R.map(r => r[0] + '|' + r[1] + '|' + r[2]));
+                const F = new Set(); R.forEach(r => (r[4] || []).forEach(f => F.add(f[0])));
+                return { isle: I.size, loc: L.size, fish: F.size, rec: R.length };
             })();
             const rfoFishNote = (g && g.id === 'rfo')
-                ? `<div class="note"><b>海洋（RFO）</b>的鱼类尺寸与金杯线暂缺可靠来源，本页下方 RF4／RF5 鱼表仅作通用机制参考。但海洋的<b>钓点 × 鱼种 × 概率</b>分布已在 <a href="#/page/fishspot">钓点与季节</a> 页完整收录（${rfoSpotStat}），要查「哪片海出什么鱼、概率多少」请直接去那页。</div>`
+                ? `<div class="note"><b>海洋（RFO）</b>的鱼类尺寸与金杯线暂缺可靠来源，本页下方 RF4／RF5 鱼表仅作通用机制参考。海洋自己那份<b>岛 × 地点 × 时段 × 鱼种</b>的实测记录在 <a href="#/page/fishspot">钓点与季节</a> 页（${rfoSpotStat.rec} 条记录、${rfoSpotStat.isle} 处岛与海面、${rfoSpotStat.fish} 种鱼）。<b>那份表没有概率</b>——它是玩家钓出来的「这里有什么」，不是解包权重，别拿它当掉率用。</div>`
                 : '';
             const crossNote = (g && !/^rf4/.test(g.id) && g.id !== 'rf5' && g.id !== 'rfo' && g.id !== 'rf3')
                 ? `<div class="note"><b>${g.name}</b> 的鱼类专项数据暂缺可靠来源。本页鱼种全表是系列最完整的 <b>RF4／RF5</b> 数据，供横向参考；钓鱼机制（鱼影、四种状态、金杯线）全系列通用，可直接用在本作。</div>`
@@ -8267,6 +8291,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百五十：海洋的钓鱼数据整张作废重建，人物与喜好照攻略本返工</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：测试群反馈「鱼的页面数据好像根本不是海洋的，能捞上来的地点都不是这作里的」「角色喜好里男女候补都写的不对」「好像还有一个游戏里压根不存在的人」，以及一张截图圈了「平台 PS3」和「阿杰尔」。</li>
+                <li class="li"><b>先说截图那两条</b>：「PS3」<b>不是错</b>——Marvelous 官方作品页写的是「対応機種 Wii｜PlayStation®3／発売日 2011年2月24日」，两个版本同日发售，本站的平台栏无误；「阿杰尔」在 22:23 那一版已经改成「亚赛尔」，那张截图是 21:26 的旧页面，属未刷新。</li>
+                <li class="li"><b>鱼是真的错了</b>：旧的 <code>SPOT_RFO</code>（257 条、20 个地点、29 种鱼、带概率）来路不明。<b>29 种鱼里 25 种与 RF5 的中文名逐字相同</b>（西太公鱼、山女鳟、红点鲑、钩吻鲑、高身鲫、斑乌贼、螯龙虾……），剩下的 3 种还是「西太公鱼铜／银／金」这类变种；概率清一色是 40/30/20/10、55/30/10/5 这种整齐到不可能的整数，且在不同岛、不同季节原样重复。<b>判定：不可信，整张作废</b>——连带把「海边的洞窟 2 池是 95% 纯虾场」那一类解读一并删掉，因为解读也是建立在假概率上的。</li>
+                <li class="li"><b>重建依据</b>：攻略本《符文工厂海洋（最强攻略）》xls 里有一张「鱼群」工作表，是玩家一趟趟钓出来的实测记录（作者署「威亚尔」），按<b>岛（含海面坐标）→ 岛上的水面（外滩／内流／瀑布／石潭／泉水…）→ 白天／夜里</b>列出鱼种，稀有鱼原文就打着星号。新增 <code>_build_rfo_fish.py</code> 解析成 <code>js/rfo_fish.js</code>（<code>RFO_FISH_SPOT</code>）：<b>90 条记录、14 处岛与海面、45 个钓位、29 种鱼</b>。原表<b>没有概率</b>，页面上也不再写概率，并明说「这是玩家钓出来的『这里有什么』，不是解包权重」。</li>
+                <li class="li"><b>喜好那一条也坐实了</b>：原表把一类东西写成一条（命的「全部烤鱼」、塔芭莎的「全部生鱼片」、索妮娅的「全部甜点」、艾琳娜的「全部矿石」……），旧版把这些类别<b>拿 RF5 的道具池展开</b>了——命的喜欢清单因此变成 26 条「盐烤红点鲑／盐烤山女鳟／烤西太公鱼／螯龙虾烤全虾」，而这些鱼<b>海洋里一条都没有</b>。这正是测试说「喜好写得不对」的地方。现改为<b>照原表粒度写</b>：22 人重写，喜欢由 282 条降到 76 条、讨厌由 77 条降到 23 条。</li>
+                <li class="li"><b>顺手改掉的两处实质错误</b>：格雷的讨厌原写「胡萝卜／巨大胡萝卜」，原表是<b>青汁</b>；莎拉的最喜欢原写「太阳坠饰」，原表是<b>心之吊坠</b>（另一份攻略写「星星吊坠」，三说并存，页面上注明以攻略本为准）。</li>
+                <li class="li"><b>人物表返工</b>：旧版 15 条 <code>chars</code> 的说明是凭印象写的——莉莉写成「教会相关」（实为<b>歌姬大姐</b>、旅店三姐妹的老大）、俾斯麦写成「老练渔夫」（实为<b>杂货店主</b>）、梅尔普琳写成「人鱼族」（实为<b>精灵女仆</b>）、艾伊利斯写成「商店店员」（实为<b>护士小妹</b>）、格雷写成「经营店铺的青年」（实为<b>教堂神父</b>）、洁丝琳写成「掌管部分日常设施」（实为<b>考古学家</b>）。现按原表四组（女性候补 10／男性候补 4／全体居民／边境客串 3）重写为 <b>24 条</b>，称号一律取原表「昵称」列。</li>
+                <li class="li"><b>男女候补</b>：<code>candM</code> 原为 <b>0</b>，是把「男主只能娶女主」当成了全貌——原表里<b>男性结婚候补有 4 位</b>（阿泽鲁、詹姆斯、乔伊、俾斯麦），走索妮娅路线时他们是对象。现改为花嫁 10／花婿 4，恋爱页写明「两边各含一位主角，合计 14 位」。</li>
+                <li class="li"><b>那个「不存在的人」</b>：24 人逐一与原表核对，<b>23 位是原表收入的角色，另 1 位是巨人优米尔</b>——它是载着主角拖岛的神像巨人，本来就不是村民，旧版把它混进「村民喜好」的 24 人里（没有生日、没有喜好、整行空白），看着就像一个凭空多出来的人。现改为标「非居民（巨人）」，并从村民喜好表里剔除，人物页仍保留为「关键角色」。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> 418 实例／0 异常／头像 214 张缺 0；<code>_test_index_health</code> 海洋 4253 行、超长名 0；<code>_test_search</code> 十作「生命果冻」全命中；新增的 <code>_build_rfo_fish.py</code>、<code>_build_rfo_gift.py</code>、<code>_audit_rfo_gift.py</code> 随库入库，随时可重跑核对。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十九：海洋（RFO）委托任务补成 188 条真表，并修两处错</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：上一轮把海洋的三份可解析资料（<code>RFO 符文海洋攻略.txt</code>、<code>符文工厂海洋（最强攻略）.xls</code>、日版 docx）与站内 40 个条目逐项对了一遍，查出 3 处问题和 1 个大缺口。这一轮做的是其中的<b>①②两个修正</b>与<b>「委托任务」补全</b>。</li>
@@ -10392,11 +10429,10 @@ function seriesCmpHtml() {
     const fishN = id => {
         const b = baseId(id);
         if (b === 'rfo') {
-            // SPOT_RFO 是扁平数组 [地点, 区域, 季节, 时间, [[鱼名, 概率], ...]]，
-            // 按钓点展开、对鱼名去重得到「鱼与钓物种数」
-            if (typeof SPOT_RFO === 'undefined' || !SPOT_RFO.length) return 0;
+            // RFO_FISH_SPOT：攻略本「鱼群」实测表 [岛, 地点, 季节, 时段, [[鱼名, 稀有], ...]]
+            if (typeof RFO_FISH_SPOT === 'undefined' || !RFO_FISH_SPOT.length) return 0;
             const set = {};
-            SPOT_RFO.forEach(r => { (r[4] || []).forEach(f => { set[f[0]] = 1; }); });
+            RFO_FISH_SPOT.forEach(r => { (r[4] || []).forEach(f => { set[f[0]] = 1; }); });
             return Object.keys(set).length;
         }
         if (b === 'azuma') {
