@@ -99,3 +99,5 @@ _t_*.js
 
 # biligame wikitext 抓取快照（_build_*.py 的输入，本地保留）
 _snap/
+
+_preview_shot.html

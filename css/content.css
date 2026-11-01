@@ -911,3 +911,35 @@
 .content .table.mon-table.azcook tbody td:first-child {
     white-space: nowrap;
 }
+
+/* 海洋主线：正文是原表整段，必须换行；步号列窄且居中 */
+.content .table.rfomain table {
+    min-width: 46rem;
+}
+
+.content .table.rfomain .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.75;
+}
+
+.content .table.rfomain tbody td:first-child {
+    white-space: nowrap;
+    text-align: center;
+    color: var(--accent);
+}
+
+/* 海洋奖杯／许愿／巨人操作／武器招式：说明列是长句，放开换行，首列不折 */
+.content .table.rfosys table {
+    min-width: 40rem;
+}
+
+.content .table.rfosys .td {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.7;
+}
+
+.content .table.rfosys tbody td:first-child {
+    white-space: nowrap;
+}

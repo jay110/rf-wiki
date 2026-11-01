@@ -4202,7 +4202,15 @@ const PAGES = [
     },
     {
         key: 'control', group: 'basic', title: '操作方式', icon: 'pad',
-        body: g => `
+        body: g => {
+            /* 海洋（Wii／PS3）没有键鼠：旧版这里落到通用分支，写了「支持手柄与键鼠」，
+               是模板套话，与平台事实不符。海洋另有巨人一套按键，单列。 */
+            const isRfo = g && g.id === 'rfo';
+            const platNote = isRfo
+                ? 'Wii 遥控器＋双节棍（也可接经典手柄）或 PS3 手柄；两版都不支持键鼠。巨人另有一套按键，见「奖杯与许愿」页。'
+                : g.id === 'rff' ? 'Wii 遥控器体感挥动；也可接经典手柄用传统操作。'
+                    : (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' ? 'NDS 触屏可点选道具与地图，下屏常驻状态栏。' : '支持手柄与键鼠；键鼠可在设置里重绑全部按键。');
+            return `
             <h2 class="h2">基本操作逻辑</h2>
             <p class="p">系列的操作始终围绕同一套思路：一个键「用当前手上的东西」（农具／武器／道具），一个键「跳／冲刺」，一个键开菜单，方向键移动。真正需要记的只有三件事——</p>
             <ul class="ul">
@@ -4210,12 +4218,27 @@ const PAGES = [
                 <li class="li"><b>蓄力</b>：长按使用键可以蓄力，农具的蓄力等级决定一次能翻几格地；杖的蓄力决定魔法强度。</li>
                 <li class="li"><b>锁定与闪避</b>：动作化的作品（3 代之后）有锁定目标与翻滚闪避，Boss 战几乎都靠这两个。</li>
             </ul>
-            ${tbl(['平台', '本作操作要点'], [
-                [g.plat, g.id === 'rff' ? 'Wii 遥控器体感挥动；也可接经典手柄用传统操作。' : (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' ? 'NDS 触屏可点选道具与地图，下屏常驻状态栏。' : '支持手柄与键鼠；键鼠可在设置里重绑全部按键。')],
+            ${tbl(['平台', '本作操作要点'], [[g.plat, platNote]], { leftFirst: true })}
+            ${isRfo ? `<h2 class="h2">海洋独有的两套操作</h2>
+            <p class="p">这一作要同时操作<b>人物</b>与<b>巨人</b>，两者按键完全分开。巨人这边最常按的是四个：</p>
+            ${tbl(['操作', '作用'], [
+                ['<b>AB</b>', '拍击海面引起冲击波，可发现海底岛屿或沉船'],
+                ['<b>A</b>', '挥拳战斗，三连击'],
+                ['<b>B</b>', '挖掘海底岩石、岛屿或沉船'],
+                ['<b>地图键</b>', '调出海图，选中位置后进入海图模式规划路线，比直接开过去省时间'],
             ], { leftFirst: true })}
+            <div class="key">海图模式里提示<b>问号</b>可以 AB 调查、提示<b>礁石</b>可以拿起来调查，都可能出符文球或海怪——很多人只把它当导航，白丢了这些点。</div>` : ''}
             <h2 class="h2">不写在说明书里的三件事</h2>
-            <p class="p">一、<b>跳跃能省时间</b>。很多地形可以跳过去，不必绕路。二、<b>背包要定期清</b>。素材堆满会挤掉任务道具的拾取位。三、<b>菜单里能看 NPC 当前位置</b>（后期作品），找人时先看一眼，比满镇跑快得多。</p>
-        `
+            <p class="p">${isRfo
+                    ? '一、<b>巨人自带传送门</b>，可以直接回家与四季牧场岛，不必每次开回港口。二、<b>每个岛只能养 5 只魔物</b>，巨人体内 10 只——养满之前先想清楚放哪。三、<b>挖岛有次数奖杯</b>，10／20／30 次各一个，前期顺手多挖几次能一起拿。'
+                    : '一、<b>跳跃能省时间</b>。很多地形可以跳过去，不必绕路。二、<b>背包要定期清</b>。素材堆满会挤掉任务道具的拾取位。三、<b>菜单里能看 NPC 当前位置</b>（后期作品），找人时先看一眼，比满镇跑快得多。'}</p>
+        `;
+        }
+    },
+    {
+        key: 'rfomain', group: 'basic', title: '主线流程', icon: 'scroll',
+        gms: ['rfo'],
+        body: () => rfoMainHtml()
     },
 
     /* ================= 牧场生活 ================= */
@@ -6004,7 +6027,7 @@ const PAGES = [
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
-                    <div class="jp-s">RF5 全部 661 条配方：技能等级与所需素材</div>
+                    <div class="jp-s">${(g && g.id !== 'rf5') ? '本作的配方与所需素材' : 'RF5 全部 661 条配方：技能等级与所需素材'}</div>
                 </a>
             </div>
         `;
@@ -6025,11 +6048,12 @@ const PAGES = [
             <div class="key">生产系统的正确节奏：<b>先靠迷宫攒素材 → 把锻造／药学等级刷到能开下一档配方 → 再回头做装备</b>。反过来做，会一直卡在「素材不够、配方不开」。</div>
             <h2 class="h2">注意</h2>
             <p class="p">部分作品里，最强／次强武器<b>无法通过锻造获得</b>（例如 RF2 需要联机小游戏）。遇到「配方开到顶却做不出最强」的情况，先确认是不是这类例外。</p>
+            ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
             ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
-                    <div class="jp-s">RF5 全部 661 条配方：武器、防具、饰品、药学</div>
+                    <div class="jp-s">${(g && g.id !== 'rf5') ? '本作的配方：武器、防具、饰品、药学' : 'RF5 全部 661 条配方：武器、防具、饰品、药学'}</div>
                 </a>
                 ${(!g || g.id === 'rf5') ? `<a href="#/page/gear">
                     <div class="jp-t">装备打造·毕业套</div>
@@ -6184,6 +6208,11 @@ const PAGES = [
             ], { leftFirst: true })}
             <div class="note">这是系列里最容易被忽略的系统。前期不用碰，中期开始做几件带属性的饰品，性价比意外地高。</div>
         `
+    },
+    {
+        key: 'rfosys', group: 'life', title: '奖杯与许愿', icon: 'note',
+        gms: ['rfo'],
+        body: () => rfoSysHtml()
     },
 
     /* ================= 活动事件 ================= */
@@ -6549,6 +6578,7 @@ const PAGES = [
             <p class="p">${rowsN} 件，按原表的种类与面板列出。<b>列多放不下时可左右滑动</b>；「—」表示该项为 0、无，或原表未给。搜武器名、种类、属性或特效都能筛。</p>
             ${ftableOwn(WX.cols, WX.colw, WX.rows, { ph: '输入武器名、种类、属性或特效筛选' })}
             <div class="note">${WX.note || ''}</div>
+            ${id === 'rfo' ? rfoStyleHtml() : ''}
             <div class="jump">
                 <a href="#/page/battle">
                     <div class="jp-t">战斗与弱点</div>
@@ -8291,6 +8321,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百五十一：海洋剩下的三张表全核了一遍——主线 32 步、奖杯 38 个、七种武器招式，连带修掉「支持键鼠」这句错话</h2>
+            <ul class="ul">
+                <li class="li"><b>起因</b>：上一轮把海洋的鱼、喜好、委托、生日都对完了，还剩攻略本 xls 里三张没碰过的表——「主线」「战斗」「其他」。这一轮逐格看完，结论是<b>这回不是「数据是假的」，而是「根本没有」</b>：站内海洋的 40 个条目里，<b>主线流程、招式、奖杯、回忆影像、龙庭许愿、巨人操作、合成难度</b>七块全是空白。</li>
+                <li class="li"><b>先说抓到的一处真错</b>：「操作方式」页对海洋写的是「支持手柄与键鼠；键鼠可在设置里重绑全部按键」——这是<b>模板兜底句</b>套到了 Wii／PS3 上，这作两个版本都<b>没有键鼠</b>。现在海洋走单独分支，写清 Wii 遥控器＋双节棍／经典手柄、PS3 手柄，并把巨人那套按键（AB 拍海面、A 三连击、B 挖掘、地图键开海图）单列成一节，正文里「菜单能看 NPC 当前位置」那种不确定的话也换成了有据的三条。</li>
+                <li class="li"><b>新增「主线流程」页</b>（<code>key: 'rfomain'</code>，只看海洋）：攻略本把主线写成 <b>32 步</b>、一步一段，照录全表，并把原表夹在正文里的 <b>9 处提醒</b>（抓一只莫克莫克、冰壁要三条公鱼、最终战前先把好感备好、存档）单独摘出来标回步号。页面上另外点明<b>三次巨人强化</b>的位置：土殿 <code>グリーンコア</code> → 过洋流、火殿 <code>レッドコア</code> → 进深水、水殿 <code>ブルーコア</code>，而且原表专门写「这次是不会自动拿走的」，背包里放着不升级。</li>
+                <li class="li"><b>新增「奖杯与许愿」页</b>（<code>key: 'rfosys'</code>）：<b>38 个奖杯</b>（白金 1／金 4／银 11／铜 22）照原表拆成「奖杯名／等级／条件」三列；<b>15 段回忆影像</b>、<b>4 项龙庭许愿</b>（500／1000／3000／5000G，花的是已捐金额不是现金）、<b>11 条巨人操作</b>一并收进来。</li>
+                <li class="li"><b>武器页补了招式</b>：那张 135 件的全表只有数值，「同一把双剑普攻 11 Hit 与蓄力挑空怎么用」原本一个字都没有。现按攻略本「战斗」表补<b>6 块（斧与锤原表合并写，实为七种武器）</b>：每块 5 条基本攻击（普通／冲刺／蓄力／空中／奥义）＋ 3 条技能（魔杖 4 条），共 <b>30＋19 条</b>，RP 消耗与 Hit 数留在原句里——硬拆成列容易拆错，整句照录反而可查。同时讲清奥义的门槛是<b>武器技能等级</b>：杖 6 级、其余近战 13 级。</li>
+                <li class="li"><b>锻造页补了合成难度</b>：这一作成败先看「物品等级 − 技能等级」，原表分 7 档（&gt;20 做不了 → &lt;−10 很简单），连同「带 ☆ 优质品」的两组概率照录。</li>
+                <li class="li"><b>三处照录、不替原表圆</b>：① 第 15 步写「伊蕾克拉（バッカス）」，可伊蕾克拉在第 13 步对应的是 <code>エレクトラ</code>、<code>バッカス</code> 在别处是「巴克斯」——<b>人名与括注日文配错</b>，正文不动，只在页尾点出；② 合成难度第Ⅵ档写「&lt;0&amp;≤−10」，字面把 0～−10 那段漏了，按第Ⅳ档的写法类推本应是「&lt;0&amp;&gt;−10」，<b>两边并存</b>；③ 主线第 31 步说「全部结婚候补」<b>12 人</b>，而「喜好」表是花嫁 10／花婿 4 合计 <b>14 位</b>，两处口径并存，不合并成一个数。</li>
+                <li class="li"><b>顺手修的两处文案</b>：锻造页两张跳转卡原本写死「RF5 全部 661 条配方」，在海洋、RF1～RF4、边境下都这么显示，现改为按当前作品说话。</li>
+                <li class="li"><b>数据怎么来的</b>：新增 <code>_build_rfo_misc.py</code>，从同一份 xls 解析出 <code>js/rfo_main.js</code>（<code>RFO_MAIN</code>）与 <code>js/rfo_misc.js</code>（<code>RFO_MISC</code>：奖杯／回忆／许愿／巨人操作／合成／招式）。脚本只做摊平，不改字。</li>
+                <li class="li"><b>校验</b>：<code>_verify</code> <b>420 实例／0 异常／头像 214 张缺 0</b>；<code>_test_index_health</code> 海洋 4421 行、超长名 0（主线表首格是步号，原会被索引取成正文，已改成「第 N 步」并把步骤名放进 <code>mon-desc</code>）；新页可用「最终决战」「奥义」等词搜到。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百五十：海洋的钓鱼数据整张作废重建，人物与喜好照攻略本返工</h2>
             <ul class="ul">
                 <li class="li"><b>起因</b>：测试群反馈「鱼的页面数据好像根本不是海洋的，能捞上来的地点都不是这作里的」「角色喜好里男女候补都写的不对」「好像还有一个游戏里压根不存在的人」，以及一张截图圈了「平台 PS3」和「阿杰尔」。</li>
@@ -9937,6 +9980,174 @@ function azumaBossHtml() {
         <h3>主线剧情 BOSS</h3>
         <div class="note">来源：英文攻略 game8 / neoseeker（biligame 可捕表未含或仅标不可捕者）。按剧情顺序列出；「乌拉／卡慕罗崎（猎犬）／美星 羽爆」三名为本站音译定名（中文攻略站无权威译名，保留英文名对照）。「贝隆＝Veyron」「克拉丽丝＝Clarice」已在可捕表，此处补 Lv 与定位。</div>
         <div class="table mon-table"><table><thead><tr><th>名称</th><th>英文名</th><th>Lv</th><th>武器弱点</th><th>属性弱点</th><th>定位／备注</th></tr></thead><tbody>${mainRows}</tbody></table></div>`;
+}
+
+/* 符文工房 海洋（RFO）主线流程：单一来源《符文工厂海洋（最强攻略）》xls「主线」工作表。
+   原表是攻略本作者的中文整理稿，人名与任务名夹日文原文、写法不统一，本页照录原文，
+   不统一译名、不补缺字；原表自身对不上的地方（人名与括注日文不匹配）只在页尾点出，不改正文。 */
+function rfoMainHtml() {
+    const M = (typeof RFO_MAIN !== 'undefined') ? RFO_MAIN : null;
+    if (!M || !M.steps.length) return '<p class="p">主线数据未加载。</p>';
+    const S = M.steps;
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const nDep = S.reduce((a, s) => a + (s.d.join('').match(/依赖/g) || []).length, 0);
+    const upg = S.filter(s => /巨人强化/.test(s.t));
+    const TPL = ['土精灵神殿', '火精灵神殿', '水精灵神殿', '风精灵神殿'];
+    const tpl = S.filter(s => TPL.some(k => s.t.indexOf(k) >= 0 || s.d.join('').indexOf(k) >= 0));
+    const tplOf = k => S.filter(s => s.t.indexOf(k) >= 0 || s.d.join('').indexOf(k) >= 0).map(s => s.i);
+
+    /* 原表在每个步骤里夹着「注意／记得／需要」这类提醒，摘出来单列，标回步号，不改一字 */
+    const TIP = /注意|记得|需要|必须先|抓一只|建议|别忘了|请先/;
+    const tips = [];
+    S.forEach(s => s.d.forEach(d => {
+        (d.match(/[^。]+。?/g) || []).forEach(x => {
+            const t = x.trim();
+            if (TIP.test(t) && t.replace(/。$/, '').length > 6) tips.push({ i: s.i, t });
+        });
+    }));
+
+    const rows = S.map(s => [s.i, esc(s.t), s.d.map(esc).join('<br>')]);
+    return `
+            <p class="p">海洋的主线是<b>「依赖驱动」</b>的：几乎每一步推进都挂在某位 NPC 的依赖上——做完依赖，海图上才出现新坐标；挖出岛或打通神殿，拿到核心强化巨人，才开得动下一片海域。全程 <b>${S.length} 步</b>，下面照攻略本原样一步一段。</p>
+            ${stat([['步骤', S.length + ' 步'], ['「依赖」出现', nDep + ' 次'], ['巨人强化', upg.length + ' 次'], ['四座神殿', tpl.length + ' 步']])}
+
+            <h2 class="h2">主线全流程</h2>
+            <p class="p">左列是原表的步号，右列是原表正文。<b>原表把「关键道具」「在哪触发」写在同一段里</b>，所以段落偏长——按步号跳着看即可，不必逐句读。</p>
+            ${tbl(['#', '步骤', '原表正文'], rows, { leftFirst: true, left: [2], cls: 'rfomain', colw: ['2.6rem', '9.5rem', ''] })}
+
+            <h2 class="h2">三次巨人强化，卡在主线中间</h2>
+            <p class="p">巨人不是一次升级到位的。前三个精灵神殿各掉一个颜色的核心，<b>交给伊莲娜（エレナ）</b>巨人才解锁一种新的移动能力：土殿的 グリーンコア → 过洋流（第 ${tplOf('土精灵神殿')[0]}～${upg[0].i} 步）、火殿的 レッドコア → 进深水（第 ${tplOf('火精灵神殿')[0]}～${upg[1].i} 步）、水殿的 ブルーコア（第 ${upg[2].i} 步）。三次强化就到此为止——风殿之后直接进终局。</p>
+            <p class="p">这也是海洋最容易卡住的地方：<b>核心要先交给伊莲娜才会生效</b>，尤其第二次原表专门注明「这次是不会自动拿走的」，背包里放着不会升级，还得每天去追问进度，否则要拖好几天。</p>
+
+            <h2 class="h2">原表夹在正文里的 ${tips.length} 处提醒</h2>
+            <p class="p">下面这些句子是从上面正文里摘出来的，<b>只摘不改、句尾保留原标点</b>；漏了往往要多跑一趟：</p>
+            ${tbl(['位置', '原句'], tips.map(t => ['第 ' + t.i + ' 步<span class="mon-desc">' + esc(S[t.i - 1] ? S[t.i - 1].t : '') + '</span>', esc(t.t)]), { leftFirst: true, left: [1], cls: 'rfomain', colw: ['5.4rem', ''] })}
+
+            <h2 class="h2">照录不改的几处</h2>
+            <ul class="ul">
+                <li class="li"><b>人名与括注日文对不上的地方不修</b>：第 15 步写「伊蕾克拉（バッカス）」，可「伊蕾克拉」在第 13 步对应的是<b>エレクトラ</b>，而バッカス 在别处是「巴克斯」——原表这一处把中文名和日文名配错了，本页照录，不替它选一个。</li>
+                <li class="li"><b>日文任务名不译</b>：正文里的「はじめてのかわら版」「海の神殿の海図」等一律保留原文，攻略本本身没有给中文名，本站不代翻。</li>
+                <li class="li"><b>原表的时间写法照抄</b>：「晚上8.00」这种用点号当冒号的写法不改；第 24 步冰壁的「ワカサギ銅、銀、金各一匹」是三条不同的鱼，不是同一条。</li>
+                <li class="li"><b>第 31 步的 12 人名单是「全部结婚候补」</b>——原表列了 リリ、オデット、アイリス、エレクトラ、メルプリン、エレナ、セーラ、パンドラ、命、ジョー、ジェームス、ビスマルク 共 12 位，与「喜好」表的分组口径不同（那边花嫁 10／花婿 4，合计 14 位），两处数字并存，不合并。</li>
+            </ul>
+            <div class="note">主线之外，攻略本另收了 <b>${(typeof RFO_QUEST !== 'undefined' && RFO_QUEST.quests) ? RFO_QUEST.quests.length : 0} 条委托</b>（18 位委托人）与 <b>${(typeof RFO_FISH_SPOT !== 'undefined') ? RFO_FISH_SPOT.length : 0} 条钓点记录</b>，各在对应页。</div>
+            <div class="jump">
+                <a href="#/page/request">
+                    <div class="jp-t">委托任务</div>
+                    <div class="jp-s">18 位委托人、188 条任务的条件与报酬</div>
+                </a>
+                <a href="#/page/rfosys">
+                    <div class="jp-t">奖杯与许愿</div>
+                    <div class="jp-s">38 个奖杯、龙庭四项许愿、巨人怎么开</div>
+                </a>
+            </div>`;
+}
+
+/* 符文工房 海洋（RFO）奖杯·回忆·许愿·巨人操作：单一来源 xls「其他」工作表。
+   奖杯等级、日文名、条件三项原表分列写的，照录；回忆影像与许愿、巨人操作是原表的段落，逐条摊开。 */
+function rfoSysHtml() {
+    const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;
+    if (!M) return '<p class="p">数据未加载。</p>';
+    const T = M.trophies || [], MEM = M.memory || [], W = M.wish || [], G = M.giant || [];
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const cnt = {};
+    T.forEach(t => { cnt[t.g] = (cnt[t.g] || 0) + 1; });
+    const ord = ['白金', '金', '银', '铜'].filter(k => cnt[k]);
+    const gcnt = ord.map(k => k + ' ' + cnt[k]).join(' · ');
+    const plat = T.filter(t => t.g === '白金');
+    const story = T.filter(t => /主线剧情/.test(t.c));
+
+    return `
+            <p class="p">这一页是攻略本「其他」表里的四块系统内容：<b>奖杯、回忆影像、龙庭许愿、巨人操作</b>。都是散在攻略本最后、游戏里又不明说的部分，照原表整理。</p>
+            ${stat([['奖杯', T.length + ' 个'], ['等级构成', gcnt], ['回忆影像', MEM.length + ' 段'], ['许愿项目', W.length + ' 项']])}
+
+            <h2 class="h2">奖杯 ${T.length} 个</h2>
+            <p class="p">原表把「等级／奖杯名／取得条件」写在一起，本页拆成三列。<b>奖杯名是日文原名</b>——PS3／Wii 版的奖杯语言跟主机语言走，攻略本也只记了日文。</p>
+            ${tbl(['奖杯名（原文）', '等级', '取得条件'], T.map(t => [
+        esc(t.jp), t === plat[0] ? '<b>白金</b>' : t.g, esc(t.c)]),
+        { leftFirst: true, left: [2], cls: 'rfosys', colw: ['15rem', '3.4rem', ''] })}
+            <div class="key"><b>白金只有一个</b>：${plat.map(p => esc(p.jp) + '（' + esc(p.c) + '）').join('、')}。另有 <b>${story.length} 个</b>是「${esc(story[0] ? story[0].c : '')}」的白送杯——跟着主线走必然拿到，不用单独刷。</div>
+
+            <h2 class="h2">回忆影像 ${MEM.length} 段</h2>
+            <p class="p">游戏内的回顾片单，原表按序号一口气列完。想补看剧情、或者确认自己漏了哪段，照这个顺序对：</p>
+            ${tbl(['#', '片段'], MEM.map(m => [m.n, esc(m.t)]), { leftFirst: true, left: [1], cls: 'rfosys', colw: ['2.6rem', ''] })}
+
+            <h2 class="h2">龙庭许愿 ${W.length} 项</h2>
+            <p class="p">许愿不是花现金，而是<b>消耗你已经捐出去的金额</b>——捐得越多，能开的项目越多。四项的价码与效果如下（金额是原表写的解锁价，效果括注也是原表原话）：</p>
+            ${tbl(['许愿项目（原文）', '捐款额', '效果'], W.map(w => [
+            esc(w.jp), '<b>' + w.g + 'G</b>', esc(w.d)]),
+        { leftFirst: true, left: [2], cls: 'rfosys', colw: ['13rem', '4.6rem', ''] })}
+            <div class="note">四项里最实用的是<b>第一项</b>：能直接看到各植岛还差多少繁荣度才解除石化——不用反复试种。第二项查居民喜好，第三项挪巨人，第四项只在许愿当天把掉宝率拉高。</div>
+
+            <h2 class="h2">巨人操作</h2>
+            <p class="p">巨人既是载具也是战力，按键跟人物完全两套。原表这几条是按 <b>Wii 版</b>写的（有「长按 A」「跳跃键」「地图键」这类说法）：</p>
+            ${tbl(['操作', '作用'], G.map(x => [x.k ? '<b>' + esc(x.k) + '</b>' : '<span class="mon-no">（通用）</span>', esc(x.d)]), { leftFirst: true, left: [1], cls: 'rfosys', colw: ['6.4rem', ''] })}
+            <div class="key">两条最容易漏：<b>装 5 只／10 只的上限</b>——每个岛只能养 5 只魔物，巨人体内 10 只；以及<b>巨人自带传送门</b>，可以直接回家和四季牧场岛，不必每次开回港口。</div>
+            <div class="jump">
+                <a href="#/page/rfomain">
+                    <div class="jp-t">主线流程</div>
+                    <div class="jp-s">32 步、三次巨人强化卡在哪</div>
+                </a>
+                <a href="#/page/request">
+                    <div class="jp-t">委托任务</div>
+                    <div class="jp-s">18 位委托人的 188 条任务</div>
+                </a>
+            </div>`;
+}
+
+/* 符文工房 海洋（RFO）七种武器的招式：单一来源 xls「战斗」工作表。
+   原表按武器分块写「基本攻击 5 条 + 技能 3～4 条 + 总评」，本页照块还原，不拆 RP 与 Hit 数另立列
+   （那些数字是夹在句子里的，硬拆容易拆错，整句照录反而可查）。 */
+function rfoStyleHtml() {
+    const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;
+    const L = (M && M.wstyle) ? M.wstyle : [];
+    if (!L.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const nSkill = L.reduce((a, w) => a + w.skill.length, 0);
+    const nMove = L.reduce((a, w) => a + w.basic.length, 0);
+
+    const blocks = L.map(w => `
+            <h3 class="h3">${esc(w.n)}${w.sk ? `<span class="mon-no">　相关技能：${esc(w.sk)}</span>` : ''}</h3>
+            <p class="p">${esc(w.desc)}</p>
+            ${tbl(['基本攻击', '原表说明'], w.basic.map(b => [b.k ? '<b>' + esc(b.k) + '</b>' : '—', esc(b.d)]), { leftFirst: true, left: [1], cls: 'rfosys', colw: ['9rem', ''] })}
+            ${tbl(['技能', '原表说明'], w.skill.map(b => [b.k ? '<b>' + esc(b.k) + '</b>' : '—', esc(b.d)]), { leftFirst: true, left: [1], cls: 'rfosys', colw: ['9rem', ''] })}
+            ${w.note ? `<div class="note"><b>原表总评</b>：${esc(w.note)}</div>` : ''}`).join('');
+
+    return `
+            <h2 class="h2">七种武器的招式与 RP</h2>
+            <p class="p">上面那张全表只有数值，<b>没有招式</b>——同一把双剑，普攻 11 Hit 与蓄力挑空的用法是两套东西。这一节照攻略本「战斗」表把每种武器的<b>普通／冲刺／蓄力／空中／奥义</b>与技能（各 3 条，魔杖 4 条）摊开，RP 消耗就写在句子里。</p>
+            ${stat([['武器块', L.length + ' 块（斧与锤合并写）'], ['基本攻击', nMove + ' 条'], ['技能', nSkill + ' 条']])}
+            <div class="key"><b>奥义的门槛不是等级，是武器技能等级</b>：杖只要 <b>6 级</b>，其余近战全都要 <b>13 级</b>；原表还注明奥义过程中主角无敌（杖除外）——所以奥义既是输出也是保命。冲刺／蓄力／空中则分别卡在技能 2／3／5 级。</div>
+            ${blocks}
+            <div class="note">原表末尾有两处主观评价照录不改：「打小龙一刀9999」与「最强武器，没有之一」（指魔杖）。这是攻略本作者当年的判断，不是本站结论——魔杖的强来自奥义是<b>被动</b>（装上就一直生效），而不是面板。</div>
+            <div class="note">攻略本对武器的叫法与上面那张全表<b>不完全一致</b>：这里写「两手剑／长枪／武士刀」，全表按解包分类写「双手剑／枪／居合刀」；「斧头、锤子」在全表里是两类，只是攻略本合并成一节讲。<b>同一件东西的两个名字，本节照攻略本原文，全表照分类名，不做统一。</b></div>`;
+}
+
+/* 符文工房 海洋（RFO）合成难度：单一来源 xls「其他」表「合成指南」。
+   原表的分段区间本身不闭合（Ⅵ 写「<0&≤-10」，把 0～-10 那段漏了），照录并点出，不替它补。 */
+function rfoCraftHtml() {
+    const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;
+    const C = M && M.craft;
+    if (!C || !C.levels.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const lv = C.levels;
+
+    return `
+            <h2 class="h2">海洋的合成难度：看「物品等级 − 技能等级」</h2>
+            <p class="p">这一作的成败不看运气条怎么按，而是先看一个差值：<b>要做的物品等级，减去你对应的技能等级</b>。差值落在哪一档，就决定了这一步是「根本做不了」还是「几乎必成」——</p>
+            ${tbl(['差值（物品等级 − 技能等级）', '原表写的难度'],
+        lv.map(l => ['<b>' + esc(l.cond) + '</b>', esc(l.d)]),
+        { leftFirst: true, left: [1], cls: 'rfosys', colw: ['12rem', ''] })}
+            <div class="key">合成时把光标停在<b>合成条的蓝色段</b>即可成功；连续失败时浮标会越来越慢，等于给你留出反应时间。除料理会出「失败作」外，其他生产失败<b>不损材料</b>，所以技能等级够了就可以放心试。</div>
+            <div class="note"><b>原表这一段区间不闭合，本站照录不补</b>：第Ⅵ档写「&lt;0&amp;≤−10」，字面是「≤−10」，可这样 0 到 −10 之间就没有归属；按第Ⅳ档「≤5&amp;&gt;0」的写法类推，第Ⅵ档本来应该是「&lt;0&amp;&gt;−10」。两边并存，读者自己判断。</div>
+
+            <h3 class="h3">带 ☆ 的优质品</h3>
+            <p class="p">成品有一定概率变成带 ☆ 的「优质品」，售价与能力值都更高，高级装备能差出几十点。原表说出现率由<b>难度</b>与<b>原材料里的优质品个数</b>共同决定，并明说这两组数是<b>网上资料、未经验证</b>，只作参考：</p>
+            <ul class="ul">
+                ${C.starA.map(s => `<li class="li">${esc(s)}</li>`).join('')}
+                ${C.starB.map(s => `<li class="li">${esc(s)}</li>`).join('')}
+            </ul>
+            <div class="note">这两组数字本站不做任何推演：原表自己标了「未经验证」，而且第一组只给了 6 个难度对应的概率，没说两者怎么叠加。真要靠优质品做装备，实际做法还是<b>把技能等级刷高、用带 ☆ 的素材</b>，比记概率可靠。</div>`;
 }
 
 /* 符文工房 海洋（RFO）委托任务：单一来源《符文工厂海洋（最强攻略）》xls「任务」工作表。
