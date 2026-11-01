@@ -1145,7 +1145,11 @@ function buildIndex(g) {
                退一格取真正的内容 */
             let ci = 0;
             if (/^\d{1,4}$/.test(ctext[0]) && ctext.length > 1) ci = 1;
-            const name = ctext[ci].replace(/\s+/g, ' ').trim();
+            /* 首格常嵌一段辅助文字（.mon-desc：日文名或魔物简介），
+               stripTags 会把它与名字连成一长串，搜索结果的标题就毁了。
+               取名字前先把这段辅助文字整块去掉；正文 s 仍是整行全文，搜索不受影响 */
+            const nameCell = cells[ci].replace(/<span class="mon-desc">[\s\S]*?<\/span>/gi, '');
+            const name = stripTags(nameCell).replace(/\s+/g, ' ').trim();
             if (!name || name === '—' || name === '-' || name === '?') continue;
             const text = stripTags(tr);
             list.push({

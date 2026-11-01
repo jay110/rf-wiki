@@ -8261,6 +8261,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+            <h2 class="h2">2026-11-01　第一百四十六：修搜索索引「名字被辅助文字污染」</h2>
+            <ul class="ul">
+                <li class="li"><b>体检发现</b>：跑全部自检脚本时，<code>_test_index_health</code> 报 rf2 有 <b>80 条超长名</b>，样例是「奥库伊奇 稍微有些笨拙的魔物。好奇心旺盛…」——即<b>魔物名和整段简介被当成同一个名字</b>。这些条目在搜索结果里会以超长串作标题，影响可读性。</li>
+                <li class="li"><b>根因</b>：<code>js/app.js</code> 的 <code>buildIndex()</code> 取每行第一个 <code>&lt;td&gt;</code> 经 <code>stripTags</code> 作名字；而魔物图鉴等多处把「名字 + 辅助文字」放进同一格，辅助文字用 <code>&lt;span class="mon-desc"&gt;</code> 包着（rf2 放魔物简介、其余放日文名）。<code>stripTags</code> 把两者连成一串，名字就毁了。</li>
+                <li class="li"><b>修法</b>：取名字前先把 <code>&lt;span class="mon-desc"&gt;…&lt;/span&gt;</code> 整块剥掉，再做 <code>stripTags</code>；正文 <code>s</code> 仍是整行全文，<b>按简介搜索不受影响</b>（rf2 搜「突进」仍命中 13 条，标题是「米诺塔」这样的纯名字）。rf2 超长名 <b>80 → 0</b>；<code>mon-desc</code> 另三处（武器/物品的日文名）也一并变干净。</li>
+                <li class="li"><b>复核</b>：<code>_test_index_health</code> 各作超长名归零（仅剩「操作方式」的平台串等长但合理的格）；<code>_test_search</code> 十作「生命果冻」全命中、无污染；<code>_verify</code> 仍 <b>408 实例／0 异常／头像 214 张缺 0</b>；<code>_coverage</code>、<code>_probe_azuma</code> 全页渲染无报错。</li>
+            </ul>
             <h2 class="h2">2026-11-01　第一百四十五：打磨 seriescmp——新增「原名与主角结构」小节</h2>
             <ul class="ul">
                 <li class="li"><b>第一百四十四继续方向 A</b>。把 <code>GAMES</code> 里仍未在本页使用的真实字段——<code>jp</code>（日文原名）、<code>en</code>（英文原名）、<code>tagline</code>（一句话定位）——聚合成<b>第七节「原名与主角结构」</b>：十作并排「作品／日文原名／英文原名／一句话定位／主角结构」五列表，<b>零臆造</b>。</li>
