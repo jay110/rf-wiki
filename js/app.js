@@ -11,21 +11,17 @@ const LSKEY = 'rf_wiki_v1';
 const TITLE_ART = {
     rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
     rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
+    /* pair-rf3／pair-rf4 原是「本体＋移植版」双作合并卡的底图，两部 SP 并入本体后
+       直接当作 3／4 的单卡图用；文件名沿用历史命名，内容仍是官方主视觉整图 */
+    rf3:   { src: 'assets/title/pair-rf3.jpg', tall: true },
+    rf4:   { src: 'assets/title/pair-rf4.jpg', tall: true },
     rf5:   { src: 'assets/title/rf5.jpg', tall: true },
     rff:   { src: 'assets/title/rff.jpg', tall: true },
     rfo:   { src: 'assets/title/rfo.jpg', tall: true },
     azuma: { src: 'assets/title/azuma.jpg', tall: true },
 };
 
-/* 双作合并卡：「本作 + 它的强化版」并成一张，图上下各一条。
-   RF3+RF3SP、RF4+RF4SP 两组，每组两张官方图单独成卡都只有一半内容能进 16:9 的框，
-   并起来反而每条都能露完整，卡片总数也从 10 降到 8。
-   键 = 排在前面的那部，mate = 并进去的第二部，src = 预先拼好的 960x540。 */
-const WPAIR = {
-    rf3: { mate: 'rf3sp', src: 'assets/title/pair-rf3.jpg' },
-    rf4: { mate: 'rf4sp', src: 'assets/title/pair-rf4.jpg' },
-};
-const WPAIR_MATE = new Set(Object.keys(WPAIR).map(k => WPAIR[k].mate));
+/* 双作合并卡已取消：RF3／RF4 的移植版并入本体作品页，作品卡回归一作一张 */
 
 const S = {
     game: 'rf4',
@@ -132,33 +128,6 @@ function titleSrc(art) {
     return art.src;
 }
 
-/* 双作合并卡：整张卡不是链接，上半条 / 下半条各是一个 a，
-   点哪一条进哪一部；文字区再把两部作品名摆成两行，小屏也点得中。 */
-function wcardPair(x, g) {
-    const p = WPAIR[x.id];
-    const b = GAMES.find(y => y.id === p.mate);
-    if (!b) return '';
-    const two = [x, b];
-    const on = two.some(y => y.id === g.id);
-    const row = (y) => `
-                <a class="pair-row${y.id === g.id ? ' on' : ''}" href="#/switch/${y.id}">
-                    <span class="pair-row-name"><span class="wpre">符文工房</span>${y.name.replace(/^符文工房\s*/, '')}</span>
-                    <span class="pair-row-meta">${y.date.slice(0, 4)}<span class="pr-plat">　${platShort(y.plat)}</span></span>
-                </a>`;
-    return `
-            <div class="wcard wcard-pair has-fig${on ? ' cur' : ''}"
-                 style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                <div class="wcard-fig is-tall">
-                    <img src="${titleSrc({ src: p.src })}" alt="" loading="lazy">
-                    <a class="pair-hit" href="#/switch/${x.id}" aria-label="${x.name}"></a>
-                    <a class="pair-hit pair-hit-2" href="#/switch/${b.id}" aria-label="${b.name}"></a>
-                </div>
-                <div class="wcard-no">${x.no}／${b.no}</div>
-                <div class="pair-rows">${two.map(row).join('')}</div>
-            </div>`;
-}
-
-
 function viewWelcome() {
     const g = cur();
     /* 用人物档案的总数（199 人），不是 data.js 里那份只收候补的旧名单 */
@@ -182,8 +151,7 @@ function viewWelcome() {
 
     <div class="section-title"><span>选择作品</span><span class="en">TITLES</span></div>
     <div class="wgrid">
-        ${GAMES.filter(x => !WPAIR_MATE.has(x.id)).map(x => {
-            if (WPAIR[x.id]) return wcardPair(x, g);
+        ${GAMES.map(x => {
             const art = TITLE_ART[x.id];
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
@@ -374,7 +342,8 @@ function focusRow(name) {
    符文工厂 wiki 的人物页；没有对应源的作品（龙之天地）回退到 GAMES[].chars
    ============================================================ */
 
-const NPC_KEY = { rf3sp: 'rf3', rf4sp: 'rf4' };
+/* 移植版已并入本体作品页，两版共用一份人物档案，不再需要别名映射 */
+const NPC_KEY = {};
 
 function npcOf(g) {
     const k = NPC_KEY[g.id] || g.id;

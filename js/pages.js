@@ -2616,8 +2616,8 @@ function fx4sHtml(g) {
     const tC = ftableOwn(F.critHead, W7, rowsOf(C), { ph: '输入名字，如「传送门」或「比修奈尔」', cls: 'fx5' });
 
     return `
-    <p class="p">本页是《符文工房4 特别版》<b>魔物与村民那一侧</b>的底牌：打它该用什么属性、状态挂不挂得上、能不能打晕打飞。源站 <code>RF4Smonsterresist</code> 把数据拆成<b>三张独立模板表</b>，本页照原样分三张列出来——三张表的名字顺序并不一致，所以不强行拼成一张。</p>
-    <p class="p">4 代那一版（切到「符文工房4」）讲的是<b>装备</b>面板上看不到的附加率与抗性。本页换了一侧，讲的是<b>魔物与村民</b>。两边口径不同，按作分开写。</p>
+    <p class="p">这一节是 4 代<b>魔物与村民那一侧</b>的底牌：打它该用什么属性、状态挂不挂得上、能不能打晕打飞。源站 <code>RF4Smonsterresist</code> 把数据拆成<b>三张独立模板表</b>，这里照原样分三张列出来——三张表的名字顺序并不一致，所以不强行拼成一张。</p>
+    <p class="p">上一节讲的是<b>装备</b>面板上看不到的附加率与抗性，这一节换到<b>魔物与村民</b>。两边口径不同，分两部分写在同一页。源条目名是 <code>RF4Smonsterresist</code>（挂在 4 豪华版名下），<b>原版 3DS 没有可对照的同名表</b>，这里照源表原样录，不替原版另标一套。</p>
     <p class="p">这份表最特别的地方是<b>含村民</b>：雷斯特、芙缇、比修奈尔、库洛丽嘉、沃尔卡农这些可操作角色和重要 NPC 也在里面——其它作的抗性表只列魔物，没有这一份。和 5 代一样，数值<b>有正也有负</b>：源表把弱点用蓝字负号写（如 −25%、−200%），本页统一标红；<b>0%</b> 压成浅灰。百分比还带小数（如 2.98%），原样保留。难度选择会影响<b>天堂之门</b>等魔物的抗性，困难难度的天堂之门只能受到弱点属性伤害。</p>
     ${stat([['属性表', n + ' 条'], ['异常表', A.length + ' 条'], ['暴击表', C.length + ' 条']])}
 
@@ -2732,7 +2732,7 @@ function fx5Html(g) {
 
     return `
     <p class="p">本页是《符文工房5》<b>魔物那一侧</b>的底牌：打它该用什么属性、状态挂不挂得上、能不能打晕打飞。源站给的是一组三张表，共 ${n} 行，三张表行号一一对应——同一行就是同一只怪。</p>
-    <p class="p">4 代那一版（切到「符文工房4」）看的是<b>装备</b>：面板上不显示、却真实生效的附加率与抗性。5 代这里换了一侧，讲的是<b>魔物</b>。两边口径不同，所以按作分开写，不硬合成一张表。</p>
+    <p class="p">4 代那一页看的是<b>装备</b>：面板上不显示、却真实生效的附加率与抗性。5 代这里换了一侧，讲的是<b>魔物</b>。两边口径不同，所以按作分开写，不硬合成一张表。</p>
     <p class="p">站内「魔物图鉴」其实已经收着其中两张（属性、暴击眩晕吹飞）。这一页把它们与第三张<b>异常抗性</b>并排放，顺便把两份数据逐格核了一遍——同源、数值零差异，只有名字写法与两行重复的区别，写在最后。</p>
     ${stat([['魔物条目', n + ' 条'], ['属性', EK.length + ' 项'], ['异常', AK.length + ' 项'], ['至少一项属性免疫', immRows + ' 条']])}
 
@@ -2780,7 +2780,7 @@ function fx5Html(g) {
 }
 
 function gearBestHtml(g) {
-    const id = (g && g.id === 'rf3sp') ? 'rf3' : (g && g.id);
+    const id = (g && g.id);
     const D = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST[id] : null;
     if (!D) return '';
     const B = D.blocks || [];
@@ -3668,7 +3668,8 @@ function nz(v) { return (v === 0 || v === '' || v == null) ? '—' : v; }
    w 最讨厌 / bg 生日礼物 / pf 喜欢的香水 / bd 生日。各作档位本来就不齐——
    rf1 没有讨厌档、rf2 没有最喜欢档，所以页面按该作实有的档位出列，
    不为了"看起来统一"去补一列空表头。 */
-const GIFT_KEY = { rf3sp: 'rf3' };
+/* 特别版／豪华版已并入本体作品页，两版共用同一份数据，不再需要别名映射 */
+const GIFT_KEY = {};
 const GIFT_SEAS = ['春', '夏', '秋', '冬'];
 
 /* 各作机制差异，读者最容易在这里误会成"漏收" */
@@ -3993,7 +3994,6 @@ function giftPage(g, arr) {
    事实来源：Marvelous／XSEED Games 官方发布、世嘉亚洲商品说明、任天堂 eShop 与 Steam 的 DLC 说明。 */
 
 function diffRf3(g) {
-    const port = g.id === 'rf3sp';
     return `
     <h2 class="h2">同一部作品，两个版本</h2>
     <p class="p">RF3 与 RF3 特别版不是两部作品：舞台西亚廉斯镇、主角麦斯、11 位花嫁候补、主线流程都一致，特别版是把 2009 年的 NDS 版整部重做之后搬到 Switch 与 PC。下表只列两版<b>不一样的地方</b>。</p>
@@ -4019,12 +4019,11 @@ function diffRf3(g) {
     <p class="p">想一次看完故事、又在意画面，选特别版：新婚模式与地狱难度是它独有的，追加剧情另买即可。反过来，NDS 版的无线／Wi-Fi 连线功能在特别版里被拿掉了，想联机只能回到原版；双屏与触控在单屏上也复现不了，这正是原版唯一还没被替代的部分。</p>
     <div class="note"><b>译名</b>：两作的日文名都叫「スペシャル」。中文官方商品名把这一部写作「符文工廠3豪華版」（世嘉自己的说明文字里也出现过「特別版」的写法），本站为区分两部，RF3 一律称「特别版」、RF4 称「豪华版」。</div>
     <div class="note">新婚模式怎么解锁、Another Episode 是几段怎么进，单开了一页讲：<a class="link" href="#/page/newly">新婚模式</a>。</div>
-    <div class="key">你现在看的是<b>${port ? '特别版' : '原作'}</b>的资料页。另一版：<a class="link" href="#/switch/${port ? 'rf3' : 'rf3sp'}">${port ? '符文工房3（NDS 2009）' : '符文工房3 特别版'}</a>　·　切换后会回到那一作的攻略目录。</div>
+    <div class="key">本站<b>不按版本分页</b>：3 与 3 特别版共用这一条作品页，其余各页（BOSS、农场、锻造、物品……）也是两版合一份数据。<b>两版不一样的地方只在本页这张表里</b>，看完这张表，下面各页按需看哪一版都能对。特别版新增的「新婚模式」与「Another Episode」怎么开，见：<a class="link" href="#/page/newly">新婚模式</a>。</div>
     `;
 }
 
 function diffRf4(g) {
-    const port = g.id === 'rf4sp';
     return `
     <h2 class="h2">同一部作品，两个版本</h2>
     <p class="p">RF4 与 RF4 豪华版的故事、舞台赛尔菲亚、12 位候补、主线流程完全一致，豪华版是把 2012 年的 3DS 版重做后的版本。下表只列两版<b>不一样的地方</b>。</p>
@@ -4048,7 +4047,7 @@ function diffRf4(g) {
     <p class="p">直接玩豪华版。它把原作内容整套保留，新增部分全部是多出来的，没有删减；如果买的是 PC／PS4／Xbox 版，连 Another Episode 都不用另买。原版 3DS 的价值只剩下双屏布局与当年的手感。</p>
     <div class="note"><b>译名</b>：两作的日文名都叫「スペシャル」。中文官方商品名把这一部写作「符文工廠4豪華版」，所以本站沿用「豪华版」；RF3 那部本站称「特别版」，是为了跟这部区分开，两者的层级其实相同。</div>
     <div class="note">新婚模式为什么「结了婚还要再买一次」、Another Episode 与新婚模式的差别，单开了一页讲：<a class="link" href="#/page/newly">新婚模式</a>。</div>
-    <div class="key">你现在看的是<b>${port ? '豪华版' : '原作'}</b>的资料页。另一版：<a class="link" href="#/switch/${port ? 'rf4' : 'rf4sp'}">${port ? '符文工房4（3DS 2012）' : '符文工房4 豪华版'}</a>　·　切换后会回到那一作的攻略目录。</div>
+    <div class="key">本站<b>不按版本分页</b>：4 与 4 豪华版共用这一条作品页，其余各页（BOSS、农场、锻造、物品……）也是两版合一份数据。<b>两版不一样的地方只在本页这张表里</b>。豪华版新增的「新婚模式」与「Another Episode」怎么开，见：<a class="link" href="#/page/newly">新婚模式</a>。</div>
     `;
 }
 
@@ -4236,7 +4235,7 @@ function produceHtml(g) {
     }
 
     /* ================= RF3 ================= */
-    if (id === 'rf3' || id === 'rf3sp') {
+    if (id === 'rf3') {
         const W3 = (typeof PWORK_RF3 !== 'undefined') ? PWORK_RF3 : [];
         if (!W3.length) return '<p class="p">这一作的宠物工作表未加载。</p>';
         const prod3 = W3.filter(r => r[2] && r[2] !== '-');
@@ -4879,8 +4878,8 @@ const PAGES = [
     },
     {
         key: 'diff', group: 'basic', title: '移植版对照', icon: 'books',
-        gms: ['rf3', 'rf3sp', 'rf4', 'rf4sp'],
-        body: g => (g.id === 'rf3' || g.id === 'rf3sp') ? diffRf3(g) : diffRf4(g)
+        gms: ['rf3', 'rf4'],
+        body: g => (g.id === 'rf3') ? diffRf3(g) : diffRf4(g)
     },
     {
         key: 'world', group: 'basic', title: '世界设定·符文', icon: 'globe',
@@ -5015,7 +5014,7 @@ const PAGES = [
     },
     {
         key: 'rf3main', group: 'basic', title: '主线流程', icon: 'scroll',
-        gms: ['rf3', 'rf3sp'],
+        gms: ['rf3'],
         body: () => rf3MainHtml()
     },
 
@@ -5525,7 +5524,7 @@ const PAGES = [
     },
     {
         key: 'boss', group: 'basic', title: 'BOSS 战', icon: 'skull',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rfo', 'rf4', 'rf4sp', 'rf5', 'rff'],
+        gms: ['rf1', 'rf2', 'rf3', 'rfo', 'rf4', 'rf5', 'rff'],
         body: g => {
             const B = (typeof BOSS !== 'undefined') ? BOSS : null;
             if (!B) return '<p class="p">BOSS 数据未加载。</p>';
@@ -5605,10 +5604,11 @@ const PAGES = [
             <div class="note">这里只收「一句话抗性」和掉落。八项抗性的<b>具体等级数值</b>在「战斗与弱点」页的 RF3 一节，两处数据同一来源、口径一致。另外 wiki 提到一句三代特有的设定：<b>最终迷宫里的魔物等级等于玩家等级</b>，所以后期不存在「练高了回头碾」这回事。</div>`;
             };
 
-            /* ---------- RF3 特别版：名单沿用三代，但地狱难度会改数值 ---------- */
+            /* ---------- RF3 特别版：名单沿用三代，但地狱难度会改数值 ----------
+               SP 已并入 RF3 一条作品页，这一节跟着挂在三代 BOSS 表后面，不再单开作品 */
             const blk3sp = () => `
-            <h2 class="h2">符文工房3 特别版：这 ${n3} 位一位不多、一位不少</h2>
-            <p class="p">3 特别版是三代的重制版。官方公布的新增要素一共这些：<b>HD 画面与重新制作的 3D 模组、新开场动画与新 BGM、新婚模式（与 Live2D 合作的动态立绘）、地狱难度、主角生日可自定、双屏合一与 ZL／ZR 快捷键、连续收获与跳过调和动画、泳装模式</b>——<b>没有任何一项是新增 BOSS</b>。所以下面这张表和三代完全相同，可以直接照着用。</p>
+            <h2 class="h2">3 特别版（2023 重制）：名单不变，变的是难度</h2>
+            <p class="p">3 特别版是三代的重制版。官方公布的新增要素一共这些：<b>HD 画面与重新制作的 3D 模组、新开场动画与新 BGM、新婚模式（与 Live2D 合作的动态立绘）、地狱难度、主角生日可自定、双屏合一与 ZL／ZR 快捷键、连续收获与跳过调和动画、泳装模式</b>——<b>没有任何一项是新增 BOSS</b>。所以上一节那张表在特别版里可以照着用，这里不另列第二遍。</p>
             <p class="p">真正会变的是<b>难度</b>。特别版在普通／困难之上又加了<b>地狱</b>，三档的差别是公开的：</p>
             ${tbl(['难度', '魔物 HP', '你受到的伤害', '你打出的伤害'], [
                 ['普通', '基准', '基准', '基准'],
@@ -5619,9 +5619,7 @@ const PAGES = [
             <p class="p">难度也不是开局选完就锁死的：特别版里<b>在地下室翻那本书就能切换</b>，随时可以调回来——这一条在玩家整理的新增要素说明里写明了。</p>
             <h3 class="h3">希雅蕾斯迷宫少了联机，没少内容</h3>
             <p class="p">希雅蕾斯迷宫（家里地下室左边那道门）在三代就能<b>单人进</b>，特别版保留了单人模式，<b>删掉的只是联机多人入口</b>与联网排行榜。所以上面这批 BOSS 在特别版里照样能单机打到，不必找人联机；只是少了「时间暂停、把村民当角色用」那套联机专属的玩法。</p>
-            <div class="note">三档倍率取自官方与中文／日文玩家整理的新增要素说明：<b>「1.5 倍／1.7 倍」是魔物体力的倍率</b>。本站没有困难／地狱下逐只 BOSS 的实测数值，因此不在表里另开一列、也不按倍率推算。</div>
-
-            ${blk3()}`;
+            <div class="note">三档倍率取自官方与中文／日文玩家整理的新增要素说明：<b>「1.5 倍／1.7 倍」是魔物体力的倍率</b>。本站没有困难／地狱下逐只 BOSS 的实测数值，因此不在表里另开一列、也不按倍率推算。</div>`;
 
             /* ---------- RFO ---------- */
             const blkR = () => {
@@ -5748,10 +5746,11 @@ const PAGES = [
             <div class="note">四代八项属性（含状态抗）的<b>完整百分比明细</b>在「战斗与弱点」页 RF4 一节（resist4.js），与本表同源。本表只收主线 BOSS 的 Lv/HP/攻防与「哪几个属性弱、哪几个抗」的结论。少数 BOSS 的弱点仅 GameFAQs 以「X弱Y抗」定性给出、未给百分比，本页照实不换算成数字。</div>`;
             };
 
-            /* ---------- RF4 豪华版：名单沿用四代，地狱难度改等级、改伤害、还改招式 ---------- */
+            /* ---------- RF4 豪华版：名单沿用四代，地狱难度改等级、改伤害、还改招式 ----------
+               SP 已并入 RF4 一条作品页，这一节跟着挂在四代 BOSS 表后面，不再单开作品 */
             const blk4sp = () => `
-            <h2 class="h2">符文工房4 豪华版：同样是这 ${n4} 位</h2>
-            <p class="p">4 豪华版官方公布的新增要素一共五项：<b>HD 画面、首次加入日语语音的双语音、新婚模式、Another Episode（12 段，每位结婚候补一段）、地狱难度</b>——<b>没有新增 BOSS</b>。下面这张表和四代完全相同。</p>
+            <h2 class="h2">4 豪华版（2019 重制）：名单不变，难度与招式会变</h2>
+            <p class="p">4 豪华版官方公布的新增要素一共五项：<b>HD 画面、首次加入日语语音的双语音、新婚模式、Another Episode（12 段，每位结婚候补一段）、地狱难度</b>——<b>没有新增 BOSS</b>。上一节那张表的名单在豪华版里同样成立，这里不另列第二遍。</p>
             <p class="p">四档难度的差异由玩家长期实测比对整理而来，官方只笼统一句「敌人强横到你可能被送回起始之森」：</p>
             ${tbl(['难度', '敌人等级', '敌人的 AI 与攻击性', '伤害修正'], [
                 ['简单', '基础等级', '<b>降低</b>', '你受到的伤害约 <b>−40%</b>'],
@@ -5763,9 +5762,7 @@ const PAGES = [
             <h3 class="h3">地狱还会改 BOSS 的招式</h3>
             <p class="p">这一条比数值更要命：有玩家报告<b>部分 BOSS 在困难／地狱下的招式不是同一套</b>。最明确的例子是<b>安布洛希亚的音波</b>——普通难度下范围大约跟睡眠粉尘相当、且不吸血；地狱难度下<b>范围扩到大半个战场，还带吸血</b>。同样的现象在<b>雷电</b>与<b>霸王花</b>上也有报告。</p>
             <div class="key">所以豪华版打地狱，<b>拿普通难度的走位经验去套会吃亏</b>：同一个招式，判定范围和附带效果可能都变了。上面这张表的 Lv／HP／攻防只保证在普通难度下成立。</div>
-            <div class="note">难度差异与招式变化取自 GameFAQs 上 RF4S 难度讨论帖中多位玩家的实测与比对，<b>不是官方公布的数据</b>——官方 what's new 页对地狱难度只有一句宣传语。本站没有地狱难度下逐只 BOSS 的实测数值，不另开列、不推算。Another Episode 是付费／随版本附带的剧情 DLC，<b>内容是 12 段语音短剧，不含战斗</b>，与本节无关。</div>
-
-            ${blk4()}`;
+            <div class="note">难度差异与招式变化取自 GameFAQs 上 RF4S 难度讨论帖中多位玩家的实测与比对，<b>不是官方公布的数据</b>——官方 what's new 页对地狱难度只有一句宣传语。本站没有地狱难度下逐只 BOSS 的实测数值，不另开列、不推算。Another Episode 是付费／随版本附带的剧情 DLC，<b>内容是 12 段语音短剧，不含战斗</b>，与本节无关。</div>`;
 
             /* ---------- RFF（边境） ---------- */
             const blkRff = () => {
@@ -5833,7 +5830,7 @@ const PAGES = [
                 </a>
             </div>`;
 
-            const per = { rf1: blk1, rf2: blk2, rf3: blk3, rf3sp: blk3sp, rfo: blkR, rf4: blk4, rf4sp: blk4sp, rf5: blk5, rff: blkRff };
+            const per = { rf1: blk1, rf2: blk2, rf3: () => blk3() + blk3sp(), rfo: blkR, rf4: () => blk4() + blk4sp(), rf5: blk5, rff: blkRff };
             const mid = (per[id] || blk1)();
             return intro + mid + tail;
         }
@@ -6927,7 +6924,7 @@ const PAGES = [
     },
     {
         key: 'gear', group: 'life', title: '装备打造·毕业套', icon: 'sword',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5'],
+        gms: ['rf1', 'rf2', 'rf3', 'rff', 'rfo', 'rf4', 'rf5'],
         body: g => {
             if (g.id !== 'rf5') return gearBestHtml(g);
             return `
@@ -7258,7 +7255,7 @@ const PAGES = [
                 ['婚后', '同住、日常加成、部分作品可生子', '婚后角色日程会变'],
             ], { leftFirst: true })}
             <h2 class="h2">本作候补规模</h2>
-            ${stat([['花嫁候补', g.candF ? g.candF + ' 位' : '见居民页'], ['花婿候补', g.candM ? g.candM + ' 位' : '见居民页'], ['同性婚', (g.id === 'rf5' || g.id === 'azuma' || g.id === 'rf4sp') ? '可选' : '视版本']])}
+            ${stat([['花嫁候补', g.candF ? g.candF + ' 位' : '见居民页'], ['花婿候补', g.candM ? g.candM + ' 位' : '见居民页'], ['同性婚', (g.id === 'rf5' || g.id === 'azuma') ? '可选' : (g.id === 'rf4' ? '豪华版可选' : '视版本')]])}
             ${g.id === 'rfo' ? `<div class="note"><b>海洋的候补是成对算的</b>：花嫁 10 位里包括索妮娅（灵魂与主角共处一室的青梅竹马），花婿 4 位里包括亚赛尔——通关后可以选择以索妮娅的身份继续，这时亚赛尔就变成对象。所以两边都各含主角之一，合计 14 位，名单与分组照攻略本「喜好」表原样。</div>` : ''}
             <div class="key">送礼的正确做法：<b>先找出「最喜欢」的那一件，而不是每天换着花样送</b>。同一件最爱的礼物每天送，好感增长远高于随机送五件普通礼物。</div>
             <h2 class="h2">生日</h2>
@@ -7267,8 +7264,8 @@ const PAGES = [
     },
     {
         key: 'newly', group: 'event', title: '新婚模式', icon: 'star',
-        gms: ['rf3sp', 'rf4sp'],
-        body: g => (g.id === 'rf3sp' ? newlywedRf3(g) : newlywedRf4(g))
+        gms: ['rf3', 'rf4'],
+        body: g => (g.id === 'rf3' ? newlywedRf3(g) : newlywedRf4(g))
     },
     {
         key: 'request', group: 'event', title: '委托任务', icon: 'board',
@@ -7611,12 +7608,12 @@ const PAGES = [
     },
     {
         key: 'fx', group: 'item', title: '状态与抗性', icon: 'bolt',
-        gms: ['rf4', 'rf4sp', 'rf5'],
+        gms: ['rf4', 'rf5'],
         body: g => {
             /* 5 代这一栏在源站是魔物抗性三张表（属性／异常／暴击眩晕吹飞），
-               与 4 代那套装备隐藏数值不是一套，分头渲染 */
+               与 4 代那套装备隐藏数值不是一套，分头渲染。
+               4 代一页出两套：先装备面板，后魔物与村民（源条目挂豪华版名下）。 */
             if (g && g.id === 'rf5') return fx5Html(g);
-            if (g && g.id === 'rf4sp') return fx4sHtml(g);
             const D = (typeof FX_RF4 !== 'undefined') ? FX_RF4 : [];
             const ST = (typeof FX_ST !== 'undefined') ? FX_ST : [];
             const RS = (typeof FX_RS !== 'undefined') ? FX_RS : [];
@@ -7734,15 +7731,17 @@ const PAGES = [
                     <div class="jp-t">防具</div>
                     <div class="jp-s">盾、铠甲、头饰、鞋与饰品的防御数值</div>
                 </a>
-            </div>`;
+            </div>
+            <h2 class="h2">换一侧：魔物与村民的抗性</h2>
+            ${fx4sHtml(g)}`;
         }
     },
     {
         key: 'rune', group: 'item', title: '符文能力', icon: 'bolt',
-        gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf4sp', 'rf5', 'rfo'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rfo'],
         body: (g) => {
-            /* 四代（本体／豪华版）是同一张「地点×出处」表，另有带筛选的专属版式；其余五作走通用版式 */
-            if (!g || (g.id !== 'rf4' && g.id !== 'rf4sp')) return runeAllHtml(g);
+            /* 四代（本体／豪华版合并为一条作品页）是同一张「地点×出处」表，另有带筛选的专属版式；其余五作走通用版式 */
+            if (!g || g.id !== 'rf4') return runeAllHtml(g);
             const D = (typeof RUNE_RF4 !== 'undefined') ? RUNE_RF4 : [];
             const id = (g && g.id) || 'rf4';
             const nm = (g && g.name) || '符文工房4';
@@ -7771,7 +7770,7 @@ const PAGES = [
                 rows, {
                     ph: '输入符文名／类别／地点／出处筛选',
                     cls: 'rune',
-                    note: `<div class="note">源表（biligame 符文工厂 wiki「RF4runeability」）只给<b>获取地点与出处</b>，<b>不写每个符文能力／魔法的具体效果</b>——想看「横扫千军到底造成什么」，源页没有，本页不编。本表四代本体与豪华版共用同一张本体获取表，故两版显示相同。<b>五代不是这一套</b>：五代的符文是「宝箱／透明宝箱／任务／通缉／商店」的获取表，没有地点分列，切到「符文工房5」看它自己那一版。</div>`
+                    note: `<div class="note">源表（biligame 符文工厂 wiki「RF4runeability」）只给<b>获取地点与出处</b>，<b>不写每个符文能力／魔法的具体效果</b>——想看「横扫千军到底造成什么」，源页没有，本页不编。4 代与 4 豪华版共用同一张本体获取表，本站只有这一份，两版同页显示。<b>五代不是这一套</b>：五代的符文是「宝箱／透明宝箱／任务／通缉／商店」的获取表，没有地点分列，切到「符文工房5」看它自己那一版。</div>`
                 })}
             </div>
             <h2 class="h2">两类各有哪些</h2>
@@ -8259,7 +8258,7 @@ const PAGES = [
     },
     {
         key: 'rf3list', group: 'item', title: '物品一览', icon: 'bottle',
-        gms: ['rf3', 'rf3sp'],
+        gms: ['rf3'],
         body: (g) => {
             const IT = (typeof ITEM_RF3 !== 'undefined') ? ITEM_RF3 : [];
             const EQ = eqblock(IT, { colw: '7rem', alias: (typeof rf3GoodsAlias === 'function') ? rf3GoodsAlias() : null });
@@ -8298,9 +8297,9 @@ const PAGES = [
     /* ================= 魔物喜好与素材出处 ================= */
     {
         key: 'gift', group: 'life', title: '魔物喜好', icon: 'gift',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rff', 'rfo'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rff', 'rfo'],
         body: g => {
-            if (g.id === 'rf3' || g.id === 'rf3sp') return giftRf3Html();
+            if (g.id === 'rf3') return giftRf3Html();
             /* 旧四作没有「投喂喜好物」这套：收服靠抚摸／刷毛固定次数（RFO 另有喜好作物） */
             if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rff' || g.id === 'rfo') return giftOldHtml(g);
             const is5 = g.id === 'rf5';
@@ -8383,9 +8382,9 @@ const PAGES = [
     /* ================= 宠物产出（派它干什么，它给你什么） ================= */
     {
         key: 'produce', group: 'life', title: '宠物产出', icon: 'pot',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo'],
+        gms: ['rf1', 'rf2', 'rf3', 'rff', 'rfo'],
         body: g => {
-            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff' || g.id === 'rfo') return produceHtml(g);
+            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' || g.id === 'rff' || g.id === 'rfo') return produceHtml(g);
             return `<p class="p">这一作暂时没有「派魔物干活／收产物」的表。</p>
             <div class="note">源站给得出产出表的有五作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF2（<code>RF2pet</code> 的宠物生产＋宠物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）、海洋（<code>RFOpet</code> 的魔物生产物列表）。RF5 的「同伴怪物生产道具一览」是一张残页（只有七行散句加一句「待补充」、没有完整表），所以这一作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
         }
@@ -8394,11 +8393,11 @@ const PAGES = [
     /* ================= 村民喜好（人，不是魔物） ================= */
     {
         key: 'npcgift', group: 'life', title: '村民喜好', icon: 'users',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rf1', 'rf2', 'rf3', 'rff', 'rfo', 'rf4', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'azuma') return giftPage(g, (typeof AZUMA_GIFT !== 'undefined') ? AZUMA_GIFT : []);
             if (g.id === 'rf1' || g.id === 'rf2') return giftRf12Html(g);
-            if (g.id !== 'rf4' && g.id !== 'rf4sp' && g.id !== 'rf5') return giftPage(g);
+            if (g.id !== 'rf4' && g.id !== 'rf5') return giftPage(g);
             const is5 = g.id === 'rf5';
             const P4 = (typeof NPC_RF4 !== 'undefined') ? NPC_RF4 : [];
             const P5 = (typeof NPC_RF5 !== 'undefined') ? NPC_RF5 : [];
@@ -8550,13 +8549,13 @@ const PAGES = [
     },
     {
         key: 'source', group: 'item', title: '素材出处与掉落', icon: 'gem',
-        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf4', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'rf1' || g.id === 'rf2') return sourceRf12Html(g);
             if (g.id === 'azuma') return sourceAzumaHtml();
             if (g.id === 'rff') return sourceRffHtml();
             if (g.id === 'rfo') return sourceRfoHtml();
-            if (g.id === 'rf3' || g.id === 'rf3sp') return sourceRf3Html();
+            if (g.id === 'rf3') return sourceRf3Html();
             const is5 = g.id === 'rf5';
             const S4 = (typeof SRC_RF4 !== 'undefined') ? SRC_RF4 : [];
             const M4 = (typeof MDROP_RF4 !== 'undefined') ? MDROP_RF4 : [];
@@ -8650,7 +8649,7 @@ const PAGES = [
     },
     {
         key: 'perfume', group: 'item', title: '香水与喜好', icon: 'bottle',
-        gms: ['rf3', 'rf3sp'],
+        gms: ['rf3'],
         body: () => {
             const P3 = (typeof PERF_RF3 !== 'undefined') ? PERF_RF3 : { scents: [], chars: [], m: [] };
             const SC = P3.scents, CH = P3.chars;
@@ -8711,7 +8710,7 @@ const PAGES = [
     },
     {
         key: 'recipe', group: 'item', title: '配方大全', icon: 'book',
-        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'azuma'],
+        gms: ['rf1', 'rf2', 'rff', 'rfo', 'rf3', 'rf4', 'rf5', 'azuma'],
         body: g => {
             if (g.id === 'rf1' || g.id === 'rf2') return recipeRf12Html(g);
             if (g.id === 'rff') return recipeRffHtml();
@@ -8918,10 +8917,10 @@ const PAGES = [
     /* ================= RF5 钓点与季节分布 ================= */
     {
         key: 'fishspot', group: 'item', title: '钓点与季节', icon: 'fish',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rf4', 'rf4sp', 'rf5', 'rfo', 'rff', 'azuma'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rfo', 'rff', 'azuma'],
         body: g => {
             if (g.id === 'azuma') return fishspotAzumaHtml();
-            if (g.id === 'rf3' || g.id === 'rf3sp') return fishspotRf3Html();
+            if (g.id === 'rf3') return fishspotRf3Html();
             if (g.id === 'rfo') return fishspotRfoHtml();
             if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rff') return fishspotRf12fHtml(g);
             if (String(g.id).indexOf('rf5') !== 0) return fishspot4Html();
@@ -9198,6 +9197,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百七十五：删掉「3 特别版」「4 豪华版」两条作品页，内容全部并回 3 与 4</h2>
+<ul class="ul">
+<li class="li"><b>改了什么：</b>作品从 10 部减到 <b>8 部</b>——<code>GAMES</code> 里删掉 <code>rf3sp</code>（符文工房3 特别版）与 <code>rf4sp</code>（符文工房4 豪华版）两条。<b>删的是「两条独立作品页」，不是这两个版本本身</b>：站内正文照旧讲特别版与豪华版，只是不再按版本分页，一律从「符文工房3」「符文工房4」进。</li>
+<li class="li"><b>为什么这么改：</b>两个版本相对原作是同一部作品的重制——剧情、舞台、候补、主线流程完全一致，各页数据（BOSS、农场、锻造、物品、钓点……）本来就只维护一份、两版共用。分成两条作品页，等于让读者在每个条目上看两遍同一张表，还得自己判断「这页说的是哪一版」。</li>
+<li class="li"><b>内容没丢，五块各自归位：</b>①「新婚模式」页原只挂这两版 → 改挂 3／4，页内按作品分流不变；②「移植版对照」页同理改挂 3／4，删掉页底「另一版：…」的互跳，改成一句「本站不按版本分页」；③ BOSS 页原为两版单开的两节（3 特别版的三档难度倍率、4 豪华版的区域等级与地狱招式变化）→ 接在本作 BOSS 表后面，标题改为「3 特别版（2023 重制）：名单不变，变的是难度」与「4 豪华版（2019 重制）：名单不变，难度与招式会变」；④「状态与抗性」页原在 4 豪华版下单独出「魔物与村民抗性」（源 <code>RF4Smonsterresist</code>，含雷斯特、芙缇等可操作角色）→ 接在 4 代装备面板之后，同一页分两部分；⑤「装备打造·毕业套」页原只有 4 豪华版有整张表、4 原版那页写着「为什么这一页空着」→ 两张并成一页：表照录，原版没有独立源的边界说明并进开头与「照录不改」。</li>
+<li class="li"><b>首页：</b>原来的「本体＋移植版」双作合并卡取消，作品卡回到一作一张，共 8 张；3／4 两张卡沿用原先拼好的官方主视觉（<code>pair-rf3.jpg</code>／<code>pair-rf4.jpg</code>，文件名为历史命名，内容是整张 16:9 图）。双作卡那套样式（<code>.wcard-pair</code>／<code>.pair-row</code> 等）一并删掉。</li>
+<li class="li"><b>作品简介补一句：</b>3／4 的 <code>intro</code> 末尾各加一句「本站把原版与重制版合在这一个条目下，两版差异见『移植版对照』」，免得读者以为站内只有 NDS／3DS 原版。</li>
+<li class="li"><b>没有改的东西：</b>更新日志里此前各条提到 <code>rf3sp</code>／<code>rf4sp</code> 的原话<b>照录不动</b>——那是当时的记录。系列发售表里 3SP／4SP 两行也保留，那是发售史实，与作品页数量无关。</li>
+<li class="li"><b>工程：</b><code>js/data.js</code> 删两条；<code>js/pages.js</code> 二十处 <code>gms</code> 与六处 <code>g.id</code> 分支改写，<code>GIFT_KEY</code>／<code>baseOf</code>／<code>NPC_KEY</code> 三张映射表清空；<code>js/gearbest.js</code> 的 <code>rf4sp</code> 条目并入 <code>rf4</code>（rf3sp 别名行删除）；<code>js/app.js</code> 删 <code>WPAIR</code>／<code>wcardPair()</code>，两张卡图挂进 <code>TITLE_ART</code>。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> <b>356 实例／0 异常</b>（少掉的 88 次是两条作品页各一套导航实例）、头像 8 作 214 张缺 0；<code>_test_links.js</code> <b>0 坏链</b>；<code>_audit_narrow.js</code> 覆盖 <code>boss</code>／<code>fx</code>／<code>newly</code>／<code>diff</code>／<code>gear</code> 在 3／4 下各档宽度，<b>0 横向溢出</b>；1100px 截图核过首页 8 张卡、4 代 BOSS 豪华版段、状态页拼接段与装备页表头。</li>
+</ul>
 <h2 class="h2">2026-11-02　第一百七十四：3 代物品表补齐漏收的 19 条，顺带更正上一批「枪类一一对应」的说法</h2>
 <ul class="ul">
 <li class="li"><b>补的是哪块：</b>「物品一览」页（<code>rf3list</code>，3 代与 3 特别版共用）的解包表，从 <b>867 条补到 886 条</b>。上一批修说明列时算出「888 条原始记录里有 21 条对不上站内条目」，这轮把 21 条逐条过了一遍——<b>19 条是真物品，补了；2 条不该收</b>。上一批是「说明配错了名字」，这一批是「东西根本不在表里」，两件事都出在同一份数据上。</li>
@@ -9293,7 +9303,7 @@ const PAGES = [
 </ul>
 <h2 class="h2">2026-11-02　第一百六十八：新增「主线流程」页（3 代），8 章 56 步照录</h2>
 <ul class="ul">
-<li class="li"><b>补的是最大的一个洞：</b>此前站内只有<b>海洋</b>与<b>边境</b>两作有主线页，RF1／2／3／4／5 一条主线都查不到。这次先把 <b>3 代</b>做出来（<code>key:'rf3main'</code>，基础知识组，<code>gms:['rf3','rf3sp']</code>）：<b>8 章、56 步、5 处 BOSS</b>，另附 <b>9 条基本操作</b>。</li>
+<li class="li"><b>补的是最大的一个洞：</b>此前站内只有<b>海洋</b>与<b>边境</b>两作有主线页，RF1／2／3／4／5 一条主线都查不到。这次先把 <b>3 代</b>做出来（<code>key:'rf3main'</code>，基础知识组，<code>gms: ['rf3']</code>）：<b>8 章、56 步、5 处 BOSS</b>，另附 <b>9 条基本操作</b>。</li>
 <li class="li"><b>源是早就躺在硬盘上、却一直没被用过的那份：</b>《符文工房3全攻略》（NW 旅团 qisiwole 原创+整理，bbs.newwise.com/thread-482165）。站内此前只用过它的<b>「全迷宫资料」</b>（101 只魔物）与<b>「日历」</b>两章，<b>「简要攻略」整章没人动</b>——单文件 177KB，UTF-16LE 编码，所以以前的 grep 全是乱码，看着像没有内容。这次先转码再定位章节，才把它捞出来。</li>
 <li class="li"><b>做出来的结构：</b>① 8 章各一张表（行号是<b>本章内</b>的步序——原表没有全局编号，本站不替它编）；② 5 处 BOSS 抽出成表，<b>右侧保留原句</b>便于按句回查；③ 四座台座（第 2～5 章章末各一座，第 1、6、7、8 章没有）；④ 三类挡路门槛：<b>9 步</b>要求「消灭所有怪物和召唤点」、<b>2 章</b>要「荷叶骑士（活跃种子）或水蜘蛛（鞋）」、龙玄洞四场「季节之间」共要 <b>18 个</b>作物（樱芜菁 4／黄瓜 4／菠菜 6／芜菁 4）；⑤ 译名对照 10 行，<b>最后一列写明凭什么认定是同一人</b>（站内别名栏已收／同音＋身份一致），正文一律不改。</li>
 <li class="li"><b>从数据里算出来、原表没写的一处：</b>进龙玄洞那句写「带好樱芜菁×4、黄瓜×4、菠菜×6、芜菁×4」，四处「奉上」写的也是 4／4／6／4，<b>两处数字对得上合计 18</b>，所以一次带够就不用跑第二趟——这一点原表没明说，是两边数字对出来的，页面上把推导过程也写出来了。</li>
@@ -9312,7 +9322,7 @@ const PAGES = [
 </ul>
 <h2 class="h2">2026-11-02　第一百六十六：新增「神器与舞」页，配方大全补药学链式分析</h2>
 <ul class="ul">
-<li class="li"><b>新页 <code>azuma_artifact</code>「神器与舞」</b>（牧场生活组，<code>gms:['azuma']</code>）：本作主角是「大地舞者」，<b>神器＝七种舞</b>，每种舞各有战斗与生活两套用法，此前站内完全空白（只有节庆页提过「大地舞者」一词）。三张表：七种舞的「战斗／生活」对照（7 行）／写明属性的三种攻击（火剑・风扇・水伞）／生活面对应的六件农活。</li>
+<li class="li"><b>新页 <code>azuma_artifact</code>「神器与舞」</b>（牧场生活组，<code>gms: ['azuma']</code>）：本作主角是「大地舞者」，<b>神器＝七种舞</b>，每种舞各有战斗与生活两套用法，此前站内完全空白（只有节庆页提过「大地舞者」一词）。三张表：七种舞的「战斗／生活」对照（7 行）／写明属性的三种攻击（火剑・风扇・水伞）／生活面对应的六件农活。</li>
 <li class="li"><b>源：</b>gametoeasy.com《龙之天地》<b>神器介绍</b>（post/1809，2025-06-22，极特攻略），按原文「战斗／生活」两栏照录。三处<b>不替原文补</b>：① 必胜之舞原文只有「根据村民数量增加威力」一句、未分栏，其战斗／生活两格记「—」；② 鼓・鬼面・锡杖的战斗用法原文未写属性，不代归类；③ 同站《赚钱攻略》（post/1854）把神器称作「火焰刀神器」「鼓之神器」，与本页「剑之舞／鼓之舞」是两套说法，<b>不认定二者等同</b>，两处各自照录。</li>
 <li class="li"><b>配方大全补药学分析（不重复数据）：</b>查证发现 p1811 药学 15 条<b>早已完整收在 <code>RECIPE_AZUMA.cats</code> 的「药学」类</b>并已在本页渲染，故<b>没有另立一页</b>，改为在 <code>recipeAzumaHtml()</code> 里加一节分析：按源表「材料」列的引用关系推出<b>两条四级链</b>（HP：恢复壶→疗愈壶→神秘壶→魔宝壶；RP：朝气之本→活力之源→一瓶满足→高扬秘药）、<b>两处合流</b>（无敌秘药＝两条链终点；醒神药＝各第三级＋心跳菇・白草）、<b>五种解状态秘药</b>（解锁条件与商店完全一致）。</li>
 <li class="li"><b>从数据里算出来的两条：</b>① 两条链<b>前三级全是定值、第四级换成百分比</b>，百分比只出现在链尾与合流件上（共 4 条）；② 醒神药虽然是药学里买价最高的一条（20,000G），但<b>恢复量只写在 HP 上</b>，RP 列是空的。链式关系全部<b>由代码从材料列推导</b>，不是手写死表，换数据也不会错位。</li>
@@ -9321,7 +9331,7 @@ const PAGES = [
 
 <h2 class="h2">2026-11-02　第一百六十五：新增「村庄升级」页（龙之天地各里满级条件）</h2>
 <ul class="ul">
-<li class="li"><b>新页 <code>azuma_village</code>「村庄升级」</b>（牧场生活组，<code>gms:['azuma']</code>）：龙之天地没有统一的「村」，而是春／夏／秋／冬<b>四个里各算各的村庄等级</b>，此前站内只把「村等级」当解锁条件提过（recipe／shop），没有专门页。本页补上满级条件全貌。</li>
+<li class="li"><b>新页 <code>azuma_village</code>「村庄升级」</b>（牧场生活组，<code>gms: ['azuma']</code>）：龙之天地没有统一的「村」，而是春／夏／秋／冬<b>四个里各算各的村庄等级</b>，此前站内只把「村等级」当解锁条件提过（recipe／shop），没有专门页。本页补上满级条件全貌。</li>
 <li class="li"><b>源：</b>中文攻略站 gametoeasy.com《龙之天地》<b>村庄满级条件丨村庄升级攻略</b>（post/1806，2025-06-21，极特攻略），与本作其它 azuma_* 页同源。原表用「150/210/300/300」斜杠串写四季，本页<b>拆成春／夏／秋／冬四列</b>、数值一字未改，四张表：满级条件 11 项／建村效果 14 项／季节限定 5 条／10 级解锁 4 样。</li>
 <li class="li"><b>守铁律：</b>「建村效果」一段原文小标题为「建村效果达成以下条件」，未说明是「达标条件」还是「满级效果」，本页照录不代为定性；原文标题「满级条件」与末段「10 级后可解锁」两处并存照录，<b>不合并成「满级＝10 级」</b>。</li>
 <li class="li"><b>校验：</b><code>node _verify.js</code> 441 实例（+1）／0 异常；520px 窄屏审计 0 横向溢出；1100px 截图逐字核版，数字与源表一致。</li>
@@ -9590,13 +9600,13 @@ const PAGES = [
             </ul>
             <h2 class="h2">2026-11-01　第一百四十一次：龙之天地（azuma）补全「料理配方」页——313 道</h2>
             <ul class="ul">
-                <li class="li"><b>新开 <code>azuma_cook</code> 页</b>（归「生活」、<code>gms:['azuma']</code>，与 azuma_skill／mon／boss 并列）：龙之天地此前在「料理」页完全空白——这一作<b>没有厨具分类、也没有料理等级门槛</b>，按「品类」分五块：<b>菜肴 162／便当 33／加工品 6／甜点 107／酒 5</b>，共 <b>313 道</b>可制作物。</li>
+                <li class="li"><b>新开 <code>azuma_cook</code> 页</b>（归「生活」、<code>gms: ['azuma']</code>，与 azuma_skill／mon／boss 并列）：龙之天地此前在「料理」页完全空白——这一作<b>没有厨具分类、也没有料理等级门槛</b>，按「品类」分五块：<b>菜肴 162／便当 33／加工品 6／甜点 107／酒 5</b>，共 <b>313 道</b>可制作物。</li>
                 <li class="li"><b>源</b>：gametoeasy.com《符文工房：龙之天地》料理配方（post/1810）。原表无逐道星级／难度，本站不补；材料格式照录（如「芜菁×1」，缺项写「—」）；「恢复HP／恢复RP」两列源表分固定值与百分比两格，本页合并为一格（如「280(+11%)」）；「获取」合并源表「解锁条件／宝箱获取／商店获取」三列，任一为空即不显示该来源。<b>译名沿用 gametoeasy 中文</b>，与站内七作 biligame 译名不完全一致。</li>
                 <li class="li"><b>渲染</b>：九列宽表（名称／品类／材料／买价／卖价／恢复HP／恢复RP／特效／获取），复用站内 <code>ftableOwn</code> 搜索框（可搜菜名、品类、食材反查、地名找青蛙石）；长文本列在列宽内换行、窄屏按站内约定整表横滑。整表 <code>min-width:53rem</code>，1100px 完整放下、520px 横滑。<code>_verify</code> 398 实例／0 异常。</li>
             </ul>
 <h2 class="h2">2026-11-01　第一百四十次：新开「符文能力」页——RF4／RF4S 的 54 个符文去哪拿</h2>
             <ul class="ul">
-                <li class="li"><b>补的是个新门类</b>：站内一直有「武器／防具／状态与抗性（fx）」，但<b>符文能力</b>与<b>符文魔法</b>这一套（RF4 把效果装到武器符文槽、魔法书能升级 Lv）没有独立一页。新开 <code>rune</code>（<code>key: 'rune'</code>，归「物品」，<code>gms: ['rf4','rf4sp']</code>），数据由 <code>_build_rune.py</code> 从 biligame 符文工厂 wiki 的 <code>RF4runeability</code>／<code>RF4Sruneability</code> 解析成 <code>js/rune.js</code>（两版共用同一张本体获取表，故只存一份）。</li>
+                <li class="li"><b>补的是个新门类</b>：站内一直有「武器／防具／状态与抗性（fx）」，但<b>符文能力</b>与<b>符文魔法</b>这一套（RF4 把效果装到武器符文槽、魔法书能升级 Lv）没有独立一页。新开 <code>rune</code>（<code>key: 'rune'</code>，归「物品」，<code>gms: ['rf4']</code>），数据由 <code>_build_rune.py</code> 从 biligame 符文工厂 wiki 的 <code>RF4runeability</code>／<code>RF4Sruneability</code> 解析成 <code>js/rune.js</code>（两版共用同一张本体获取表，故只存一份）。</li>
 <li class="li"><b>54 个，两类二分</b>：<b>符文能力 29 个</b>（横扫千军、升龙拳、无心剑、云裂、一心一刀……装武器槽、不可升级）＋<b>符文魔法 25 个</b>（螺旋石锥、彗星暴雨、大治愈、黑洞……来自魔法书、可逐 Lv 强化）。<b>20 个有等级门槛</b>（参数栏写 Lv2／Lv3），其余装上即用。</li>
 <li class="li"><b>表是「获取地图」不是「效果说明」</b>：源表只给<b>地点／出处／类别／名字／参数</b>——去哪拿（宝箱 or 特殊事件，少数要解谜如双子岩 8 字绕圈），<b>不写每个符文到底造成什么</b>。所以页面照实定位成「去哪拿」，效果栏不编；页内另列两类名字全集方便先认全貌。</li>
 <li class="li"><b>为什么只挂 RF4</b>：RF5 的同类数据在源站只有「待补充」一句话（<code>RF5符文技能、魔法数据</code> 正文 389 字、零表），没有可逐条核对的表，本页不挂五代；其他作（RF1～3／边境／海洋／龙之天地）走的是各自的技能／魔法体系，与 RF4 这套「武器符文槽」不是一回事，不硬凑。</li>
@@ -9630,7 +9640,7 @@ const PAGES = [
             </ul>
             <h2 class="h2">2026-10-31　第一百三十七次：新开「宠物产出」页——魔物上班给你什么，只有两作给得出表</h2>
             <ul class="ul">
-                <li class="li"><b>补的是个空页</b>：站内一直有「魔物与伙伴」讲怎么抓、「魔物图鉴」列名录，但<b>「抓回来派它干什么、它每天给你什么」没有独立一页</b>。<code>beast</code> 页里只有一段通用文字（「派去照顾农田：1 只每天约消耗 1 份牧草」），给不出任何一作的数值。本次新开 <b>「宠物产出」</b>（<code>key: 'produce'</code>，归「牧场生活」，<code>gms: ['rf1','rff']</code>），新增顶层函数 <code>produceHtml()</code>。数据由 <code>_build_produce.py</code> 从 <code>RF1petfarm</code>／<code>RFFpet</code> 两份 wikitext 解析成 <code>js/produce.js</code>。</li>
+                <li class="li"><b>补的是个空页</b>：站内一直有「魔物与伙伴」讲怎么抓、「魔物图鉴」列名录，但<b>「抓回来派它干什么、它每天给你什么」没有独立一页</b>。<code>beast</code> 页里只有一段通用文字（「派去照顾农田：1 只每天约消耗 1 份牧草」），给不出任何一作的数值。本次新开 <b>「宠物产出」</b>（<code>key: 'produce'</code>，归「牧场生活」，<code>gms: ['rf1', 'rff']</code>），新增顶层函数 <code>produceHtml()</code>。数据由 <code>_build_produce.py</code> 从 <code>RF1petfarm</code>／<code>RFFpet</code> 两份 wikitext 解析成 <code>js/produce.js</code>。</li>
                 <li class="li"><b>为什么只有两作</b>：源站<b>只有这两页给得出「工作—产物—概率」的表</b>。RF2／海洋的宠物页只有抚摸次数与喜好作物，一个字都没提产出；RF5 也有同名页「同伴怪物生产道具一览」，但内容是<b>七行散句</b>（「位于森林地带的白色黄毛牛才生产牛奶」「森林的粉色青蛙出液体类」……）加一句「待补充」，没有表也没有概率——所以本页只挂 rf1／rff 两作，<b>其余作品在侧栏里根本不出现</b>，不拿散句凑一张表出来。</li>
                 <li class="li"><b>RF1 的硬数字</b>：<b>32 只</b>有工作表记录，而图鉴共 <b>63 只</b>——<b>其余 31 只既不干活也不产东西</b>，只在迷宫里当敌人和素材库。32 只里<b>产出型只有 5 只</b>（水牛哞哞→牛奶、摩可摩可→软软毛、黄蜂与女王蜂→蜂蜜、咕咕鸡→鸡蛋），其余 <b>27 只</b>是劳力：<b>浇水 10 只</b>（清一色法师型与水栖型）、<b>收获 14 只</b>（兽人一系＋哥布林一系几乎全包）、<b>骑乘 3 只</b>（银狼、猎狼、水牛毛毛）。<b>一只只干一件事</b>，又想产奶又想浇水只能养两只。</li>
                 <li class="li"><b>RF1 的地点按洞窟算</b>：源表写「4洞」「2洞、6洞」，指的是<b>第几个洞窟</b>（不是第几层），本页统一写成「第 4 洞窟」。按出现点统计，<b>第 1 洞窟最挤（6 只）</b>，第 6 洞窟只有冰幽灵一只——想要水属性那条线，往返第 2、6 两洞的频率最高。</li>
@@ -12882,7 +12892,7 @@ function pageVis(p, g) {
     return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
 }
 
-/* 跨作机制对照：把十部作品放在一张表里并排看。
+/* 跨作机制对照：把各作放在一张表里并排看。
    所有数字取自已加载的数据全局（GAMES / 各作料理与钓鱼数据表），零臆造；
    系统机制差异是建站过程中逐作核实过的发现，每条都标了出处，不跨作换算。*/
 /* 生日核对：站内七作的人物生日 × 外部两份资料，逐人对照。
@@ -13038,7 +13048,7 @@ function bdCheckHtml() {
 
     <div class="jump">
         <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">生日当天送什么最划算</div></a>
-        <a href="#/page/seriescmp"><div class="jp-t">跨作机制对照</div><div class="jp-s">十作并排看</div></a>
+        <a href="#/page/seriescmp"><div class="jp-t">跨作机制对照</div><div class="jp-s">八作并排看</div></a>
     </div>
     <div class="note">本页不判断「哪个生日才是对的」：站内数据照录源站，外部数据照录两份资料，两边一致就记一致，不一致就记不一致，<b>不替任何一方改数字</b>。想查某位的完整档案（喜好、住址、求婚条件），点名字进人物页。</div>
     `;
@@ -13046,9 +13056,7 @@ function bdCheckHtml() {
 
 function seriesCmpHtml() {
     const G = (typeof GAMES !== 'undefined') ? GAMES : [];
-    // SP 版与本体共用同一份数据文件，映射回本体以取真实条数
-    const baseOf = { rf3sp: 'rf3', rf4sp: 'rf4' };
-    const baseId = id => baseOf[id] || id;
+    const baseId = id => id;
     const ckN = id => ({
         rf1: typeof RF1_COOK !== 'undefined' ? RF1_COOK.length : 0,
         rf2: typeof RF2_COOK !== 'undefined' ? RF2_COOK.length : 0,
@@ -13115,7 +13123,7 @@ function seriesCmpHtml() {
 
     return `
     <h2 class="h2">跨作机制对照</h2>
-    <p class="p">把十部作品放在一张表里并排看。基础信息、结婚候补、角色数直接取自本站数据文件（<code>GAMES</code>）；料理与钓鱼规模是各作数据表的<b>真实条数</b>；系统机制差异是建站过程中逐作核实过的发现，每条都标了出处作，<b>不跨作换算、不替没核实的填数字</b>。</p>
+    <p class="p">把 ${G.length} 部作品放在一张表里并排看。基础信息、结婚候补、角色数直接取自本站数据文件（<code>GAMES</code>）；料理与钓鱼规模是各作数据表的<b>真实条数</b>；系统机制差异是建站过程中逐作核实过的发现，每条都标了出处作，<b>不跨作换算、不替没核实的填数字</b>。</p>
 
     <h2 class="h2">一、基础信息</h2>
     ${tbl(['作品', '发售日', '平台', '主角', '舞台'], infoRows, { colw: ['6.4rem', '6.6rem', '7.2rem', '9rem', ''], left: [3, 4] })}
