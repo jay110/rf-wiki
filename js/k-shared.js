@@ -5949,6 +5949,166 @@ function shopRf3Html() {
     <div class="note">数据文件 <code>js/rf3shop.js</code>（<code>RF3_SHOP</code>）由 <code>_build_rf3_shop.py</code> 按原文行区间切出，逐行校验列数；页面里的所有统计（条数、占比、最贵、最便宜）都是<b>现算</b>，没有一处写死。</div>`;
 }
 
+function shopRf1Html() {
+    const D = (typeof RF1_SHOP !== 'undefined') ? RF1_SHOP : null;
+    if (!D || !D.shops || !D.shops.length) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const money = v => (v == null || v === '') ? dash : (/[GＧ]$/.test(String(v)) ? E(v) : E(v) + 'G');
+    const pnum = v => { const m = String(v == null ? '' : v).replace(/[^0-9]/g, ''); return m ? Number(m) : null; };
+    const idx = (sec, re) => { for (let i = 0; i < sec.c.length; i++) if (re.test(sec.c[i])) return i; return -1; };
+
+    /* 摊平：每条记下所属店与小节，价格列按各节自己的表头认（售价／费用都是价格） */
+    const all = [];
+    D.shops.forEach(sp => sp.secs.forEach(sec => {
+        const ni = idx(sec, /商品|名称|农具/), pi = idx(sec, /售价|价格|费用/), di = idx(sec, /说明|作用/);
+        sec.r.forEach(r => all.push({
+            sp, sec, r, di,
+            name: ni >= 0 ? r[ni] : r[0],
+            price: pi >= 0 ? r[pi] : '',
+            pl: pnum(pi >= 0 ? r[pi] : ''),
+        }));
+    }));
+
+    const priced = all.filter(x => x.pl != null);
+    const byP = priced.slice().sort((a, b) => b.pl - a.pl);
+    const hi = byP[0], hi2 = byP[1], lo = byP[byP.length - 1];
+    const noPrice = all.filter(x => x.pl == null);
+
+    /* 上架时点：说明列里的「XX击破后／通关后／春限定／种子」就是进度条 */
+    const stageOf = s => {
+        const t = String(s || '');
+        if (!t) return '开局可买';
+        if (/开始即可|一开始|初期/.test(t)) return '开局可买';
+        if (/通关后/.test(t)) return '通关后';
+        if (/击破后/.test(t)) return '剧情击破后';
+        if (/限定|种子/.test(t)) return '季节／种子';
+        return '备注（尺寸·增筑·分类）';
+    };
+    const STAGE_ORDER = ['开局可买', '季节／种子', '剧情击破后', '通关后', '备注（尺寸·增筑·分类）'];
+    const stageCount = {}, stageEg = {};
+    let noCol = 0;
+    const noColSecs = [];
+    all.forEach(x => {
+        if (x.di < 0) {
+            noCol++;
+            const k = x.sp.n + '·' + x.sec.t;
+            if (noColSecs.indexOf(k) < 0) noColSecs.push(k);
+            return;
+        }
+        const s = stageOf(x.r[x.di]);
+        stageCount[s] = (stageCount[s] || 0) + 1;
+        (stageEg[s] = stageEg[s] || []).push(x.name);
+    });
+    const pct = n => { const v = n / all.length * 100; return (v > 0 && v < 1) ? '<1%' : Math.round(v) + '%'; };
+    const stageRows = STAGE_ORDER.filter(s => stageCount[s]).map(s => [s, stageCount[s] + ' 条', pct(stageCount[s]), stageEg[s].slice(0, 4).join('、')]);
+
+    /* 纯设施（无货架） */
+    const fac = D.shops.filter(sp => !sp.secs.length);
+
+    /* 每店：条目数、最贵一件 */
+    const spRows = D.shops.map((sp, i) => {
+        let n = 0, mx = null;
+        sp.secs.forEach(sec => sec.r.forEach(r => {
+            n++;
+            const pi = idx(sec, /售价|价格|费用/);
+            const v = pi >= 0 ? pnum(r[pi]) : null;
+            if (v != null && (!mx || v > mx.v)) mx = { v: v, s: r[idx(sec, /商品|名称|农具/)] };
+        }));
+        return [String(i + 1), E(sp.n), sp.h ? E(sp.h) : dash, (n ? n + ' 条' : '<span class="txc">纯设施</span>'),
+            mx ? '<b>' + E(mx.s) + '</b> ' + money(String(mx.v)) : dash];
+    });
+
+    /* 全表（可搜） */
+    const allRows = all.map(x => {
+        const st = x.di >= 0 ? (String(x.r[x.di]).trim() || '—') : '—';
+        return [
+            [x.name, x.sp.n, x.sec.t, st].join(' ').replace(/"/g, ''),
+            [E(x.name), '<span class="txc">' + E(x.sp.n) + '</span>', '<span class="txc">' + E(x.sec.t) + '</span>', money(x.price), E(st)]
+        ];
+    });
+
+    /* 逐店明细 */
+    const shopBlocks = D.shops.map((sp, i) => {
+        const secs = sp.secs.map(sec => {
+            const ni = idx(sec, /商品|名称|农具/), pi = idx(sec, /售价|价格|费用/);
+            const cols = sec.c.map(h => /说明|作用/.test(h) ? 'auto' : /^(商品|名称|农具)$/.test(h) ? '8.4rem'
+                : /季节/.test(h) ? '3rem' : /售价|价格|费用/.test(h) ? '4.8rem' : 'auto');
+            const rows = sec.r.map(r => sec.c.map((h, j) =>
+                (j === ni) ? '<b class="nw">' + E(r[j]) + '</b>'
+                    : (j === pi) ? money(r[j]) : E(r[j])));
+            const leftCols = [0];
+            sec.c.forEach((h, j) => { if (/说明|作用/.test(h)) leftCols.push(j); });
+            return `<h3 class="h3">${E(sec.t)}<span class="txc">　${sec.r.length} 条</span></h3>
+            ${tbl(sec.c, rows, { leftFirst: true, left: leftCols, colw: cols, cls: 'rf3shop' })}`;
+        }).join('');
+
+        const desc = sp.desc ? `<p class="p">${E(sp.desc)}</p>` : '';
+        const fnote = (!sp.secs.length) ? `<p class="p txc">—— 这处是纯设施，没有货架价目 ——</p>` : '';
+        const notes = (sp.notes && sp.notes.length) ? `<div class="note">${sp.notes.map(E).join('<br>')}</div>` : '';
+        return `
+        <h2 class="h2">${i + 1}. ${E(sp.n)}${sp.full && sp.full !== sp.n ? `　<span class="txc">${E(sp.full)}</span>` : ''}${sp.h ? `　<span class="txc">${E(sp.h)}</span>` : ''}</h2>
+        ${desc}${fnote}${secs}${notes}`;
+    }).join('');
+
+    const facList = fac.map(sp => `<p><b>${E(sp.n)}</b>${sp.full && sp.full !== sp.n ? '　<span class="txc">' + E(sp.full) + '</span>' : ''}${sp.h ? '　<span class="txc">' + E(sp.h) + '</span>' : ''}${sp.desc ? '　' + E(sp.desc) : ''}</p>`).join('');
+
+    return `
+    <h2 class="h2">1 代的镇子：13 处设施，9 家带货，4 处纯设施</h2>
+    <p class="p">本页是《RF1 符文工房·新牧场物语 全资料整合》（91KB 中文编译本）「商店」各节的<b>全部 ${all.length} 条</b>，按原文的店序、店内的小节原样排。13 处里，浴场、卡尔迪亚教会、旅馆、怪物小屋是<b>纯设施</b>（只有营业时间和简介，不摆价目表）；其余 9 家带货。</p>
+    <p class="p"><b>这些数字是买价，不是卖价。</b>原文没有「出货价／卖价」那一列，所以本页<b>不算买进再卖出赚多少</b>——少了一半，算出来的差价都是假的。原文没有的，这里也不补。</p>
+    ${stat([
+        ['设施', D.shops.length + ' 处'],
+        ['带货店', (D.shops.length - fac.length) + ' 家'],
+        ['商品行', all.length + ' 条'],
+        ['有标价', priced.length + ' 条'],
+        ['最贵一件', hi ? money(String(hi.pl)) : dash],
+        ['最便宜', lo ? money(String(lo.pl)) : dash],
+    ])}
+
+    <h2 class="h2">13 处一览</h2>
+    <p class="p">先看规模：哪家东西最多、最贵的一件在谁家。营业时间照原文——<b>伊万的流动店只在祝日（节日）开</b>，平时不在；浴场全年无休但只开到晚上 11 点。</p>
+    ${tbl(['#', '设施', '营业时间', '条目', '最贵的一件'], spRows, { leftFirst: true, left: [0, 1], colw: ['2.2rem', '10rem', '9rem', '3.8rem', 'auto'], cls: 'rf3shop' })}
+
+    <h2 class="h2">价格的两头：${hi ? E(hi.name) + ' ' + money(String(hi.pl)) : ''}，和最便宜的 60G 那档</h2>
+    <p class="p">全表 ${priced.length} 条有价商品，最贵的和最便宜的差 <b>${hi && lo ? Math.round(hi.pl / lo.pl).toLocaleString('en-US') : 0} 倍</b>：一头是锻冶屋的奥尔德鲁，另一头是艾德医院的药草、海之家的沙丁鱼那一档 60G。武器和魔法书是价格天花板，种子、零食、常用药是地板。</p>
+    ${tbl(['名次', '商品', '店', '价格'], [
+        ['最贵', E(hi.name), E(hi.sp.n), money(String(hi.pl))],
+        ['第二', E(hi2.name), E(hi2.sp.n), money(String(hi2.pl))],
+        ['最便宜', E(lo.name), E(lo.sp.n), money(String(lo.pl))],
+    ], { leftFirst: true, left: [1], colw: ['4.4rem', 'auto', '9.4rem', '6rem'], cls: 'rf3shop' })}
+    <div class="key">${hi ? '<b>' + E(hi.name) + '</b>（' + money(String(hi.pl)) + '）比第二名贵出 ' + (hi2 ? Math.round(hi.pl / hi2.pl * 10) / 10 : 0) + ' 倍，它就在锻冶屋的武器柜里，而且<b>要等赛壬击破、且只在冬季卖</b>——1 代最贵的一件同时卡着剧情和季节两道锁。' : ''}原表只给买价、不给卖价和属性，所以本站<b>不评价它值不值这个价</b>。</div>
+
+    <h2 class="h2">什么进度能买到什么</h2>
+    <p class="p">这张表是本页最该先看的：把 ${all.length} 条按「什么时候上架」重新分一遍，就知道<b>开局能买的其实不少，但大半好东西要等剧情或季节</b>。原文的档位写法照录，没有合并。「说明」列为空（或写「开始即可购买」）的就是开局就能买；写「XX击破后」要推剧情；写「春／夏／秋／冬限定」或「种子」是季节货。</p>
+    ${tbl(['上架时点', '条数', '占比', '举例'], [['开局可买（说明空白或「开始即可购买」）', (stageCount['开局可买'] || 0) + ' 条', pct(stageCount['开局可买'] || 0), (stageEg['开局可买'] || []).slice(0, 4).join('、')]].concat(stageRows).concat([['原文未单列说明（视作随时可购）', noCol + ' 条', pct(noCol), noColSecs.join('、')]]), { leftFirst: true, left: [0, 3], colw: ['13rem', '4.6rem', '4rem', 'auto'], cls: 'rf3shop' })}
+    <div class="key">剧情锁最重的是<b>武器与魔法书</b>：长剑要等巨大恶魔，双手剑要等奇美拉，巨剑／防御者要等戈勒姆，风之剑／水之剑还要再叠「春季限定」；魔法书从「传送」开局就有，到「爆炸／地震」「陨石／暴风」要一路推到戈勒姆、钢之战车。<b>种子则卡季节＋通关</b>——樱花草、油灯草、金刚花这些「通关后有售」的，前期根本买不到。</div>
+
+    <h2 class="h2">一张表查全部 ${all.length} 条</h2>
+    <p class="p">按商品名、店名、小节名或上架时点（如「击破后」「冬季限定」）搜都行。下面是摊平版，同一件东西在两家店出现就占两行。</p>
+    <details class="mon-fold">
+        <summary>展开／收起：${all.length} 条总表</summary>
+        ${ftableOwn(['商品', '店', '小节', '价格', '上架时点'], ['8.4rem', '8.6rem', '7rem', '4.8rem', 'auto'], allRows, { ph: '输入商品名、店名或「击破后」', cls: 'rf3shopall' })}
+    </details>
+
+    <h2 class="h2">逐店明细</h2>
+    <p class="p">下面按<b>原文的店序</b>原样排，一家店一节，店内再按原文的小节分。表格里的字没改过——价格一律带 G，和原文一致。</p>
+    ${shopBlocks}
+
+    <h2 class="h2">纯设施（无货架）</h2>
+    <p class="p">这 ${fac.length} 处只提供服务或场所，不卖货，所以没有价目表。它们的简介照录：</p>
+    <div class="txt-list">${facList}</div>
+
+    <h2 class="h2">照录不改的几处</h2>
+    <div class="txt-list">
+        <p><b>农具升级是「要求」不是「售价」</b>——锻冶屋那张表四列是「农具／材料／费用／日数」，本站把「费用」当价格列用，原表的「材料」「日数」两列照原样保留，没有合并进价格。</p>
+        <p><b>伊万的流动店按「每月 N 日」轮换货架</b>——同一家店分五张小表（1/7/13/19/25 日），不是一张大表，本站照原样拆开。</p>
+        <p><b>价格一律带 G</b>——原表所有价格都写成「1000G」这种带单位的形式，本站不改写法、不去掉 G。</p>
+        <p><b>源文件里有一处孤立的「海边」二字</b>（夹在锻冶屋与海之家之间、不属于任何表格），本站立不成农具升级的行，也没另开条目，按非数据跳过。</p>
+    </div>
+    <div class="note">数据文件 <code>js/rf1shop.js</code>（<code>RF1_SHOP</code>）由 <code>_build_rf1_shop.py</code> 按原文行区间切出，逐行校验；页面里的所有统计（条数、占比、最贵、最便宜）都是<b>现算</b>，没有一处写死。源文件为 UTF-16LE 单文件，商店章未单独署名，故只记到「全资料整合」这一层。</div>`;
+}
+
 function shopRf2Html() {
     const D = (typeof RF2_SHOP !== 'undefined') ? RF2_SHOP : null;
     if (!D || !D.secs || !D.secs.length) return '';
@@ -10173,7 +10333,8 @@ const PAGES = [
             <p class="p">每家店都有开门与关门时间，晚上去会吃闭门羹。多数作品在店门口或菜单里能查到营业时间。换季第一天、节日当天，部分店铺不开。</p>
             ${g.id === 'azuma' ? shopAzumaHtml()
             : g.id === 'rf2' ? shopRf2Html()
-            : g.id === 'rf3' ? shopRf3Html() : ''}
+            : g.id === 'rf3' ? shopRf3Html()
+            : g.id === 'rf1' ? shopRf1Html() : ''}
         `
     },
     {
