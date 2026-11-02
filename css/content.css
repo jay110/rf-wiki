@@ -525,6 +525,12 @@
     min-width: 31rem;
 }
 
+/* 二代委托：触发条件与流程都是长句，窄屏给下限宽度靠横滑，
+   否则「攻略本原话」会被压成每字一行 */
+.content .table.rf2qs table {
+    min-width: 40rem;
+}
+
 /* 回本与否的语义色（非股价语境：绿=好，红=差） */
 .content .up {
     color: #0f6b33;

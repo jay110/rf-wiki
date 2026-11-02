@@ -6980,6 +6980,8 @@ const PAGES = [
             if (g && g.id === 'rfo') return requestRfoHtml();
             /* 边境没有依赖板，委托走邮件 + 角色事件链，单独说明 */
             if (g && g.id === 'rff') return requestRffHtml();
+            /* 二代没有任务板，委托挂在人身上；两套攻略源拼成一张表，单独一页 */
+            if (g && g.id === 'rf2') return requestRf2Html();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -8895,6 +8897,19 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十九：2 代的委托任务补齐 124 条，两套攻略源拼成一张表</h2>
+<ul class="ul">
+<li class="li"><b>补的是哪块：</b>「委托任务」页此前对 2 代只有那段<b>九作共用的通用说明</b>——讲委托是什么、怎么取舍，<b>一条 RF2 的任务都查不到</b>。这次给 2 代单开一个分支（<code>requestRf2Html()</code>），和海洋、边境、东国一样走专属内容。</li>
+<li class="li"><b>源：一份文件里拼了六份攻略。</b>《RF2 攻略合辑》是 UTF-16LE 的单文件（2160 行），里面依次是泡芙的《轻松上手指南》、终有依天的《【RF2】【一周目】任务大全》、安打的《任务、居民、怪物攻略》、泡芙的《进阶指南》，后面还有安打与伏特各一段。站内此前只用过其中「节日全事件一览」一章。<b>任务数据有两套，作者不是一个人</b>，所以本页把两套都写明来历，不冒充一份。</li>
+<li class="li"><b>两套怎么拼的：</b>主表用终有依天那套 <b>118 条</b>（有「触发条件／流程／奖励」三列，但<b>只写一周目</b>）；另一套（安打）<b>123 条</b>奖励混写在内容里，却有主表完全没有的<b>二代角色</b>。两套大面积重叠、译名各写各的，所以<b>只补主表没覆盖的 6 条</b>（凌 1、奥斐斯 1、姆苏 3，以及玛娜的求婚那一步），<b>不做同名合并、不判定谁对</b>。合计 <b>124 条、23 位委托人</b>。</li>
+<li class="li"><b>算出来的一件事：七位候选人的链条一模一样长。</b>每人 <b>10 条</b>，条件从「剧情后」排到「爱情度 9」，<b>七个最高档全是 9</b>。也就是说没有谁更好追，差别只在最后那件求婚道具怎么拿——这是从 118 条数据里数出来的，不是攻略本写的。</li>
+<li class="li"><b>求婚道具和站内村民表对着核了：</b>七件里 <b>4 件一字不差</b>（罗萨琳德 100 朵玫瑰的花束、塞西莉娅 圆石、阿莉希亚 水晶球、茱莉雅 回忆戒指）；<b>3 件各写各的</b>——玛娜「婚约戒指」对站内「订婚戒指」、多萝茜「祝福挂饰」对「祝福坠饰」、由绘那件攻略本写中文站内写日文原名。<b>两边都照录，不断言是不是同一件。</b></li>
+<li class="li"><b>两处坑，原文自己写明的：</b>多萝茜的「祝福挂饰」不在她的链上，是<b>高顿</b>那条【有要给的东西】发出来的（触发条件还写着「多罗茜所有任务完成」）；茱莉雅的「回忆戒指」要先经手<b>由绘</b>、再搭 10000G、等 3 天。只做她一个人的任务，这两件都拿不到。</li>
+<li class="li"><b>原文的错字一律照录，不修：</b>「把金刚花交给<b>的</b>罗萨琳德」（多一个「的」）、「与阿利希亚<b>雅</b>对话后」（多一个「雅」，跟她名字都对不上）、「奖励<b>，</b>：无」（冒号前多一个逗号）、「维维安筑」（站内叫薇薇安邸）。四条都能在表里原样找到。</li>
+<li class="li"><b>两套都说没写全，也照录：</b>补表作者自述「缺少一些候选老婆的相关任务。因为我追女仆MM」，塔妮亚那节作者直接写「任务很多…在此省略那些任务不做复述」；主表标题就是「一周目」，二代那三位一个任务都没收。所以页面上写明<b>这不是 RF2 任务的完整清单</b>，只是这两套资料加起来的全部。</li>
+<li class="li"><b>数据怎么来的：</b>新增 <code>_build_rf2_quest.py</code> → <code>js/rf2quest.js</code>（<code>RF2_QUEST</code>）。脚本只拆字段，<b>不补标点、不统一译名、不改口语</b>；页面的统计（条数、委托人数、候选人条数、求婚道具一致几件、写「无」几条）全部<b>现算</b>，换数据不会对不上。译名另有一张表对到站内规范名（只用于生成链接与人物页入口，<b>表里显示的字不改</b>）。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> <b>444 实例／0 异常</b>；<code>_audit_narrow.js --page request --game rf2 --width 520</code> 0 横向溢出；1100px 与 520px 截图核版。发现「阿利希雅」在终有依天那套里写作「阿利希雅」、安打那套写作「阿莉西娅」、站内规范名是「阿莉希亚」——<b>三种写法并存</b>，映射表里显式记了两条，不靠猜。</li>
+</ul>
 <h2 class="h2">2026-11-02　第一百六十八：新增「主线流程」页（3 代），8 章 56 步照录</h2>
 <ul class="ul">
 <li class="li"><b>补的是最大的一个洞：</b>此前站内只有<b>海洋</b>与<b>边境</b>两作有主线页，RF1／2／3／4／5 一条主线都查不到。这次先把 <b>3 代</b>做出来（<code>key:'rf3main'</code>，基础知识组，<code>gms:['rf3','rf3sp']</code>）：<b>8 章、56 步、5 处 BOSS</b>，另附 <b>9 条基本操作</b>。</li>
@@ -11750,6 +11765,125 @@ function rfoCraftHtml() {
    原表是 18 位委托人各占一列、16 个任务批上下堆叠的块状表，本站只做「摊平成一任务一记录」，
    任务名与报酬里的物品名保留攻略本的日文原文（攻略本自己没给译名，本页不代为翻译），
    发生条件与任务内容里的「？」「???」也是原表自带的，一律照录。 */
+/* 符文工房 2 的委托任务：两套来源拼起来的一张表。
+   主表＝终有依天《【RF2】【一周目】任务大全》（贴吧，118 条，带触发条件与奖励，只写一周目）；
+   补表＝安打《任务、居民、怪物攻略》（TGBUS，123 条，奖励混在内容里，含二代）。
+   两源大面积重叠，所以只补主表没覆盖的 6 条，不做同名合并——译名两套、口径两套，合并不了就照录。 */
+function requestRf2Html() {
+    const Q = (typeof RF2_QUEST !== 'undefined') ? RF2_QUEST : null;
+    if (!Q || !Q.quests || !Q.quests.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + esc(s) + '</span>';
+    const JP = {};
+    (Q.people || []).forEach(p => { JP[p.n] = p.j || ''; });
+
+    const all = Q.quests, ex = Q.extra || [];
+    const nAll = all.length, nEx = ex.length;
+    const CAND = Q.cand || [];
+
+    /* ---- 按委托人分组，顺序按主表里第一次出现的先后 ---- */
+    const ppl = [];
+    all.forEach(q => {
+        let p = ppl.filter(x => x.n === q.n)[0];
+        if (!p) { p = { n: q.n, j: JP[q.n] || '', list: [] }; ppl.push(p); }
+        p.list.push(q);
+    });
+    ppl.forEach(p => {
+        p.cnt = p.list.length;
+        const lv = p.list.map(q => { const m = (q.c || '').match(/爱情度(\d+)/); return m ? +m[1] : 0; });
+        p.maxLv = Math.max.apply(null, lv.concat([0]));
+        p.cand = CAND.indexOf(p.n) >= 0;
+    });
+    const nPpl = ppl.length;
+    /* 补表里的委托人：只算主表完全没有的那几位（玛娜是主表有的，她那一条属于「链条没写完」） */
+    const exPpl = [];
+    ex.forEach(q => {
+        if (ppl.some(p => p.n === q.n)) return;
+        if (!exPpl.some(x => x.n === q.n)) exPpl.push({ n: q.n, cnt: ex.filter(y => y.n === q.n).length });
+    });
+
+    /* ---- 计数全部现算 ---- */
+    const nNone = all.filter(q => q.r === '无').length;
+    const nNoR = all.filter(q => !q.r).length;
+    const nHave = nAll - nNone - nNoR;
+    const candRows = ppl.filter(p => p.cand);
+    const candTen = candRows.filter(p => p.cnt === 10).length;
+    const candNine = candRows.every(p => p.maxLv === 9);
+
+    /* ---- 求婚道具：攻略本 vs 站内村民表，逐条比对（只比字面，不判同一物） ---- */
+    const mar = Q.marriage || [];
+    const marSame = mar.filter(m => m.prop && m.prop === m.item).length;
+    const marDiff = mar.filter(m => m.prop && m.prop !== m.item);
+
+    return `
+    <div class="note">本页把两套来源拼成一张表。<b>主表</b>是《【RF2】【一周目】任务大全》（百度贴吧·终有依天）的 ${nAll} 条——它有「触发条件／流程／奖励」三列，但<b>只写一周目</b>；<b>补表</b>是《符文工房2 任务、居民、怪物攻略》（TGBUS 巴士速攻·安打）的 ${nEx} 条——奖励混写在内容里，却有主表完全没有的三位二代委托人。<b>两套对同一批任务各写各的</b>（译名不同、奖励记法也不同），本站不合并、不判定谁对，只在主表缺的地方用另一套补上，并标明是哪一套。</div>
+    ${stat([
+        ['任务条目', (nAll + nEx) + ' 条'],
+        ['主表／补表', nAll + ' ／ ' + nEx],
+        ['委托人', (nPpl + exPpl.filter(x => !ppl.some(p => p.n === x.n)).length) + ' 位'],
+        ['候选人', CAND.length + ' 位'],
+        ['写「无」奖励', nNone + ' 条'],
+    ])}
+
+    <h2 class="h2">一、这个作的委托是一个人一条链，不是一块任务板</h2>
+    <p class="p">RF2 没有公共的委托板，任务挂在<b>具体的人</b>名下：接谁的、做完才能接下一个。攻略本自己的说法照录如下——</p>
+    ${Q.mech.map(m => `<p class="p" style="padding-left:1.2rem;border-left:3px solid var(--line,#ddd)">${esc(m)}</p>`).join('')}
+    ${tbl(['开启条件（原文四条）'], Q.cond.map(c => [esc(c)]), { leftFirst: true })}
+    <div class="key"><b>七位候选人的链条长度完全一样</b>：${candRows.every(p => p.cnt === candRows[0].cnt) ? '每人 ' + candRows[0].cnt + ' 条' : candRows.map(p => p.cnt).join('、') + ' 条'}，且${candNine ? '每人的最高一档都停在<b>爱情度 9</b>' : '最高一档并不一致'}。也就是说<b>没有谁的任务更多更好追</b>，差别只在最后那件求婚道具怎么拿——见下一节。</div>
+
+    <h2 class="h2">二、七件求婚道具，${marSame} 件和站内村民表一字不差</h2>
+    <p class="p">攻略本每写到链条最后一步，会写明「给她什么就能结婚」。这七件东西，站内「村民喜好」页每人也有一个「求婚道具」栏，两边可以对着核：</p>
+    ${tbl(['候选人', '求婚道具', '攻略本原话（照录）', '站内村民表'], mar.map(m => [
+        '<b>' + esc(m.n) + '</b>',
+        esc(m.item),
+        '<span class="mon-no" style="display:block;text-align:left">' + esc(m.said) + '</span>',
+        m.prop ? (m.prop === m.item ? '一致' : '<b>' + esc(m.prop) + '</b>') : dash,
+    ]), { colw: ['5.4rem', '9rem', 'auto', '9rem'], left: [0, 1, 2, 3], cls: 'rf2qs' })}
+    <p class="p">七件里 <b>${marSame} 件两边一字不差</b>；剩下 ${mar.length - marSame} 件各写各的：${marDiff.map(m => '<b>' + esc(m.n) + '</b>的「' + esc(m.item) + '」对站内的「' + esc(m.prop) + '」').join('、')}。<b>两种写法都照录</b>——本站不替它们统一，也不断言「婚约戒指」与「订婚戒指」是不是同一件。</p>
+    <div class="note"><b>两处坑，都是原文写明的：</b>一是<b>多萝茜</b>的「祝福挂饰」不在她自己的链上，而是<b>高顿</b>那条【有要给的东西】发出来的（触发条件还写着「多罗茜所有任务完成」）；二是<b>朱丽雅</b>的「回忆戒指」要先经手<b>由绘</b>、再搭 10000G、等 3 天。只做她一个人的任务，这两件都拿不到。</div>
+    <div class="note">罗萨琳德那件更绕：原文是一行夹在任务条目之间的<b>独立说明</b>，不是一条任务——${esc((Q.quotes && Q.quotes[0]) || '')}</div>
+
+    <h2 class="h2">三、链条的形状：爱情度一级一条，一级一道坎</h2>
+    <p class="p">主表给的条件写得很有规律：第一条是「剧情后」这类触发，之后一条一个「爱情度 N」，从 1 排到 9。下面这张表把七位候选人的起始条件和最高档摆在一起——<b>七个数字一样，说明流程设计是同一套</b>。</p>
+    ${tbl(['候选人', '条数', '首条触发条件', '最高爱情度'], candRows.map(p => [
+        '<b><a class="link" href="#/char/rf2/' + encodeURIComponent(p.n) + '">' + esc(p.n) + '</a></b>' + (p.j ? '（' + esc(p.j) + '）' : ''),
+        String(p.cnt),
+        Lf(p.list[0].c || '—'),
+        p.maxLv ? String(p.maxLv) : dash,
+    ]), { colw: ['10.6rem', '3.4rem', 'auto', '6rem'], left: [0, 2] })}
+    <div class="note">「最高爱情度 9」不等于「9 就结婚」：结婚那一步要么是<b>第 10 条任务</b>（把求婚道具交出去），要么根本不在任务里（罗萨琳德是把花束直接送）。主表只到 9 为止，所以本页不给任何人补第 10 条。</div>
+
+    <h2 class="h2">四、${nAll} 条主表任务，按委托人分节</h2>
+    <p class="p">每节的顺序是攻略本<b>从上到下</b>的顺序。<b>主表这 ${nAll} 条任务名全是中文译名</b>（终有依天这一套就是这么写的）；补来的 ${nEx} 条反过来，<b>全是日文原名</b>。两套写法并存，本页各在各的位置上照录：不把中文名翻回日文，也不把日文名译成中文。「好感度」「友好度」「爱情度」三种叫法都是原文的，同样没统一。</p>
+    <div class="note"><b>原文的错字与怪写法一律照录，不修：</b>玛娜第一条写作「把金刚花交给<b>的</b>罗萨琳德」（多一个「的」）；阿莉希亚第一条的触发条件写作「与阿利希亚<b>雅</b>对话后」（多一个「雅」，跟她的名字都对不上）；多罗茜那条写作「奖励<b>，</b>：无」（冒号前多一个逗号）；罗萨琳德的触发条件里「维维安筑」也不是本站的「薇薇安邸」。这些都能在下面的表里原样找到——<b>本站不动手改攻略本的错</b>。</div>
+    <p class="p">奖励这一列有 ${nNone} 条写的是「无」${nNoR ? '，' + nNoR + ' 条干脆空着——空的不是本站漏填，<b>原文那里就没有</b>' : '——那是原文自己写的「无」，不是本站漏填'}。</p>
+    ${ppl.map(p => `<h3 class="h3">${p.cand ? '<span class="mon-no">候选</span> ' : ''}<a class="link" href="#/char/rf2/${encodeURIComponent(p.n)}">${esc(p.n)}</a>${p.j ? '（' + esc(p.j) + '）' : ''}　${p.cnt} 条</h3>
+    ${tbl(['任务', '触发条件', '流程', '奖励'], p.list.map(q => [
+        '<b>' + esc(q.t) + '</b>', Lf(q.c || '—'), Lf(q.f || '—'), q.r ? esc(q.r) : dash,
+    ]), { colw: ['10rem', '8rem', 'auto', '8.6rem'], left: [0, 1, 2, 3], cls: 'rf2qs' })}`).join('\n')}
+
+    <h2 class="h2">五、主表没有、从另一套补来的 ${nEx} 条</h2>
+    <p class="p">补的这 ${nEx} 条分两种：一是<b>主表一位都没收的委托人</b>（${exPpl.map(x => esc(x.n) + ' ' + x.cnt + ' 条').join('、')}）——这三位都是<b>二代</b>的角色，主表只写一周目，自然没有他们；二是<b>玛娜的求婚那一步</b>，主表链条停在爱情度 9 就没往下写。</p>
+    ${tbl(['委托人', '任务', '内容（照录）', '为什么补'], ex.map(q => [
+        esc(q.n), '<b>' + esc(q.t) + '</b>', Lf(q.x || '—'), esc(q.why),
+    ]), { colw: ['8rem', '11rem', 'auto', '11rem'], left: [0, 1, 2, 3], cls: 'rf2qs' })}
+
+    <h2 class="h2">六、两套都没说全的地方（照录，不补）</h2>
+    <div class="note"><b>补表作者自述不全：</b>「${esc(Q.mech[Q.mech.length - 1] || '')}」——他自己追的是女仆，别的候选人的部分任务就没触发、也没记。所以<b>本页不是 RF2 任务的完整清单</b>，只是这两套资料加起来的全部。</div>
+    <div class="note"><b>塔妮亚的任务被作者略过了：</b>「${esc(Q.tanya || '')}」——她的条目只有 ${(ppl.filter(p => p.n === '塔喵')[0] || {}).cnt || 0} 条，不是她只有这么多任务。</div>
+    <div class="note"><b>补表里那几位会员补的任务也照收：</b>${(Q.contrib || []).map(c => '「' + esc(c) + '」').join('、')}。这些是帖子里别人补的，原作者没写，<b>本页不改写、也不并进正文</b>，原样记在这里。</div>
+    <div class="note"><b>「一周目」是主表的边界：</b>主表标题就是《【一周目】任务大全》，二代那批角色（${exPpl.map(x => esc(x.n)).join('、')}）一个任务都没收。想知道二代的任务，只有补表这 ${ex.filter(q => exPpl.some(x => x.n === q.n)).length} 条可用——<b>本站没有更全的二代任务资料</b>。</div>
+
+    <div class="jump">
+        <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">求婚道具与生日礼物</div></a>
+        <a href="#/page/love"><div class="jp-t">恋爱与结婚</div><div class="jp-s">爱情度怎么涨</div></a>
+        <a href="#/page/source"><div class="jp-t">素材出处</div><div class="jp-s">任务要的东西去哪打</div></a>
+        <a href="#/page/rf2list"><div class="jp-t">物品一览</div><div class="jp-s">奖励里的那些东西</div></a>
+    </div>
+    <div class="note">数据文件 <code>js/rf2quest.js</code>（<code>RF2_QUEST</code>），由 <code>_build_rf2_quest.py</code> 从 UTF-16LE 原文切分生成，脚本只拆字段：不补标点、不统一译名、不改口语。原始文件里这两段之间的作者署名是<b>三个人</b>（终有依天、安打、以及同文件里泡芙的上手指南），别当成一份攻略的两个版本。</div>`;
+}
+
 function requestRfoHtml() {
     const Q = (typeof RFO_QUEST !== 'undefined') ? RFO_QUEST : null;
     if (!Q || !Q.quests.length) return '';
