@@ -543,6 +543,11 @@
     min-width: 30rem;
 }
 
+/* 791 行出货全表：六列，窄屏靠横滑，不压列宽 */
+.content .table.rf3goods table {
+    min-width: 44rem;
+}
+
 /* 一行里的每项加成／效果各是一个不可拆的短串（「知力+8」「毒（10）3.9%」），
    不锁住就会被 CJK 的任意断行拆成两截 */
 .content .table .nw {
