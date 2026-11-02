@@ -543,6 +543,18 @@
     min-width: 30rem;
 }
 
+/* 三代商店：八家店的明细最多四列（商品／季节／售价／说明），说明列是长句，
+   窄屏给到 34rem 靠横滑，硬压会把说明挤成每字一行 */
+.content .table.rf3shop table {
+    min-width: 34rem;
+}
+
+/* 三代商店的摊平总表：五列且店名是长串（「钓鱼池「卡尔罗斯休闲馆」」），
+   窄屏一律横滑，不为了塞进 520px 把商品名截断 */
+.content .table.rf3shopall table {
+    min-width: 46rem;
+}
+
 /* 791 行出货全表：六列，窄屏靠横滑，不压列宽 */
 .content .table.rf3goods table {
     min-width: 44rem;
