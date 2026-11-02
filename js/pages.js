@@ -8789,6 +8789,13 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十四：窄屏横向溢出审计做成常驻回归工具</h2>
+<ul class="ul">
+<li class="li"><b>新增 <code>_audit_narrow.js</code></b>：用本机 Edge headless 在 520px 窄视口下渲染每个页面，量 <code>scrollWidth − clientWidth</code>（正值＝页面被撑破）。支持 <code>--page</code> / <code>--game</code> / <code>--width</code> 范围过滤，自动探测 Edge（或 <code>EDGE_BIN</code> 指定）。探测器已用 900px 红块校准（520px 视口正确报出 410），可信。</li>
+<li class="li"><b>挂进 <code>_verify.js</code> 但默认关闭</b>：仅在 <code>RFWIKI_LAYOUT_AUDIT=1</code> 且本机有 Edge 时才跑，避免拖慢默认 0.3s 的纯 Node 自检。先前的临时审计脚本已删，本次固化成可复用、可提交的回归项。</li>
+<li class="li"><b>完整跑通</b>：440 次渲染（全 62 页 × 各自可见作）0 页面级横向溢出——宽表（RFF 战斗、RF5 速查表、海洋双折叠表等）都在 <code>.table{overflow-x:auto}</code> 容器内横滑，不撑破页面。此前发现的 produce 页 <code>rfoprod</code> 出现点列换行问题已不在。</li>
+</ul>
+
 <h2 class="h2">2026-11-02　第一百六十三：「战斗与弱点」加「跨作弱点体系速览」路线图</h2>
 <ul class="ul">
 <li class="li"><b>battle 页顶部新增「先看六作怎么读抗性（速览）」</b>：一张总览表并列六作的抗性体系与读法——RF5/RF4 八属性小数系数（负数＝弱点）、RF3 八属性整数倍率（−1＝怕、+4＝极抗）、RF1 五列减伤值（全正数、小＝脆）、海洋三档记号（×＝弱点）、边境四属性耐性点（全正数、高＝抗）。每项标注收录数与「细表」指向，避免把某一作的读法误套到另一作。</li>

@@ -81,3 +81,28 @@ if (!only) {
             '行数', (h.match(/<tr data-s=/g) || []).length);
     });
 }
+
+/* 窄屏布局审计（回归项，默认关闭以免拖慢自检）。
+   开启： RFWIKI_LAYOUT_AUDIT=1 node _verify.js
+   依赖： 本机装有 Microsoft Edge（自动探测，或用 EDGE_BIN 指定）。
+   说明： 用 Edge headless 在 520px 下渲染每页，量 scrollWidth-clientWidth；
+          正值＝页面被撑破。宽表应在 .table 容器内横滑，不撑破页面。 */
+if (!only && process.env.RFWIKI_LAYOUT_AUDIT) {
+    const { execFileSync } = require('child_process');
+    const audit = require('./_audit_narrow.js');
+    const edge = audit.findEdge();
+    if (!edge) {
+        console.log('（窄屏审计跳过：未找到 Edge，可用 EDGE_BIN 指定）');
+    } else {
+        console.log('—— 窄屏布局审计（RFWIKI_LAYOUT_AUDIT=1）——');
+        try {
+            const out = execFileSync(process.execPath, [ROOT + '_audit_narrow.js', '--edge', edge],
+                { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+            process.stdout.write(out);
+            if (/溢出 \d+ 处/.test(out) && !/溢出 0 处/.test(out)) bad++;
+        } catch (e) {
+            process.stdout.write((e.stdout || '') + (e.stderr || ''));
+            bad++;
+        }
+    }
+}
