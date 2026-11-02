@@ -12209,7 +12209,7 @@ function craftRf3Html() {
         ['条目', R.length + ' 行'],
         ['素材', uniq.length + ' 件'],
         ['站内对得上', MAP.length + ' 行'],
-        ['站内素材表', '90 件']
+        ['站内素材表', ((typeof MAT_RF3 !== 'undefined') ? MAT_RF3.length : 90) + ' 件']
     ])}
     <div class="note">源：<b>${esc(D.src)}</b>，社区整理，<b>原文没有署名</b>，也没写出处。文件名自述「不包括法杖」，正文里确实只有素材、没有法杖那套规则——<b>法杖怎么强化，这份源里没有</b>。站内对照列取自<a href="#/page/material">素材与矿石</a>页的强化表（解包数据）。两份都是民间整理，不是官方手册。</div>
 
@@ -12248,7 +12248,7 @@ function craftRf3Html() {
     <div class="note">「数值」与「触发率」是原文并排给的两个数，<b>原文没说两者怎么换算</b>。拿同一效果横着比就能看出分母不统一：麻痹（20）写 7.8%（约等于 ÷255），麻痹（5）写 3.9%（约等于 ÷128），气绝（2）写 2%（÷99 才勉强靠近）。所以<b>别拿数值直接折算概率</b>，那是本站算不出来、原文也没交代的东西。</div>
 
     <h2 class="h2">四、和站内那张素材表对着看</h2>
-    <p class="p">站内的<a href="#/page/material">素材与矿石</a>页有一张同样题材的表（解包数据，90 件，带买价卖价与入手地点）。两边能对上名字的有 <b>${MAP.length} 行</b>，对不上的 ${unmapped.length} 件是「${unmapped.map(esc).join('、')}」——站内没有这个写法（见下一节的推测，<b>只写推测</b>）。</p>
+    <p class="p">站内的<a href="#/page/material">素材与矿石</a>页有一张同样题材的表（解包数据，${(typeof MAT_RF3 !== 'undefined') ? MAT_RF3.length : 90} 件，带买价卖价与入手地点）。两边能对上名字的有 <b>${MAP.length} 行</b>，对不上的 ${unmapped.length} 件是「${unmapped.map(esc).join('、')}」——站内没有这个写法（见下一节的推测，<b>只写推测</b>）。</p>
 
     <h3 class="h3">难度：${dSame.length} 一致、${dDiffU.length} 不一致</h3>
     <p class="p">站内那 ${dCmp.length} 行给了强化难度，其中 ${dSame.length} 行与源<b>完全相同</b>。不同的 ${dDiffU.length} 件（源里共 ${dDiff.length} 行，有 ${dDiff.length - dDiffU.length} 行是分节重抄）全部列在下面——两套数都摆着，<b>本站不判定谁对</b>：</p>
