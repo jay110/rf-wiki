@@ -1213,6 +1213,48 @@ function buildIndex(g) {
     return list;
 }
 
+/* 正文索引：行索引只收表格，讲解文字（小标题、段落、提示块）一个字都没进，
+   于是「照录不改」「量纲不同」「没有一个能通吃」这类只写在正文里的说法，
+   搜出来是 0 条 0 页。这里按页收一份「去掉表格后」的纯文本，
+   与行索引同样只缓存最近两作（十作全留要几十 MB）。 */
+const PROSECACHE = {};
+const PROSEORDER = [];
+
+function buildProse(g) {
+    if (PROSECACHE[g.id]) return PROSECACHE[g.id];
+    const out = [];
+    for (const p of PAGES) {
+        /* 更新日志什么都提一句，收进正文索引只会让每条查询都多出一条日志 */
+        if (p.key === 'changelog' || !pageVis(p, g)) continue;
+        let h = '';
+        try { h = p.body(g) || ''; } catch (e) { continue; }
+        const text = stripTags(h.replace(/<table[\s\S]*?<\/table>/gi, ' '))
+            .replace(/\s+/g, ' ').trim();
+        if (text.length < 24) continue;
+        out.push({ k: p.key, t: p.title, i: p.icon, grp: p.group, s: text.toLowerCase(), raw: text });
+    }
+    PROSECACHE[g.id] = out;
+    PROSEORDER.push(g.id);
+    while (PROSEORDER.length > 2) {
+        const old = PROSEORDER.shift();
+        if (old !== g.id) delete PROSECACHE[old];
+    }
+    return out;
+}
+
+/* 正文命中：所有词都要出现才算，按首词出现次数排序——讲得最多的一页排最前 */
+function searchProse(g, words) {
+    const hits = [];
+    const head = words[0];
+    for (const e of buildProse(g)) {
+        if (!words.every(w => e.s.includes(w))) continue;
+        let c = 0;
+        for (let i = e.s.indexOf(head); i >= 0; i = e.s.indexOf(head, i + head.length)) c++;
+        hits.push({ e, c });
+    }
+    return hits.sort((a, b) => b.c - a.c || a.e.t.length - b.e.t.length);
+}
+
 /* 所有词都要命中；首词落在名称里比落在数值里得分高得多 */
 function scoreEntry(e, words) {
     for (const w of words) if (!e.s.includes(w)) return 0;
@@ -1347,7 +1389,7 @@ function viewSearch(q) {
         <div class="section-title"><span>搜索</span><span class="en">SEARCH</span></div>
         ${box}
         <div class="empty">输入关键词开始搜索<br>
-            <span style="font-size:0.74rem">可以搜物品名（「生命果冻」）、页面名（「锻造」），也可以多个词一起搜（「剑 攻击」）</span>
+            <span style="font-size:0.74rem">可以搜物品名（「生命果冻」）、页面名（「锻造」）、正文里的说法（「量纲」），也可以多个词一起搜（「剑 攻击」）</span>
         </div>`;
     }
 
@@ -1359,6 +1401,9 @@ function viewSearch(q) {
     const { list, relaxed, used, rows } = searchEntries(g, words);
     const head = used[0];
     const LIMIT = 80;
+    /* ③ 正文命中：只写在讲解里、表格里一个字都没有的说法（「照录不改」「量纲不同」） */
+    const prAll = searchProse(g, used);
+    const PRLIMIT = 12;
     const shown = list.slice(0, LIMIT);
     const total = list.length;
 
@@ -1373,7 +1418,7 @@ function viewSearch(q) {
         .filter(x => x.p);
 
     return `
-    <div class="section-title"><span>搜索「${escHtml(raw)}」</span><span class="en">${total} ENTRIES</span></div>
+    <div class="section-title"><span>搜索「${escHtml(raw)}」</span><span class="en">${total ? total + ' ENTRIES' : (pgHit.length + extra.length + prAll.length) + ' PAGES'}</span></div>
     ${box}
     ${relaxed ? `<div class="sres-tip">同时含有「${escHtml(words.join('」「'))}」的条目没有，下面按「${escHtml(head)}」单独匹配。</div>` : ''}
     ${(pgHit.length || extra.length) ? `
@@ -1391,6 +1436,21 @@ function viewSearch(q) {
                 <div class="list-item-title">${p.title}</div>
                 <div class="list-item-sub">${n} 条命中</div>
                 ${icon('chev', 'chev')}
+            </a>`).join('')}
+        </div>` : ''}
+    ${prAll.length ? `
+        <div class="sres-head">正文提到　<span class="sres-n">${prAll.length}</span>
+            ${prAll.length > PRLIMIT ? `<span class="sres-more">只列前 ${PRLIMIT} 页</span>` : ''}
+        </div>
+        <div class="sres">
+            ${prAll.slice(0, PRLIMIT).map(({ e, c }) => `
+            <a class="sres-item" href="#/page/${e.k}">
+                <div class="sres-top">
+                    <span class="sres-name">${escHtml(e.t)}</span>
+                    ${c > 1 ? `<span class="sres-cnt">×${c}</span>` : ''}
+                    <span class="sres-page">正文</span>
+                </div>
+                <div class="sres-snip">${markKw(snippetOf(e.raw, head), head)}</div>
             </a>`).join('')}
         </div>` : ''}
     ${total ? `
@@ -1417,7 +1477,7 @@ function viewSearch(q) {
             </a>`;
     }).join('')}
         </div>` : ''}
-    ${(!total && !pgHit.length && !extra.length) ? `<div class="empty">没有找到「${escHtml(raw)}」<br>
+    ${(!total && !pgHit.length && !extra.length && !prAll.length) ? `<div class="empty">没有找到「${escHtml(raw)}」<br>
         <span style="font-size:0.74rem">本站只收录已核对的数据；换个别名或更短的关键词再试，例如「药草」「锻造」「结婚」</span></div>` : ''}
     <div style="padding:1rem"><a class="link" href="#/wiki" style="font-size:0.84rem">‹ 返回攻略目录</a></div>`;
 }
