@@ -10,8 +10,7 @@ const page = process.argv[2] || 'rf3list';
 const game = process.argv[3] || 'rf3';
 const outp = process.argv[4] || '_out.html';
 
-const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {

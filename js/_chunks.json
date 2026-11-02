@@ -1,0 +1,146 @@
+{
+  "core": [
+    "js/icons.js",
+    "js/changelog-head.js",
+    "js/data.js",
+    "js/npc_azuma.js",
+    "js/npcfull.js",
+    "js/pages.js",
+    "js/app.js"
+  ],
+  "shared": [
+    "js/monsters.js",
+    "js/boss.js",
+    "js/fish.js",
+    "js/fish_old.js",
+    "js/recipe_rf12.js",
+    "js/gift_rf12.js",
+    "js/source_rf12.js",
+    "js/pet_old.js",
+    "js/crop_more.js",
+    "js/produce.js",
+    "js/extradata.js",
+    "js/npcdata.js",
+    "js/gearbest.js",
+    "js/runeall.js",
+    "js/weapon_old.js",
+    "js/pot_old.js",
+    "js/bd_ext.js",
+    "js/faces.js",
+    "js/sched.js"
+  ],
+  "cross": [
+    "js/resist.js",
+    "js/resist4.js",
+    "js/rf2cal.js",
+    "js/rf3cal.js",
+    "js/rf5cal.js",
+    "js/festmore.js"
+  ],
+  "games": {
+    "rf1": [
+      "js/rf1data.js",
+      "js/rf1mon.js",
+      "js/rf1term.js",
+      "js/rf1cook.js",
+      "js/fishspot_rf1.js",
+      "js/crop1.js"
+    ],
+    "rf2": [
+      "js/rf2data.js",
+      "js/rf2quest.js",
+      "js/rf2shop.js",
+      "js/rf2cook.js",
+      "js/fishspot_rf2.js"
+    ],
+    "rf3": [
+      "js/mon3.js",
+      "js/rf3shop.js",
+      "js/rf3mat.js",
+      "js/rf3data.js",
+      "js/rf3cook.js",
+      "js/rf3recipes.js",
+      "js/recipe_rf3.js",
+      "js/gift_rf3.js",
+      "js/fishspot_rf3.js",
+      "js/rf3main.js",
+      "js/rf3goods.js",
+      "js/rf3weapon.js",
+      "js/mat_rf3.js"
+    ],
+    "rff": [
+      "js/rffdata.js",
+      "js/rffmon.js",
+      "js/rffterm.js",
+      "js/rffcook.js",
+      "js/fishspot_rff.js",
+      "js/rffevent.js",
+      "js/rffcrop.js"
+    ],
+    "rfo": [
+      "js/monrfo.js",
+      "js/rfomon.js",
+      "js/cnterm.js",
+      "js/rfocook.js",
+      "js/crop_rfo.js",
+      "js/rfo_fish.js",
+      "js/rfoquest.js",
+      "js/rfo_main.js",
+      "js/rfo_misc.js",
+      "js/rfomap.js",
+      "js/rfosail.js"
+    ],
+    "rf4": [
+      "js/mon4.js",
+      "js/recipes4.js",
+      "js/items4.js",
+      "js/rf4forge.js",
+      "js/rf4cook.js",
+      "js/fishspot4.js",
+      "js/fx4s.js",
+      "js/cropdata.js",
+      "js/fxdata.js",
+      "js/rune.js"
+    ],
+    "rf5": [
+      "js/recipes.js",
+      "js/items.js",
+      "js/rf5cook.js",
+      "js/fishspot.js",
+      "js/fx5.js",
+      "js/crop5.js"
+    ],
+    "azuma": [
+      "js/fishspot_azuma.js",
+      "js/fish_azuma.js",
+      "js/drop_azuma.js",
+      "js/recipe_azuma.js",
+      "js/crop_azuma.js",
+      "js/shop_azuma.js",
+      "js/skill_azuma.js",
+      "js/quest_azuma.js",
+      "js/azuma.js",
+      "js/azuma_cook.js",
+      "js/azuma_gift.js"
+    ]
+  },
+  "pages": {
+    "changelog": [
+      "js/changelog.js"
+    ]
+  },
+  "sha": {
+    "core": "295e731cf98065ea",
+    "shared": "f37677b21385683b",
+    "cross": "226db472fe859d8a",
+    "game:rf1": "bdfbee54d15c03be",
+    "game:rf2": "820ea6d4fa19fb6c",
+    "game:rf3": "40f8a6c782a20ef1",
+    "game:rff": "6a6e6f0d54bfc863",
+    "game:rfo": "2b49d9a15f591e57",
+    "game:rf4": "995cc681a4eb35f7",
+    "game:rf5": "1d75038895ec3f75",
+    "game:azuma": "9f5fcdee3948fe94",
+    "page:changelog": "5d1d8ef96b25b98c"
+  }
+}

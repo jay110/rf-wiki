@@ -1,8 +1,7 @@
 /* 索引健康检查：异常名称、纯数字名、超长名 */
 const fs = require('fs'), vm = require('vm');
 const ROOT = __dirname + '/';
-const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = { console, window: { addEventListener() { }, location: { hash: '' }, innerWidth: 1280, scrollTo() { } },
     document: { addEventListener() { }, getElementById: () => stubEl, querySelector: () => stubEl, querySelectorAll: () => [], createElement: () => stubEl, body: stubEl } };

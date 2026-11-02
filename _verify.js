@@ -1,9 +1,32 @@
 /* 本地渲染校验：按 index.html 的顺序加载所有 js，逐页调 body() 检查异常 */
 const fs = require('fs'), vm = require('vm');
 const ROOT = __dirname + '/';
-const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 console.log('脚本数', files.length);
+
+/* ---------- 0. 分包是否过期 ----------
+   index.html 现在只引 js/k-*.js，改了源文件却没重打包，线上就是旧内容。
+   这里按 js/_chunks.json 里记的指纹重算一遍，对不上直接判失败。 */
+(function checkChunks() {
+    const cp = ROOT + 'js/_chunks.json';
+    if (!fs.existsSync(cp)) { console.log('!! 缺 js/_chunks.json，先跑 node _build_chunks.js'); process.exitCode = 1; return; }
+    const plan = JSON.parse(fs.readFileSync(cp, 'utf8'));
+    const crypto = require('crypto');
+    const shaOf = l => crypto.createHash('sha1')
+        .update(l.map(f => fs.readFileSync(ROOT + f, 'utf8')).join('\n;\n') + '\n')
+        .digest('hex').slice(0, 16);
+    const pairs = [['core', plan.core], ['shared', plan.shared], ['cross', plan.cross]];
+    for (const gid of Object.keys(plan.games || {})) pairs.push(['game:' + gid, plan.games[gid]]);
+    for (const k of Object.keys(plan.pages || {})) pairs.push(['page:' + k, plan.pages[k]]);
+    const stale = pairs.filter(([k, l]) => plan.sha && plan.sha[k] !== shaOf(l));
+    if (stale.length) {
+        console.log('!! 包已过期（' + stale.map(x => x[0]).join('、') + '），跑 node _build_chunks.js');
+        process.exitCode = 1;
+    } else {
+        console.log('分包 ' + pairs.length + ' 个，与源文件一致');
+    }
+})();
+
 
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {

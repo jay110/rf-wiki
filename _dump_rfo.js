@@ -1,8 +1,7 @@
 /* 把海洋（rfo）可见页全部渲染成纯文本，落到 _snap/rfo_pages/ 便于逐页核对 */
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const ROOT = __dirname + '/';
-const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {

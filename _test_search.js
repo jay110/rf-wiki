@@ -1,8 +1,7 @@
 /* 搜索功能自测 */
 const fs = require('fs'), vm = require('vm');
 const ROOT = __dirname + '/';
-const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {
     console,

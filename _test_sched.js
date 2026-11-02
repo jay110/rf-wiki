@@ -1,7 +1,6 @@
 /* 行程表渲染测试：8 种星期 × 全部村民，重点校验 colspan 总和不能错位 */
 const fs = require('fs'), vm = require('vm');
-const html = fs.readFileSync('index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 const stub = {
     innerHTML: '', textContent: '', value: '', style: {}, dataset: {},
     classList: { add() { }, remove() { }, toggle() { } },

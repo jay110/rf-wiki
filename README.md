@@ -12,7 +12,8 @@
 
 ## 特性
 
-- 纯静态：无 CDN、无构建步骤、无后端，双击 `index.html` 即可运行
+- 纯静态：无 CDN、无后端。源文件直接打开也能跑，但线上走的是 `_build_chunks.js` 打出来的分包
+  （见下面「打包与按需加载」）
 - Hash 路由单页应用：`#/` 是站点主页，`#/wiki` 是攻略目录，`#/page/<页面key>` 是具体条目
   （主页与攻略目录分开，结构参照矿石镇的攻略百科）
 - 移动端优先：430px 宽度下表格横向滚动，不压成竖排
@@ -36,10 +37,33 @@ python -m http.server 8000
 # 然后访问 http://localhost:8000
 ```
 
+### 打包与按需加载
+
+`index.html` 只引三个包（清单 `js/k-plan.js`、加载器 `js/k-loader.js`、内核 `js/k-core.js`），
+其余按「进哪一作、开哪一页」现下：进某作下 `k-shared.js` + `k-<作品>.js`；打开跨作页
+（跨作机制对照／节日一览／战斗与属性）下全部作品包 + `k-cross.js`；打开更新日志下
+`k-page-changelog.js`。首页因此只下约 413KB（gzip），而不是全部 1.2MB。
+
+改了 `js/` 下的任何源文件之后：
+
+```bash
+node _build_chunks.js        # 重新打包（会自检：每作只装自己的包时，全部页面输出须与全量一致）
+python _build_clhead.py      # 只在改了 js/changelog.js 之后需要：重生成日志摘要
+node _verify.js              # 会先检查「包是否过期」，对不上直接失败
+```
+
+**源文件清单只有一份**：`js/_manifest.json`（按加载顺序）。打包、单文件版、11 个校验脚本
+都读它，新增数据文件只改这一处。包过期检测靠 `js/_chunks.json` 里的指纹。
+
+`python _inline.py` 仍然生成单文件版 `standalone.html`（全部源文件内联，不按需加载）。
+
 ## 目录结构
 
 ```
-index.html          入口（脚本加载顺序在此定义）
+index.html          入口（只引三个包；源文件顺序在 js/_manifest.json）
+js/k-*.js          分包产物，由 _build_chunks.js 生成，勿手改
+js/_manifest.json   源文件清单（顺序）
+js/_chunks.json     分包方案与每个包的指纹
 css/main.css        布局、导航、主题
 css/content.css     正文组件：表格、区块、分节
 js/app.js           路由、渲染、搜索

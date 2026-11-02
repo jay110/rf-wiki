@@ -1,8 +1,7 @@
 /* 时段反查测试：8 天 × 19 个整点，把反查结果和正向编码逐格对撞。
    核心断言——反查是正向表的转置，任何一格都不能错位或丢人。 */
 const fs = require('fs'), vm = require('vm');
-const html = fs.readFileSync('index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 const stub = {
     innerHTML: '', textContent: '', value: '', style: {}, dataset: {},
     classList: { add() { }, remove() { }, toggle() { } },

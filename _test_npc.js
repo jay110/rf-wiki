@@ -1,7 +1,6 @@
 /* 人物板块渲染测试：每作 × 每分类 × 每人详情 */
 const fs = require('fs'), vm = require('vm');
-const html = fs.readFileSync('index.html', 'utf8');
-const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const files = require('./_files.js')();
 const stub = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = { console, window: { addEventListener() { }, location: { hash: '' }, innerWidth: 1280, scrollTo() { } }, document: { addEventListener() { }, getElementById: () => stub, querySelector: () => stub, querySelectorAll: () => [], createElement: () => stub, body: stub } };
 vm.createContext(ctx);

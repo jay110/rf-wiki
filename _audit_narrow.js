@@ -47,21 +47,35 @@ function buildAuditHtml() {
   </script>\n`;
   const foot = `<script>
     window.addEventListener('load',function(){setTimeout(function(){
-      try{var d=document.documentElement,cw=d.clientWidth,sw=d.scrollWidth,off=sw-cw;
+      try{
+        /* 分包之后必须先确认页面真的画出来了：占位行没有宽度，量出来必然 0 溢出 */
+        var mn=document.querySelector('#main');
+        if(mn&&/正在载入资料/.test(mn.textContent)){
+          var b0=document.createElement('div');b0.id='__audit';b0.setAttribute('data-overflow','notready');
+          b0.textContent='NOTREADY';document.body.appendChild(b0);return;
+        }
+        var d=document.documentElement,cw=d.clientWidth,sw=d.scrollWidth,off=sw-cw;
         var b=document.createElement('div');b.id='__audit';b.setAttribute('data-overflow',String(off));
         b.textContent='OVERFLOW='+off;document.body.appendChild(b);
       }catch(e){var b2=document.createElement('div');b2.id='__audit';b2.setAttribute('data-overflow','-1');b2.textContent='ERR '+e;document.body.appendChild(b2);}
     },1200);});
   </script>\n`;
   h = h.replace('</head>', head + '</head>');
-  h = h.replace('</body>', foot + '</body>');
+  /* 分包之后，若不在本地铺开所有包，量到的可能是「正在载入资料」那行占位，
+     溢出永远 0，审计就白做了。把包全部铺进来，并关掉按需加载。 */
+  const plan = JSON.parse(fs.readFileSync(ROOT + 'js/_chunks.json', 'utf8'));
+  const all = [plan.shared, plan.cross]
+    .concat(Object.keys(plan.games).map(g => 'js/k-' + g + '.js'))
+    .concat(Object.keys(plan.pages || {}).map(k => 'js/k-page-' + k + '.js'));
+  const burst = all.map(f => '<script src="' + f + '"></script>').join('\n')
+    + '\n<script>window.K_PLAN = null;</script>\n';
+  h = h.replace('</body>', burst + foot + '</body>');
   return h;
 }
 
 /* ---------- 加载 bundle，枚举页面与作品 ---------- */
 function loadBundle() {
-  const html = fs.readFileSync(ROOT + 'index.html', 'utf8');
-  const files = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+  const files = require('./_files.js')();
   const ctx = {
     console,
     window: { addEventListener() { }, location: { hash: '' }, innerWidth: 1280, scrollTo() { } },

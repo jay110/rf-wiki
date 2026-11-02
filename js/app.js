@@ -94,6 +94,12 @@ function go(path) {
 /* 从更新日志页里取最新的几条标题，给主页「最近更新」用。
    直接读 changelog 的正文，不另维护一份列表，免得又忘同步。 */
 function latestUpdates(n) {
+    /* 更新日志正文改成按需加载了，没载入时用打包时生成的摘要（_split_changelog.py）。
+       载入之后仍按原文算；两份由 _test_changelog.js 断言一致。 */
+    if (typeof CHANGELOG_HEAD !== 'undefined' && CHANGELOG_HEAD.latest
+        && (typeof CHANGELOG_HTML === 'undefined')) {
+        return CHANGELOG_HEAD.latest.slice(0, n);
+    }
     try {
         const p = PAGE_MAP['changelog'];
         if (!p) return [];
@@ -111,6 +117,13 @@ function latestUpdates(n) {
 let _siteUpdated = '';
 function siteUpdated() {
     if (_siteUpdated) return _siteUpdated;
+    /* 同上：正文没载入时用摘要里的日期，别让每页页脚都去拉 400KB 的日志 */
+    if (typeof CHANGELOG_HEAD !== 'undefined' && CHANGELOG_HEAD.updated
+        && (typeof CHANGELOG_HTML === 'undefined')) {
+        const h = CHANGELOG_HEAD.updated.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (h) _siteUpdated = `${h[1]}年${+h[2]}月${+h[3]}日`;
+        if (_siteUpdated) return _siteUpdated;
+    }
     try {
         const p = PAGE_MAP['changelog'];
         const m = ((p && p.body()) || '').match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -1461,7 +1474,61 @@ function viewError(msg) {
 
 let lastHash = null;
 
+/* ---------- 分包：这一路由要什么，先下齐再画 ----------
+   首页与「选择作品」不碰任何作品数据，所以打开最快；进某作才下那一作的数据；
+   跨作页（系列对照／节日／战斗）与更新日志各自单独一包，用到才下。 */
+function chunkNeed(r) {
+    if (typeof K === 'undefined' || typeof K_PLAN === 'undefined' || !K_PLAN) return null;
+    const none = { game: null, page: null, cross: false };
+    if (r.name === 'home' || r.name === 'games' || r.name === 'switch') return none;
+    const g = cur();
+    const need = { game: g.id, page: null, cross: false };
+    if (r.name === 'search') { need.cross = true; return need; }
+    if (r.name === 'resident' || r.name === 'char' || r.name === 'sched') {
+        const gg = GAMES.find(x => x.id === r.args[0]);
+        need.game = gg ? gg.id : g.id;
+        return need;
+    }
+    if (r.name === 'page') {
+        const key = r.args[0];
+        if (K_PLAN.pages && K_PLAN.pages[key]) need.page = key;
+        if (K_PLAN.crossPages && K_PLAN.crossPages.indexOf(key) >= 0) need.cross = true;
+    }
+    return need;
+}
+
+function showLoading() {
+    const m = document.getElementById('main');
+    if (!m) return;
+    m.innerHTML = '<div class="content"><p class="p gray">正在载入资料……</p></div>';
+}
+
+let _waitingFor = '';
 function render() {
+    const r = parseRoute();
+    const need = chunkNeed(r);
+    if (need) {
+        const lack = (need.game && !K.has(need.game))
+            || (need.page && !K.hasPage(need.page))
+            || (need.cross && !K.hasCross());
+        if (lack) {
+            const sig = location.hash;
+            if (_waitingFor !== sig) { _waitingFor = sig; showLoading(); }
+            K.ready(need).then(() => {
+                _waitingFor = '';
+                if (location.hash === sig) render();
+            }).catch(() => {
+                /* 包没下来就照常画：缺数据的页自带「数据未加载」提示，总比一直转圈强 */
+                _waitingFor = '';
+                renderNow();
+            });
+            return;
+        }
+    }
+    renderNow();
+}
+
+function renderNow() {
     const r = parseRoute();
     const g = cur();
 

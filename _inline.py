@@ -38,6 +38,20 @@ def face_block():
 
 
 html = re.sub(r'<link rel="stylesheet" href="([^"]+)"\s*/?>', css_repl, html)
+
+# 分包之后 index.html 只引三个包。单文件版没有同目录可读，也不该按需加载：
+# 把清单里的源文件按原顺序全部灌进来，并把 K_PLAN 置空（关掉按需加载那一套）。
+manifest = json.loads((ROOT / "js" / "_manifest.json").read_text(encoding="utf-8"))["files"]
+bundle = "\n;\n".join(
+    (ROOT / f).read_text(encoding="utf-8").replace("</script", "<\\/script")
+    for f in manifest)
+html = re.sub(
+    r'[ \t]*<script src="js/k-plan\.js"></script>\s*\n'
+    r'[ \t]*<script src="js/k-loader\.js"></script>\s*\n'
+    r'[ \t]*<script src="js/k-core\.js"></script>',
+    lambda m: "<script>var K_PLAN=null;\n" + bundle + "\n</script>",
+    html)
+print(f"内联源文件 {len(manifest)} 个")
 html = re.sub(r'<script src="([^"]+)"\s*>\s*</script>', js_repl, html)
 
 # 站点图标（assets/icon/*）在单文件版里没有同目录可读，一并转成 data URI

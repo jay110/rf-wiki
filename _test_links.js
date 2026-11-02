@@ -8,8 +8,7 @@
  */
 'use strict';
 const fs = require('fs'), vm = require('vm');
-const html = fs.readFileSync('index.html', 'utf8');
-const srcs = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const srcs = require('./_files.js')();
 let code = srcs.map(f => fs.readFileSync(f, 'utf8')).join('\n;\n') + '\n;__o={PAGES,GAMES};';
 const ctx = { console, window: { addEventListener() {}, matchMedia() { return { matches: false, addEventListener() {} }; }, location: { hash: '' }, localStorage: { getItem() { return null; }, setItem() {} } }, document: { addEventListener() {}, querySelector() { return null; }, querySelectorAll() { return []; }, body: { classList: { add() {}, remove() {} } }, documentElement: { classList: { add() {}, remove() {} } } }, localStorage: { getItem() { return null; }, setItem() {} }, location: { hash: '' }, navigator: { userAgent: 'node' }, setTimeout, clearTimeout };
 vm.createContext(ctx);
