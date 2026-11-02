@@ -100,6 +100,7 @@
   "js/azuma_cook.js",
   "js/azuma_gift.js",
   "js/changelog.js",
+  "js/pages-meta.js",
   "js/pages.js",
   "js/app.js"
  ]

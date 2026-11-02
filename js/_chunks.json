@@ -5,7 +5,7 @@
     "js/data.js",
     "js/npc_azuma.js",
     "js/npcfull.js",
-    "js/pages.js",
+    "js/pages-meta.js",
     "js/app.js"
   ],
   "shared": [
@@ -27,7 +27,8 @@
     "js/pot_old.js",
     "js/bd_ext.js",
     "js/faces.js",
-    "js/sched.js"
+    "js/sched.js",
+    "js/pages.js"
   ],
   "cross": [
     "js/resist.js",
@@ -130,8 +131,8 @@
     ]
   },
   "sha": {
-    "core": "295e731cf98065ea",
-    "shared": "f37677b21385683b",
+    "core": "ec6b6e1ff81d43e4",
+    "shared": "1a3f9bfb97f7fc06",
     "cross": "226db472fe859d8a",
     "game:rf1": "bdfbee54d15c03be",
     "game:rf2": "820ea6d4fa19fb6c",

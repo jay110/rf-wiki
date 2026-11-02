@@ -75,6 +75,16 @@
         </nav>
     </div>
 
+    <!-- Service Worker：stale-while-revalidate，首访缓存、回访秒开、离线可用。
+         文件在仓库根目录 sw.js，scope 取 './'；改了本文件或 index.html 记得把 sw.js 里 CACHE 版本号 +1 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () { });
+            });
+        }
+    </script>
+
     <!-- 三个包：清单、加载器、内核。其余 99 个源文件由 _build_chunks.js 打进 js/k-*.js，
          进哪一作、开哪一页才下哪一个。源文件顺序见 js/_manifest.json -->
     <script src="js/k-plan.js"></script>

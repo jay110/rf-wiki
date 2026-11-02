@@ -156,7 +156,7 @@ function viewWelcome() {
         <div class="wcover-sub">非官方中文资料站</div>
         <div class="wcover-stat">
             <div><b>${GAMES.length}</b><span>部作品</span></div>
-            <div><b>${PAGES.length}</b><span>个条目</span></div>
+            <div><b>${PAGE_COUNT}</b><span>个条目</span></div>
             <div><b>${chars}</b><span>位角色</span></div>
         </div>
         <a class="wcover-go" href="#/wiki">进入攻略　›</a>
@@ -194,7 +194,7 @@ function viewWelcome() {
     </div>
     <div class="copyright">
         <div>符文工房攻略百科　·　非官方中文资料站</div>
-        <div>收录 ${GAMES.length} 部作品　/　${PAGES.length} 个条目　/　${chars} 位角色</div>
+        <div>收录 ${GAMES.length} 部作品　/　${PAGE_COUNT} 个条目　/　${chars} 位角色</div>
         <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
     </div>`;
 }
