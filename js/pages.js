@@ -4716,6 +4716,11 @@ const PAGES = [
         gms: ['rff'],
         body: () => rffEventHtml()
     },
+    {
+        key: 'rf3main', group: 'basic', title: '主线流程', icon: 'scroll',
+        gms: ['rf3', 'rf3sp'],
+        body: () => rf3MainHtml()
+    },
 
     /* ================= 牧场生活 ================= */
     {
@@ -8890,6 +8895,17 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十八：新增「主线流程」页（3 代），8 章 56 步照录</h2>
+<ul class="ul">
+<li class="li"><b>补的是最大的一个洞：</b>此前站内只有<b>海洋</b>与<b>边境</b>两作有主线页，RF1／2／3／4／5 一条主线都查不到。这次先把 <b>3 代</b>做出来（<code>key:'rf3main'</code>，基础知识组，<code>gms:['rf3','rf3sp']</code>）：<b>8 章、56 步、5 处 BOSS</b>，另附 <b>9 条基本操作</b>。</li>
+<li class="li"><b>源是早就躺在硬盘上、却一直没被用过的那份：</b>《符文工房3全攻略》（NW 旅团 qisiwole 原创+整理，bbs.newwise.com/thread-482165）。站内此前只用过它的<b>「全迷宫资料」</b>（101 只魔物）与<b>「日历」</b>两章，<b>「简要攻略」整章没人动</b>——单文件 177KB，UTF-16LE 编码，所以以前的 grep 全是乱码，看着像没有内容。这次先转码再定位章节，才把它捞出来。</li>
+<li class="li"><b>做出来的结构：</b>① 8 章各一张表（行号是<b>本章内</b>的步序——原表没有全局编号，本站不替它编）；② 5 处 BOSS 抽出成表，<b>右侧保留原句</b>便于按句回查；③ 四座台座（第 2～5 章章末各一座，第 1、6、7、8 章没有）；④ 三类挡路门槛：<b>9 步</b>要求「消灭所有怪物和召唤点」、<b>2 章</b>要「荷叶骑士（活跃种子）或水蜘蛛（鞋）」、龙玄洞四场「季节之间」共要 <b>18 个</b>作物（樱芜菁 4／黄瓜 4／菠菜 6／芜菁 4）；⑤ 译名对照 10 行，<b>最后一列写明凭什么认定是同一人</b>（站内别名栏已收／同音＋身份一致），正文一律不改。</li>
+<li class="li"><b>从数据里算出来、原表没写的一处：</b>进龙玄洞那句写「带好樱芜菁×4、黄瓜×4、菠菜×6、芜菁×4」，四处「奉上」写的也是 4／4／6／4，<b>两处数字对得上合计 18</b>，所以一次带够就不用跑第二趟——这一点原表没明说，是两边数字对出来的，页面上把推导过程也写出来了。</li>
+<li class="li"><b>照录不改的六处都点了名：</b>第 5 章「死亡冰壁」那句<b>原句没有句号</b>；「青狮乙」「赤狮丙」是原文的甲乙丙编号不是错字；第 7 章的「求婚吧XD」「（囧）」是原整理者的话；同一处地方三个写法并存（湖中的龙玄洞／龙玄洞／玄泳的龙之巢）；「希雅莲斯之花」按原文写，站内另处写的是「希雅蕾斯之树」，<b>花与树、两种写法，没有源能并成一件东西，不合并</b>；原表不给 BOSS 等级与弱点，<b>不补</b>。</li>
+<li class="li"><b>一处特别提醒写进页里：</b>按这份流程，<b>第 7 章就是结婚</b>（交流祭→求婚→妻子失踪→才知道最终迷宫在哪），<b>不结婚进不了第 8 章</b>。这是 3 代的结构特点，找主线的玩家最容易在这里卡住。</li>
+<li class="li"><b>数据怎么来的：</b>新增 <code>_build_rf3_main.py</code>，从 UTF-16LE 原文切分「简要攻略」→ <code>js/rf3main.js</code>（<code>RF3_MAIN</code>）。脚本只做两件事：定位章节、去掉行首的「·」，<b>一个字都没改</b>。页面上的统计（章数、步数、BOSS、门槛、作物量）全部<b>由这 56 步现算</b>，不是写死的数字，换数据不会对不上。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> <b>444 实例（+2，rf3 与 rf3sp 各一份）／0 异常</b>；<code>_audit_narrow.js --page rf3main --width 520</code> <b>2 次渲染 0 横向溢出</b>；1100px 与 520px 截图逐块核版。RF3 与 RF3SP 共用这一份——<b>本站没有两版主线差异的资料</b>，既不声称「SP 一样」，也不给任何一步标「SP 新增」。</li>
+</ul>
 <h2 class="h2">2026-11-02　第一百六十七：搜索补上「正文」索引，只写在讲解里的说法也能搜到</h2>
 <ul class="ul">
 <li class="li"><b>修的是什么：</b>搜索此前只索引两样东西——<b>页面标题</b>和<b>表格行</b>。讲解文字（小标题、段落、提示块）一个字都没进索引，于是<b>只写在正文里的说法搜出来是 0 条 0 页</b>。实证：「照录不改」在 5 个页面的正文里出现过、表格里 0 次；「不臆造」「没有一个能通吃」「两码事」同样如此——搜这些词以前全是空结果。</li>
@@ -11041,6 +11057,143 @@ function rffEventHtml() {
                 { leftFirst: true, cls: 'txt', colw: ['9rem', '9rem'] })}
             <div class="note"><b>「卡侬」「布兰迪克」两位，站内「居民」页没有收录</b>——前者是教拉格纳魔法的人（火球杖、燃烧之杖、深红之杖都从他这儿拿，等级门槛 2／10／20／30／65），后者是村里那个专门找麻烦的人（弄乱田地、堵家门、若草遗迹决斗，16 条）。两人的日文名在这份机翻里没有标，本站不猜，先照机翻名字放着。
             ${nQ ? '<br>原文里有 <b>' + nQ + ' 条标签带问号</b>（如「艾莉丝-06?」），是原整理者自己也不确定的，照录。' : ''}</div>`;
+}
+
+/* ---------- 符文工房 3（RF3 / RF3SP）主线流程 ----------
+   单一来源：《符文工房3全攻略》（NW 旅团 qisiwole 原创+整理）「简要攻略」章节，8 章 56 步。
+   数据 RF3_MAIN 由 _build_rf3_main.py 切分生成；本页只加「由这 56 步本身算得出来」的统计，
+   不补写原表没有的判断；标点、表情、译名一律照录。 */
+function rf3MainHtml() {
+    const M = (typeof RF3_MAIN !== 'undefined') ? RF3_MAIN : null;
+    if (!M || !M.chapters.length) return '<p class="p">主线数据未加载。</p>';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const CH = M.chapters;
+    const N = CH.reduce((a, c) => a + c.steps.length, 0);
+
+    /* 摊平：记下每一步属于哪章、是本章第几步，后面所有统计都从这张表出，不再硬编码 */
+    const flat = [];
+    CH.forEach(c => c.steps.forEach((s, i) => flat.push({ ch: c.t, n: i + 1, s })));
+
+    /* BOSS：原文只有「遇到BOSS…」「引出BOSS…」两种写法（「战胜BOSS后…」不是出场，要排掉）；
+       名字包在「」里，最后一只写成「遇到BOSS水神龙『阿库纳比特』」，称呼留在句里不拆。 */
+    const boss = [];
+    flat.forEach(x => {
+        const m = x.s.match(/(遇到|引出)BOSS([^。]*)/);
+        if (!m) return;
+        const names = (m[2].match(/「[^」]*」/g) || []).map(v => v.slice(1, -1));
+        boss.push({ ch: x.ch, n: x.n, names, sent: x.s });
+    });
+    const nBossName = boss.reduce((a, b) => a + b.names.length, 0);
+
+    /* 通行门槛：原文反复出现的三类前置，各自数一遍 */
+    const summon = flat.filter(x => /召唤点/.test(x.s));
+    const lotus = flat.filter(x => /荷叶骑士/.test(x.s));
+    const lotusCh = CH.filter(c => c.steps.some(s => /荷叶骑士/.test(s))).map(c => c.t);
+    const dais = flat.filter(x => /台座/.test(x.s))
+        .map(x => ({ ch: x.ch, n: x.n, t: (x.s.match(/「([^」]*台座)」/) || [])[1] }))
+        .filter(x => x.t);
+
+    /* 龙玄洞四色作物：带一项 + 四处「奉上…之后开门」，数量从原文里读 */
+    const cropList = (flat.filter(x => /进入前带好/.test(x.s))
+        .map(x => (x.s.match(/进入前带好(.+?)。/) || [])[1])[0] || '');
+    const offer = flat.map(x => {
+        const m = x.s.match(/「([^」]*之间)」.*?奉上(.+?)之后开门/);
+        return m ? { room: m[1], give: m[2] } : null;
+    }).filter(Boolean);
+    const cropTotal = offer.reduce((a, o) => {
+        const m = o.give.match(/×(\d+)/);
+        return a + (m ? +m[1] : 0);
+    }, 0);
+
+    const longest = CH.slice().sort((a, b) => b.steps.length - a.steps.length)[0];
+    const shortest = CH.slice().sort((a, b) => a.steps.length - b.steps.length)[0];
+
+    /* 译名对照：攻略本写法 → 站内「居民」页定稿。依据写进表里，别让人以为本站随便配的。 */
+    const NAME_MAP = [
+        ['希娅', '希雅', 'シア', '同音；且都是花店'],
+        ['咲夜', '咲耶', 'さくや', '站内别名栏已收「咲夜」'],
+        ['库露露法', '克璐璐法', 'クルルファ', '站内别名栏已收「克鲁鲁法」'],
+        ['欧德鲁法', '恩德珐', 'オンドルファ', '站内别名栏已收「恩多鲁法」'],
+        ['玛乔莉', '玛洁莉', 'マージョリー', '同音'],
+        ['伽吉', '加基', 'ガジ', '同音；且都是锻冶屋'],
+        ['达莉雅', '达丽娅', 'ダリア', '站内别名栏已收「达丽亚」'],
+        ['泽泽', '泽杰', 'ゼゼ', '站内别名栏已收「泽泽」'],
+        ['伊昂', '伊奥', 'イオン', '站内别名栏已收「伊欧」'],
+        ['库鲁丁', '格尔汀', 'グルテン', '同音；且都是食堂'],
+    ];
+
+    return `
+            <p class="p">RF3 的主线是<b>按章节推进</b>的，没有编号式的任务列表：一章打完进下一章，章内每一步都是「去某地、触发、打掉挡路的东西」。攻略本把整条线写成 <b>${CH.length} 章 ${N} 步</b>，下面照原样一章一段。</p>
+            ${stat([['章节', CH.length + ' 章'], ['步骤', N + ' 步'], ['BOSS', boss.length + ' 处 / ' + nBossName + ' 只'], ['最长的章', longest.t + '（' + longest.steps.length + ' 步）'], ['最短的章', shortest.t + '（' + shortest.steps.length + ' 步）']])}
+            <div class="note"><b>这一页的文字是攻略本原文，照录。</b>来源《符文工房3全攻略》（NW 旅团 qisiwole 原创+整理，bbs.newwise.com/thread-482165）。原文里的小标题、「·」起头的步骤、括号里的吐槽（如「求婚吧XD」「（囧）」）都没有改，只把「·」去掉换成了表格的行号。</div>
+
+            <h2 class="h2">基本操作：${M.ops.length} 条，原表照录</h2>
+            <p class="p">这一作是双屏掌机，按键说明本身也是攻略的一部分——尤其是 <b>L＋某键</b>那三组快捷列表，游戏里不提示。</p>
+            ${tbl(['按键', '作用'], M.ops.map(([k, v]) => ['<code>' + esc(k) + '</code>', esc(v)]),
+        { left: [1], cls: 'txt', colw: ['9rem', ''] })}
+
+            <h2 class="h2">八章流程</h2>
+            <p class="p">每章一张表，行号是本章内的第几步（原表没有全局编号，本站也不替它编）。<b>章的先后就是流程顺序</b>；章内多数步骤也是串着的，只有第 6 章「交流祭」里那几件凑材料的事先后随意——缎带和胸针都归到花束里，两件可以倒着办。</p>
+            ${CH.map((c, ci) => `
+            <h3 class="h3">第 ${ci + 1} 章　${esc(c.t)}　<span class="mon-desc">${c.steps.length} 步</span></h3>
+            ${tbl(['#', '原文'], c.steps.map((s, i) => [String(i + 1), esc(s)]),
+            { left: [1], cls: 'rfomain', colw: ['2.6rem', ''] })}`).join('')}
+
+            <h2 class="h2">${boss.length} 处 BOSS，${nBossName} 只</h2>
+            <p class="p">原表只在句子里点一句「遇到BOSS『某某』」，没有等级、没有弱点、也没有战法。这里把它们按出现顺序抽出来，<b>右边保留原句</b>，方便按句回查；数值与弱点在<a class="link" href="#/page/beast">魔物与伙伴</a>页。</p>
+            ${tbl(['章', 'BOSS', '原句'], boss.map(b => [
+            esc(b.ch),
+            b.names.length ? b.names.map(n => '<b>' + esc(n) + '</b>').join('　＋　') : '—',
+            esc(b.sent)]),
+        { leftFirst: true, left: [2], cls: 'rfomain', colw: ['9rem', '9rem', ''] })}
+            <div class="note">最后一行那句，原文是「遇到BOSS水神龙『阿库纳比特』」——<b>「水神龙」是称呼不是名字</b>，本页只把引号里的当名字，称呼留在原句里。</div>
+
+            <h2 class="h2">四座台座：第 2～5 章各有一次</h2>
+            <p class="p">第 2 到第 5 章，每章最后一步都是「进『台座』→ 调查宝玉 → 恢复一段记忆」。四座台座就是这四章的收尾标记——<b>看到台座，说明这一章打完了</b>。第 1 章是序幕、第 6～8 章没有台座，所以不能拿它当全流程的进度尺。</p>
+            ${tbl(['章', '台座'], dais.map(d => [esc(d.ch), '<b>' + esc(d.t) + '</b>']),
+            { leftFirst: true, cls: 'txt', colw: ['11rem', ''] })}
+
+            <h2 class="h2">挡路的三类门槛</h2>
+            <p class="p">这 ${N} 步里有相当一部分不是「走过去」而是「先清场」。按原文里反复出现的三种写法数一遍：</p>
+            ${tbl(['门槛', '出现', '原文怎么写'], [
+            ['清空场景', summon.length + ' 步', '「消灭所有怪物和召唤点」——不清完，门不开、路不通'],
+            ['同一件移动道具', lotus.length + ' 步 / ' + lotusCh.length + ' 章', '「需要荷叶骑士（活跃种子）或者水蜘蛛（鞋）」——' + lotusCh.join('、') + ' 两章共用这一条'],
+            ['四色作物', offer.length + ' 处 / 共 ' + cropTotal + ' 个', '「奉上…之后开门」——' + (cropList ? '进洞前一次带齐：' + esc(cropList) : '四场各交一种')],
+        ], { leftFirst: true, left: [2], cls: 'txt', colw: ['9rem', '11rem', ''] })}
+            ${offer.length ? `<p class="p">四场「季节之间」各自要的东西不一样，顺序是春→夏→秋→冬：</p>
+            ${tbl(['场景', '奉上'], offer.map(o => ['<b>' + esc(o.room) + '</b>', esc(o.give)]),
+            { leftFirst: true, cls: 'txt', colw: ['13rem', ''] })}` : ''}
+            <div class="note">作物数量是两个来源对得上的：进洞前那句写「带好樱芜菁×4、黄瓜×4、菠菜×6、芜菁×4」，四处「奉上」写的也是 4／4／6／4，合计 <b>${cropTotal}</b> 个——一次带够就不用跑第二趟，这一点原表没有明说，是从两处数字对出来的。</div>
+
+            <h2 class="h2">这一作的特殊之处：结婚在主线里</h2>
+            <p class="p">按这份流程的写法，<b>第 7 章就是结婚</b>：交流祭第二天谈婚事 → 求婚 → 妻子失踪 → 才知道最终迷宫「龙玄洞」在哪。也就是说<b>不结婚就进不了第 8 章，也就看不到结局</b>。</p>
+            <p class="p">第 7 章原文把条件写在一句里：需要<b>双人床、订婚戒指、对方的爱情任务全部完成</b>，然后到指定约会地点回答问题。这四项缺一项都推不动，而其中「爱情任务」在各角色自己的事件链里。</p>
+
+            <h2 class="h2">译名对照：攻略本写法 → 站内定稿</h2>
+            <p class="p">这一章的正文用一套较早的译名（希娅、咲夜、库露露法…），站内「居民」页用另一套（希雅、咲耶、克璐璐法…）。<b>正文不改</b>——改了就没法按攻略本回查；对照放这里，最后一列写明凭什么认定是同一人。</p>
+            ${tbl(['攻略本（本页）', '站内定稿', '日文', '对照依据'], NAME_MAP.map(r => [esc(r[0]), esc(r[1]), esc(r[2]), '<span class="mon-desc">' + esc(r[3]) + '</span>']),
+            { leftFirst: true, cls: 'txt', colw: ['9rem', '9rem', '9rem', ''] })}
+
+            <h2 class="h2">照录不改的几处</h2>
+            <ul class="ul">
+                <li class="li"><b>第 5 章「死亡冰壁」那句没有句号</b>：「最深处场景『阻止步伐的仰天大道』遇到BOSS『死亡冰壁』」——原文断在这里，不补标点。</li>
+                <li class="li"><b>「青狮乙」「赤狮丙」是原文的编号式命名</b>，不是错字也不是两个人名拆错了：同一场战斗里两只狮子，原表用甲乙丙区分。</li>
+                <li class="li"><b>第 7 章的表情符号照留</b>：「去追求你喜欢的女孩子并求婚吧XD」「求婚的第二天会听说未来的妻子失踪了（囧）」——这是原整理者的话，不是本站的调侃。</li>
+                <li class="li"><b>同一处地方三个写法并存</b>：第 7 章写「湖中的龙玄洞」，第 8 章标题写「龙玄洞」、句中又出现「玄泳的龙之巢」。三个写法都照录，不统一。</li>
+                <li class="li"><b>「希雅莲斯之花」按原文写</b>：第 5、6 两章都这么写。站内「居民」页讲希雅名字来历那句写的是「希雅蕾斯之树」——<b>花与树、两种写法</b>，本站没有源能把它们并成一件东西，所以不合并。</li>
+                <li class="li"><b>原表不给数值</b>：BOSS 没有等级／HP／弱点，作物只给数量不给季节限制，装备与等级一路没提。这些都<b>不补</b>——补了就是本站自己写的东西。</li>
+            </ul>
+            <div class="note">数据文件：<code>js/rf3main.js</code>（<code>RF3_MAIN</code>），由 <code>_build_rf3_main.py</code> 从 UTF-16LE 原文切分生成，脚本只做「定位章节 + 去掉行首的『·』」，一个字都没改。RF3 与 RF3SP 共用这一份——<b>本站没有两版的主线差异资料</b>，既不声称「SP 一样」，也不给任何一步标「SP 新增」。</div>
+            <div class="jump">
+                <a href="#/page/beast">
+                    <div class="jp-t">魔物与伙伴</div>
+                    <div class="jp-s">BOSS 的等级、HP、抗性与掉落在这页</div>
+                </a>
+                <a href="#/page/request">
+                    <div class="jp-t">委托任务</div>
+                    <div class="jp-s">揭示板与信箱的委托、报酬</div>
+                </a>
+            </div>`;
 }
 
 /* 边境（RFF）的「委托」：不像别作有依赖板，走的是邮件 + 角色事件链。
