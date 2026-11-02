@@ -531,6 +531,12 @@
     min-width: 40rem;
 }
 
+/* 二代商店：种子表五列且「售价」是重点，窄屏也不能把它挤出屏幕，
+   所以下限压到 24rem，让五列在 520px 里全部露出来；其余长句表同此 */
+.content .table.rf2shop table {
+    min-width: 24rem;
+}
+
 /* 回本与否的语义色（非股价语境：绿=好，红=差） */
 .content .up {
     color: #0f6b33;

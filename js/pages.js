@@ -1663,6 +1663,191 @@ function recipeRfoHtml() {
    28 处地点写法里有三组商品与价格完全一致（火仙药店／药店、
    萨扎的铁匠铺／铁匠铺、木工樱屋／营造铺），照录不合并，只在页上点明。
    ============================================================ */
+/* 符文工房 2 的商店：攻略本《RF2 攻略合辑》「商店及售价」一章，四家店。
+   一条商品在源里是「日文名<TAB>中文名<TAB>」+ 下一行价格；诊所那节偶尔把中文名另起一行。
+   本页只照录，不把攻略本的中文名换成站内叫法——两套写法并存，对照放在单独一节里讲。 */
+function shopRf2Html() {
+    const D = (typeof RF2_SHOP !== 'undefined') ? RF2_SHOP : null;
+    if (!D || !D.secs || !D.secs.length) return '';
+    const esc = t => String(t == null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const money = v => (v == null) ? dash : Number(v).toLocaleString('en-US') + 'G';
+    const L = s => '<span style="display:block;text-align:left;width:100%">' + s + '</span>';
+    const num = v => (v == null) ? dash : String(v);
+
+    const sec = k => D.secs.filter(s => s.k === k)[0];
+    const flat = s => { const a = []; s.subs.forEach(su => su.items.forEach(it => a.push(it))); return a; };
+
+    const gro = sec('杂货屋'), wug = sec('武具行'), ped = sec('行商'), cli = sec('诊所');
+    const groAll = flat(gro), wugAll = flat(wug), pedAll = flat(ped), cliAll = flat(cli);
+    const all = groAll.concat(wugAll, pedAll, cliAll);
+
+    /* 一件商品出现在哪几季（按日文原名认，同一件四季都有就是「春夏秋冬」） */
+    const seasonsOf = jp => gro.subs.filter(su => su.items.some(x => x.j === jp)).map(su => su.k);
+    const order = '春夏秋冬';
+
+    /* ---- 种子：按季节展开，同一件在几季上架就出现几次 ---- */
+    const seedRows = [];
+    const seedKey = {};
+    gro.subs.forEach(su => su.items.forEach(it => {
+        if (it.d == null) return;
+        seedRows.push({ se: su.k, it: it });
+        seedKey[it.j] = it;
+    }));
+    const seedU = Object.keys(seedKey).map(k => seedKey[k]);
+
+    /* ---- 杂货屋里的非种子商品 ---- */
+    const goods = [];
+    const goodsKey = {};
+    groAll.forEach(it => {
+        if (it.d != null) return;
+        if (!goodsKey[it.c]) {
+            goodsKey[it.c] = { it: it, se: seasonsOf(it.j) };
+            goods.push(goodsKey[it.c]);
+        }
+    });
+    const fourSeason = goods.filter(g => g.se.length === 4);
+    const oneSeason = goods.filter(g => g.se.length < 4);
+
+    /* ---- 两源互校：种子价与天数 vs 站内农作页 ---- */
+    const cmp = seedU.filter(it => it.x);
+    const noCrop = seedU.filter(it => !it.x);
+    const pSame = cmp.filter(it => it.p === it.xb);
+    const dSame = cmp.filter(it => it.d === it.xd);
+    const bothDiff = cmp.filter(it => it.p !== it.xb || it.d !== it.xd);
+
+    /* ---- 其余商品：站内物品表里找不找得到 ---- */
+    const oth = [];
+    const othKey = {};
+    groAll.concat(wugAll, pedAll, cliAll).forEach(it => {
+        if (it.d != null) return;                 // 种子另有互校，不混进这一节
+        if (othKey[it.c]) return;
+        othKey[it.c] = it;
+        oth.push(it);
+    });
+    const othMiss = oth.filter(it => !it.x);
+
+    /* ---- 价格与天数 ---- */
+    const priced = all.filter(it => it.p != null);
+    const byPrice = priced.slice().sort((a, b) => b.p - a.p || (a.c < b.c ? -1 : 1));
+    const priciest = byPrice[0];
+    const cheapest = priced.slice().sort((a, b) => a.p - b.p || (a.c < b.c ? -1 : 1))[0];
+    const nCheap = priced.filter(it => it.p === cheapest.p).length;
+    const storeMax = s => Math.max.apply(null, flat(s).map(it => it.p == null ? 0 : it.p));
+    const dayVals = seedU.map(it => it.d).filter(v => v != null);
+    const minDay = Math.min.apply(null, dayVals), maxDay = Math.max.apply(null, dayVals);
+    const fastSeeds = seedU.filter(it => it.d === minDay);
+    const slowSeeds = seedU.filter(it => it.d === maxDay);
+
+    /* 诊所：草与成药 */
+    const grass = cliAll.filter(x => /草/.test(x.c));
+    const med = cliAll.length - grass.length;
+    const cliMax = cliAll.slice().sort((a, b) => b.p - a.p || (a.c < b.c ? -1 : 1))[0];
+
+    return `
+    <h2 class="h2">2 代的商店一共四家</h2>
+    <p class="p">本页是攻略本「商店及售价」那一章的<b>全部 ${all.length} 行</b>：杂货屋（四季各一批）、武具行、行商、诊所。<b>杂货屋按季节换货</b>，所以同一种种子在表里会出现一两次；其余三家不分季节。</p>
+    ${stat([
+        ['商店', '4 家'],
+        ['商品行', all.length + ' 行'],
+        ['种子', seedU.length + ' 种'],
+        ['最贵一件', money(priciest.p)],
+        ['最便宜', money(cheapest.p)],
+    ])}
+    <div class="key"><b>全表最贵的是种子，不是武器。</b>最贵一件是 ${esc(priciest.c)}（${money(priciest.p)}），武具行最贵只到 ${money(storeMax(wug))}，行商最贵 ${money(storeMax(ped))}。前三名全是种子：${byPrice.slice(0, 3).map((it, i) => (i ? '、' : '') + esc(it.c) + ' ' + money(it.p)).join('')}。前期缺钱时最容易被种子价吓到，这个顺序别搞反。</div>
+
+    <h2 class="h2">杂货屋 · 按季卖种子，共 ${seedU.length} 种</h2>
+    <p class="p">种子一季一批，<b>换季就换货</b>，所以「这一季能种什么」得看季节列。生长天数是原文附在种子名后的括注（如「4天」），本站只把它拆成一列，数字不动。<b>${esc(Object.keys(seedKey).filter(j => seasonsOf(j).length > 1).map(j => seedKey[j].c).join('、') || '没有')}</b> 是唯一跨季卖的种子（${Object.keys(seedKey).filter(j => seasonsOf(j).length > 1).map(j => seasonsOf(j).join('／')).join('、') || '—'}），冬天没有它。</p>
+    ${tbl(['季节', '种子', '日文原名', '生长', '售价'], seedRows.map(r => [
+        esc(r.se),
+        L('<b>' + esc(r.it.c) + '</b>'),
+        L(esc(r.it.j)),
+        num(r.it.d) + ' 天',
+        money(r.it.p),
+    ]), { leftFirst: true, left: [1, 2], colw: ['2.8rem', '7.4rem', '8.4rem', '3.6rem', '4.4rem'], cls: 'rf2shop' })}
+    <div class="note">生长天数从 <b>${minDay} 天</b>到 <b>${maxDay} 天</b>，差 ${Math.round(maxDay / minDay)} 倍。最短的一档是 ${fastSeeds.map(x => esc(x.c)).join('、')}（${minDay} 天）；最长的是 ${slowSeeds.map(x => esc(x.c)).join('、')}（${maxDay} 天，${money(slowSeeds[0].p)}）。<b>原文只给天数与种价，没给产量与卖价，所以本站不算回本天数</b>——少这两样算出来的都是假数。</div>
+
+    <h2 class="h2">杂货屋 · 除了种子，还卖 ${goods.length} 件吃的用的</h2>
+    <p class="p">这 ${goods.length} 件里 <b>${fourSeason.length} 件四季都摆</b>，原文把它们<b>在四季里各抄了一遍</b>（${fourSeason.length} 件 × 4 季 = ${fourSeason.length * 4} 行），价格一处都没变。本站合成一张表，省得读四遍同样的数字。</p>
+    ${tbl(['商品', '日文原名', '上架季节', '售价'], goods.map(g => [
+        L('<b>' + esc(g.it.c) + '</b>'),
+        L(esc(g.it.j)),
+        esc(g.se.join('')) + (g.se.length === 4 ? '（四季）' : '（单季）'),
+        money(g.it.p),
+    ]), { leftFirst: true, left: [0, 1, 2], colw: ['7rem', '8.4rem', '7rem', '4.6rem'], cls: 'rf2shop' })}
+    <div class="note">表里只有 ${esc(oneSeason.map(g => g.it.c).join('、') || '—')} 是<b>单季限定</b>，其余 ${fourSeason.length} 件四季同价。${fourSeason.length ? fourSeason.slice(0, 2).concat(fourSeason.slice(-1)).map(g => esc(g.it.c) + ' ' + money(g.it.p)).join('、') + ' 这几件' : ''}不用等哪一季。</div>
+
+    <h2 class="h2">武具行：${wugAll.length} 条，卖的是「类别」不是「名字」</h2>
+    <p class="p">这一节原文写得很省：中文列给的是<b>片手剑、两手剑、枪、锤子、斧子、杖、盾、护腕、靴子</b>——九个<b>武器类别</b>，不是具体哪一把。日文列倒是给了具体型号。<b>本站照录这个不对称</b>，只在末列给出站内同名的具体武器，方便你顺着去找属性。</p>
+    ${tbl(['日文原名', '原文中文', '售价', '站内同名的武器'], wugAll.map(it => [
+        L(esc(it.j)),
+        L('<b>' + esc(it.c) + '</b>'),
+        money(it.p),
+        it.x ? L(esc(it.x)) : dash,
+    ]), { leftFirst: true, left: [0, 1, 3], colw: ['8.4rem', '5.6rem', '4.6rem', '6.6rem'], cls: 'rf2shop' })}
+    <div class="note">第一行「ブロードゾード」是原文写法，<b>ソ 的位置写成了 ゾ</b>（一般作 ブロードソード）；第二行「ク雷（レイ）モア」把读音注进了名字里（クレイモア）。两处都照录，没改。</div>
+
+    <h2 class="h2">行商：${pedAll.length} 条，卖吃的和首饰</h2>
+    <p class="p">行商是流动摊，卖的全是成品——饭、果汁、戒指胸针，<b>不卖材料也不卖种子</b>。价格比杂货屋的食材贵一截：杂货屋的白饭 ${money((groAll.filter(x => x.c === '白饭')[0] || {}).p)}，行商最贵一件 ${money(storeMax(ped))}。适合懒得下厨的时候，不适合囤货。</p>
+    ${tbl(['日文原名', '原文中文', '售价'], pedAll.map(it => [
+        L(esc(it.j)),
+        L('<b>' + esc(it.c) + '</b>'),
+        money(it.p),
+    ]), { leftFirst: true, left: [0, 1], colw: ['9rem', '6.6rem', '4.6rem'], cls: 'rf2shop' })}
+
+    <h2 class="h2">诊所：${cliAll.length} 条，${med} 种药加 ${grass.length} 种草</h2>
+    <p class="p">前 ${med} 条是成药，后 ${grass.length} 条是草。原文只给其中 ${cliAll.filter(x => x.n).length} 种药加了括注说明用途，本站单列一栏照录；<b>没加括注的，本站也不替它补</b>——原表没写就是没写。</p>
+    ${tbl(['日文原名', '原文中文', '原文备注', '售价'], cliAll.map(it => [
+        L(esc(it.j)),
+        L('<b>' + esc(it.c) + '</b>'),
+        it.n ? L(esc(it.n)) : dash,
+        money(it.p),
+    ]), { leftFirst: true, left: [0, 1, 2], colw: ['7.6rem', '6rem', '8.4rem', '4.4rem'], cls: 'rf2shop' })}
+    <div class="note">最便宜的一档是草，<b>${nCheap} 种都卖 ${money(cheapest.p)}</b>；诊所里最贵的一味是 ${esc(cliMax.c)}（${money(cliMax.p)}）。原文里「マヒロン」「ペラペラ丸」两条把中文名<b>另起一行</b>写，和其余条目排版不一样，本站照原样拆成两列，没统一格式。</div>
+
+    <h2 class="h2">和站内数据对了一遍：${pSame.length} 种种子价格一致</h2>
+    <p class="p">站内「农作」页有 2 代的种子买价与生长天数（来自另一份整理），正好能交叉核对。<b>${cmp.length} 种两边都找得到的种子里，价格一致 ${pSame.length} 种，生长天数也一致 ${dSame.length} 种</b>。下面把对不上的全列出来——<b>两边都照录，不判定谁对</b>。</p>
+    ${tbl(['种子', '攻略本', '站内农作页', '差在哪'], bothDiff.map(it => [
+        L('<b>' + esc(it.c) + '</b>'),
+        money(it.p) + ' / ' + it.d + ' 天',
+        money(it.xb) + ' / ' + it.xd + ' 天',
+        L([
+            it.p !== it.xb ? '价格：' + (it.xb === it.p * 2 ? '站内正好是本站的两倍' : '两边各写一个数') : '',
+            it.d !== it.xd ? '天数：差 ' + Math.abs(it.d - it.xd) + ' 天' : '',
+        ].filter(Boolean).join('；')),
+    ]), { leftFirst: true, left: [0, 3], colw: ['6.4rem', '6.4rem', '7rem', 'auto'], cls: 'rf2shop' })}
+    <div class="note">${noCrop.length ? '还有一种站内农作页<b>根本没有同名作物</b>：' + noCrop.map(it => esc(it.c) + '（' + esc(it.j) + '，' + money(it.p) + ' / ' + it.d + ' 天）').join('、') + '——站内表里没有它，不是本站把它删了。' : ''}差额最扎眼的是赤水晶种子：攻略本 17,400G，站内 34,800G，<b>正好一半</b>；可同季另三种水晶站内都写三万上下（青 32,400／绿 29,700／白 39,800），所以十七万这一档看着像少写了一位数。但<b>这只是推测，不是结论</b>，表里照录原文。</div>
+
+    <h2 class="h2">名字：攻略本一套，站内一套</h2>
+    <p class="p">非种子的 ${oth.length} 件里，<b>${oth.length - othMiss.length} 件能在站内物品表找到对应物</b>${othMiss.length ? '，只有 ' + othMiss.map(it => esc(it.c) + '（' + esc(it.j) + '）').join('、') + ' 找不到' : ''}。但名字常常不是同一个写法。本页<b>一律显示攻略本的字</b>，站内叫法只在下面举例——不替换、不合并。</p>
+    ${tbl(['攻略本写法', '站内物品表', '差在哪'], [
+        ['蓝色草', '靛草', '「藍」译成了颜色，站内按染料叫靛'],
+        ['大阪烧', '什锦烧', '两种常见译法'],
+        ['蓝宝石胸针', '海蓝宝石胸针', 'アクアマリン 是海蓝宝石，不是蓝宝石'],
+        ['海鲜皮萨', '海鲜披萨', '「皮」是「披」的误写'],
+        ['海鲜锔饭', '海鲜奶焗饭', '「锔」应为「焗」，站内还换了整个叫法'],
+        ['牛奶S／鸡蛋S', '牛奶Ｓ型／鸡蛋Ｓ型', '半角 S 对全角 Ｓ，还多一个「型」'],
+        ['白饭', '米饭', '同物异名'],
+        ['艾莉草', '艾丽草', '莉／丽'],
+        ['丸子粉', '糯米粉', 'だんご粉 站内按原料叫'],
+        ['四叶草种子', '幸运草种子', '同一件：站内物品表叫幸运草、农作页叫四叶草，站内自己也不统一'],
+        ['片手剑', '阔剑', 'ブロードソード 就是阔剑，原文却写成类别'],
+    ], { leftFirst: true, left: [0, 1, 2], colw: ['7.6rem', '8.4rem', 'auto'], cls: 'rf2shop' })}
+
+    <h2 class="h2">照录不改的几处</h2>
+    <ul class="ul">
+        <li class="li"><b>两个日文名都是原文的错</b>：「ブロードゾード」（ソ 写成 ゾ）、「ク雷（レイ）モア」（读音混进名字）。不动。</li>
+        <li class="li"><b>武具行卖类别</b>：中文列九条全是「片手剑／两手剑／枪…」，不是具体武器名。不替它补型号。</li>
+        <li class="li"><b>「海鲜皮萨」「海鲜锔饭」</b>：错字照录，不改成「披萨」「焗饭」。</li>
+        <li class="li"><b>诊所两条排版不一致</b>：マヒロン、ペラペラ丸把中文名写在下一行，其余写在同行。照原样拆列，不统一。</li>
+        <li class="li"><b>赤水晶种子 17,400G</b> 与站内农作页 34,800G 差一倍；另有 <b>${bothDiff.filter(it => it.d !== it.xd).length} 种种子的生长天数</b>与站内写的不一样——照录，不断言哪个错。</li>
+        <li class="li"><b>原文不给的一律不补</b>：没有产量、没有作物卖价、没有回本天数、没有营业时间。这四项本站都不替它算、不替它编。</li>
+    </ul>
+    <div class="note">数据源：${esc(D.src)}。原文是 UTF-16LE 的单文件，一章里拼了好几份攻略，这一章没有署名，所以只能记到「合辑」这一层。</div>
+    `;
+}
+
 function shopAzumaHtml() {
     const R = (typeof SHOP_AZUMA !== 'undefined') ? SHOP_AZUMA.rows : [];
     if (!R.length) return '';
@@ -5595,7 +5780,8 @@ const PAGES = [
             <div class="key">逛镇子有个高效顺序：<b>委托板 → 杂货店 → 锻冶屋 → 逐个送礼</b>。前三个是资源，最后一个是时间，凑一趟走完。</div>
             <h2 class="h2">营业时间</h2>
             <p class="p">每家店都有开门与关门时间，晚上去会吃闭门羹。多数作品在店门口或菜单里能查到营业时间。换季第一天、节日当天，部分店铺不开。</p>
-            ${g.id === 'azuma' ? shopAzumaHtml() : ''}
+            ${g.id === 'azuma' ? shopAzumaHtml()
+            : g.id === 'rf2' ? shopRf2Html() : ''}
         `
     },
     {
@@ -8897,6 +9083,23 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百七十：2 代的商店补齐 138 行价目，种子价与站内农作页逐条对过</h2>
+<ul class="ul">
+<li class="li"><b>补的是哪块：</b>「商店与设施」页此前对 2 代只有那段通用话术——讲设施有哪几类、营业时间怎么查，<b>一条具体商品的价格都查不到</b>。这次给 2 代单开分支（<code>shopRf2Html()</code>），和东国一样走专属内容。</li>
+<li class="li"><b>源：</b>《RF2 攻略合辑》的「商店及售价」一章，<b>四家店 138 行</b>——杂货屋（春 26／夏 25／秋 23／冬 19）、武具行 9、行商 20、诊所 16。原文一条是三行：日文名、中文名、价格；诊所那节偶尔把中文名另起一行、还多一行括注。</li>
+<li class="li"><b>杂货屋按季换货，种子 38 种。</b>生长天数是原文附在种子名后的括注（「4天」「120天」），本站只拆成一列，数字不动。跨度 <b>4 天到 120 天</b>，差 30 倍；最短一档三件（樱萝卜／土豆／萝卜），最长只有金刚花一件（54,000G）。<b>牧草种子是唯一跨三季卖的</b>（春／夏／秋），冬天没有。</li>
+<li class="li"><b>算出来的一件事：原文把 13 件杂货在四季里各抄了一遍</b>（13 件 × 4 季 = 52 行），<b>价格一处都没变</b>。本站合成一张表，只在「上架季节」列标出四季。单季限定的只有曲奇一件（春）。</li>
+<li class="li"><b>武具行这节写的是「类别」不是「名字」：</b>中文列九条全是片手剑／两手剑／枪／锤子／斧子／杖／盾／护腕／靴子，日文列才给具体型号。<b>照录这个不对称</b>，只在末列补站内同名的具体武器（阔剑／双手剑／长枪…），方便顺着去找属性。</li>
+<li class="li"><b>两源互校——这轮最有价值的一块：</b>站内「农作」页另有 2 代的种子买价与生长天数（另一个人整理的）。<b>37 种两边都找得到的种子里，价格一致 36 种，生长天数也一致 31 种</b>。对不上的 7 种全列在页面上，两边照录、不判定谁对。</li>
+<li class="li"><b>最扎眼的一条差额：</b>赤水晶种子攻略本 17,400G、站内 34,800G，<b>正好一半</b>；可同季另三种水晶站内都写三万上下（青 32,400／绿 29,700／白 39,800），所以十七万看着像少写一位数。<b>页面明写这是推测不是结论。</b></li>
+<li class="li"><b>另外 6 种是「价格一样、天数不一样」</b>（土豆 4 对 7、胡萝卜 8 对 9、红薯 11 对 6、菠菜 6 对 5、青椒 12 对 10、魅惑兰 7 对 12），全在秋季。价格对得上说明是同一件作物，天数就只能两边都留着。</li>
+<li class="li"><b>找不到对应物的两件：</b>蓬蓬草种子（ポンポン草の種）站内农作页没有同名作物；饲料（飼い葉）站内物品表里也没有。<b>写「找不到」，不写成「不存在」</b>——站内表没收，不等于游戏里没有。</li>
+<li class="li"><b>名字两套并存：</b>非种子 59 件里 58 件能在站内物品表找到对应物，但写法常常不同。页面举了 11 组：蓝色草／靛草、大阪烧／什锦烧、蓝宝石胸针／海蓝宝石胸针（アクアマリン 是海蓝宝石）、海鲜皮萨／海鲜披萨、海鲜锔饭／海鲜奶焗饭、牛奶S／牛奶Ｓ型（半角对全角还多一个「型」）、白饭／米饭、艾莉草／艾丽草、丸子粉／糯米粉、四叶草种子／幸运草种子、片手剑／阔剑。<b>表里一律显示攻略本的字，不替换不合并。</b></li>
+<li class="li"><b>照录不改点名五处：</b>「ブロードゾード」（ソ 写成 ゾ）、「ク雷（レイ）モア」（读音混进名字）、「海鲜皮萨」「海鲜锔饭」（错字）、诊所两条把中文名另起一行的排版差异。</li>
+<li class="li"><b>不补的也写明了：</b>原文没有产量、没有作物卖价、没有回本天数、没有营业时间。这四项本站都不替它算、不替它编——「售价 ÷ 天数」看着像收益，其实缺了产量就是假数，所以一列都没加。</li>
+<li class="li"><b>数据怎么来的：</b>新增 <code>_build_rf2_shop.py</code> → <code>js/rf2shop.js</code>（<code>RF2_SHOP</code>）。脚本只拆字段与认季节，<b>不改字、不补标点、不统一译名</b>；对照用的译名映射只写在脚本里，不进数据。页面的统计（行数、种子种数、四季通用几件、几个价格一致、几种找不到）全部<b>现算</b>。窄屏把七张表的列宽下限压到 24rem，五列在 520px 里能全露出来，售价不靠横滑才看得见。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> <b>444 实例／0 异常</b>；<code>_audit_narrow.js --page shop</code> 520px 10 次渲染、375px、rf2 专项，全部 0 横向溢出；1100px 与 520px 逐段截图核版。过程中自己改掉三处：草的判定把「草药」漏了（导致写成 7 药 9 草，实为 6 药 10 草）、单季限定取字段取错对象（表里显示成空）、非种子统计一度把种子算进去（59 件变 97 件）。</li>
+</ul>
 <h2 class="h2">2026-11-02　第一百六十九：2 代的委托任务补齐 124 条，两套攻略源拼成一张表</h2>
 <ul class="ul">
 <li class="li"><b>补的是哪块：</b>「委托任务」页此前对 2 代只有那段<b>九作共用的通用说明</b>——讲委托是什么、怎么取舍，<b>一条 RF2 的任务都查不到</b>。这次给 2 代单开一个分支（<code>requestRf2Html()</code>），和海洋、边境、东国一样走专属内容。</li>
