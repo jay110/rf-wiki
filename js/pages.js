@@ -4958,6 +4958,72 @@ const PAGES = [
             <div class="note">取自 biligame 符文工厂 wiki「符文工厂1魔物数据表」${M1.length} 行，字段为物理／火／风／水／地抗性，加吹飞、倒地、毒、封印、麻痹、吸收六项。<b>译名沿用该 wiki</b>，与魔物图鉴里的汉化定稿名是两套体系（这里的「兽人」＝图鉴里的「野猪战士」），因此不做强行合并。<b>本页呈现的是抗性排序与分布，不是伤害公式</b>——原表没给换算方式，本站不推算实际减伤百分比。</div>`;
                 })()}
 
+            ${(() => {
+                const RM = (typeof RFF_MON !== 'undefined') ? RFF_MON : [];
+                if (!RM.length) return '<p class="p">边境（RFF）的数据未加载。</p>';
+                const KEYS = ['火', '水', '风', '地'];
+                const elParse = s => {
+                    const o = { 火: 0, 水: 0, 风: 0, 地: 0 };
+                    if (!s || s === '—') return null;
+                    const m = s.match(/^全属性(\d+)$/);
+                    if (m) { const v = +m[1]; o.火 = o.水 = o.风 = o.地 = v; return o; }
+                    const re = /(火|水|风|地)(\d+)/g; let mm;
+                    while ((mm = re.exec(s))) o[mm[1]] = +mm[2];
+                    return o;
+                };
+                const parsed = RM.map(r => {
+                    const e = elParse(r[6]);
+                    let mx = -Infinity, mxk = [];
+                    if (e) KEYS.forEach(k => { if (e[k] > mx) { mx = e[k]; mxk = [k]; } else if (e[k] === mx) mxk.push(k); });
+                    const flat = e ? (e.火 === e.水 && e.水 === e.风 && e.风 === e.地) : false;
+                    return { name: r[0], lv: r[1], hp: r[2], atk: r[3], def: r[4], e, mx, mxk, flat, loc: r[7] };
+                });
+                const rffN = parsed.length;
+                const rffNoData = parsed.filter(x => !x.e).length;
+                const rffHas = rffN - rffNoData;
+                const rffFlat = parsed.filter(x => x.flat).length;
+                const rffResist = { 火: 0, 水: 0, 风: 0, 地: 0 };
+                const rffResistEx = { 火: [], 水: [], 风: [], 地: [] };
+                parsed.forEach(x => { if (x.e && !x.flat) { const k = x.mxk[0]; rffResist[k]++; if (rffResistEx[k].length < 6) rffResistEx[k].push(x.name); } });
+                const rffResistOrder = KEYS.map(k => ({ k, n: rffResist[k] })).sort((a, b) => b.n - a.n);
+                const cell = (k, x) => {
+                    if (!x.e) return '<td class="td rv-zero">—</td>';
+                    const v = x.e[k];
+                    let cls = 'rv-zero';
+                    if (v === x.mx && x.mx > 0) cls = 'rv-pos';
+                    return '<td class="td ' + cls + '">' + v + '</td>';
+                };
+                const rffRows = parsed.map(x => '<tr>' +
+                    '<td class="td left r-n">' + x.name + '</td>' +
+                    '<td class="td">' + x.lv + '</td>' +
+                    '<td class="td">' + x.hp + '</td>' +
+                    '<td class="td">' + x.atk + '</td>' +
+                    '<td class="td">' + x.def + '</td>' +
+                    cell('火', x) + cell('水', x) + cell('风', x) + cell('地', x) +
+                    '<td class="td r-res">' + (x.e ? (x.flat ? '—' : x.mxk.join('/')) : '—') + '</td>' +
+                    '<td class="td left">' + (x.loc || '—') + '</td>' +
+                    '</tr>');
+                return `
+            <h2 class="h2">边境（RFF）：${rffN} 只，四属性耐性点，没有负数是正常的</h2>
+            <p class="p">边境比 RF4/RF5 早一代，抗性体系更原始：只有<b>火／水／风／地</b>四属性，而且给的是<b>耐性点数</b>——<b>数值越高越抗，未列出的属性按 0（无特殊耐性）计</b>。这和 RF5/RF4「负数＝弱点」的读法是两码事：边境的表里<b>一个负数都没有</b>，所以这里没有真正的属性弱点，只有「<b>更抗什么</b>」——想打疼就避开它最抗的那一项。</p>
+            ${stat([['收录', rffN + ' 只'], ['有元素数据', rffHas + ' 只'], ['四属性等值', rffFlat + ' 只'], ['原表未给(—)', rffNoData + ' 只']])}
+            <p class="p">原表只给 ${rffHas} 只标注了元素属性，其余 ${rffNoData} 只记为「—」（未给，不解读为 0 或免疫）。在有数据的 ${rffHas} 只里，先数它们的<b>最抗方向</b>——数值最高那一栏（同高则并列）：</p>
+            ${tbl(['最抗(耐性最高)', '只数', '占比', '例子'], rffResistOrder.map(a => [
+                    a.k, a.n + ' 只', Math.round(a.n / rffHas * 100) + '%',
+                    rffResistEx[a.k].slice(0, 5).join('、') + (rffResistEx[a.k].length > 5 ? ' 等' : '')
+                ]), { leftFirst: true, cls: 'txt', colw: ['5rem', 'auto', 'auto', 'auto'] })}
+            <div class="key">${rffFlat} 只四属性完全等值（如「全属性9」的瓦格纳、「全属性15」的小小龙），它们<b>没有最抗方向</b>——任何属性武器对它们都是「不减伤」的意义。剩下 ${rffHas - rffFlat} 只各有突出抗性，<b>火</b>与<b>水</b>是最常被拿来当壳的属性（各 ${rffResist['火']}／${rffResist['水']} 只），打这些怪时别带对应属性。</div>
+            <details class="mon-fold">
+                <summary>展开 ${rffN} 只魔物的四属性耐性（点一下）</summary>
+                <div class="table mon-table" data-rff><table><thead><tr>
+                    <th class="th left">魔物</th><th class="th">LV</th><th class="th">HP</th><th class="th">攻</th><th class="th">防</th>
+                    <th class="th">火</th><th class="th">水</th><th class="th">风</th><th class="th">地</th>
+                    <th class="th">最抗</th><th class="th left">出现地点</th>
+                </tr></thead><tbody>${rffRows.join('')}</tbody></table></div>
+            </details>
+            <div class="note">取自 biligame 符文工厂 wiki「RFFmonster」页，${rffN} 行，字段为 等级／HP／攻击／防御／魔法力／元素属性／出现地点／总掉落物／备注。<b>元素属性</b>列原表即如此标注，本站按「耐性点数、越高越抗」解读（与 RF4/RF5 同向）；<b>未列出的属性按 0 计，原表记为「—」的按无数据显示</b>，不擅自解读为免疫或弱点。「二次战」「ED后」「的蛋」等是同一只怪的变体或阶段，原表分行列，此处照录不合并。掉落物与能否驯服见魔物图鉴页。</div>`;
+            })()}
+
             <h2 class="h2">海洋：${(typeof RFO_RES !== 'undefined') ? RFO_RES.length : 0} 只，抗性只有「〇／×／空」三档</h2>
             ${(() => {
                     const RS1 = (typeof RFO_RES !== 'undefined') ? RFO_RES : [];
@@ -8712,6 +8778,14 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十二：「战斗与弱点」补上 边境（RFF）的四属性耐性节</h2>
+<ul class="ul">
+<li class="li"><b>战斗与弱点页新增 边境（RFF）节</b>：本地唯一还有源、且 battle 页此前缺作的维度。RFF 抗性体系比 RF4/RF5 原始——只有<b>火／水／风／地</b>四属性、给的是<b>耐性点数</b>（越高越抗，无负数），与 RF5/RF4「负数＝弱点」读法不同，本页明确写成「没有真正的属性弱点、只有更抗什么」。</li>
+<li class="li"><b>源数据 115 只</b>取自 <code>js/rffmon.js</code>（biligame「RFFmonster」页）。关键核实：原表只给 <b>54 只</b>标注了元素属性，其余 <b>61 只记为「—」</b>（未给，按无数据显示，不擅自解读为免疫或弱点）；54 只里有 <b>11 只四属性等值</b>（如「全属性9」的瓦格纳）、<b>43 只各有突出抗性</b>。初版用「取最小值当软肋」会把单属性怪（如「风30」其余三项为 0 基线）误判成「软肋＝火」，已改为更忠实的「最抗方向」统计（火 17／水 12／风 7／地 7）。</li>
+<li class="li"><b>折叠表沿用站内 <code>mon-fold</code> 模式</b>：<code>展开 115 只魔物的四属性耐性（点一下）</code>，列魔物／LV／HP／攻／防／火／水／风／地／最抗／出现地点，最抗那栏高亮（<code>rv-pos</code>），无数据显示「—」。与 RF5 速查表、海洋双折叠表同一套交互。</li>
+<li class="li"><b>校验 440 实例／0 异常／头像 8 作 214 张缺 0</b>；RFF 节经独立渲染抽取确认数字与文案正确（115／54／11／61 自洽）。「二次战」「ED后」「的蛋」等变体按原表分行列照录不合并。</li>
+</ul>
+
 <h2 class="h2">2026-11-02　第一百六十一：「宠物产出」补上 海洋（RFO）的魔物生产物列表</h2>
 <ul class="ul">
 <li class="li"><b>produce 现覆盖六作</b>：<code>gms</code> 由 <code>['rf1','rf2','rf3','rf3sp','rff']</code> 加 <code>rfo</code>。海洋源站「RFOpet」页有一张完整的「魔物生产物列表」，此前 produce 页旧说明错称「海洋的宠物页只有喜好作物」——其实产出数据一直就在，本轮补正（与上一轮 RF2 同一类笔误）。</li>
