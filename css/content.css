@@ -537,6 +537,18 @@
     min-width: 24rem;
 }
 
+/* 三代素材强化：效果列是「毒（10）3.9%　麻痹（20）7.8%…」这种长串，
+   窄屏给下限宽度靠横滑，硬压会把每项挤成一列字 */
+.content .table.rf3mat table {
+    min-width: 30rem;
+}
+
+/* 一行里的每项加成／效果各是一个不可拆的短串（「知力+8」「毒（10）3.9%」），
+   不锁住就会被 CJK 的任意断行拆成两截 */
+.content .table .nw {
+    white-space: nowrap;
+}
+
 /* 回本与否的语义色（非股价语境：绿=好，红=差） */
 .content .up {
     color: #0f6b33;
