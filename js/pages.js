@@ -6797,6 +6797,7 @@ const PAGES = [
             <div class="key">生产系统的正确节奏：<b>先靠迷宫攒素材 → 把锻造／药学等级刷到能开下一档配方 → 再回头做装备</b>。反过来做，会一直卡在「素材不够、配方不开」。</div>
             <h2 class="h2">注意</h2>
             <p class="p">部分作品里，最强／次强武器<b>无法通过锻造获得</b>（例如 RF2 需要联机小游戏）。遇到「配方开到顶却做不出最强」的情况，先确认是不是这类例外。</p>
+            ${(g && /^rf4/.test(g.id)) ? craftRf4Html() : ''}
             ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
             ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
             <div class="jump">
@@ -9083,6 +9084,22 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百七十一：4 代的锻造补上 TLU／TRP 这套算法，素材稀有度与站内表逐条对过</h2>
+<ul class="ul">
+<li class="li"><b>补的是哪块：</b>「锻造与药学」页此前对十个作品都用同一段话——讲三条生产线、讲「强化比换新重要」，<b>一条具体数值都没有</b>。这次给 4 代单开分支（<code>craftRf4Html()</code>，4 代与 4 豪华版共用），和海洋那支一样走专属内容。</li>
+<li class="li"><b>源：</b>《RF4 装备锻造/强化详解》（百度贴吧·呼兒將出換美酒）。这份源一直没被用过——它不在 <code>_snap</code> 快照里，是 <code>G:/10257/Downloads/符文攻略/</code> 那份 <b>GB18030</b> 的 txt（不是前几轮连着踩到的 UTF-16LE）。</li>
+<li class="li"><b>讲清的核心：</b>四代成品的最终面板＝配方基础值 ＋ <b>TLU 那一段</b> ＋ <b>TRP 那一段</b> ＋ 强化材料自己给的点数。TLU／TRP 是「材料等级总数」「材料稀有度总数」，材料位置一共 <b>15 格</b>（制作 6 ＋ 强化 9），上限因此是 <b>150</b> 与 <b>225</b>——按 15 格折算正好是每格 10 级、15 点稀有度，和原文「稀有度在 0 至 15 之间」对得上，这两个数不是随口给的。<b>这套收益要制作技能到 50 才生效。</b></li>
+<li class="li"><b>四张段位表照录：</b>武器／防具共用 TLU 门槛（<b>5 段</b>，满段武器 700 物攻 ＋ 650 魔攻、防具 350 物防 ＋ 350 魔防）；TRP 是另一条线（<b>8 段</b>，满段武器 2,000 物攻、防具 800 物防，末段直接从 1,000 跳到 2,000）。<b>原文没写这些段是否累加</b>，页面明写不替它判断、不替它求和。</li>
+<li class="li"><b>法杖与魔防是第三套表，来源不同：</b>正文只给了「法杖最高段奖励测试为 1800」一句，前七段是他附在末尾的<b>外国论坛清单</b>（8 段，法杖满 1,800、魔防满 780）。魔防比防具物防的 800 少 20，原文自己注了「除第 8 段外与 DEF 的段位相同」，两节按来源分开、不混成一套。</li>
+<li class="li"><b>饰品吃 TRP 但要按属性分类</b>（DEF／MDEF／ATK 三类清单照录），堆错料拿不到想要那一项。</li>
+<li class="li"><b>强化：同一种料重复用会衰减</b>——原文的例子是加 10 防 → 10、5、2、1、0，照此第五格就归零，所以九格要凑不同材料。另附<b>特殊功用材料 19 条</b>（放大镜、透光石、狸猫叶、毒素X、黑苹果、四色核心、圣龙鳞、光明石、倍铁、10 倍铁、超级废铁…）。</li>
+<li class="li"><b>两源互校——这轮最有价值的一块：</b>原文末尾那份 <b>70 条</b>英文素材稀有度清单，正好能和站内「素材与矿石」页的<b>稀有度</b>列（取自解包数据）逐条对。<b>56 条能对上，其中 51 条数值一致</b>，5 条不一致；14 条英文名在解包表里找不到唯一对应（Small／Big／Rune Crystal 三个都可能对上好几件结晶），<b>不硬配</b>，并写明「对不上不等于站内没有这件素材」。</li>
+<li class="li"><b>清单自己打架的三处照录：</b>闪耀石（Glitta Augite 8 ／ Glitta 7）、狸猫的叶子（10 ／ 11）、10 倍铁（10-Fold Steel 10 ／ 10-fold 11）——同一份清单里同一件素材出现两次、数值不同，而<b>站内这三个数都等于每件的第一条</b>。两组都留着，不判定后面那三行是不是笔误。</li>
+<li class="li"><b>理论最高攻击那把也对上了：</b>原文写「溅耀星辰 Splash Star，基础 14000 Atk」，站内解包表里这把叫<b>飞溅之星</b>（战锤·光，基础物攻 14,000、魔攻 7,200）——而站内全部 231 把武器里基础物攻最高的也正是它。这一条是<b>现算的</b>，不是照抄原文。</li>
+<li class="li"><b>照录不改点名六处：</b>「笵围」「畜力」「水壸」「遊戏」四个错字、「PLU满级」（全文只有 TLU／TRP，PLU 是把两者混写）、「红萝卜剑」（站内带萝卜字样的武器只有「白萝卜」且归在双手剑，两边照录不判定）、「Barrett段奖励（头巾男）」（站内叫巴雷特）、「彩虹水壸」对站内「彩虹洒水壶」。另有一句原文自述「如果对不上汉化版的文字请见谅」，所以中文名以原文译法为准，不换成解包表的叫法。</li>
+<li class="li"><b>数据怎么来的：</b>新增 <code>_build_rf4_forge.py</code> → <code>js/rf4forge.js</code>（<code>RF4_FORGE</code>）。段位表按「第N段奖励(XX TLU): …」句式正则取数，特殊材料那 19 条因中英混排句式不统一，改为<b>逐条照抄并用断言核对「原文里确实有这一条」</b>，不用正则硬拆（首版拆出来把「4-Leaf Clover」切成「Leaf Clover」、「Object X 毒素X」切成「Object X」＋「X」）。页面的统计（格数、段数、对照条数、一致条数、重复条目）全部<b>现算</b>。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> <b>444 实例／0 异常</b>；<code>_audit_narrow.js --page craft --game rf4 --width 520</code> 与 375px 均 0 横向溢出；1100px 整页与 520px 分段截图核版。过程中自己改掉四处：TLU／TRP 表头比数据多一列（门槛并进了「段位」格，表头没跟着改，导致数字整体错位一格）、「满段（225）」把理论上限当成最后一段门槛（TRP 最高一段只要求 200）、防具满段误取了武器那一列（2,000 应是 800）、清单一节把「站内都等于较小的那个值」写反了（实际等于每件的第一条）。</li>
+</ul>
 <h2 class="h2">2026-11-02　第一百七十：2 代的商店补齐 138 行价目，种子价与站内农作页逐条对过</h2>
 <ul class="ul">
 <li class="li"><b>补的是哪块：</b>「商店与设施」页此前对 2 代只有那段通用话术——讲设施有哪几类、营业时间怎么查，<b>一条具体商品的价格都查不到</b>。这次给 2 代单开分支（<code>shopRf2Html()</code>），和东国一样走专属内容。</li>
@@ -11939,6 +11956,165 @@ function rfoStyleHtml() {
 
 /* 符文工房 海洋（RFO）合成难度：单一来源 xls「其他」表「合成指南」。
    原表的分段区间本身不闭合（Ⅵ 写「<0&≤-10」，把 0～-10 那段漏了），照录并点出，不替它补。 */
+/* 符文工房 4 的锻造：成品上限由「材料等级总数」与「材料稀有度总数」两个数决定，
+   强化栏共九格。源：《RF4 装备锻造/强化详解》（百度贴吧·呼兒將出換美酒）。
+   数据由 _build_rf4_forge.py 从源文本拆出，存在 RF4_FORGE 里。 */
+function craftRf4Html() {
+    const D = (typeof RF4_FORGE !== 'undefined') ? RF4_FORGE : null;
+    if (!D) return '';
+    const esc = t => String(t == null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const n = v => Number(v).toLocaleString('en-US');
+
+    const pos = D.base.pos + D.base.enh;          // 六个制作位 + 九个强化位
+    const tluMax = pos * 10;                      // 每位最高 10 级
+    const trpMax = pos * 15;                      // 稀有度 0–15
+
+    /* ---- 四种段位表 ---- */
+    /* 门槛并进「段位」格，所以表头比数据源少一列 */
+    const tluRows = D.tlu.rows.map(r =>
+        [`第 ${r[0]} 段（${r[1]}）`, n(r[2]), n(r[3]), n(r[4]), n(r[5])]);
+    const trpRows = D.trp.rows.map(r =>
+        [`第 ${r[0]} 段（${r[1]}）`, n(r[2]), n(r[3])]);
+    const staffRows = D.staff.rows.map(r => [`第 ${r[0]} 段（${r[1]}）`, n(r[2])]);
+    const mdefRows = D.mdef.rows.map(r => [`第 ${r[0]} 段（${r[1]}）`, n(r[2])]);
+    const H_TLU = ['段位', '武器物攻', '武器魔攻', '防具物防', '防具魔防'];
+    const H_TRP = ['段位', '武器物攻', '防具物防'];
+    const H_STAFF = ['段位', '法杖魔攻'];
+    const H_MDEF = ['段位', '魔防'];
+
+    const last = a => a[a.length - 1];
+    const tluW = last(D.tlu.rows), tluA = last(D.tlu.rows);
+    const trpW = last(D.trp.rows), trpA = last(D.trp.rows);
+    const armorTop = trpA[3];                    // 防具物防在第四格
+    const staffTop = last(D.staff.rows), mdefTop = last(D.mdef.rows);
+
+    /* ---- 素材稀有度对照（源里那份英文清单 vs 站内解包表）---- */
+    const rp = D.rp || [];
+    const mine = rp.filter(x => x.mine != null);
+    const same = mine.filter(x => x.mine === x.v);
+    const diff = mine.filter(x => x.mine !== x.v);
+    const noid = rp.filter(x => x.mine == null);
+
+    /* 同一件素材在清单里出现两次、数值不同 */
+    const byKey = {};
+    rp.forEach(x => { const k = x.cn || x.en.toLowerCase(); (byKey[k] = byKey[k] || []).push(x); });
+    const dup = Object.keys(byKey).filter(k => byKey[k].length > 1 &&
+        new Set(byKey[k].map(x => x.v)).size > 1).map(k => byKey[k]);
+
+    /* 分类汇总 */
+    const cats = [];
+    rp.forEach(x => { if (cats.indexOf(x.cat) < 0) cats.push(x.cat); });
+    const catRows = cats.map(c => {
+        const all = rp.filter(x => x.cat === c);
+        const m = all.filter(x => x.mine != null);
+        return [esc(c), all.length, m.length, m.filter(x => x.mine === x.v).length];
+    });
+
+    /* ---- 理论最高攻击那把：和站内解包表对一下 ---- */
+    const W = (typeof EQW_RF4 !== 'undefined') ? EQW_RF4 : [];
+    const splash = W.filter(w => /溅/.test(w[0]));
+    const topBase = W.reduce((a, w) => (a && w[3] > a[3]) ? w : a, null);
+
+    const specRows = D.spec.map(s => [
+        (s.pre ? esc(s.pre) + ' ' : '') + '<b>' + esc(s.en) + '</b>',
+        s.cn ? esc(s.cn) : '—',
+        esc(s.note)
+    ]);
+
+    return `
+    <p class="p">四代的锻造有一层别作没有的东西：成品的最终面板<b>不只取决于配方</b>，还取决于你往里面塞了什么料——把材料的<b>等级</b>和<b>稀有度</b>各自加总，两个总数各自跨过门槛，就额外送一段攻击或防御。这一页把这套算法按原文拆开。</p>
+    ${stat([
+        ['总格数', pos + ' 格'],
+        ['等级总数上限', n(tluMax)],
+        ['稀有度总数上限', n(trpMax)],
+        ['稀有度对照', rp.length + ' 条']
+    ])}
+    <div class="note">源：<b>${esc(D.src)}</b>。作者自述「以下各项是我看了前人的攻略后自己用游戏资料去证明、推论而补充得出」，其中 TLU／TRP 一段转自 gamefaqs 的 Kirbye2006 与 Anketam，末尾的素材稀有度清单是外国论坛玩家自记。<b>这是社区整理，不是官方数值。</b></div>
+
+    <h2 class="h2">一、先记两个总数：TLU 与 TRP</h2>
+    <p class="p">一件装备的材料位置一共 <b>${pos} 个</b>：制作时的 6 个，加上强化的 9 个。每个位置上放的材料都带着自己的<b>等级</b>与<b>稀有度</b>（原文说稀有度是藏在材料说明里、0 到 15 之间的隐藏值），把这些数分别加起来，就得到「材料等级总数」<b>TLU</b> 与「材料稀有度总数」<b>TRP</b>。</p>
+    ${tbl(['位置', '格数'], [
+        ['制作（配方本身）', D.base.pos + ' 格'],
+        ['强化', D.base.enh + ' 格'],
+        ['合计', '<b>' + pos + ' 格</b>']
+    ], { leftFirst: true, colw: ['9rem', '5rem'] })}
+    <p class="p">原文给的上限是 TLU <b>${n(tluMax)}</b>、TRP <b>${n(trpMax)}</b>。按 ${pos} 格折算回去，等于每格最高 10 级、15 点稀有度——和原文另一句「稀有度在 0 至 15 之间」正好对上，这两个数不是随口给的。</p>
+    <div class="key">这套分段收益<b>要制作技能到 50 才开始生效</b>（原文：「制作技能到50后」）。技能等级没到之前，塞再好的料也拿不到这几段加成。</div>
+
+    <h2 class="h2">二、TLU 到了哪一段，送多少</h2>
+    <p class="p">武器与防具共用同一套 TLU 门槛，但送的东西不一样：武器送物攻与魔攻，防具送物防与魔防。</p>
+    ${tbl(H_TLU, tluRows, { leftFirst: true, colw: ['', '5rem', '5rem', '5rem', '5rem'] })}
+    <p class="p">满段（${tluMax}）是武器 <b>${n(tluW[2])} 物攻 + ${n(tluW[3])} 魔攻</b>、防具 <b>${n(tluA[4])} 物防 + ${n(tluA[5])} 魔防</b>。注意武器这一档<b>同时给物攻和魔攻</b>，防具那一档给的是物防和魔防，两列别记混。</p>
+    <div class="note">原文列的是「第几段给多少」，<b>没写这些段是否累加</b>（即到了第 3 段是只拿第 3 段的 70，还是把前两段也叠上）。本页不替它判断，也不替它求和。</div>
+
+    <h2 class="h2">三、TRP 是另一条线，八段</h2>
+    <p class="p">稀有度总数走的是完全独立的一条：门槛从 25 起，八段，最后一档（200）直接把武器物攻从 ${n(D.trp.rows[6][2])} 抬到 ${n(trpW[2])}——比前一档翻了一倍。</p>
+    ${tbl(H_TRP, trpRows, { leftFirst: true, colw: ['', '6rem', '6rem'] })}
+    <p class="p">满段（门槛 ${trpW[1]}）武器送 <b>${n(trpW[2])} 物攻</b>、防具送 <b>${n(armorTop)} 物防</b>。也就是说，一件装备的最终面板＝配方基础值 ＋ TLU 那一段 ＋ TRP 那一段 ＋ 强化材料自己给的点数。想堆面板，两条线得<b>同时</b>推——只把等级塞满，TRP 那 ${n(trpW[2])} 一分都拿不到。</p>
+
+    <h2 class="h2">四、法杖与魔防走的是第三套表</h2>
+    <p class="p">原文正文只写了一句「法杖的TRP奖励对应为法术强度，最高段奖励测试为 1800」，前七段没给。它末尾抄来的那份外国论坛清单里才有完整的八段，魔防也另有一套：</p>
+    ${tbl(H_STAFF, staffRows, { leftFirst: true, colw: ['', '6rem'] })}
+    ${tbl(H_MDEF, mdefRows, { leftFirst: true, colw: ['', '6rem'] })}
+    <p class="p">法杖满段 <b>${n(staffTop[2])} 魔攻</b>，与正文那句「最高段奖励测试为 1800」一致。魔防满段 <b>${n(mdefTop[2])}</b>，比防具物防的 ${n(armorTop)} 少 ${armorTop - mdefTop[2]}——原文自己也注了一句「除第 8 段外与 DEF 的段位相同」，这 20 点的差是作者照抄的原文差异，不是本站算错。</p>
+    <div class="note"><b>两张表的来源不同，得分开看：</b>上面「武器／防具」那四张是作者正文里自己整理的；法杖与魔防这两张是他附在末尾的英文清单（原文说「下面是外国论坛上玩家自己记下的一些数据」）。本站按来源分成两节，不把两份混成一套。</div>
+
+    <h2 class="h2">五、饰品看属性归哪一类</h2>
+    <p class="p">饰品也吃 TRP，但吃哪一档要看它加的是什么属性。原文按三类列了清单：</p>
+    ${tbl(['送哪一项', '哪些饰品'], D.acc.map(a => ['<b>' + esc(a[0]) + '</b>', esc(a[1])]), {
+        leftFirst: true, left: [1], colw: ['5rem', '']
+    })}
+    <p class="p">所以给饰品堆稀有度之前，先确认它送的是哪一项——往一枚加魔防的戒指（MDEF 那一类）里堆料，涨的是魔防那一档，不会变成物攻。</p>
+
+    <h2 class="h2">六、强化：同一种料重复用，效果会衰减</h2>
+    <p class="p">规则很干脆：<b>同一材料重复使用，效果不断减半</b>。原文举的例子是「一个材料写着加 10 防，第一次是 10，然后便是 5、2、1、0」。照这个例子，同一件料塞到<b>第五格就归零</b>了（10 → 5 → 2 → 1 → 0）——<b>九格要凑不同材料，不是同一件堆九次</b>。</p>
+    <p class="p">除了一般的数值材料，还有一批<b>带特殊功用</b>的料，原文列了 ${D.spec.length} 条：</p>
+    ${tbl(['原名', '中文名', '作用（原文）'], specRows, {
+        leftFirst: true, left: [1, 2], colw: ['9rem', '5rem', '']
+    })}
+    <div class="note">这一节原文自己写了「原文英文，我自己翻译的，如果对不上汉化版的文字请见谅」——所以中文名以原文译法为准，本站不换成解包表里的叫法。有 ${D.spec.filter(x => !x.cn).length} 条<b>只有英文名</b>（${D.spec.filter(x => !x.cn).map(x => esc(x.en)).join('、')}），原文就没给中文，本页不替它起名——站内解包表里能查到对应的可能是「遮光石」「四叶草」「倍铁」「10倍铁」，但那是对照出来的，不是原文写的。</div>
+    <div class="key">两条连招是原文点名的：<b>毒素X</b> 会让后续所有材料功效相反，<b>黑苹果</b> 是大量负属性——两个凑一起是「负得更多」还是「负负得正」，原文只说「和上述的X一起用」，没给结论，本页也不猜。</div>
+
+    <h2 class="h2">七、站内素材表的「稀有度」，就是这里的 TRP</h2>
+    <p class="p">「素材与矿石」页那张表有一列<b>稀有度</b>（取自解包数据），它在这套算法里就是算 TRP 用的那个数。原文末尾附了一份 ${rp.length} 条的英文稀有度清单，拿它跟站内表逐条对，能对上的有 <b>${mine.length}</b> 条：</p>
+    ${tbl(['分类', '清单条数', '站内查得到', '数值一致'], catRows, { leftFirst: true, colw: ['4.4rem', '4.6rem', '4.6rem', '4.2rem'] })}
+    <p class="p">对上的 ${mine.length} 条里 <b>${same.length} 条数值一致</b>，${diff.length} 条不一致：</p>
+    ${tbl(['素材', '清单里写作', '清单值', '站内稀有度'], diff.map(x => [
+        '<b>' + esc(x.cn) + '</b>', esc(x.en), x.v, x.mine
+    ]), { leftFirst: true, left: [1], colw: ['6rem', '8.4rem', '4rem', '4.6rem'] })}
+    <div class="note"><b>三处是清单自己打架，不是站内抄错：</b>${dup.map(g =>
+        esc(g[0].cn || g[0].en) + '（' + g.map(x => esc(x.en) + ' ' + x.v).join(' / ') + '）').join('、')}——同一件素材在同一份清单里出现两次、数值不同，而<b>站内这三个数都等于每件的第一条（Glitta Augite 8、Raccoon Leaf 10、10-Fold Steel 10）</b>。两组都留着，不判定后面那三行是不是笔误。</div>
+    <p class="p">剩下 <b>${noid.length} 条对不上</b>：${noid.map(x => esc(x.en) + '（' + x.v + '）').join('、')}。这些英文名在站内解包表里<b>找不到唯一对应</b>——比如 Small／Big／Rune Crystal 三个都可能对上好几件结晶，本站不硬配；<b>「对不上」不等于站内没有这件素材</b>。</p>
+
+    <h2 class="h2">八、理论最高攻击的一把</h2>
+    <p class="p">原文最后算了一把「理论攻击最高的武器」，逐项拆开：</p>
+    <ul class="ul">${D.maxw.slice(1).map(l => `<li class="li">${esc(l)}</li>`).join('')}</ul>
+    ${splash.length ? `<p class="p">站内解包表里这把写作<b>${esc(splash[0][0])}</b>（${esc(splash[0][1])}，${esc(splash[0][2])}属性，基础物攻 <b>${n(splash[0][3])}</b>、魔攻 ${n(splash[0][4])}），和原文「基础 14000 Atk」对得上。而站内全部 ${W.length} 把武器里，基础物攻最高的也正是它${topBase && topBase[3] === splash[0][3] ? '——这一条是现算的，不是照抄原文' : ''}。</p>` : ''}
+    <div class="note">「总共 18133 Atk + 3440 STR」是作者按自己那套式子加出来的，<b>不是官方数值</b>；其中「镶嵌」「强化」那几项的乘算关系（哪些乘 2、哪些乘 8）原文只列了括号里的写法，本站照录，不重新推。</div>
+
+    <h2 class="h2">九、原文给的两条实操</h2>
+    <ul class="ul">
+        <li class="li"><b>法杖升到 Lv.3 后才能多段蓄力</b>；初期拿「闪电马 Boss 的掉落物」去强化，蓄力放出的法术比同期其他法术好用。</li>
+        <li class="li"><b>收尾三件是绿龙牙、龙骨、彩虹水壶</b>（原文写作「彩虹水壸」）——绿龙牙是因为法术本身强，龙骨是无视抗性，水壶是第一段蓄力很快。这是原文说的「外国攻略比较推荐」。</li>
+    </ul>
+    <p class="p">另有一条只跟农具有关：把能蓄力四段的鱼竿用<b>光明石</b>继承替换到农具里，农具也能蓄力四段，而且<b>第四段不花 RP</b>。原文说「这里涉及关于法杖的继承，有时间搜集数据后将于楼下补充」——也就是说这部分他一直没补完，本页照录现状。</p>
+
+    <h2 class="h2">十、照录不改的地方</h2>
+    <ul class="ul">
+        <li class="li"><b>错字留着：</b>「增加武器攻击<b>笵</b>围」（范围）、「能<b>畜</b>力四段」（蓄力）、「强化到水<b>壸</b>中」（水壶）、「<b>遊</b>戏」（游戏）。原文就这么写，本页一处都没改。</li>
+        <li class="li"><b>「PLU满级」：</b>原文谈红萝卜剑时写「就有一把PLU满级(奖励700物攻 + 650魔攻)的单手剑」——而全文只有 TLU／TRP 两个缩写，PLU 应是把两者混写。照录，不改写成 TLU。</li>
+        <li class="li"><b>「红萝卜剑」对不上站内任何一把：</b>原文说它是「某把单手剑」「材料只要单一块红萝卜」；站内解包表里带萝卜字样的武器只有「白萝卜」，而且归在<b>双手剑</b>（基础物攻 78）。两边照录，<b>不断言是不是同一把</b>，也不断言原文写错了类别。</li>
+        <li class="li"><b>人名：</b>原文写「Barrett段奖励(头巾男)」，站内居民表里这位叫<b>巴雷特</b>（バレット）。表里不换成人名，只在正文点一句。</li>
+        <li class="li"><b>译名两套并存：</b>原文叫「溅耀星辰 Splash Star」，站内解包表叫「飞溅之星」；原文「彩虹水壸」，站内农具里叫「彩虹洒水壶」。各在各位，不统一。</li>
+        <li class="li"><b>清单里的重复条目照录：</b>同一份英文清单里，${dup.length} 件素材各出现两次且数值不同（见上一节那张提示）。不合并成一行。</li>
+        <li class="li"><b>原文没给的，本页也没有：</b>九格强化栏里各位置的<b>固定加成</b>（哪些料加攻、加多少）、各段是否累加、镶嵌与强化的乘算细则，原文都没列。这些地方都空着。</li>
+    </ul>
+
+    <p class="p">素材的稀有度在哪查、每把武器的基础物攻是多少，分别到<a href="#/page/material">素材与矿石</a>和<a href="#/page/weapon">武器</a>两页对着看。</p>
+`;
+}
+
 function rfoCraftHtml() {
     const M = (typeof RFO_MISC !== 'undefined') ? RFO_MISC : null;
     const C = M && M.craft;
