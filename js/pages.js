@@ -1928,6 +1928,89 @@ function recipeAzumaHtml() {
     const buildWood = flat.filter(x => x.k === '建筑物' || x.k === '地形' || x.k === '摆设')
         .filter(x => x.m.some(m => m.indexOf('木材') >= 0 || m.indexOf('竹材') >= 0 || m.indexOf('石材') >= 0)).length;
 
+    /* ---------- 药学（15 条）：两条四级链、两处合流、五种解状态秘药 ----------
+       判据全部来自源表的「材料」列：某条的材料里出现本表另一件的名字，就是「拿上一级做下一级」。
+       只引用一件＝升级；引用两件＝两条链合流；不引用任何本表成品、且自己没有下级＝独立条目。 */
+    const MED = C.filter(c => c.k === '药学')[0] || null;
+    const med = (() => {
+        if (!MED) return null;
+        const h = MED.head;
+        const ix = kw => h.findIndex(x => x.indexOf(kw) >= 0);
+        const iHP = ix('恢复HP'), iHPp = ix('恢复HP%'), iRP = ix('恢复RP'), iRPp = ix('恢复RP%');
+        const iEff = ix('特效'), iUnl = ix('解锁'), iBox = ix('宝箱'), iShop = ix('商店');
+        const iB = iBuy(MED), iS = iSell(MED);
+        const rows = MED.rows, names = rows.map(r => r[0]);
+        const has = v => !!v && v !== '—';
+        const refs = rows.map(r => {
+            const out = [];
+            for (let i = 1; i <= 4; i++) {
+                if (!has(r[i])) continue;
+                const nm = String(r[i]).split('×')[0].trim();
+                if (names.indexOf(nm) >= 0 && out.indexOf(nm) < 0) out.push(nm);
+            }
+            return out;
+        });
+        const nextOf = {};
+        refs.forEach((rf, i) => { if (rf.length === 1) nextOf[rf[0]] = names[i]; });
+        const starts = names.filter((n, i) => refs[i].length === 0 && nextOf[n]);
+        const chainOf = st => { const out = []; let cur = st; while (cur && out.indexOf(cur) < 0) { out.push(cur); cur = nextOf[cur]; } return out; };
+        const chains = starts.map(st => {
+            const r0 = rows[names.indexOf(st)];
+            return { k: has(r0[iRP]) ? 'RP' : 'HP', list: chainOf(st) };
+        });
+        const pos = {};
+        chains.forEach(ch => ch.list.forEach((n, i) => { pos[n] = { k: ch.k, lv: i + 1 }; }));
+        const byName = n => rows[names.indexOf(n)];
+        const rec = r => {
+            const p = [];
+            if (has(r[iHP])) p.push('HP ' + r[iHP]);
+            if (has(r[iHPp])) p.push('HP ' + r[iHPp]);
+            if (has(r[iRP])) p.push('RP ' + r[iRP]);
+            if (has(r[iRPp])) p.push('RP ' + r[iRPp]);
+            return p.length ? p.join('・') : '';
+        };
+        const mats = r => r.slice(1, 5).filter(has).join('、') || '<span class="mon-no">—</span>';
+        const merges = names.filter((n, i) => refs[i].length > 1);
+        const indep = names.filter((n, i) => refs[i].length === 0 && !nextOf[n] && has(rows[i][iEff]));
+        const fixedRows = rows.filter(r => has(r[iHP]) || has(r[iRP]));
+        const pctRows = rows.filter(r => has(r[iHPp]) || has(r[iRPp]));
+        const noSrc = rows.filter(r => !has(r[iUnl]) && !has(r[iBox]) && !has(r[iShop]));
+        const indepUnl = {}, indepShop = {};
+        indep.forEach(n => {
+            const r = byName(n);
+            indepUnl[r[iUnl]] = (indepUnl[r[iUnl]] || 0) + 1;
+            indepShop[r[iShop]] = (indepShop[r[iShop]] || 0) + 1;
+        });
+        const sameUnl = Object.keys(indepUnl).length === 1 ? Object.keys(indepUnl)[0] : null;
+        const sameShop = Object.keys(indepShop).length === 1 ? Object.keys(indepShop)[0] : null;
+        const chainRows = [], mergeRows = [], indepRows = [];
+        const chainText = ch => ch.list.map(n => n + ' ' + (rec(byName(n)) || '—')).join(' → ');
+        const hpCh = chains.filter(c => c.k === 'HP')[0] || null;
+        const rpCh = chains.filter(c => c.k === 'RP')[0] || null;
+        chains.forEach(ch => ch.list.forEach((n, i) => {
+            const r = byName(n);
+            chainRows.push([ch.k + ' 链', (i + 1) + ' 级', '<b>' + n + '</b>', mats(r),
+                rec(r) || '<span class="mon-no">—</span>', money(num(r[iB])), money(num(r[iS]))]);
+        }));
+        merges.forEach(n => {
+            const r = byName(n);
+            const from = refs[names.indexOf(n)].map(x => x + '（' + pos[x].k + ' 链 ' + pos[x].lv + ' 级）').join(' ＋ ');
+            mergeRows.push(['<b>' + n + '</b>', from, mats(r), rec(r) || '<span class="mon-no">—</span>',
+                money(num(r[iB])), money(num(r[iS]))]);
+        });
+        indep.forEach(n => {
+            const r = byName(n);
+            indepRows.push(['<b>' + n + '</b>', mats(r), r[iEff]]);
+        });
+        return {
+            rows, names, refs, chains, pos, byName, rec, mats, merges, indep,
+            fixedRows, pctRows, noSrc, indepUnl, indepShop, sameUnl, sameShop,
+            chainRows, mergeRows, indepRows, chainText, hpCh, rpCh, nChain: Object.keys(pos).length,
+            buyOf: n => { const r = byName(n); return r ? num(r[iB]) : null; },
+            sellOf: n => { const r = byName(n); return r ? num(r[iS]) : null; },
+        };
+    })();
+
     /* 卖价最高 */
     const sellTop = flat.filter(x => x.s != null).slice().sort((a, b) => b.s - a.s).slice(0, 8);
     const topAllWeapon = sellTop.every(x => W.some(c => c.k === x.k));
@@ -1984,6 +2067,24 @@ function recipeAzumaHtml() {
         <p class="p">建筑物／地形／摆设三类共 ${buildCat} 条里，<b>${buildFixed} 条的买价全写同一个数「${buildBuyTop}」</b>，${buildBuyNone} 条写「—」，<b>没有一条是逐件定价</b>。拿这个数算利润率没有意义。</p>
         <p class="p">这也解释了为什么「卖价 > 买价」的 ${over.length} 条里有 ${over.length - overNoDecor.length} 条落在摆设——不是摆设能套利，而是这一列的买价本来就没填真实价格。这三类真正逐件不同的是卖价与制作花费两列${decoSell ? '：卖价从' + decoSell.lo.k + '的「' + decoSell.lo.n + '」' + money(decoSell.lo.v) + ' 到' + decoSell.hi.k + '的「' + decoSell.hi.n + '」' + money(decoSell.hi.v) : ''}${decoCost ? '；制作花费从「' + decoCost.lo.n + '」的 ' + decoCost.lo.v + 'G 到「' + decoCost.hi.n + '」的 ' + decoCost.hi.v.toLocaleString() + 'G' : ''}。</p>
     </details>
+
+    ${med ? `
+    <h2 class="h2">药学 ${med.rows.length} 条：两条四级链，末端合成同一种「万能药」</h2>
+    <p class="p">上一段那张「卖价高于买价」的榜里，<b>「高扬秘药」是唯一一条药学</b>（买 ${money(med.buyOf('高扬秘药'))}、卖 ${money(med.sellOf('高扬秘药'))}）。它不是孤立的漏网条目——这张表其实是<b>按「上一级 ＋ 一两种草」一级级叠出来的</b>：${med.rows.length} 条里 <b>${med.nChain} 条构成两条四级链</b>，<b>${med.merges.length} 条是两条链合流</b>，剩下 <b>${med.indep.length} 条</b>互不相干、各自用原料做。</p>
+    <p class="p">下面的判据<b>不用猜</b>：源表的「材料」列里出现了本表另一件的名字，那就是拿它当原料。只引用一件＝上一级；引用两件＝两条链并到一起。</p>
+    ${tbl(['链', '级别', '成品', '材料（原文）', '恢复量', '买入', '卖出'], med.chainRows, { leftFirst: true, cls: 'azuq', colw: ['3.6rem', '3.6rem', '6.4rem', 'auto', '7rem', '5.2rem', '5.2rem'] })}
+    <div class="key"><b>前三级全是定值，到第四级才换成百分比。</b>两条链读下来是这样——<b>HP</b>：${med.chainText(med.hpCh)}；<b>RP</b>：${med.chainText(med.rpCh)}。<b>百分比只出现在链尾与合流件上</b>（${med.pctRows.map(r => r[0]).join('、')}，共 ${med.pctRows.length} 条），中间三级一条都没有——推链的时候别指望「越往上数字越大就行」，第四级换的是量纲，不是继续加数。</div>
+
+    <h2 class="h2">合流：两条链在半路并一次，在终点又并一次</h2>
+    <p class="p">两条链不是平行的死线，<b>各有一条合流件</b>——把 HP 链与 RP 链当原料吃到一起。而这两件，也正好是<b>整张药学表里买价最高的两条</b>：</p>
+    ${tbl(['成品', '由哪几级合成', '材料（原文）', '恢复量', '买入', '卖出'], med.mergeRows, { leftFirst: true, cls: 'azuq', colw: ['6.4rem', 'auto', 'auto', '7rem', '5.4rem', '5.2rem'] })}
+    <div class="key"><b>两条合流件的位置不一样</b>：<b>无敌秘药接在两条链的终点</b>（魔宝壶 ＋ 高扬秘药），所以它要先把两条链都推满；<b>醒神药只接第三级</b>（神秘壶×2 ＋ 一瓶满足×2），但额外要「心跳菇」与「白草」两件采集物，并且它的恢复量只写在 HP 上（${med.rec(med.byName('醒神药'))}）、RP 列是空的——<b>别以为买下药学里最贵的那瓶（${money(med.buyOf('醒神药'))}）就 HP／RP 一起满</b>。</div>
+
+    <h2 class="h2">剩下 ${med.indep.length} 条：只差「解的是哪一种状态」</h2>
+    <p class="p">这 ${med.indep.length} 条的原料互不相同、也不吃任何成品，共同点只有一个——<b>都是解状态</b>，而且<b>四条恢复列全空</b>：不回复 HP，也不回复 RP，纯粹拿来治病。</p>
+    ${tbl(['成品', '材料（原文）', '解除'], med.indepRows, { leftFirst: true, cls: 'azuq', colw: ['6.4rem', 'auto', '8rem'] })}
+    <div class="key">这 ${med.indep.length} 条的「解锁条件」与「商店」<b>完全一样，一个字都不差</b>：${med.sameUnl ? '解锁全写「' + med.sameUnl + '」' : '解锁条件不统一'}、${med.sameShop ? '商店全是「' + med.sameShop + '」' : '商店不统一'}。<b>所以关键不是跑五个地方，是把那处地方跑一次、把五味草都备齐</b>；做出来之后五瓶在同一家店都能补货。<b>另有 ${med.noSrc.length} 条（${med.noSrc.map(r => r[0]).join('、')}）三列来源全空</b>——源表没写哪买、哪捡、哪个宝箱，本页照录为空，不补。</div>
+    ` : ''}
 
     <h2 class="h2">解锁条件：${noUnlock} 条没有条件，${task} 条靠任务，${frog} 条靠青蛙石</h2>
     <p class="p">源表的「解锁条件」一列写法很杂：地名、任务名、牵绊等级、宝箱、青蛙石、NPC 对话都混在一起。<b>${noUnlock} 条（${Math.round(noUnlock / total * 100)}%）这一列是「—」</b>，也就是一开局就能做。能归到地名上的按地方数一遍：</p>
@@ -8789,6 +8890,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十六：新增「神器与舞」页，配方大全补药学链式分析</h2>
+<ul class="ul">
+<li class="li"><b>新页 <code>azuma_artifact</code>「神器与舞」</b>（牧场生活组，<code>gms:['azuma']</code>）：本作主角是「大地舞者」，<b>神器＝七种舞</b>，每种舞各有战斗与生活两套用法，此前站内完全空白（只有节庆页提过「大地舞者」一词）。三张表：七种舞的「战斗／生活」对照（7 行）／写明属性的三种攻击（火剑・风扇・水伞）／生活面对应的六件农活。</li>
+<li class="li"><b>源：</b>gametoeasy.com《龙之天地》<b>神器介绍</b>（post/1809，2025-06-22，极特攻略），按原文「战斗／生活」两栏照录。三处<b>不替原文补</b>：① 必胜之舞原文只有「根据村民数量增加威力」一句、未分栏，其战斗／生活两格记「—」；② 鼓・鬼面・锡杖的战斗用法原文未写属性，不代归类；③ 同站《赚钱攻略》（post/1854）把神器称作「火焰刀神器」「鼓之神器」，与本页「剑之舞／鼓之舞」是两套说法，<b>不认定二者等同</b>，两处各自照录。</li>
+<li class="li"><b>配方大全补药学分析（不重复数据）：</b>查证发现 p1811 药学 15 条<b>早已完整收在 <code>RECIPE_AZUMA.cats</code> 的「药学」类</b>并已在本页渲染，故<b>没有另立一页</b>，改为在 <code>recipeAzumaHtml()</code> 里加一节分析：按源表「材料」列的引用关系推出<b>两条四级链</b>（HP：恢复壶→疗愈壶→神秘壶→魔宝壶；RP：朝气之本→活力之源→一瓶满足→高扬秘药）、<b>两处合流</b>（无敌秘药＝两条链终点；醒神药＝各第三级＋心跳菇・白草）、<b>五种解状态秘药</b>（解锁条件与商店完全一致）。</li>
+<li class="li"><b>从数据里算出来的两条：</b>① 两条链<b>前三级全是定值、第四级换成百分比</b>，百分比只出现在链尾与合流件上（共 4 条）；② 醒神药虽然是药学里买价最高的一条（20,000G），但<b>恢复量只写在 HP 上</b>，RP 列是空的。链式关系全部<b>由代码从材料列推导</b>，不是手写死表，换数据也不会错位。</li>
+<li class="li"><b>校验：</b><code>node _verify.js</code> 442 实例（+1）／0 异常；520px 窄屏审计（azuma_artifact、recipe 两页）0 横向溢出；1100px 截图逐字核版。</li>
+</ul>
+
 <h2 class="h2">2026-11-02　第一百六十五：新增「村庄升级」页（龙之天地各里满级条件）</h2>
 <ul class="ul">
 <li class="li"><b>新页 <code>azuma_village</code>「村庄升级」</b>（牧场生活组，<code>gms:['azuma']</code>）：龙之天地没有统一的「村」，而是春／夏／秋／冬<b>四个里各算各的村庄等级</b>，此前站内只把「村等级」当解锁条件提过（recipe／shop），没有专门页。本页补上满级条件全貌。</li>
@@ -10236,6 +10346,11 @@ const PAGES = [
         gms: ['azuma'],
         body: () => azumaVillageHtml(),
     },
+    {
+        key: 'azuma_artifact', group: 'life', title: '神器与舞', icon: 'note',
+        gms: ['azuma'],
+        body: () => azumaArtifactHtml(),
+    },
 ];
 
 /* 龙之天地（azuma）村庄升级：四个里各自的满级条件。
@@ -10313,6 +10428,77 @@ function azumaVillageHtml() {
             ${tbl(['里', '解锁'], UNLOCK.map(r => [r[0], esc(r[1])]), { leftFirst: true, cls: 'txt', colw: ['6rem', 'auto'] })}
 
             <div class="note">取自中文攻略站 gametoeasy.com《符文工房：龙之天地》<b>村庄满级条件丨村庄升级攻略</b>（post/1806，2025-06-21，极特攻略）。原表把四季数值写成「150/210/300/300」这种斜杠串，本页拆成春／夏／秋／冬四列，<b>数值一字未改</b>；「皆为 X」按原文保留为备注。<b>原文没有单列「满级＝10 级」这句</b>，只说标题「满级条件」、末段「10 级后可解锁」——两处并存照录。本页不换算、不补原文没写的项。</div>`;
+}
+
+/* 龙之天地（azuma）神器与舞：7 种舞，6 种按「战斗／生活」两栏写，必胜之舞只有一句。
+ * 唯一来源 gametoeasy.com《龙之天地》神器介绍（post/1809，2025-06-22，极特攻略）。
+ * 原文按战斗／生活分栏，本页照录；必胜之舞原文未分栏，不代补、不猜用途。
+ * 另一篇（post/1854 赚钱攻略）称「火焰刀神器」「鼓之神器」，与本页「剑之舞／鼓之舞」
+ * 是两套说法，本站不擅自认定二者等同，两处各自照录。 */
+function azumaArtifactHtml() {
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    /* [舞, 神器, 战斗, 生活, 原文补充] */
+    const D = [
+        ['必胜之舞', '—', '—', '—', '原文只有一句「根据村民数量增加威力」，未分战斗／生活'],
+        ['鼓之舞', '鼓',
+            '挥舞神器「鼓」展开震撼舞姿，可以为主角与周围的伙伴恢复HP。此外，鼓之舞的冲击波还能短暂阻挡敌人行动！',
+            '每天可以对作物施展一次鼓之舞，促进作物生长。甚至还能让枯萎的作物恢复生机！', ''],
+        ['剑之舞', '剑',
+            '挥舞神器「剑」翩然起舞，可以释放强大的火焰之力对敌人展开攻击！',
+            '对已经可以收成的作物挥舞，可以得到种子。还有机会获得比作物更高品质的种子！',
+            '种子是概率升级，最高 lv9。使用弓箭配合时也算割掉种子的判定。'],
+        ['扇之舞', '扇',
+            '挥舞神器「扇」翩然起舞，可以掀起强力旋风，对敌人展开攻击！',
+            '将扇之舞掀起的旋风吹向田里的作物，就能够一口气将作物全部收成！', ''],
+        ['伞之舞', '伞',
+            '挥舞神器「伞」展开华丽舞姿，释放强大的水之力量，对敌人造成伤害！',
+            '使用伞之舞，可以轻松为大范围的田地浇水，让作物茁壮成长！', ''],
+        ['鬼面之舞', '鬼面',
+            '可以使用鬼的怪力对敌人发动攻击。在鬼面之舞期间，即便受到敌方攻击也不会退缩。还能使出各种相扑的招式。',
+            '使用鬼面之舞，可以破坏挡在道路上的巨石。', ''],
+        ['锡杖之舞', '锡杖',
+            '召唤天之国的使者【光之蝶】，能自动搜寻敌人并发动攻击。',
+            '通过锡杖神器所拥有的能昭示真相的力量，可以揭开隐藏之物的真面目。', ''],
+    ];
+    const dual = D.filter(r => r[2] !== '—').length;
+    /* 战斗面里原文写明属性的只有三处：剑＝火焰、扇＝旋风、伞＝水 */
+    const ELEM = [
+        ['火', '剑之舞', '释放强大的火焰之力'],
+        ['风', '扇之舞', '掀起强力旋风'],
+        ['水', '伞之舞', '释放强大的水之力量'],
+    ];
+    /* 生活面的六件事，逐条对应原文动作 */
+    const LIFE = [
+        ['促进作物生长', '鼓之舞', '每天一次，还能让枯萎的作物恢复生机'],
+        ['拿种子（含更高品质）', '剑之舞', '对可收成的作物挥舞，概率升级'],
+        ['一口气全收', '扇之舞', '旋风吹向田里，把作物全部收成'],
+        ['大范围浇水', '伞之舞', '轻松为大范围田地浇水'],
+        ['破坏路上的巨石', '鬼面之舞', '用鬼的怪力破坏挡路的巨石'],
+        ['揭开隐藏之物', '锡杖之舞', '昭示真相，显形隐藏物'],
+    ];
+    const rows = D.map(r => [
+        '<b>' + esc(r[0]) + '</b>', r[1] === '—' ? '<span class="mon-no">—</span>' : esc(r[1]),
+        r[2] === '—' ? '<span class="mon-no">—</span>' : esc(r[2]),
+        r[3] === '—' ? '<span class="mon-no">—</span>' : esc(r[3]),
+        r[4] ? '<span class="mon-desc">' + esc(r[4]) + '</span>' : '',
+    ]);
+    return `
+            <p class="p">龙之天地的主角身份是<b>「大地舞者」</b>，力量不挂在武器上，而是<b>用「舞」把神器里蕴藏的力量激发出来</b>。所以本作的「神器」不是拿在手里砍的装备，而是<b>一套七种舞</b>——每种舞都同时有一套战斗用法和一套生活用法，两套分开算。</p>
+            ${stat([['舞（神器）', D.length + ' 种'], ['战斗／生活两栏', dual + ' 种'], ['写明属性的攻击', ELEM.length + ' 种'], ['生活面覆盖农活', LIFE.length + ' 项']])}
+            <p class="p">七种里<b>有 ${dual} 种是「战斗／生活」两栏俱全</b>，剩下一种是<b>必胜之舞</b>——原文对它只有一句「根据村民数量增加威力」，<b>没分栏、也没写怎么发动</b>。本页照录这一句，不替它补用途。</p>
+            ${tbl(['舞', '神器', '战斗', '生活', '原文补充'], rows, { leftFirst: true, cls: 'txt', colw: ['5.6rem', '3.6rem', 'auto', 'auto', 'auto'] })}
+
+            <h2 class="h2">战斗面：${ELEM.length} 种带属性，其余靠召唤与怪力</h2>
+            <p class="p">原文在战斗描述里<b>写明了属性的只有三种</b>，正好是火／风／水各一：</p>
+            ${tbl(['属性', '舞', '原文'], ELEM.map(r => [r[0], r[1], esc(r[2])]), { leftFirst: true, cls: 'txt', colw: ['4.4rem', '6rem', 'auto'] })}
+            <div class="key">另外三种战斗用法<b>不带属性</b>，靠的是别的东西：<b>鼓之舞</b>不给伤害，给的是<b>为主角与周围伙伴回 HP ＋ 冲击波短暂阻挡敌人</b>（七种舞里唯一写明「群体回复」的一种）；<b>鬼面之舞</b>是<b>用鬼的怪力攻击</b>，卖点在「受到攻击也不会退缩」外加各种相扑招式；<b>锡杖之舞</b>是<b>召唤光之蝶自动索敌</b>，交给它打就行。要打属性弱点只有剑／扇／伞三把能选，另外三把管的是续航、硬直与自动攻击。</div>
+
+            <h2 class="h2">生活面：${LIFE.length} 种舞，刚好六件最费时的农活</h2>
+            <p class="p">这作把农活拆成了六个动作，一种舞正好包一件——<b>不用切换工具，切舞就行</b>：</p>
+            ${tbl(['要干的事', '用哪种舞', '原文要点'], LIFE.map(r => [esc(r[0]), r[1], esc(r[2])]), { leftFirst: true, cls: 'txt', colw: ['10rem', '6rem', 'auto'] })}
+            <div class="note" style="border-left-width:3px">两处限制原文写得很具体，别按「随时能用」记：<b>鼓之舞对作物每天只能施展一次</b>；<b>剑之舞取种是概率升级</b>，最高只到 <b>lv9</b>，并且<b>用弓箭配合时也算割掉种子的判定</b>——想刷高品质种子，弓箭那一刀同样算数。</div>
+
+            <div class="note">取自中文攻略站 gametoeasy.com《符文工房：龙之天地》<b>神器介绍</b>（post/1809，2025-06-22，极特攻略）。原文按<b>「战斗／生活」两栏</b>逐舞写，本页原样照录，只把长句拆进表格、不改字。三件事本站<b>没有替原文补</b>：① <b>必胜之舞</b>只有「根据村民数量增加威力」一句，未分栏，故其战斗／生活两格记「—」；② 战斗属性只写火／风／水三种，<b>鼓、鬼面、锡杖的战斗用法原文未写属性，本页也不替它归类</b>；③ 同一站的《赚钱攻略》（post/1854）把神器称作「<b>火焰刀神器</b>」「<b>鼓之神器</b>」，与本页的「剑之舞／鼓之舞」是两套说法，<b>本站不认定二者等同，两处各自照录</b>。</div>`;
 }
 
 /* 龙之天地（azuma）专属：料理配方（313 道，五类，不混入七作「料理」页的厨具/等级模板）
