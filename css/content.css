@@ -244,6 +244,12 @@
     text-align: left;
 }
 
+/* 海洋宠物产出：出现点列是多地点长文本，允许换行（默认 nowrap 会让窄屏横滑） */
+.content .table.rfoprod td,
+.content .table.rfoprod th {
+    white-space: normal;
+}
+
 .content .repeat {
     font-size: 0.72rem;
     color: #93a0a7;

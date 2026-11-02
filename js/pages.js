@@ -3888,6 +3888,25 @@ function produceHtml(g) {
         <div class="note">时段取自 biligame「RF2pet」页的「宠物工作」表。源表的「上午0点」指当日午夜（24:00），本站照录不折算。源表只给了这四种工作的起止时间，没有写「产出」与「工作」之间的好感门槛差异，本页不另作换算。</div>`;
     }
 
+    /* ================= 海洋 ================= */
+    if (id === 'rfo') {
+        const PO = (typeof PETPROD_RFO !== 'undefined') ? PETPROD_RFO : [];
+        if (!PO.length) return '<p class="p">这一作暂时没有宠物产出数据。</p>';
+        const prods = {};
+        PO.forEach(r => { prods[r[1]] = (prods[r[1]] || 0) + 1; });
+        const prodNames = Object.keys(prods).sort((a, b) => prods[b] - prods[a]);
+        const days = PO.map(r => parseInt(r[3], 10)).filter(v => !isNaN(v));
+        const dMin = Math.min.apply(null, days), dMax = Math.max.apply(null, days);
+        const gem = PO.filter(r => /宝石|金|银/.test(r[1])).length;
+        return `
+        <h2 class="h2">海洋：${PO.length} 只魔物每天被你刷毛、隔几天给你产一样东西</h2>
+        <p class="p">海洋的宠物产出跟 RF2 的「好感度分档」不同：<b>每只固定产一种东西</b>，靠「毛刷次数」（每天能刷几次涨好感）和「产出天数」（每隔几天收一次）两个参数描述。奶蛋毛蜜是每天稳定来源，宝石与金属来自宝箱系魔物，产出周期长得多（10 天一次）。</p>
+        ${stat([['会产出的魔物', PO.length + ' 只'], ['产出物种类', prodNames.length + ' 种'], ['产出天数', dMin + '～' + dMax + ' 天']])}
+        <div class="key">${prodNames.length} 种产出物：${prodNames.join('、')}。其中奶／蛋／毛／蜜每天都有；宝石与金属来自 ${gem} 只宝箱系魔物（红宝石／蓝宝石／金／银），产出天数一律 10 天。</div>
+        ${tbl(['魔物', '产出物', '毛刷次数', '产出天数', '出现点'], PO.map(r => [r[0], '<b>' + r[1] + '</b>', r[2], r[3], r[4]]), { leftFirst: true, left: [4], cls: 'rfoprod' })}
+        <div class="note">源表「黄蜂」在原文里重复出现两次（两行逐字相同），本站已合并为一行。毛刷次数与产出天数取自 biligame「RFOpet」页的「魔物生产物列表」。出现点里的「精灵殿／沉船／岛屿」等都是游戏内实际地名，源表用「[[日文|中文]]」链接，本站只取中文显示名。</div>`;
+    }
+
     /* ================= 边境 ================= */
     if (!PD.length) return '<p class="p">这一作暂时没有宠物产出数据。</p>';
 
@@ -7878,11 +7897,11 @@ const PAGES = [
     /* ================= 宠物产出（派它干什么，它给你什么） ================= */
     {
         key: 'produce', group: 'life', title: '宠物产出', icon: 'pot',
-        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff'],
+        gms: ['rf1', 'rf2', 'rf3', 'rf3sp', 'rff', 'rfo'],
         body: g => {
-            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff') return produceHtml(g);
+            if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rf3' || g.id === 'rf3sp' || g.id === 'rff' || g.id === 'rfo') return produceHtml(g);
             return `<p class="p">这一作暂时没有「派魔物干活／收产物」的表。</p>
-            <div class="note">源站给得出产出表的有四作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF2（<code>RF2pet</code> 的宠物生产＋宠物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）。海洋的宠物页只有喜好作物，RF5 的「同伴怪物生产道具一览」是一张残页（只有七行散句加一句「待补充」、没有完整表），所以这两作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
+            <div class="note">源站给得出产出表的有五作：初代（<code>RF1petfarm</code> 32 只魔物工作表）、RF2（<code>RF2pet</code> 的宠物生产＋宠物工作表）、RF3（<code>RF3farm</code> 90 只的工作＋农活等级）、边境（<code>RFFpet</code> 生产概率＋工作范围＋生蛋）、海洋（<code>RFOpet</code> 的魔物生产物列表）。RF5 的「同伴怪物生产道具一览」是一张残页（只有七行散句加一句「待补充」、没有完整表），所以这一作本页留空，去<a class="link" href="#/page/beast">魔物与伙伴</a>看收服流程。</div>`;
         }
     },
 
@@ -8693,6 +8712,15 @@ const PAGES = [
     {
         key: 'changelog', group: 'lore', title: '更新日志', icon: 'note',
         body: () => `
+<h2 class="h2">2026-11-02　第一百六十一：「宠物产出」补上 海洋（RFO）的魔物生产物列表</h2>
+<ul class="ul">
+<li class="li"><b>produce 现覆盖六作</b>：<code>gms</code> 由 <code>['rf1','rf2','rf3','rf3sp','rff']</code> 加 <code>rfo</code>。海洋源站「RFOpet」页有一张完整的「魔物生产物列表」，此前 produce 页旧说明错称「海洋的宠物页只有喜好作物」——其实产出数据一直就在，本轮补正（与上一轮 RF2 同一类笔误）。</li>
+<li class="li"><b>生产物表：19 只魔物、9 种产出物</b>——列：魔物／产出物／毛刷次数／产出天数／出现点。海洋不像 RF2 按好感分档，而是<b>每只固定产一种</b>，靠「毛刷次数」（每天可刷几次涨好感）和「产出天数」（每隔几天收一次）描述：奶蛋毛蜜每天都有，宝石与金属（红宝石／蓝宝石／金／银）来自 4 只宝箱系魔物、产出天数一律 10 天。</li>
+<li class="li"><b>解析用脚本 <code>_build_rfo_pet.py</code></b>：从 wikitext 抽显示名（<code>[[jp|cn]]</code> 只取中文，取错会整表变日文）、<code>&lt;br&gt;</code> 多地点转「、」；源表「黄蜂」重复一行（两行逐字相同）已按整行去重。</li>
+<li class="li"><b>新增 CSS <code>.table.rfoprod</code></b>：出现点列是多地点长文本，默认 <code>white-space:nowrap</code> 会在窄屏撑出横滑，故让该表单元格 <code>white-space:normal</code> 换行、出现点列左对齐。520 与 1100px 截图确认无横滑、地点不截断。</li>
+<li class="li"><b>校验 440 实例（＋1）／0 异常／头像 8 作 214 张缺 0</b>；搜索与索引健康。海洋源文件里还有一张「简易总表」（EXP／成长／农作物／掉落全览），与站内 mbook 图鉴和掉落页重合，不搬，避免重复建设。</li>
+</ul>
+
 <h2 class="h2">2026-11-02　第一百六十：「宠物产出」补上 RF2 的宠物生产＋工作表</h2>
 <ul class="ul">
 <li class="li"><b>produce 现覆盖五作</b>：<code>gms</code> 由 <code>['rf1','rf3','rf3sp','rff']</code> 加 <code>rf2</code>。RF2 源站「RF2pet」页有干净的「宠物生产」「宠物工作」两表，此前 produce 页的旧说明错称「RF2 只有抚摸次数与喜好作物」——其实那是收服（gift 页）的口径，产出数据一直就在，本轮补正。</li>
