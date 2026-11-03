@@ -22,6 +22,7 @@
   "js/rf1term.js",
   "js/rf1shop.js",
   "js/rf1craft.js",
+  "js/rf1request.js",
   "js/rf2data.js",
   "js/rf2quest.js",
   "js/rf2shop.js",

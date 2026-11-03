@@ -45,6 +45,7 @@
       "js/rf1term.js",
       "js/rf1shop.js",
       "js/rf1craft.js",
+      "js/rf1request.js",
       "js/rf1cook.js",
       "js/fishspot_rf1.js",
       "js/crop1.js"
@@ -144,10 +145,10 @@
     ]
   },
   "sha": {
-    "core": "fd6fabdcc21d373b",
-    "shared": "ef3c2c124d0c02f5",
+    "core": "ae24c93dd068938b",
+    "shared": "d4796c315d926100",
     "cross": "226db472fe859d8a",
-    "game:rf1": "ed9bece74f147cbd",
+    "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "bb35f7215f7d0513",
     "game:rff": "f7cc8d3932f40ea5",
@@ -155,6 +156,6 @@
     "game:rf4": "5d468d1d94dc4342",
     "game:rf5": "766394d24d1376c0",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "a460f9c8bb1aa78a"
+    "page:changelog": "d0739bd0dcfb8d41"
   }
 }

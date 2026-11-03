@@ -8186,6 +8186,8 @@ const PAGES = [
             if (g && g.id === 'rf3') return requestRf3Html();
             /* 五代的委托是一根长链，解锁列基本都写着「完成上一条」，源站是单表 173 条 */
             if (g && g.id === 'rf5') return requestRf5Html();
+            /* 一代没有委托板，任务以支线剧情形式存在，源站是 8 条支线的分步流程 */
+            if (g && g.id === 'rf1') return requestRf1Html();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -11985,6 +11987,53 @@ function rfoCraftHtml() {
    主表＝终有依天《【RF2】【一周目】任务大全》（贴吧，118 条，带触发条件与奖励，只写一周目）；
    补表＝安打《任务、居民、怪物攻略》（TGBUS，123 条，奖励混在内容里，含二代）。
    两源大面积重叠，所以只补主表没覆盖的 6 条，不做同名合并——译名两套、口径两套，合并不了就照录。 */
+function requestRf1Html() {
+    const Q = (typeof RF1_REQUEST !== 'undefined') ? RF1_REQUEST : null;
+    if (!Q || !Q.items || !Q.items.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const nItem = Q.items.length;
+    const nStep = Q.items.reduce((a, i) => a + i.steps.length, 0);
+    /* 提到「求婚」的支线有几条：现算，不写死 */
+    const nMar = Q.items.filter(i => i.steps.some(s => /求婚/.test(s))).length;
+    /* 不按「1、2、3」开头写的行（注意点、续行）有几行 */
+    const nRaw = Q.items.reduce((a, i) => a + i.steps.filter(s => !/^\d+[、.]/.test(s)).length, 0);
+
+    return `
+    <div class="note">源：<b>${esc(Q.src)}</b>。${esc(Q.note)}</div>
+    ${stat([
+        ['支线', nItem + ' 条'],
+        ['分步流程', nStep + ' 步'],
+        ['牵到求婚道具', nMar + ' 条'],
+        ['非编号行', nRaw + ' 行'],
+    ])}
+
+    <h2 class="h2">一、一代没有委托板，任务都藏在支线里</h2>
+    <p class="p">RF1 和后面几作不一样：<b>没有委托箱、没有任务板、也没有「接一条做一条」的委托列表</b>。这一作能给玩家的额外目标，是<b>支线剧情</b>——多半由某个村民的一句话起头，按顺序跑几个地点、交几样东西，最后给一件道具，其中好几件直接就是<b>求婚道具</b>。</p>
+    ${Q.friendly ? `<div class="key"><b>先记住这条机制：</b>${esc(Q.friendly)}　也就是说好感度是<b>进支线的前置</b>，不是支线的奖励——人没混熟，有些门根本不会对你打开。</div>` : ''}
+    <p class="p">所以看这一页的方式和别的作不同：不是「我现在能接什么」，而是<b>「我知道这件事之后该按什么顺序跑」</b>。下面每条都按源站的分步顺序照录，编号是源站自己的。</p>
+
+    <h2 class="h2">二、${nItem} 条支线，逐条分步</h2>
+    <p class="p">步骤前面的「1、2、3」是源站写的，<b>本站没有重新编号</b>——所以你会看到个别行不带号（那是源站的「注意点」或上一行的续写），这类共 ${nRaw} 行，原样留在它该在的位置上。</p>
+    ${Q.items.map(it => `<h3 class="h3">${esc(it.t)}　${it.steps.length} 步</h3>
+    <div style="margin:.2rem 0 .9rem 0">
+    ${it.steps.map(s => `<p class="p" style="margin:.18rem 0 .18rem 1rem;padding-left:.9rem;border-left:3px solid var(--line,#ddd)">${esc(s)}</p>`).join('\n    ')}
+    </div>`).join('\n')}
+
+    <h2 class="h2">三、本站照录、不动手的几处</h2>
+    <div class="note"><b>标点与口语一律不改：</b>原文里有「在居民中打听，。」（逗号后面直接跟句号）、「得知圣杯被扔在了カジミール遺跡,」（半角逗号）、「1、…」「其它、…」混用等写法，<b>全部照录</b>。本站不改攻略作者的标点习惯。</div>
+    <div class="note"><b>地名与人名保留原文写法：</b><code>カジミール遺跡</code>、<code>トロス洞窟</code> 这类没译的日文原名照抄不译——源站同一段里既有中文译名也有日文原名，本站不替它统一，也不猜对应关系。</div>
+    <div class="note"><b>「只能通关前完成」这类限制照录在步骤位置：</b>它不是一句概括，而是<b>那条支线的第一条</b>。所以「被丢弃的圣杯」的第 1 行没有编号——源站就是那么排的，本站没有把它提出来单列成「注意事项」。</div>
+    <div class="note"><b>这一页不追求「全」：</b>源站只收了这 ${nItem} 条。RF1 还有大量村民对话事件、节日事件、以及每条洞窟的通行证条件，那些不在本页，<b>本站也不拿别处资料硬凑成一张「全任务表」</b>——凑出来的表看着完整，错一条就会把人带沟里。</div>
+
+    <div class="jump">
+        <a href="#/page/love"><div class="jp-t">恋爱与结婚</div><div class="jp-s">求婚道具与爱情度门槛</div></a>
+        <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">先把好感度刷上去</div></a>
+        <a href="#/page/boss"><div class="jp-t">BOSS 战</div><div class="jp-s">支线里要打的那几只</div></a>
+        <a href="#/page/request"><div class="jp-t">委托任务</div><div class="jp-s">其他作品的委托结构</div></a>
+    </div>
+    <div class="note">数据文件 <code>js/rf1request.js</code>（<code>RF1_REQUEST</code>），由 <code>_build_rf1_request.py</code> 从源站 wikitext 按章节解析生成（8 条／35 步内嵌在脚本里，可离线复现）。脚本只拆章节、去 wiki 链接标记，不改写、不合并、不补全。</div>`;
+}
+
 function requestRf5Html() {
     const Q = (typeof RF5_REQUEST !== 'undefined') ? RF5_REQUEST : null;
     if (!Q || !Q.rows || !Q.rows.length) return '';
