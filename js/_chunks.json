@@ -125,7 +125,8 @@
       "js/rf5request.js",
       "js/fishspot.js",
       "js/fx5.js",
-      "js/crop5.js"
+      "js/crop5.js",
+      "js/expand.js"
     ],
     "azuma": [
       "js/fishspot_azuma.js",
@@ -149,8 +150,8 @@
     ]
   },
   "sha": {
-    "core": "cedfba85c24d5f5b",
-    "shared": "4e5f594fc159daa0",
+    "core": "811b2bad8aa9f629",
+    "shared": "53909c3a855b98fd",
     "cross": "226db472fe859d8a",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
@@ -158,8 +159,8 @@
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "9e3654e80e5964e0",
     "game:rf4": "c5bae67b1053da2a",
-    "game:rf5": "766394d24d1376c0",
+    "game:rf5": "870736ffc3aa3c37",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "c5e9a4088d886055"
+    "page:changelog": "b322322a2c1ff652"
   }
 }

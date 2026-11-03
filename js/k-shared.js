@@ -11846,8 +11846,7 @@ function decorateDeepHtml(id) {
 
         return `
         <h2 class="h2">先扩建房子，才轮得到买家具</h2>
-        <p class="p">本作家具有一个硬前提：<b>房子没扩建，那一批家具根本不上货架</b>。扩建本身也是「金钱＋木材」，所以前期真正的瓶颈是木头——砍树、买木材、让魔物去砍，三条路都得用上。扩建共 ${ex.length} 档，含魔物小屋的两级扩建。</p>
-        ${tbl(['种类', '金钱', '木材'], ex.map(r => [E(r[0]), G(r[1]), E(r[2])]), { leftFirst: true })}
+        <p class="p">本作家具有一个硬前提：<b>房子没扩建，那一批家具根本不上货架</b>。扩建本身也是「金钱＋木材」，所以前期真正的瓶颈是木头——砍树、买木材、让魔物去砍，三条路都得用上。七档扩建的价格与「哪一档开了哪几件」在<a href="#/page/home">自宅与扩建</a>页，这里只讲它压住了哪些家具。</p>
         <p class="p">最贵的是<b>2 楼卧室 ${G(exRow('2楼卧室')[1])}＋木材 ${exRow('2楼卧室')[2]}</b>，它也是家具解锁的总闸——下面 ${gated.length} 件有前置的家具里，有 ${gateCount('扩建2楼寝室')} 件卡在它后面。</p>
         <h2 class="h2">家具 ${fur.length} 件：${G(Math.min.apply(null, priceOf(fur)))} 到 ${G(Math.max.apply(null, priceOf(fur)))}</h2>
         <p class="p">全部由<b>卢特</b>一家卖，而且<b>只在祝日摆摊</b>。源表给的售卖日只出现 ${daySet.join('／')} 这 ${daySet.length} 天，另有 ${allHol} 条直接写「所有祝日」——反过来说，本作的祝日就是这 ${daySet.length} 天，错过一天要等六天。价钱按功能分层：${G('500')} 一档 ${furPeek(500).length} 件（五张挂画加一台小冰箱）、${G('10000')} 一档 ${furPeek(10000).length} 件（桌子、收纳箱、窗帘、大冰箱）、${G('20000')} 一档只有两张床，最贵的 ${G('28000')} 是 ${furPeek(28000).map(E).join('、')}。</p>
@@ -12162,6 +12161,192 @@ function mineDeepHtml(id) {
             ${tbl(['钓点', '鱼种', '前几种鱼'], rows, { leftFirst: true, colw: ['10rem', '4.4rem', 'auto'] })}
             ${rich ? `<p class="p">鱼种最多的是<b>${E(rich)}</b>（${(S.spots[rich] || []).length} 种）。</p>` : ''}
             ${JUMP}`;
+    }
+
+    return '';
+}
+
+/* 自宅与扩建：RF1／RF3／RF5／边境 有可核对的增筑（改建）表，这四作单独写；
+   RF2／RF4／海洋／龙之天地 站内没有可引用的扩建数据，返回空串退回通用文案。 */
+function homeDeepHtml(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const G = v => E(v) + 'G';
+    const D = v => (v === '—' || v === '' || v == null ? '<span class="mon-no">—</span>' : E(v));
+
+    /* ================= RF1：增筑在农场做，家具在流动店买 ================= */
+    if (id === 'rf1') {
+        const S = (typeof RF1_SHOP !== 'undefined' && RF1_SHOP.shops) || [];
+        const ivan = S.filter(s => s.n.indexOf('伊万') >= 0)[0];
+        const furn = [], cook = [];
+        (ivan ? ivan.secs : []).forEach(sec => (sec.r || []).forEach(r => {
+            if (sec.t === '每月19日') cook.push({ t: sec.t, r: r });
+            else if (sec.t !== '每月7日') furn.push({ t: sec.t, r: r });
+        }));
+        const carpenters = S.filter(s => (s.desc || '').indexOf('增筑') >= 0);
+        const gated = furn.filter(o => /要求房屋增筑/.test(o.r[2] || ''));
+        const smallCook = cook.filter(o => /厨房（小）/.test(o.r[2] || ''));
+        const bigCook = cook.filter(o => /厨房（大）/.test(o.r[2] || ''));
+
+        return `
+        <h2 class="h2">本作的「增筑」不在菜单里，在两座农场上</h2>
+        <p class="p"><b>房屋与怪物小屋的增筑，是两座农场顺带做的服务</b>。源站对这两家的介绍就是这么写的——</p>
+        <ul class="ul">
+            ${carpenters.map(s => `<li class="li"><b>${E(s.n)}</b>：${E(s.desc)}</li>`).join('')}
+        </ul>
+        <div class="note">增筑本身要多少钱、多少木材，源站<b>只写了「提供增筑服务」这一句</b>，没有金额也没有材料数。本站不补这个数字——去诺伊曼或卡缪那里问，游戏内会报价。</div>
+
+        <h2 class="h2">家具只有一家卖，而且只在祝日摆摊</h2>
+        <p class="p">家具来自<b>伊万的流动店</b>，祝日开业、雨雪照常、台风暴雪不开。它按每月的固定几天分五档摆货：每月 1 日厨房与冰箱、7 日五台加工机、13 日储物棚与桌子、19 日六件厨具、25 日只有一张床。也就是说<b>想买什么得挑日子去</b>，错过一天要等下个月。</p>
+        ${tbl(['商品', '售价', '说明（照录）'], furn.map(o => [E(o.r[0]), G(o.r[1].replace('G', '')), D(o.r[2] || '')]), { leftFirst: true, colw: ['auto', '5.4rem', '12rem'] })}
+        <p class="p">九件里有 <b>${gated.length} 件标着「要求房屋增筑」</b>——大号那一档全在里面，末位的双人床也是。所以顺序是死的：<b>先去农场增筑，回头才买得到大件</b>，反过来只能在货架前干看着。</p>
+        <div class="key">大号与小号差的是容量与价格，不是功能：冰箱（小）${G('1000')}／45 格、冰箱（大）${G('2000')}／60 格；储物棚（小）${G('1000')}／45 格、储物棚（大）${G('2000')}／60 格。多花 ${G('1000')} 买 15 格，而且只有大号需要先增筑。</div>
+
+        <h2 class="h2">厨具六件，卡在厨房大小上</h2>
+        <p class="p">每月 19 日那档全是厨具，门槛写得明明白白：<b>${smallCook.map(o => E(o.r[0])).join('、')}</b> 要「厨房（小）」，<b>${bigCook.map(o => E(o.r[0])).join('、')}</b> 要「厨房（大）」。厨房（小）${G('1000')}、厨房（大）${G('2000')}，差价 ${G('1000')}——<b>直接上大的，六件一次全开</b>；只买小的，烤箱锅蒸锅永远不卖给你。</p>
+        <p class="p">床是存档点，也是结婚要的东西（本作${G('10000')}，且要房屋增筑）。睡前的存档不可回退，重要节点前先睡一觉——这条在<a href="#/page/time">时间与日程</a>页说得更细。</p>
+        <div class="jump">
+            <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">伊万与两座农场的营业时间</div></a>
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">各作的家具入口与价格</div></a>
+        </div>`;
+    }
+
+    /* ================= RF3：大树长出二楼之后才能改建 ================= */
+    if (id === 'rf3') {
+        const S = (typeof RF3_SHOP !== 'undefined' && RF3_SHOP.shops) || [];
+        const reb = [], furn = [], fnotes = [];
+        S.forEach(s => {
+            (s.secs || []).forEach(sec => {
+                if (sec.t === '改建') reb.push({ shop: s.n, c: sec.c, r: sec.r || [] });
+                if (sec.t === '家具') furn.push({ shop: s.n, c: sec.c, r: sec.r || [] });
+            });
+            (s.notes || []).forEach(n => { if (/家具/.test(n)) fnotes.push(n); });
+        });
+        const barn = reb.length ? reb.filter(x => x.shop.indexOf('锻冶') >= 0)[0] : null;
+        const hosp = reb.filter(x => x.shop.indexOf('医院') >= 0)[0];
+        const woodIn = txt => Number(String(txt).replace(/[^\d]/g, '')) || 0;
+        const rowsOf = sec => sec.r.map(r => {
+            const mi = sec.c.indexOf('售价') >= 0 ? sec.c.indexOf('售价') : sec.c.indexOf('价格');
+            return r.map((c, i) => (i === 0 ? '<b>' + E(c) + '</b>' : (i === mi && /^\d+$/.test(String(c)) ? G(c) : D(c))));
+        });
+        const benchWood = reb.reduce((a, sec) => a + sec.r.filter(r => r[0].indexOf('饲育小屋') < 0).reduce((x, r) => x + woodIn(r.join(' ').match(/\d+本/) ? r.join(' ').match(/\d+本/)[0] : ''), 0), 0);
+        const barnWood = (barn ? barn.r.filter(r => r[0].indexOf('饲育小屋') >= 0) : []).reduce((x, r) => x + woodIn(r.join(' ').match(/\d+本/) ? r.join(' ').match(/\d+本/)[0] : ''), 0);
+        const barnWoods = (barn ? barn.r.filter(r => r[0].indexOf('饲育小屋') >= 0) : []).map(r => r.join(' ').match(/\d+本/) ? r.join(' ').match(/\d+本/)[0] : '');
+
+        return `
+        <h2 class="h2">先让那棵树长大，房子才长出二楼</h2>
+        <p class="p">RF3 的扩建不是花钱就能买：<b>二楼是剧情给的</b>——主线推到「回镇后发现大树成长」，自宅才多出二楼。二楼出现之后，改建菜单才在两家店里打开：<b>锻冶屋</b>改锻冶台与装饰台，<b>魔法医院</b>改药学台。在此之前，钱和木材都到位也改不了。</p>
+        ${barn ? `<h3 class="h3">${E(barn.shop)}的改建</h3>
+        ${tbl(barn.c, rowsOf(barn), { leftFirst: true, colw: ['auto', '5.4rem', '6rem', '10rem'] })}
+        <div class="note">五条「建造饲育小屋」的价格栏在源表里是<b>空白</b>，只有木材数（40／80／120／160／200 本，一条本体加四条增筑）。本站照原样留空显示「—」，<b>不补 0</b>。</div>` : ''}
+        ${hosp ? `<h3 class="h3">${E(hosp.shop)}的改建</h3>
+        ${tbl(hosp.c, rowsOf(hosp), { leftFirst: true, colw: ['auto', '6rem', '5.4rem', '10rem'] })}
+        <div class="note">两家店的表头不一样，<b>照录不统一</b>：锻冶屋写「名称｜售价｜需要木材｜说明」，医院写「名称｜必要资材｜价格｜说明」——同一件事，列序是反的。照着看别串行：医院的第二列是木材数，第三列才是钱。</div>` : ''}
+
+        <h2 class="h2">家里的三件东西</h2>
+        ${furn.length ? tbl(furn[0].c, furn[0].r.map(r => r.map((c, i) => (i === 0 ? '<b>' + E(c) + '</b>' : D(c)))), { leftFirst: true, colw: ['auto', '6rem', '7rem'] }) : ''}
+        <p class="p">杂货屋这三件就是本作「住」的全部开销：<b>双人床 ${G('15000')}＋木材 80</b>、书架 ${G('4000')}＋木材 120、收纳箱（大）${G('6000')}＋木材 160。<b>床是结婚的硬条件</b>——新婚模式那条线的第 ③ 步就是「备好双人床」，见<a href="#/page/newly">新婚模式</a>；而且 <b>Boss 打完之前家具商不卖床</b>，钱攒够了也得等剧情。</p>
+        ${fnotes.length ? `<div class="key">${fnotes.map(E).join('　')}——家具上限十个，是「别乱买」这件事的官方口径：买错了打碎换木材，比堆在屋里占位强。</div>` : ''}
+        <p class="p">木材是这一页真正的货币：三张工作台加起来已经 <b>${benchWood} 本</b>，五条饲育小屋（${barnWoods.join('／')}）再要 <b>${barnWood} 本</b>——合计 ${benchWood + barnWood} 本，比钱更难凑。砍树、让魔物去砍、买木材，三条路都得用。</p>
+        <div class="jump">
+            <a href="#/page/newly"><div class="jp-t">新婚模式</div><div class="jp-s">双人床与婚约指轮那六步</div></a>
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">装饰台只做饰品，家具只能买</div></a>
+        </div>`;
+    }
+
+    /* ================= RF5：本作没有自家增筑，扩的是镇上的店 ================= */
+    if (id === 'rf5') {
+        const X = (typeof RF5_EXPAND !== 'undefined') ? RF5_EXPAND : null;
+        if (X) {
+            const shop = X.rows.filter(r => r[0] !== '魔物小屋');
+            const barn = X.rows.filter(r => r[0] === '魔物小屋');
+            const facs = [];
+            shop.forEach(r => { if (facs.indexOf(r[0]) < 0) facs.push(r[0]); });
+            const stagePrice = s => {
+                const set = shop.filter(r => r[1] === s).map(r => r[2]);
+                const u = set.filter((v, i) => set.indexOf(v) === i);
+                return u;
+            };
+            const els = [];
+            barn.forEach(r => { const e = r[1].replace(/[AB]\d?$/, ''); if (els.indexOf(e) < 0) els.push(e); });
+            const chain = (el, side) => barn.filter(r => r[1].indexOf(el) === 0 && (r[1] === el + side || r[1].indexOf(el + side) === 0))
+                .sort((a, b) => (a[1].length - b[1].length));
+            const cell = r => r ? `SEED ${E(r[3])}／石 ${D(r[4])}／木 ${D(r[5])}` : '<span class="mon-no">—</span>';
+            const barnRows = els.map(el => {
+                const a = chain(el, 'A'), b = chain(el, 'B');
+                const same = a.length === b.length && a.every((x, i) => x[3] === b[i][3] && x[4] === b[i][4] && x[5] === b[i][5]);
+                return [el, a.length, same, a.map(cell)];
+            });
+            const maxSe = shop.concat(barn).reduce((m, r) => Math.max(m, Number(r[3]) || 0), 0);
+            const topSe = shop.concat(barn).filter(r => Number(r[3]) === maxSe);
+            const golded = barn.filter(r => r[2] !== '—').length;
+            const F5 = (typeof FURN !== 'undefined' && FURN.rf5 && FURN.rf5.rows) ? FURN.rf5.rows : [];
+            const bed5 = F5.filter(r => r[0] === '双人床')[0] || [];
+
+            return `
+        <h2 class="h2">先说明一件事：本作的「扩建」里没有自己家</h2>
+        <p class="p">帕尔摩工房那张 ${X.rows.length} 行的扩建清单，逐行看下去——<b>${facs.length} 处镇上的店铺／设施，加上魔物小屋 ${barn.length} 行，一条「自宅」都没有</b>。也就是说 RF5 的房子从开局到最后都那么大，能「扩建」的是别人的店和你自己的牧场。想让货架上多出东西，钱要花在别人的房子上。</p>
+
+        <h2 class="h2">店铺扩建：${shop.length} 行，${facs.length} 处，价钱是固定的三档</h2>
+        <p class="p">除了警署只有两阶（起价 ${G(stagePrice('1阶段').filter(v => v !== '8000')[0] || '10000')}），其余七处都是三阶，<b>阶段 1 一律 ${stagePrice('1阶段').filter(v => v !== '10000').join('')}G、阶段 2 一律 ${stagePrice('2阶段').join('')}G、阶段 3 一律 ${stagePrice('3阶段').join('')}G</b>——店与店之间不差价，只差你还缺多少木材与石材。除金币外每一阶还要 <b>SEED 点</b>，这是本作扩建真正的第二个钱包。</p>
+        ${tbl(['设施', '阶段', '金币', 'SEED 点', '石材', '木材'], shop.map(r => ['<b>' + E(r[0]) + '</b>', E(r[1]), D(r[2]) === '<span class="mon-no">—</span>' ? D(r[2]) : G(r[2]), E(r[3]), D(r[4]), D(r[5])]), { leftFirst: true, colw: ['auto', '4.6rem', '5.4rem', '5.4rem', '4.6rem', '4.6rem'] })}
+
+        <h2 class="h2">魔物小屋：${barn.length} 行全收 SEED 点，金币一栏是破折号</h2>
+        <p class="p">这一块跟店铺是两套计价：<b>${golded === 0 ? '整列金币都是「—」，一分钱都不要' : '极少数行要金币'}</b>，代价是 SEED 点加石材木材。五条属性龙各两条线（A／B），每条线五档，A 与 B 的价目${barnRows.every(x => x[2]) ? '<b>逐档完全一样</b>' : '不完全一样'}——所以下面把两条线并成一档来列；源表里它们是分开的 ${barn.length} 行，栏位名（土龙A、土龙B、土龙A1……）照录在数据里，没有合并掉。</p>
+        ${tbl(['龙', '档数', '起手', '1', '2', '3', '4'], barnRows.map(x => [E(x[0]), String(x[1]), x[3][0] || '—', x[3][1] || '—', x[3][2] || '—', x[3][3] || '—', x[3][4] || '—']), { leftFirst: true, colw: ['6rem', '3.6rem', 'auto', 'auto', 'auto', 'auto', 'auto'] })}
+        <p class="p">最贵的一档是<b>${topSe.length ? topSe.map(r => E(r[1])).join('／') : '—'}</b>：SEED 点 ${maxSe}，石材 ${D(topSe[0] ? topSe[0][4] : '—')}、木材 ${D(topSe[0] ? topSe[0][5] : '—')}。地龙这条线起手就要 SEED 1500（土龙只要 100），最后一档顶到 ${maxSe}；风龙次之（A4／B4 各 5000 SEED 点）。</p>
+        <div class="note">两条线（A 与 B）价目相同但<b>栏位是分开卖的</b>：源表把它们逐行列出，本站也逐行照录成「一档」，没有合并成一半的档数。真要照着买，按栏位名找，别按档数推。</div>
+
+        <h2 class="h2">婚房要的不是扩建，是一张床</h2>
+        <p class="p">RF5 结婚不用改房子，只要一张床：<b>双人床 ${bed5.length ? G(bed5[1]) : G('30000')}</b>——它在帕尔摩工房的家具表里，是 ${F5.length} 件中唯一一行带备注的（「${bed5.length > 4 ? E(bed5[5]) : '做好结婚准备吧'}」），而且${bed5.length > 3 && bed5[3] === '—' && bed5[4] === '—' ? '<b>纯付钱，不要石材木材</b>' : '要补材料'}。</p>
+        <div class="jump">
+            <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">店铺三阶扩展开了哪些货</div></a>
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">帕尔摩工房 74 件家具全表</div></a>
+        </div>`;
+        }
+        return '';
+    }
+
+    /* ================= 边境：七档扩建，木头是硬门槛 ================= */
+    if (id === 'rff') {
+        const F = (typeof FURN !== 'undefined') ? FURN : null;
+        if (F && F.rff && F.rff.expand) {
+            const ex = F.rff.expand.rows;
+            const it = (F.rff.items && F.rff.items.rows) || [];
+            const num = v => Number(String(v).replace(/[^\d]/g, '')) || 0;
+            const house = ex.filter(r => r[0].indexOf('魔物小屋') < 0);
+            const barn = ex.filter(r => r[0].indexOf('魔物小屋') >= 0);
+            const sum = a => a.reduce((x, r) => x + num(r[1]), 0);
+            const wsum = a => a.reduce((x, r) => x + num(r[2]), 0);
+            const gate = k => it.filter(r => (r[4] || '').indexOf(k) >= 0);
+            const g2 = gate('扩建2楼寝室'), gk = gate('扩建厨房后');
+            const gf = gate('扩建锻造房间后'), gh = gate('扩建调合房间后');
+            const gated = it.filter(r => r[4] && r[4] !== '—');
+            const cat = {};
+            it.forEach(r => { cat[r[0]] = (cat[r[0]] || 0) + 1; });
+            const catTxt = Object.keys(cat).map(k => `${k} ${cat[k]}`).join('／');
+
+            return `
+        <h2 class="h2">七档扩建，房子与牧场分开算</h2>
+        <p class="p">边境的扩建只有一处入口（卢特的摊子），但七档里<b>四档是房子、三档是牧场</b>，两笔账别混。全部用「金钱＋木材」付，没有石材也没有别的条件。</p>
+        <h3 class="h3">房子四档</h3>
+        ${tbl(['项目', '金钱', '木材'], house.map(r => ['<b>' + E(r[0]) + '</b>', G(r[1]), E(r[2])]), { leftFirst: true, colw: ['auto', '6rem', '5.4rem'] })}
+        <p class="p">四档合计 <b>${G(sum(house))}＋木材 ${wsum(house)}</b>。最便宜的是厨房（${G('10000')}＋木材 120），最贵的是 2 楼卧室（${G('75000')}＋木材 900）——<b>它也是最贵的那一档，单它一档就吃掉房子那 ${wsum(house)} 本木材的六成</b>。</p>
+        <h3 class="h3">牧场三档</h3>
+        ${tbl(['项目', '金钱', '木材'], barn.map(r => ['<b>' + E(r[0]) + '</b>', G(r[1]), E(r[2])]), { leftFirst: true, colw: ['auto', '6rem', '5.4rem'] })}
+        <p class="p">三档合计 ${G(sum(barn))}＋木材 ${wsum(barn)}。魔物小屋本体只要 ${G('1000')}＋木材 10，但两级扩建一口气抬到 ${G('68000')}——<b>牧场的产能是靠后两档买的，不是靠本体</b>。</p>
+        <div class="key">七个全买齐：<b>${G(sum(ex))}＋木材 ${wsum(ex)}</b>。木材才是真门槛——${wsum(ex)} 本木头按「砍树／买／让魔物去砍」三条路分，一条都不够用。</div>
+
+        <h2 class="h2">扩建不只是「变大」，它解锁货架</h2>
+        <p class="p">卢特那张表 ${it.length} 件（${catTxt}）里有 <b>${gated.length} 件挂着前置</b>，前置全在这七档里：「扩建 2 楼寝室」${g2.length} 件、「扩建厨房后」${gk.length} 件、「扩建锻造房间后」${gf.length} 件、「扩建调合房间后」${gh.length} 件。剩下两件不归扩建管——<b>儿童床要结婚后、儿童玩具箱要怀孕后</b>，房子盖满也买不到。</p>
+        <p class="p">所以顺序是：<b>厨房 → 调合间／锻造间 → 2 楼卧室</b>。厨房最便宜（${G('10000')}＋120 木）却一次开 ${gk.length} 件，含三台最便宜的厨具；2 楼卧室最贵，但它开的是双人床与五张挂画——<b>床在这一档，结婚要用的东西压在总闸后面</b>。</p>
+        <div class="note">家具全表（含每件的价格、售卖日、解锁）在<a href="#/page/decorate">装饰与家具</a>页，这一页只算扩建的账，不复述家具清单。</div>
+        <p class="p">扩建完还得买家具，而家具只在祝日摆摊——两件事排在一起，日程要算：<b>先攒木材，再等祝日</b>，别在祝日当天才发现木头不够。</p>
+        <div class="jump">
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">卢特的祝日摊与 17 件有前置的家具</div></a>
+            <a href="#/page/farm"><div class="jp-t">农场与田地</div><div class="jp-s">野外田地与农药</div></a>
+        </div>`;
+        }
+        return '';
     }
 
     return '';
@@ -13161,7 +13346,7 @@ const PAGES = [
     },
     {
         key: 'home', group: 'life', title: '自宅与扩建', icon: 'house2',
-        body: () => `
+        body: (g) => homeDeepHtml(g && g.id) || (`
             <h2 class="h2">一开始的房子里有什么</h2>
             <p class="p">床（睡觉／存档）、日历（查节日与生日）、电视或公告（看天气预报）、储物箱、厨房（需要购买或扩建后开放）。</p>
             <h2 class="h2">扩建顺序建议</h2>
@@ -13170,12 +13355,12 @@ const PAGES = [
                 ['②', '储物箱扩容', '素材一多，背包与箱子不够用是最常见的卡点'],
                 ['③', '锻造台／药学台', '自制装备与药品，性价比远高于商店购买'],
                 ['④', '双人床', '结婚前置条件（各作要求不同）'],
-                ['⑤', '装饰台', '家具与饰品属于后期内容，靠装饰提升舒适度与部分加成'],
+                ['⑤', '装饰台', '只做<b>饰品</b>，不做家具；没有制作入口的家具只能买'],
             ], { leftFirst: true })}
             <div class="note">扩建需要素材与金钱，而素材大多来自迷宫。所以「下迷宫」和「扩建房子」不是两件事，是一条线的前后段。</div>
             <h2 class="h2">存档与时间管理</h2>
             <p class="p">系列传统是<b>只能在床上存档</b>。这意味着一天的行动是不可回退的（除个别作品有中断存档）。重要节点前——告白、求婚、Boss 战、节日比赛——先睡一觉存上。</p>
-        `
+        `)
     },
     {
         key: 'shop', group: 'life', title: '商店与设施', icon: 'shop',
