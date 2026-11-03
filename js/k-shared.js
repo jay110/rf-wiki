@@ -12263,6 +12263,8 @@ const PAGES = [
             if (g && g.id === 'rf4') return requestRf4Html();
             /* 三代的委托挂在村民身上，三条入线（布告栏／邮箱／猫头鹰），另有一张 280 条大表 */
             if (g && g.id === 'rf3') return requestRf3Html();
+            /* 五代的委托是一根长链，解锁列基本都写着「完成上一条」，源站是单表 173 条 */
+            if (g && g.id === 'rf5') return requestRf5Html();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -16062,6 +16064,55 @@ function rfoCraftHtml() {
    主表＝终有依天《【RF2】【一周目】任务大全》（贴吧，118 条，带触发条件与奖励，只写一周目）；
    补表＝安打《任务、居民、怪物攻略》（TGBUS，123 条，奖励混在内容里，含二代）。
    两源大面积重叠，所以只补主表没覆盖的 6 条，不做同名合并——译名两套、口径两套，合并不了就照录。 */
+function requestRf5Html() {
+    const Q = (typeof RF5_REQUEST !== 'undefined') ? RF5_REQUEST : null;
+    if (!Q || !Q.rows || !Q.rows.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + esc(s) + '</span>';
+    const cell = v => (v === null || v === undefined || v === '') ? dash : Lf(v);
+
+    const nAll = Q.rows.length;
+    /* 下面几个数全从行数据现算，不写死 */
+    const nChain = Q.rows.filter(r => /完成/.test(r[2] || '')).length;
+    const nShop = Q.rows.filter(r => /商店追加/.test(r[3] || '')).length;
+    const nFav = Q.rows.filter(r => /好感度|友好度|爱情度/.test(r[2] || '')).length;
+    const nEmptyR = Q.rows.filter(r => !r[3]).length;
+    const nRnd = Q.rows.filter(r => /随机/.test(r[3] || '')).length;
+    const seqOk = Q.rows.every((r, i) => String(r[0]) === String(i + 1));
+
+    return `
+    <div class="note">源：<b>${esc(Q.src)}</b>。${esc(Q.note)}</div>
+    ${stat([
+        ['委托条目', nAll + ' 条'],
+        ['解锁靠「完成上一条」', nChain + ' 条'],
+        ['报酬带「商店追加」', nShop + ' 条'],
+        ['解锁卡好感度', nFav + ' 条'],
+    ])}
+
+    <h2 class="h2">一、五代是一根主线串到底，不是一堆散任务</h2>
+    <p class="p">把「解锁」那一列当成线索看，形状就很清楚了：<b>${nAll} 条里有 ${nChain} 条的前置就是「某某委托完成」</b>。也就是说这张表基本是一条长链——不做前面的，后面的根本不出现。其中 <b>${nShop} 条</b>的报酬是「商店追加」，即做完之后杂货店／花店才开卖新品种；<b>${nFav} 条</b>把门槛卡在好感度上。</p>
+    <div class="key">新手最容易卡住的地方在这儿：<b>委托不是「有事没事去刷一刷」</b>，而是被链条锁着。屏幕上没有新委托，通常不是 bug，是链上某一条没交。报酬写「商店追加」的那几条尤其别跳过——它们是种子和材料能不能买到的开关。</div>
+
+    <h2 class="h2">二、${nAll} 条委托全表</h2>
+    <p class="p">序号是源站自己的编号，${seqOk ? '<b>1 到 ' + nAll + ' 连续、无重复</b>' : '存在跳号或重复'}。中文名与报酬里括号内的日文原名一并保留（源站就是这么写的），方便对着游戏里的日文界面找。</p>
+    ${tbl(Q.cols.map(esc), Q.rows.map(r => r.map(cell)), { cls: 'rf1craft', left: [1, 2, 3], colw: ['4.6rem', '15rem', 'auto', 'auto'] })}
+
+    <h2 class="h2">三、本站照录、不动手的几处</h2>
+    <div class="note"><b>${nEmptyR} 条报酬是空的：</b>页面上显示「—」。源站那两格写的就是占位符，不是本站漏抄——<b>也正因为查不到报酬，本站不去别处搬一个数字填进来</b>。</div>
+    <div class="note"><b>${nRnd} 条报酬写「随机」：</b>照录。遇到这种就别指望刷指定道具，它给的是随机池。</div>
+    <div class="note"><b>解锁条件里带「后」「以上」的写法一律照录：</b>「在床上休息后去旅馆后」这种连着两个「后」的句子是源站原话，本站不改。条件是「完成某某」的，指的就是同表里那一条，按序号找过去即可。</div>
+    <div class="note"><b>本页只有委托表：</b>源站这一页没有按入口（布告栏／侦探事务所／警署）分类，也没有单列「通缉魔物」——本站不替它补一层分类，保持原表一层平铺。</div>
+
+    <div class="jump">
+        <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">「商店追加」到底追加了什么</div></a>
+        <a href="#/page/crop"><div class="jp-t">农作</div><div class="jp-s">种子解锁与等级作物</div></a>
+        <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">委托给的配方面包用来做什么</div></a>
+        <a href="#/page/request"><div class="jp-t">委托任务</div><div class="jp-s">其他作品的委托结构</div></a>
+    </div>
+    <div class="note">数据文件 <code>js/rf5request.js</code>（<code>RF5_REQUEST</code>），由 <code>_build_rf5_request.py</code> 从源站 wikitext 表解析生成（173 条内嵌在脚本里，可离线复现）。脚本只拆字段、去 wiki 链接与换行标记、把空的「-」统一成「—」。</div>`;
+}
+
 function requestRf3Html() {
     const Q = (typeof RF3_REQUEST !== 'undefined') ? RF3_REQUEST : null;
     if (!Q || !Q.groups || !Q.groups.length) return '';

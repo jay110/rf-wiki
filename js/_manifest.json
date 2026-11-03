@@ -42,6 +42,7 @@
   "js/rf5cal.js",
   "js/rf5cook.js",
   "js/rf5shop.js",
+  "js/rf5request.js",
   "js/rf4cook.js",
   "js/rffcook.js",
   "js/rffshop.js",

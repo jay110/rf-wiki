@@ -118,6 +118,7 @@
       "js/items.js",
       "js/rf5cook.js",
       "js/rf5shop.js",
+      "js/rf5request.js",
       "js/fishspot.js",
       "js/fx5.js",
       "js/crop5.js"
@@ -143,8 +144,8 @@
     ]
   },
   "sha": {
-    "core": "58988edf2dd67843",
-    "shared": "b2c9a608656a45af",
+    "core": "fd6fabdcc21d373b",
+    "shared": "ef3c2c124d0c02f5",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "a04cf7bc3dceb418",
@@ -152,8 +153,8 @@
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "c1a5d66ff3d8302f",
     "game:rf4": "5d468d1d94dc4342",
-    "game:rf5": "67b8f0237e8cd311",
+    "game:rf5": "766394d24d1376c0",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "bcd23213eb30b618"
+    "page:changelog": "a460f9c8bb1aa78a"
   }
 }
