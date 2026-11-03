@@ -98,7 +98,8 @@
       "js/rfomap.js",
       "js/rfosail.js",
       "js/rfoshop.js",
-      "js/rfoforge.js"
+      "js/rfoforge.js",
+      "js/rfoitems.js"
     ],
     "rf4": [
       "js/mon4.js",
@@ -136,7 +137,8 @@
       "js/azuma.js",
       "js/azuma_cook.js",
       "js/azuma_gift.js",
-      "js/azuma_forge.js"
+      "js/azuma_forge.js",
+      "js/azuma_armor.js"
     ]
   },
   "pages": {
@@ -145,17 +147,17 @@
     ]
   },
   "sha": {
-    "core": "ae24c93dd068938b",
-    "shared": "d4796c315d926100",
+    "core": "9295970ad2166b92",
+    "shared": "861984e9d7d2303a",
     "cross": "226db472fe859d8a",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "bb35f7215f7d0513",
     "game:rff": "f7cc8d3932f40ea5",
-    "game:rfo": "c1a5d66ff3d8302f",
+    "game:rfo": "9e3654e80e5964e0",
     "game:rf4": "5d468d1d94dc4342",
     "game:rf5": "766394d24d1376c0",
-    "game:azuma": "65335158b0019a86",
-    "page:changelog": "9d567df9bdb30e77"
+    "game:azuma": "0c753ddbe99f7f39",
+    "page:changelog": "0299978162575711"
   }
 }

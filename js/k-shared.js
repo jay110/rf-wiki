@@ -12343,6 +12343,7 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'azuma' && typeof AZUMA_FORGE !== 'undefined') { const h = weaponAzumaHtml(); if (h) return h; }
             const TX = txPack(id, 'weapon');
             const W = /^rf3/.test(id) ? (typeof EQW_RF3 !== 'undefined' ? EQW_RF3 : [])
                 : id === 'rf5' ? (typeof EQW_RF5 !== 'undefined' ? EQW_RF5 : [])
@@ -12503,6 +12504,8 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'rfo' && typeof RFO_ITEMS !== 'undefined') { const h = rfoArmorHtml(); if (h) return h; }
+                        if (id === 'azuma' && typeof AZUMA_ARMOR !== 'undefined') { const h = azumaArmorHtml(); if (h) return h; }
             const TX = txPack(id, 'armor');
             const A = id === 'rf5' ? (typeof EQA_RF5 !== 'undefined' ? EQA_RF5 : [])
                 : is4 ? (typeof EQA_RF4 !== 'undefined' ? EQA_RF4 : []) : [];
@@ -12784,6 +12787,8 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'rfo' && typeof RFO_ITEMS !== 'undefined') { const h = rfoToolHtml(); if (h) return h; }
+                        if (id === 'azuma' && typeof AZUMA_FORGE !== 'undefined') { const h = toolAzumaHtml(); if (h) return h; }
             const TX = txPack(id, 'tool');
             const T = id === 'rf5' ? (typeof EQT_RF5 !== 'undefined' ? EQT_RF5 : [])
                 : is4 ? (typeof EQT_RF4 !== 'undefined' ? EQT_RF4 : []) : [];
@@ -12862,6 +12867,8 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'rfo' && typeof RFO_ITEMS !== 'undefined') { const h = rfoMatHtml(); if (h) return h; }
+                        if (id === 'azuma' && typeof AZUMA_FORGE !== 'undefined') { const h = matAzumaHtml(); if (h) return h; }
             const TX = txPack(id, 'material');
             const M = id === 'rf5' ? (typeof MAT_RF5 !== 'undefined' ? MAT_RF5 : [])
                 : is4 ? (typeof MAT_RF4 !== 'undefined' ? MAT_RF4 : []) : [];
@@ -12976,6 +12983,8 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'rfo' && typeof RFO_ITEMS !== 'undefined') { const h = rfoFoodHtml(); if (h) return h; }
+                        if (id === 'azuma' && typeof AZUMA_FORGE !== 'undefined') { const h = foodAzumaHtml(); if (h) return h; }
             const TX = txPack(id, 'food');
             const D = id === 'rf5' ? (typeof DSH_RF5 !== 'undefined' ? DSH_RF5 : [])
                 : is4 ? (typeof DSH_RF4 !== 'undefined' ? DSH_RF4 : []) : [];
@@ -13057,6 +13066,7 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+                        if (id === 'azuma' && typeof AZUMA_ARMOR !== 'undefined') { const h = azumaPotionHtml(); if (h) return h; }
             const TX = txPack(id, 'potion');
             const P = id === 'rf5' ? (typeof POT_RF5 !== 'undefined' ? POT_RF5 : [])
                 : is4 ? (typeof POT_RF4 !== 'undefined' ? POT_RF4 : []) : [];
@@ -14224,6 +14234,348 @@ const PAGES = [
         body: () => azumaArtifactHtml(),
     },
 ];
+
+/* ============================================================
+   龙之天地（azuma）的物品四页：武器／农具／素材／料理
+   四页都不另引数据源，只把站内已有的三份数据换一个角度看：
+     AZUMA_FORGE（js/azuma_forge.js，111 件五类武器）
+     AZUMA_COOK （js/azuma_cook.js，313 条五类料理）
+     DROP_AZUMA （js/drop_azuma.js，458 行魔物掉落，124 种可掉素材）
+   完整表都在各自的原页（锻造／料理配方／素材出处），这四页只做纵向比较与倒排，
+   所以不会再抄一遍全表。所有计数、排名、区间都是现算的。
+   ============================================================ */
+function azEsc(t) {
+    return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* 「铁×2」-> 「铁」；材料串统一拆成名字数组 */
+function azMatNames(s) {
+    return String(s == null ? '' : s).split(/[／\/、]/)
+        .map(x => x.replace(/×\s*\d+\s*$/, '').trim())
+        .filter(x => x && x !== '—');
+}
+
+function azNum(v) {
+    const n = parseFloat(String(v == null ? '' : v).replace(/[^\d.\-]/g, ''));
+    return isFinite(n) ? n : null;
+}
+
+/* 龙之天地（azuma）的防具与药品：数据在 js/azuma_armor.js（AZUMA_ARMOR，
+   由 _build_azuma_armor.py 从 gametoeasy 四篇文章的 HTML 表生成）。
+   防具在这作只有头部／肩甲／饰品三类，源站也是三篇文章，本页逐篇出表、不合并成一张。 */
+function azumaArmorHtml() {
+    const D = (typeof AZUMA_ARMOR !== 'undefined') ? AZUMA_ARMOR : null;
+    if (!D || !D.fams || !D.fams.length) return '';
+    const E = azEsc;
+    const all = D.fams.reduce((a, f) => a.concat(f.rows.map(r => r[1])), []);
+    const n = all.length;
+    const withEff = all.filter(r => r[6] !== '—').length;
+    const withUp = all.filter(r => r[5] !== '—').length;
+    const noUnlock = all.filter(r => r[7] === '—' && r[8] === '—').length;
+    /* 每类的防御／魔防天花板：源表在饰品那一栏写的是百分比，原样带出来 */
+    const top = (f, i) => {
+        let best = null;
+        f.rows.forEach(r => {
+            const v = azNum(r[1][i]);
+            if (v === null) return;
+            if (!best || v > best.v) best = { v: v, s: r[1][i], n: r[1][0] };
+        });
+        return best;
+    };
+    let out = '';
+    out += '<h2 class="h2">龙之天地的防具：三张表，三类</h2>';
+    out += '<p class="p">这一作的防具只有 <b>头部、肩甲、饰品</b> 三类，源站也是三篇文章各一张表：' +
+        D.fams.map(f => E(f.name) + ' ' + f.n + ' 条').join('、') + '，合计 <b>' + n + ' 件</b>。' +
+        '源站没有「铠甲／鞋／盾」的独立条目，本页不补一张出来——补出来的只能靠猜。</p>';
+    out += stat([['防具', n + ' 件'], ['类别', D.fams.length + ' 类'],
+        ['带特殊效果', withEff + ' 件'], ['带升级增加', withUp + ' 件']]);
+    out += '<h3 class="h3">三类的高度</h3>';
+    out += '<p class="p">每类里防御力／魔防最高的那一件。<b>饰品那一栏源表给的是百分比</b>（「1%」「8%」这种写法），' +
+        '头部与肩甲是数值——两套单位并存是源表本来的样子，本页<u>没有换算成同一套</u>，' +
+        '所以只能横着比「同一类里谁更高」，不能拿饰品的 8% 去比肩甲的 800。</p>';
+    out += tbl(['类别', '件数', '防御力最高', '魔防最高'],
+        D.fams.map(f => {
+            const a = top(f, 3), b = top(f, 4);
+            return [E(f.name), String(f.n),
+                a ? E(a.n) + '（' + E(a.s) + '）' : '—',
+                b ? E(b.n) + '（' + E(b.s) + '）' : '—'];
+        }), { leftFirst: true, cls: 'txt', colw: ['6rem', '4rem', '11rem', '11rem'] });
+    D.fams.forEach(f => {
+        out += '<h2 class="h2">' + E(f.name) + '（' + f.n + ' 件）</h2>';
+        out += ftableOwn(f.cols.map(E), f.colw, f.rows, { ph: '输入' + E(f.name) + '名称、材料或解锁条件筛选', left: [0] });
+    });
+    out += '<div class="key">这一作换防具的动机和七作不同：<b>面板差距其实不大，差距在「防具特殊效果」那一栏</b>。' +
+        '抗性、属性减伤、状态免疫都写在那里，而「升级增加」只是每次强化能加多少。' +
+        '所以配装顺序是<b>先挑效果，再看防御</b>。</div>';
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。' + E(D.note) + '</div>';
+    if (noUnlock) {
+        out += '<div class="note">表里有 ' + noUnlock + ' 条<b>解锁条件与宝箱获取栏都是「—」</b>的条目' +
+            '（如饰品的闪身绑腿），源站就是空的——本页不替它补「大概在哪拿」。</div>';
+    }
+    out += '<div class="jump">' +
+        '<a href="#/page/potion"><div class="jp-t">药品</div><div class="jp-s">同站的药学配方表</div></a>' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">武器与药的做法</div></a>' +
+        '<a href="#/page/weapon"><div class="jp-t">武器</div><div class="jp-s">五类武器与面板</div></a>' +
+        '</div>';
+    return out;
+}
+
+function azumaPotionHtml() {
+    const D = (typeof AZUMA_ARMOR !== 'undefined') ? AZUMA_ARMOR.potion : null;
+    if (!D || !D.rows.length) return '';
+    const E = azEsc;
+    const n = D.n;
+    const rows = D.rows.map(r => r[1]);
+    const inShop = rows.filter(r => r[10] !== '—').length;
+    const inBox = rows.filter(r => r[9] !== '—').length;
+    const hasEff = rows.filter(r => r[7] !== '—').length;
+    const hasPct = rows.filter(r => r[4] !== '—' || r[6] !== '—').length;
+    let out = '';
+    out += '<h2 class="h2">药品：' + n + ' 味，一半靠配、一半靠买</h2>';
+    out += '<p class="p">这一作的药学配方共 <b>' + n + ' 条</b>：' + inShop + ' 条商店有售、' + inBox + ' 条能在宝箱里开出来，' +
+        '其余只能自己配。恢复量分两套写法——<b>固定值（HP／RP）与百分比（HP%／RP%）</b>，' +
+        '源表把两套并列成四列，本页照录，不替它折算。</p>';
+    out += stat([['药品', n + ' 条'], ['商店有售', inShop + ' 条'], ['宝箱可得', inBox + ' 条'],
+        ['带特效', hasEff + ' 条'], ['带百分比恢复', hasPct + ' 条']]);
+    out += '<div class="key">带百分比的那几条是<b>终盘才有意义</b>的：固定值恢复在 HP／RP 上限高起来之后就不够看了，' +
+        '而百分比恢复永远按比例来。<b>看一瓶药值不值得带，先看它有没有百分比那一栏。</b></div>';
+    out += '<h2 class="h2">全表（' + n + ' 条）</h2>';
+    out += '<p class="p">材料四列已合成一列（源表的「—」占位丢掉）；<b>只记商店买价、不记卖价</b>。' +
+        '「解锁条件」是配方怎么拿到，「宝箱获取」「商店获取」是成品在哪捡／哪买——三栏各管一件事，别混着看。</p>';
+    out += ftableOwn(D.cols.map(E), D.colw, D.rows, { ph: '输入药品名、材料、特效或获取方式筛选', left: [0] });
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。同站另有《魔物掉落表》与《料理配方》，' +
+        '药学材料的来源可到<a href="#/page/material">素材与矿石</a>页反查。' +
+        '源表「醒神药」一行的商店获取一栏写了三段位置（用空格连着），本页照录不拆。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">药学技能怎么刷</div></a>' +
+        '<a href="#/page/rp"><div class="jp-t">体力与 RP</div><div class="jp-s">RP 上限与回复来源</div></a>' +
+        '<a href="#/page/food"><div class="jp-t">料理与食材</div><div class="jp-s">不喝药也能回的那条路</div></a>' +
+        '</div>';
+    return out;
+}
+
+function weaponAzumaHtml() {
+    const F = (typeof AZUMA_FORGE !== 'undefined') ? AZUMA_FORGE : null;
+    if (!F || !F.families.length) return '';
+    const E = azEsc;
+    const all = F.families.reduce((a, f) => a.concat(f.rows.map(r => ({ f: f.name, r: r }))), []);
+    const n = all.length;
+    const withElem = all.filter(x => x.r[3] !== '—').length;
+    const withEff = all.filter(x => x.r[4] !== '—').length;
+    const priced = all.filter(x => azNum(x.r[2]) !== null);
+    const perFam = F.families.map(f => {
+        const rows = f.rows;
+        const best = k => rows.slice().sort((a, b) => (azNum(b[k]) || 0) - (azNum(a[k]) || 0))[0];
+        const ps = rows.map(r => azNum(r[2])).filter(v => v !== null);
+        return {
+            name: f.name, n: rows.length,
+            atk: best(5), mgc: best(6),
+            pmin: ps.length ? Math.min.apply(null, ps) : null,
+            pmax: ps.length ? Math.max.apply(null, ps) : null,
+            top: rows.slice().sort((a, b) => (azNum(b[5]) || 0) - (azNum(a[5]) || 0)).slice(0, 3)
+        };
+    });
+    let out = '';
+    out += '<h2 class="h2">龙之天地的武器：只有五类</h2>';
+    out += '<p class="p">这一作的武器是 <b>五类 ' + n + ' 件</b>：' +
+        perFam.map(x => E(x.name) + ' ' + x.n).join('、') + '。' +
+        '长枪、锤、斧、拳套、魔杖这些前面几作的常客在本作<b>一件都没有</b>——这不是表不全，是游戏本身就没有。' +
+        '全表在<a href="#/page/craft">锻造与药学</a>页（同一份数据），这一页只做纵向比较：<b>每类能到多高、买价跨度多大</b>。</p>';
+    out += stat([['武器', n + ' 件'], ['类别', F.families.length + ' 类'],
+        ['带攻击属性', withElem + ' 件'], ['带特效', withEff + ' 件'],
+        ['标了买价', priced.length + ' 件']]);
+    out += '<h3 class="h3">各类的天花板与买价跨度</h3>';
+    out += '<p class="p">「最高攻击／最高魔攻」是各类里那项数值最高的一件；<b>买价跨度</b>是该类最便宜与最贵之间的区间——' +
+        '跨度大的类别，说明它从初期到终盘一路都有东西可做，不用等解锁。</p>';
+    out += tbl(['类别', '件数', '最高攻击', '最高魔攻', '买价最低', '买价最高'],
+        perFam.map(x => [E(x.name), String(x.n),
+            (x.atk && x.atk[5] !== '—') ? E(x.atk[0]) + '（' + E(x.atk[5]) + '）' : '—',
+            (x.mgc && x.mgc[6] !== '—') ? E(x.mgc[0]) + '（' + E(x.mgc[6]) + '）' : '—',
+            x.pmin == null ? '—' : x.pmin + 'G',
+            x.pmax == null ? '—' : x.pmax + 'G']),
+        { leftFirst: true, cls: 'txt', colw: ['7rem', '3.6rem', '9rem', '9rem', '6rem', '6rem'] });
+    out += '<h3 class="h3">各类攻击前三</h3>';
+    out += '<p class="p">按攻击从高到低取前三。<b>符咒一栏的物理攻击是「—」</b>，它的数值全在魔攻上，' +
+        '所以这一类的「前三」按攻击排会出现一整列空值——那不是漏数据。</p>';
+    out += tbl(['类别', '名称', '攻击', '魔攻', '买价'],
+        perFam.reduce((a, x) => a.concat(x.top.map(r =>
+            [E(x.name), E(r[0]), E(r[5]), E(r[6]), E(r[2])])), []),
+        { leftFirst: true, cls: 'txt', colw: ['7rem', '9rem', '4.4rem', '4.4rem', '5rem'] });
+    out += '<div class="key">五类里<b>没有「谁最强」这回事</b>：这一作的伤害主要挂在「舞」与神器的属性和特效上，' +
+        '武器更像载体。选武器先看<b>有没有你要的属性／特效</b>，再看面板——' +
+        '这一条和锻造页的说明是同一套判断。</div>';
+    out += '<div class="note">数据同<a href="#/page/craft">锻造与药学</a>页：<code>js/azuma_forge.js</code> 的 <code>AZUMA_FORGE</code>' +
+        '（' + n + ' 件，源：<b>' + E(F.src) + '</b>）。<b>只记买价、不记卖价</b>；「—」照录，意思是源表没写。' +
+        '「升级+」是源表的一列强化值，不是可叠加次数上限，本页不据此推算。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">五类武器全表与材料</div></a>' +
+        '<a href="#/page/azuma_artifact"><div class="jp-t">神器与舞</div><div class="jp-s">本作真正的战力在舞上</div></a>' +
+        '<a href="#/page/material"><div class="jp-t">素材与矿石</div><div class="jp-s">这些武器的材料从哪来</div></a>' +
+        '</div>';
+    return out;
+}
+
+function toolAzumaHtml() {
+    let out = '';
+    out += '<h2 class="h2">这一作没有农具表，因为它没有农具</h2>';
+    out += '<p class="p">龙之天地是系列里唯一<b>取消整套农具</b>的一作：<b>锄头、镰刀、洒水壶这一整套都不存在</b>，' +
+        '农活改由「神器」承担——主角是大地舞者，下地干活是<b>跳一支对应的舞</b>，不是换一把工具。' +
+        '所以这一页没有物品表可列，<a href="#/page/craft">锻造页</a>里也没有农具这一类（那一页的五类全是武器）。</p>';
+    out += stat([['农具', '0 件'], ['农具锻造', '无'], ['替代系统', '神器（舞）']]);
+    out += '<h3 class="h3">六件农活，六种舞</h3>';
+    out += '<p class="p">神器页把七种舞的「生活面」逐条写开了，正好对上农活里最费时的六件事——' +
+        '<b>要干什么 → 跳哪支舞</b>：</p>';
+    out += tbl(['要干的事', '用哪种舞', '原文要点'], [
+        ['促进作物生长、救活枯萎作物', '鼓之舞', '每天一次，还能让枯萎的作物恢复生机'],
+        ['取种子（含更高品质）', '剑之舞', '对可收成的作物挥舞，概率升级'],
+        ['一口气全收', '扇之舞', '旋风吹向田里，把作物全部收成'],
+        ['大范围浇水', '伞之舞', '轻松为大范围田地浇水'],
+        ['破坏挡路的巨石', '鬼面之舞', '用鬼的怪力破坏挡路的巨石'],
+        ['揭开隐藏之物', '锡杖之舞', '昭示真相，显形隐藏物'],
+    ], { leftFirst: true, cls: 'txt', colw: ['11rem', '6rem'] });
+    out += '<h3 class="h3">七作的农具，到本作对应到哪</h3>';
+    out += '<p class="p">按前面几作的六件基础农具逐条对照。<b>只有原文写到的才标对应</b>，其余一律记「原文没写」，' +
+        '不替它猜——猜出来的对应关系一旦错了，玩家会照着去跳半天舞。</p>';
+    out += tbl(['七作的农具', '干什么', '本作对应'], [
+        ['锄头', '翻土', '原文没写'],
+        ['洒水壶', '浇水', '伞之舞（大范围浇水）'],
+        ['镰刀', '割草、收割', '扇之舞（一口气全收）'],
+        ['斧', '砍树、取木材', '原文没写'],
+        ['锤', '碎矿、碎石', '原文没写'],
+        ['钓竿', '钓鱼', '原文没写（本作另有钓鱼玩法）'],
+    ], { leftFirst: true, cls: 'txt', colw: ['7rem', '9rem'] });
+    out += '<div class="key">本作的农活节奏和七作完全不同：<b>一天只能催一次生长（鼓之舞每天都在冷却）</b>，' +
+        '而收成可以一次性全收（扇之舞）。所以「先催后收」的时间安排比七作重要得多——' +
+        '七作里可以来回补浇，这里每一支舞都带冷却或一次性限制。</div>';
+    out += '<div class="note">农活与舞的对应关系取自<b>神器介绍</b>（gametoeasy.com，post/1809，2025-06-22）；' +
+        '「本作取消传统农具、改由神器替代」这句在<b>武器配方五帖</b>（同站）与<b>官方站 asia.runefactory.com</b> 两边都写过，' +
+        '本站<a href="#/page/craft">锻造页</a>也按此处理。七作农具的六项用途来自本站其他作品的农具页，属跨作对照，' +
+        '不是本作的表——请勿当成「本作也有锄头」。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/azuma_artifact"><div class="jp-t">神器与舞</div><div class="jp-s">七种舞的战斗面与生活面</div></a>' +
+        '<a href="#/page/crop"><div class="jp-t">作物与种子</div><div class="jp-s">舞催什么、田怎么开</div></a>' +
+        '<a href="#/page/azuma_village"><div class="jp-t">村庄升级</div><div class="jp-s">开垦田地与金色作物</div></a>' +
+        '</div>';
+    return out;
+}
+
+function matAzumaHtml() {
+    const D = (typeof DROP_AZUMA !== 'undefined') ? DROP_AZUMA : null;
+    if (!D || !D.rows.length) return '';
+    const E = azEsc;
+    /* 素材 -> 掉落它的「魔物（区域）」 */
+    const idx = {};
+    D.rows.forEach(r => {
+        (r[2] || []).forEach(raw => {
+            const k = String(raw).replace(/×\s*\d+\s*$/, '').trim();
+            if (!k) return;
+            const a = idx[k] = idx[k] || [];
+            const tag = r[0] + '（' + r[1] + '）';
+            if (a.indexOf(tag) < 0) a.push(tag);
+        });
+    });
+    /* 素材 -> 用到它的武器件数 / 料理道数（字面同名才算，不做同义词合并） */
+    const useW = {}, useC = {};
+    if (typeof AZUMA_FORGE !== 'undefined') {
+        AZUMA_FORGE.families.forEach(f => f.rows.forEach(r => {
+            azMatNames(r[1]).forEach(m => { useW[m] = (useW[m] || 0) + 1; });
+        }));
+    }
+    if (typeof AZUMA_COOK !== 'undefined') {
+        AZUMA_COOK.cats.forEach(c => c.rows.forEach(r => {
+            r.slice(1, 5).forEach(v => azMatNames(v).forEach(m => {
+                useC[m] = (useC[m] || 0) + 1;
+            }));
+        }));
+    }
+    const names = Object.keys(idx).sort((a, b) =>
+        (useW[b] || 0) - (useW[a] || 0) || (useC[b] || 0) - (useC[a] || 0) || (a < b ? -1 : 1));
+    const inForge = names.filter(m => useW[m]).length;
+    const inCook = names.filter(m => useC[m]).length;
+    const rows = names.map(m => {
+        const src = idx[m];
+        const head = src.slice(0, 3).join('、');
+        return [m, src.length > 3 ? head + ' 等 ' + src.length + ' 处' : head,
+            useW[m] ? useW[m] + ' 件' : '—', useC[m] ? useC[m] + ' 道' : '—'];
+    });
+    let out = '';
+    out += '<h2 class="h2">素材：' + names.length + ' 种靠打，' + inForge + ' 种喂给锻造</h2>';
+    out += '<p class="p"><a href="#/page/source">素材出处与掉落</a>页是<b>按魔物查</b>（' + D.rows.length +
+        ' 行，一只怪在哪张图掉什么）；这一页反过来<b>按素材查</b>：这东西是哪几只怪掉的、它们在哪张图，' +
+        '以及它被哪几件武器、哪几道料理用掉。两页同一份源（<b>' + E(D.source || D.title) + '</b>），只是查的方向不同。</p>';
+    out += stat([['可掉素材', names.length + ' 种'], ['用于锻造', inForge + ' 种'],
+        ['用于料理', inCook + ' 种'], ['掉落记录', D.rows.length + ' 行']]);
+    out += '<div class="key">缺材料的正确顺序是<b>先查这张表看它喂不喂锻造</b>：喂锻造的（前几十行）才值得专门去刷；' +
+        '不喂锻造也不进料理的素材，多半只是换钱或送礼用——别为它绕路。</div>';
+    out += '<h3 class="h3">素材 → 掉落 → 用途</h3>';
+    out += '<p class="p">按「用于锻造的件数」降序，「掉落」一栏最多列三处，多的用「等 N 处」收尾（全列出来这页就没法看了）。' +
+        '<b>用途是按名字字面对上的</b>：源表把同一样东西写成两种叫法时这里对不上，本页不做同义词合并，也不猜。</p>';
+    out += tbl(['素材', '掉落（魔物／区域）', '用于锻造', '用于料理'],
+        rows.map(r => [E(r[0]), E(r[1]), r[2], r[3]]),
+        { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto', '5rem', '5rem'] });
+    out += '<div class="note">源：<b>' + E(D.source || '') + '</b>（' + D.rows.length + ' 行，' + names.length + ' 种素材）。' +
+        '「用于锻造」统计的是 <code>js/azuma_forge.js</code> 材料栏里出现这个名字的武器件数，' +
+        '「用于料理」统计 <code>js/azuma_cook.js</code> 的 ' +
+        (typeof AZUMA_COOK !== 'undefined' ? AZUMA_COOK.cats.reduce((a, c) => a + c.rows.length, 0) : 0) +
+        ' 道菜。两条都是现算的，不是另一份数据。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/source"><div class="jp-t">素材出处与掉落</div><div class="jp-s">同一份数据，按魔物查</div></a>' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">这些素材做成什么</div></a>' +
+        '<a href="#/page/azuma_cook"><div class="jp-t">料理配方</div><div class="jp-s">食材与做法</div></a>' +
+        '</div>';
+    return out;
+}
+
+function foodAzumaHtml() {
+    const C = (typeof AZUMA_COOK !== 'undefined') ? AZUMA_COOK : null;
+    if (!C || !C.cats.length) return '';
+    const E = azEsc;
+    const all = [];
+    C.cats.forEach(c => c.rows.forEach(r => all.push({ k: c.k, r: r })));
+    const n = all.length;
+    const idx = {};
+    all.forEach(x => {
+        x.r.slice(1, 5).forEach(v => azMatNames(v).forEach(m => {
+            const a = idx[m] = idx[m] || [];
+            if (a.indexOf(x.r[0]) < 0) a.push(x.r[0]);
+        }));
+    });
+    const names = Object.keys(idx).sort((a, b) => idx[b].length - idx[a].length || (a < b ? -1 : 1));
+    const multi = names.filter(m => idx[m].length >= 3);
+    const byHp = all.filter(x => azNum(x.r[7]) !== null).sort((a, b) => azNum(b.r[7]) - azNum(a.r[7])).slice(0, 8);
+    const byRp = all.filter(x => azNum(x.r[9]) !== null).sort((a, b) => azNum(b.r[9]) - azNum(a.r[9])).slice(0, 8);
+    let out = '';
+    out += '<h2 class="h2">食材：' + n + ' 道菜里哪样材料用得最多</h2>';
+    out += '<p class="p">' + n + ' 道料理已经按五类（' + C.cats.map(c => E(c.k) + ' ' + c.rows.length).join('、') +
+        '）列在<a href="#/page/azuma_cook">料理配方</a>页，本页不抄一遍——这一页做的是倒排：' +
+        '<b>把每道菜的材料拆开、按材料归并</b>，看哪几样东西被反复用到。</p>';
+    out += stat([['料理', n + ' 道'], ['不同食材', names.length + ' 种'],
+        ['出现在 3 道以上', multi.length + ' 种'],
+        ['最常用', names[0] ? names[0] + '（' + idx[names[0]].length + ' 道）' : '—']]);
+    out += '<h3 class="h3">常用食材（3 道以上）</h3>';
+    out += '<p class="p">按出现道数降序，最后一列只列前四道菜——要查某道菜的完整配方，去料理配方页。' +
+        '<b>道数是用到它的不同料理数</b>，同名条目已去重。</p>';
+    out += tbl(['食材', '道数', '用到的料理（前四道）'],
+        multi.map(m => [E(m), String(idx[m].length), idx[m].slice(0, 4).map(E).join('、')]),
+        { leftFirst: true, cls: 'txt', colw: ['8rem', '4rem'] });
+    out += '<h3 class="h3">回复最高的几道</h3>';
+    out += '<p class="p">HP 与 RP 分开排。本作有「恢复HP%／恢复RP%」两栏，<b>百分比与固定值不是一回事</b>——' +
+        '固定值在高等级时会显得很弱，百分比才是终盘的主力，所以两张榜都只取固定值那一栏，' +
+        '按百分比吃饭的菜这里排不上去，去配方页看。</p>';
+    out += tbl(['HP 最高', 'HP', 'RP 最高', 'RP'],
+        byHp.map((x, i) => [E(x.r[0]), E(x.r[7]),
+            byRp[i] ? E(byRp[i].r[0]) : '—', byRp[i] ? E(byRp[i].r[9]) : '—']),
+        { leftFirst: true, cls: 'txt', colw: ['9rem', '4.4rem', '9rem', '4.4rem'] });
+    out += '<div class="note">数据同<a href="#/page/azuma_cook">料理配方</a>页：<code>js/azuma_cook.js</code> 的 <code>AZUMA_COOK</code>' +
+        '（' + n + ' 条，源：gametoeasy.com《符文工房：龙之天地》料理配方，post/1810）。' +
+        '<b>只记买价、不记卖价</b>；材料名照录源表，同一样东西两种叫法时这里会分成两行，本页不合并。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/azuma_cook"><div class="jp-t">料理配方</div><div class="jp-s">' + n + ' 道菜的材料与恢复量</div></a>' +
+        '<a href="#/page/material"><div class="jp-t">素材与矿石</div><div class="jp-s">这些食材哪只怪掉</div></a>' +
+        '<a href="#/page/fish"><div class="jp-t">鱼类图鉴</div><div class="jp-s">本作的鱼也是食材</div></a>' +
+        '</div>';
+    return out;
+}
 
 /* 龙之天地（azuma）村庄升级：四个里各自的满级条件。
  * 唯一来源 gametoeasy.com《龙之天地》村庄满级条件丨村庄升级攻略（post/1806，2025-06-21，极特攻略）。
@@ -16055,6 +16407,199 @@ function rfoCraftHtml() {
         }
         out += '<div class="note">源：<b>' + E2(D.src) + '</b>。' + E2(D.note) + '</div>';
     }
+    return out;
+}
+
+/* ============================================================
+   符文工房 海洋（RFO）的四个物品页：装备／农具／素材／料理
+   数据在 js/rfoitems.js（RFO_ITEMS，由 _build_rfo_items.py 从 biligame wikitext 生成）。
+   源站把这几类拆成四张独立页、各页列也不统一，所以四页各自出表、各自筛选，
+   不拼成一张「物品总表」——拼起来必然有空列，空列等于把「没写」当成「没有」。
+   页内所有计数与排名都是现算的，不写死数字。
+   ============================================================ */
+function rfoEsc(t) {
+    return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* 把某一类的名字按原表顺序串成升级链：同名相邻两条合成「名字（2 条）」 */
+function rfoChain(rows, cat) {
+    const names = rows.filter(r => r[1][0] === cat).map(r => r[1][1]);
+    const out = [];
+    names.forEach(n => {
+        const last = out[out.length - 1];
+        if (last && last[0] === n) last[1]++;
+        else out.push([n, 1]);
+    });
+    return out.map(x => rfoEsc(x[0]) + (x[1] > 1 ? '（' + x[1] + ' 条）' : '')).join('→');
+}
+
+function rfoArmorHtml() {
+    const D = (typeof RFO_ITEMS !== 'undefined') ? RFO_ITEMS.armor : null;
+    if (!D || !D.rows.length) return '';
+    const E = rfoEsc;
+    const n = D.n;
+    const rows = D.rows.map(r => r[1]);
+    const cn = k => rows.filter(r => r[0] === k).length;
+    const withEff = rows.filter(r => r[7] !== '—' || r[8] !== '—').length;
+    const withPrice = rows.filter(r => r[9] !== '—').length;
+    const atkInHand = rows.filter(r => r[0] === '手部' && r[3] !== '—').length;
+    let out = '';
+    out += '<h2 class="h2">海洋的装备：源站只整理了四个部位</h2>';
+    out += '<p class="p">这一页在源站叫「饰品数据」，里面四类——' +
+        D.cats.map(c => E(c) + ' ' + cn(c)).join('、') + '——合起来 <b>' + n + ' 件</b>，' +
+        '是除武器之外能穿的全部东西。<b>本作没有单独的铠甲／盾／鞋表</b>，源站也没有另开一页，所以这里不补一张出来：' +
+        '补出来的表只能靠猜，猜错比空着更坏。</p>';
+    out += tbl(['部位', '件数', '这一栏装什么', '数值在哪'], [
+        ['头部', String(cn('头部')), '帽子、头巾、眼镜一类', '防御与魔防为主，攻击几乎不出现'],
+        ['颈部', String(cn('颈部')), '围巾、项链', '防御、魔防与最大 HP'],
+        ['身体', String(cn('身体')), '斗篷、腰带、徽章', '元素抗性集中在这一栏'],
+        ['手部', String(cn('手部')), '戒指、手环、手套', '攻击几乎全在这一栏（' + atkInHand + ' 件带攻击）'],
+    ], { leftFirst: true, cls: 'txt', colw: ['4rem', '4rem', '11rem'] });
+    out += stat([['装备', n + ' 件'], ['部位', D.cats.length + ' 个'],
+        ['带特效', withEff + ' 件'], ['源站给了买价', withPrice + ' 件']]);
+    out += '<div class="key">这一作的装备思路和后面几作不同：<b>数值差距主要来自「装饰Lv」与特效，而不是部位</b>。' +
+        '同一件东西的高质版本会换一条特效，所以表里「普通效果／高质效果」两栏要一起看——' +
+        '高质那条往往才是你真正想要的东西。</div>';
+    out += '<div class="note">源站《毕业装备》页给的极限防御组合是超级毛茸茸围腰＋超级毛茸茸围巾＋超级摩可摩可的帽子＋钻石戒指，' +
+        '四件分别落在身体、颈部、头部、手部，正好一件一位，<b>全在这张表里</b>。也就是说本作的「毕业装」不是换一整套，而是把四个部位各换成那一栏的最优件。</div>';
+    out += '<h2 class="h2">全表（' + n + ' 件）</h2>';
+    out += '<p class="p">按源表顺序，列名沿用源站：<b>装饰Lv</b> 是源站的「装饰技能」，即做这件东西需要的技能等级；' +
+        '<b>总材料</b> 照录原文，日文原名不译。搜名称、部位、效果或材料都能筛。</p>';
+    out += ftableOwn(D.cols.map(E), D.colw, D.rows, { ph: '输入名称、部位、效果或材料筛选', left: [0, 1] });
+    out += '<div class="note">源：<b>' + E(D.src || '') + '</b>。<b>只记商店买价、不记卖价</b>；' +
+        '源站记为「—」的格子照录为「—」，意思是「源站没写」，不是 0，也不是免费。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/gear"><div class="jp-t">装备打造</div><div class="jp-s">强化怎么叠，星号怎么来</div></a>' +
+        '<a href="#/page/weapon"><div class="jp-t">武器</div><div class="jp-s">这一作十类武器与面板</div></a>' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">配方书与技能等级</div></a>' +
+        '</div>';
+    return out;
+}
+
+function rfoToolHtml() {
+    const D = (typeof RFO_ITEMS !== 'undefined') ? RFO_ITEMS.tool : null;
+    if (!D || !D.rows.length) return '';
+    const E = rfoEsc;
+    const n = D.n;
+    const cn = k => D.rows.filter(r => r[1][0] === k).length;
+    let out = '';
+    out += '<h2 class="h2">海洋的农具：五类 ' + n + ' 件，一条链一级</h2>';
+    out += '<p class="p">这一作的农具是<b>锻造出来的</b>，不是买来的：' +
+        D.cats.map(c => E(c) + ' ' + cn(c) + ' 件').join('、') + '。' +
+        '名字会重复——金锤两条、砍柴用斧两条、铁镰刀两条——<b>这不是抄重</b>：源站把「用上一级农具＋材料再锻一次」的每一级都单列一行，' +
+        '同名两行的差别在材料和买价上，升级路线因此是断在表里的、不是一条直线。</p>';
+    out += stat([['农具', n + ' 件'], ['类别', D.cats.length + ' 类'],
+        ['带消耗RP', D.rows.filter(r => r[1][10] !== '—').length + ' 件'],
+        ['带高质特效', D.rows.filter(r => r[1][9] !== '—').length + ' 件']]);
+    out += '<h3 class="h3">逐级的升级链</h3>';
+    out += '<p class="p">下面按原表顺序把同名相邻项合成一条，括号里的「2 条」表示这一级源表列了两种做法。' +
+        '<b>链是按表里的行序排的，不是按数值排的</b>——源表本身就是升级顺序。</p>';
+    out += tbl(['类别', '件数', '链路（按原表顺序）'],
+        D.cats.map(c => [E(c), String(cn(c)), rfoChain(D.rows, c)]),
+        { leftFirst: true, cls: 'txt', colw: ['6rem', '4rem'] });
+    out += '<h2 class="h2">全表（' + n + ' 件）</h2>';
+    out += '<p class="p"><b>锻造Lv</b> 是做这一级要的技能等级，<b>消耗RP</b> 是挥一次要的 RP——' +
+        '本作的农具要耗 RP，这是它和后面几作最大的手感差别：RP 见底连地都种不了，' +
+        '所以「消耗RP」这一列比攻击力更值得看。</p>';
+    out += ftableOwn(D.cols.map(E), D.colw, D.rows, { ph: '输入名称、类别、特效或材料筛选', left: [0, 1] });
+    out += '<div class="note"><b>镰刀、钓竿、锤、斧在锻造页里也当成武器类收录</b>（那一页的「镰刀」「钓竿」两族就是这几件），' +
+        '本页是农具视角：多了「消耗RP」与农具专属的高质特效，并按「农具锤子／农具斧／精灵杖／镰刀／钓竿」分类。' +
+        '<b>精灵杖只在农具表里出现</b>，锻造页没有这一类。</div>';
+    out += '<div class="note">源：<b>' + E(D.src || '') + '</b>。只记商店买价、不记卖价；「—」照录，意思是源站没写。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">农具的配方书与技能门槛</div></a>' +
+        '<a href="#/page/farm"><div class="jp-t">种田</div><div class="jp-s">蓄力范围与田地管理</div></a>' +
+        '<a href="#/page/fish"><div class="jp-t">钓鱼</div><div class="jp-s">钓竿等级与鱼种</div></a>' +
+        '</div>';
+    return out;
+}
+
+function rfoMatHtml() {
+    const D = (typeof RFO_ITEMS !== 'undefined') ? RFO_ITEMS.mat : null;
+    if (!D || !D.rows.length) return '';
+    const E = rfoEsc;
+    const n = D.n;
+    const rows = D.rows.map(r => r[1]);
+    const has = i => rows.filter(r => r[i] !== '—').length;
+    let out = '';
+    out += '<h2 class="h2">海洋的素材：四条来路，全写在表里</h2>';
+    out += '<p class="p">这一作的材料共 <b>' + n + ' 件</b>，源站对每一件都标了七件事：买价、哪家店卖、宠物能不能生产、' +
+        '哪只怪掉、那只怪在哪个地图、以及哪个地图的宝箱罐子开得出。<b>没有「说不清从哪来」的格子</b>——' +
+        '这在本系列里是少见的完整。</p>';
+    out += stat([['材料', n + ' 件'], ['能直接买', has(1) + ' 件'], ['魔物掉落', has(4) + ' 件'],
+        ['宠物生产', has(3) + ' 件'], ['宝箱·罐子', has(6) + ' 件']]);
+    out += tbl(['来源', '在这张表里怎么读'], [
+        ['店铺', '有店名的就是能直接买，买价一栏才有数字；买价是「—」的就是买不到'],
+        ['宠物生产', '让魔物在牧场干活产出，不花买价，但要先养对怪'],
+        ['魔物掉落', '打哪只怪会掉；「魔物在哪」一栏是那只怪出现的地图'],
+        ['宝箱·罐子', '地图坐标照录源站写法（如「古代石像G-7」），不是本页换算的'],
+    ], { leftFirst: true, cls: 'txt', colw: ['5rem'] });
+    out += '<div class="key">缺材料时的搜索顺序：<b>先看能不能买，再看宠物生产，最后才去打怪</b>。' +
+        '同一件材料往往三条路都通，打怪是最慢的一条——除非你要的正是那只怪的别的掉落。</div>';
+    out += '<h2 class="h2">全表（' + n + ' 件）</h2>';
+    out += '<p class="p">「魔物在哪」和「宝箱·罐子」两栏很长，因为源站把每张图的每个点位都列了出来，' +
+        '本页<b>不合并、不去重</b>，照录。列多放不下时可左右滑动。</p>';
+    out += ftableOwn(D.cols.map(E), D.colw, D.rows, { ph: '输入材料名、店铺、掉落魔物或地图筛选' });
+    out += '<div class="note">源：<b>' + E(D.src || '') + '</b>。只记商店买价、不记卖价；' +
+        '地图名与坐标照录源站，源站没译的日文原名也照录。源站表头的「地图宝箱、罐子」在本页记作「宝箱·罐子」。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/crop"><div class="jp-t">作物与种子</div><div class="jp-s">作物也是材料的一部分</div></a>' +
+        '<a href="#/page/mbook"><div class="jp-t">魔物图鉴</div><div class="jp-s">掉落按怪查，这一页按材料查</div></a>' +
+        '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">这些材料都喂给谁</div></a>' +
+        '</div>';
+    return out;
+}
+
+/* 料理页不抄「料理配方」页的 181 道菜，改做倒排：食材 → 用到它的菜。
+   数据仍是同一份 RFO_COOK（js/rfocook.js），没有第二套来源。 */
+function rfoFoodHtml() {
+    const C = (typeof RFO_COOK !== 'undefined') ? RFO_COOK : [];
+    if (!C.length) return '';
+    const E = rfoEsc;
+    const idx = {};
+    C.forEach(r => {
+        (r[4] || []).forEach(m => {
+            if (!m) return;
+            const a = idx[m] = idx[m] || [];
+            /* 源表里有同名条目（沙丁鱼串出现三次），这里按菜名去重，不然「前四道」会串成同一个名字 */
+            if (a.indexOf(r[1]) < 0) a.push(r[1]);
+        });
+    });
+    const names = Object.keys(idx).sort((a, b) => idx[b].length - idx[a].length || (a < b ? -1 : 1));
+    const multi = names.filter(m => idx[m].length >= 3);
+    const hp = C.slice().sort((a, b) => (b[6] || 0) - (a[6] || 0)).slice(0, 8);
+    const rp = C.slice().sort((a, b) => (b[7] || 0) - (a[7] || 0)).slice(0, 8);
+    let out = '';
+    out += '<h2 class="h2">食材：哪样东西用得最多</h2>';
+    out += '<p class="p">' + C.length + ' 道料理已经按厨具列在<a href="#/page/cook">料理配方</a>页，本页不再抄一遍——' +
+        '这一页回答另一个问题：<b>食材都用到哪去了</b>。做法是把每道菜的材料栏拆开、按材料归并，' +
+        '就得到下面这张倒排表。用得越多，越值得囤。</p>';
+    out += stat([['料理', C.length + ' 道'], ['不同食材', names.length + ' 种'],
+        ['出现在 3 道以上', multi.length + ' 种'],
+        ['最常用', names[0] ? names[0] + '（' + idx[names[0]].length + ' 道）' : '—']]);
+    out += '<h3 class="h3">常用食材（出现在 3 道以上）</h3>';
+    out += '<p class="p">按出现次数降序。<b>后面一列只列前四道菜</b>，不是全部——全列出来这一页就没法看了，' +
+        '要查某道菜用什么，去料理配方页。源表里有同名条目（同一道菜被列了三次），本页按菜名去重后再计数——' +
+        '所以「道数」是<b>用到它的不同料理数</b>，不是源表的行数。</p>';
+    out += tbl(['食材', '道数', '用到的料理（前四道）'],
+        multi.map(m => [E(m), String(idx[m].length), idx[m].slice(0, 4).map(E).join('、')]),
+        { leftFirst: true, cls: 'txt', colw: ['7rem', '4rem'] });
+    out += '<h3 class="h3">回复最高的几道</h3>';
+    out += '<p class="p">HP 与 RP 分开排，因为<b>两者在迷宫里的稀缺程度不一样</b>：HP 可以靠药草硬顶，' +
+        'RP 见底就只能回城。所以 RP 榜比 HP 榜更实用。</p>';
+    out += tbl(['HP 最高', 'HP', 'RP 最高', 'RP'],
+        hp.map((r, i) => [E(r[1]), String(r[6] == null ? '—' : r[6]),
+            rp[i] ? E(rp[i][1]) : '—', rp[i] ? String(rp[i][7] == null ? '—' : rp[i][7]) : '—']),
+        { leftFirst: true, cls: 'txt', colw: ['9rem', '4rem', '9rem', '4rem'] });
+    out += '<div class="note">这张表是<b>现算的</b>：数据来自 <code>js/rfocook.js</code> 的 <code>RFO_COOK</code>（' +
+        C.length + ' 条，与料理配方页同源），没有第二套食材数据。材料名照录源表——同一样东西在源站有两种写法时' +
+        '（译名与日文原名并存）这里会分成两行，本页不做合并，也不猜它们是不是同一样。</div>';
+    out += '<div class="jump">' +
+        '<a href="#/page/cook"><div class="jp-t">料理配方</div><div class="jp-s">' + C.length + ' 道菜的做法与配方书</div></a>' +
+        '<a href="#/page/crop"><div class="jp-t">作物与种子</div><div class="jp-s">种出来的东西都喂给谁</div></a>' +
+        '<a href="#/page/fish"><div class="jp-t">钓鱼</div><div class="jp-s">鱼也是主要食材之一</div></a>' +
+        '<a href="#/page/potion"><div class="jp-t">药品与香料</div><div class="jp-s">RP 不够时靠这个补</div></a>' +
+        '</div>';
     return out;
 }
 
