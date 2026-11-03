@@ -12352,6 +12352,187 @@ function homeDeepHtml(id) {
     return '';
 }
 
+function loveDeepHtml(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const G = v => E(v) + 'G';
+    const nf = (typeof NPC_FULL !== 'undefined' && NPC_FULL[id]) || [];
+    const dash = '<span class="mon-no">—</span>';
+
+    /* 八作都成立的一段：好感怎么涨、生日怎么用。各作分支末尾都挂它 */
+    const TAIL = `
+            <h2 class="h2">好感只有一条捷径：找对那件东西</h2>
+            <p class="p">好感是这一整条线唯一的硬通货。它涨得最快的方式不是每天换着花样送，是<b>找到这个人「最喜欢」的那一件，天天送同一件</b>——同一件最爱的礼物天天送，涨得比随机送五件普通礼物快得多。谁喜欢什么、谁哪天生日，见<a href="#/page/npcgift">村民喜好</a>。</p>
+            <p class="p">生日当天送礼的加成明显高于平日。把「本周谁过生日」写进日程，比每天盲送效率高得多——日期对不上的几处已经单列在<a href="#/page/bdcheck">生日核对</a>页。</p>
+            <div class="note">这一页只讲<b>从好感到婚礼</b>这一段。婚后的专属剧情（新婚模式、Another Episode 之类）另有一页——没有这类内容的作品，到婚礼为止。</div>`;
+
+    /* ================= RF1：11 条条件，全部以「爱情度10 + 双人床」开头 ================= */
+    if (id === 'rf1') {
+        const P = nf.filter(x => x.pr);
+        if (!P.length) return '';
+        const hasBed = P.filter(x => x.pr.indexOf('双人床') >= 0).length;
+        const hasLv = P.filter(x => /爱情度10/.test(x.pr)).length;
+        const gift = P.filter(x => /赠送/.test(x.pr));
+        const talk = P.filter(x => /对话/.test(x.pr));
+        const zero = P.filter(x => /归零/.test(x.pr));
+        const noRole = P.filter(x => !x.r);
+        const rows = P.map(x => [E(x.n), x.r ? E(x.r) : dash, E(x.pr)]);
+        return `
+            <h2 class="h2">这一作的求婚条件，是逐人写的</h2>
+            <p class="p">RF1 没有「通用求婚流程」这种东西：源页对每位能结婚的人各写了一条条件，${P.length} 条摆在一起看，才看得出规律。<b>${hasLv} 条都以「爱情度10」开头，${hasBed} 条都要求「拥有双人床」</b>——这两件是全员门槛，剩下那一截才是各自的差别。</p>
+            ${tbl(['村民', '身份', '求婚条件（源页原文）'], rows, { leftFirst: true, colw: ['6.4rem', '6rem', 'auto'] })}
+            <p class="p">差别落在两种做法上。<b>${gift.length} 位要送一件特定东西</b>（${gift.map(x => E(x.n)).join('、')}）——条件里写明「赠送某某求婚」，东西没到手，好感满了也开不了口。<b>${talk.length} 位是「对话选择」</b>：好感与床到位以后，跟她说的话里会多一个求婚选项，不用额外递东西。两条路之外还有一个特例——托尔蒂那条最长：要祝日、晴天、先去浴场泡温泉，再到夜晚 9 点的クレメンス山山顶送牛奶 L 型，<b>四件事缺一件都不成</b>。</p>
+            <div class="key">${zero.length} 位的条件末尾写着<b>「反悔好感度爱情度归零」</b>（${zero.map(x => E(x.n)).join('、')}）。婚礼前先存档，这不是客套话——拒绝的代价是把这一整条线退回原点。莉妮特那条更麻烦：源页写「站在街上，和她对话就会被视作求婚」，也就是<b>你只是想说句话</b>。</div>
+            <div class="note">一处对不上，照录不裁：源页给了 <b>${P.length} 条</b>求婚条件，而站内作品数据里的候补计数是 <b>10 位</b>；差的那一位本站没有源可判，而这 ${P.length} 条里有 <b>${noRole.length} 位</b>（${noRole.map(x => E(x.n)).join('、')}）在源页的身份栏本身是空的。本页照 ${P.length} 条列，计数不因此改。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= RF2：条件只有一件道具，没写别的 ================= */
+    if (id === 'rf2') {
+        const P = nf.filter(x => x.pr);
+        if (!P.length) return '';
+        const cand = nf.filter(x => /花嫁|花婿/.test(x.r || ''));
+        const noPr = cand.filter(x => !x.pr);
+        const rows = P.map(x => [E(x.n), x.r ? E(x.r) : dash, '<b>' + E(x.pr) + '</b>']);
+        return `
+            <h2 class="h2">七位候选，七件东西——就这么多</h2>
+            <p class="p">RF2 的求婚条件在源页上短得反常：每人只写了一样东西。爱情度要到多少、要不要双人床，这一栏<b>一个字没提</b>。七件<b>互不重复</b>，一人一件。</p>
+            ${tbl(['村民', '身份', '求婚道具'], rows, { leftFirst: true, colw: ['6.4rem', '6rem', 'auto'] })}
+            <p class="p">七件东西的分量差得很远：有「订婚戒指」「回忆戒指」这种一看就是聘礼的，也有「圆石」「100朵玫瑰的花束」——<b>源页写的就是这些名字，本页照录，不替它们换近名道具</b>。真要凑这七件，卡人的通常不是钱，是知不知道它在哪。</p>
+            <div class="note">这一栏只有道具名，<b>没有写爱情度要多少、要不要双人床</b>——所以本站不补。别拿别的作品的「好感 10 心＋双人床」套过来：那是 RF1／RF3／RF4 的条件，不是这一作的。${noPr.length ? `另外，站内收录的 ${cand.length} 位候补里有 <b>${noPr.length} 位</b>（${noPr.map(x => E(x.n)).join('、')}）在源页没有这一栏，本页不替这几位编。` : ''}</div>
+            ${TAIL}`;
+    }
+
+    /* ================= RF3：结婚写在主线第 7 章里 ================= */
+    if (id === 'rf3') {
+        const S = (typeof RF3_SHOP !== 'undefined' && RF3_SHOP.shops) || [];
+        const bed = [];
+        S.forEach(s => (s.secs || []).forEach(sec => {
+            if (sec.t !== '家具') return;
+            (sec.r || []).forEach(r => { if (r[0] === '双人床') bed.push({ shop: s.n, r: r }); });
+        }));
+        const b = bed.length ? bed[0].r : null;
+        const candF = (typeof GAMES !== 'undefined' ? (GAMES.filter(g => g.id === 'rf3')[0] || {}).candF : 0) || nf.filter(x => /花嫁/.test(x.r || '')).length;
+        return `
+            <h2 class="h2">这一作的婚礼在主线里，绕不过去</h2>
+            <p class="p">别的作品里结婚多数是可选的支线，RF3 不是：<b>主线第 7 章就是结婚</b>——交流祭第二天谈婚事、求婚、妻子失踪，之后才知道最终迷宫「龙玄洞」在哪。<b>不结婚就进不了第 8 章，也就看不到结局</b>。所以这一作的「恋爱」不是玩法分支，是主线的一段。</p>
+            <p class="p">第 7 章的条件源文写在一句里：<b>双人床、订婚戒指、对方的爱情任务全部完成</b>，然后到指定约会地点回答问题。四项缺一项都推不动。</p>
+            ${tbl(['条件', '怎么满足', '卡在哪'], [
+            ['双人床', b ? `${G(b[1].replace(/G$/, ''))} ＋ 木材 ${E(b[2].replace(/本$/, ''))} 本，杂货屋买` : '杂货屋买', '要等奥德瓦溪谷的 BOSS 打完后家具商才开始卖'],
+            ['订婚戒指', '源文只写了「订婚戒指」这四个字', '没写多少钱、也没写怎么做；站内锻冶屋的货架上也没有这一件'],
+            ['爱情任务全完成', '该角色的个人事件链跑完', '按好感分档解锁，光送礼不涨事件'],
+            ['指定约会地点', '带齐上面三样，到那个地点回答问题', '地点因人而异，问错地方没有反应'],
+        ], { leftFirst: true, colw: ['8rem', 'auto', 'auto'] })}
+            <div class="note">「爱情任务」这一条最容易漏：它是<b>每个人自己的一串事件</b>，不是一条通用任务。好感拉满但事件没跑完，条件表上就是差一项，而游戏不会告诉你差哪一项。</div>
+            <p class="p">能结婚的是 <b>${candF} 位花嫁候补</b>，名单与生日见<a href="#/page/npcgift">村民喜好</a>页。婚后还有一层——特别版新增的<b>新婚模式</b>，每人一段独立剧情，入口条件与上面这条链是连着的，但多两步（打造指轮、救回被掳走的未婚妻）。那两步在<a href="#/page/newly">新婚模式</a>页。</p>
+            <div class="key">先说一句最实用的：<b>求婚之前多存一个档</b>。求婚之后立刻接一段剧情，中间隔着一整个迷宫和一场水龙战；打不过就卡在那里，而存档点在过去。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= RF4：三件东西 + 事件得看完 ================= */
+    if (id === 'rf4') {
+        const cand = nf.filter(x => /花嫁|花婿/.test(x.r || ''));
+        const f = cand.filter(x => /花嫁/.test(x.r)).length;
+        const m = cand.filter(x => /花婿/.test(x.r)).length;
+        return `
+            <h2 class="h2">四件都到位，求婚选项才会出现</h2>
+            <p class="p">RF4 的条件是四件并列：<b>好感 10 心、双人床、婚约指轮、该角色的镇内事件全部看完</b>。前三件是攒出来的，第四件是跑出来的——而它恰恰是最常被漏掉的那一件。</p>
+            ${tbl(['条件', '说明', '卡在哪'], [
+            ['好感 10 心', '对话、送礼、节日互动都算', '按喜好送涨得快，名单见村民喜好页'],
+            ['双人床', '家具店买', '站内没有这一作的床价与解锁条件记录，本页不写数字'],
+            ['婚约指轮', '必须持有', '配方与入手方式站内都没有记录，本页不写'],
+            ['镇内事件看完', '该角色在城里的个人事件链跑完', '<b>事件没看完，求婚选项根本不会出现</b>，而且系统不提示差哪一段'],
+        ], { leftFirst: true, colw: ['8rem', 'auto', 'auto'] })}
+            <p class="p">候补是 <b>${f} 位花嫁 ＋ ${m} 位花婿</b>，共 ${cand.length} 位。其中迪拉斯、雷昂、琥珀、朵儿洁这几位要先在剧情里救出来或接进城里才谈得上，道格则要接近通关才肯谈婚论嫁——<b>不是好感不够，是人还不在城里</b>。</p>
+            <div class="note">本作<b>豪华版可选同性婚</b>。<b>结婚不等于解锁新婚模式</b>：婚后还要回城里的指示牌花王子／公主点数把该角色的那一段买下来，标题画面才会出现入口。这一段在<a href="#/page/newly">新婚模式</a>页，本页不重复。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= RF5：一张床 + 一条委托 ================= */
+    if (id === 'rf5') {
+        const F5 = (typeof FURN !== 'undefined' && FURN.rf5 && FURN.rf5.rows) ? FURN.rf5.rows : [];
+        const bed = F5.filter(r => r[0] === '双人床')[0] || [];
+        const noteCol = bed.length > 5 ? bed[5] : '';
+        const pureGold = F5.filter(r => r[3] === '—' && r[4] === '—').length;
+        const req = (typeof RF5_REQUEST !== 'undefined' && RF5_REQUEST.rows) ? RF5_REQUEST.rows : [];
+        const marry = req.filter(r => /结婚/.test(r[1] || ''));
+        const fest = (typeof FEST_RF5 !== 'undefined') ? FEST_RF5 : [];
+        const lov = fest.filter(r => /恋人/.test(r[6] || ''));
+        const cand = nf.filter(x => /花嫁|花婿/.test(x.r || ''));
+        const f = cand.filter(x => /花嫁/.test(x.r)).length;
+        const m = cand.filter(x => /花婿/.test(x.r)).length;
+        return `
+            <h2 class="h2">这一作把「结婚」做成了一条委托</h2>
+            <p class="p">RF5 的结婚流程在系统里留了一个很直白的记号：委托列表里有一条就叫<b>「${marry.length ? E(marry[0][1]) : '做好结婚准备吧'}」</b>，解锁条件写的是「${marry.length ? E(marry[0][2]) : '有可以结婚的对象'}」。也就是说，<b>能不能结婚，游戏自己会告诉你</b>——这条委托刷出来，就意味着系统已经认了这对。</p>
+            ${bed.length ? `<p class="p">先说床：<b>双人床 ${G(bed[1])}</b>。帕尔摩工房家具表 ${F5.length} 件里只有它一行带备注——备注写的正是「${E(noteCol)}」，跟那条委托一个名字。${bed[3] === '—' && bed[4] === '—' ? `它不要石材木材，纯金币；这张表里纯金币的家具共 ${pureGold} 件，它只是其中之一，贵归贵，倒不需要先去砍树。` : ''}</p>` : ''}
+            <p class="p">候补是 <b>${f} 位花嫁 ＋ ${m} 位花婿</b>，共 ${cand.length} 位，<b>同性婚可选</b>。${lov.length ? `恋人关系在这作另有实际用处：${lov.map(r => E(r[0] + ' ' + r[1] + ' 日·' + r[2])).join('、')} 两天，条件都是「${E(lov[0][6].split('｜')[0])}」，当天 ${E((lov[0][6].split('｜')[1] || '').replace(/^当天/, ''))}。` : ''}</p>
+            <div class="note">逐人的求婚条件（谁要什么、事件要跑到哪）<b>站内没有可核对的表，本页不编</b>。上面这几条是游戏系统自己写在委托与节日表里的，能查；剩下的只能靠流程自己跑，本站没有可引用的表，不编。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= 边境 RFF：从约会到孩子，一整条链 ================= */
+    if (id === 'rff') {
+        const EV = (typeof RFF_EVENT !== 'undefined' && RFF_EVENT.groups) ? RFF_EVENT.groups : [];
+        const g = EV.filter(x => x.who === '结婚')[0];
+        const L = g ? g.list : [];
+        if (!L.length) return '';
+        const need = L.filter(x => /求婚花束/.test((x.c || '') + (x.r || '')));
+        const bundle = L.filter(x => /必要材料/.test((x.c || '') + (x.r || '')))[0];
+        const bt = bundle ? ((bundle.c || '').indexOf('必要材料') >= 0 ? bundle.c : bundle.r) : '';
+        const mats = bt ? (((bt.match(/必要材料(.*)$/) || [])[1] || '').replace(/[。\s]+$/, '')) : '';
+        const matList = mats ? (mats.match(/[“"]([^”"]+)[”"]/g) || []).map(x => x.replace(/[“”"]/g, '')) : [];
+        const blocked = L.filter(x => /不能约会/.test(x.c || ''))[0];
+        const rows = L.map(x => [String(x.n), E((x.c || '').replace(/\n/g, ' ')), E((x.r || '').replace(/\n/g, ' '))]);
+        return `
+            <h2 class="h2">这一作的结婚是一串事件，不是一次告白</h2>
+            <p class="p">边境没有「好感满了点求婚」这种一步到位的设计：它把整条线拆成 ${L.length} 条事件，从约会、送花束、婚礼，一路写到孩子会站起来。源表这一组就叫「结婚」，下面的原文照录（<b>机翻整理，原文如此</b>）。</p>
+            ${tbl(['#', '条件', '结果'], rows, { leftFirst: true, colw: ['2.6rem', 'auto', 'auto'] })}
+            ${blocked ? `<div class="key">第 1 条值得单拎出来：<b>「花嫁爱情度8以上对话没可以约定约会」</b>——原文就写作「没」，按句意应是「就」，<b>本页不改</b>。后面括号里点了四位<b>先天的例外</b>：${E(blocked.c.replace(/^.*?（/, '').replace(/）.*$/, ''))}。这四个人不是好感不够，是<b>前置剧情没走完</b>，照着好感刷是刷不出约会的。</div>` : ''}
+            ${mats ? `<h3 class="h3">求婚花束要自己做</h3>
+            <p class="p">这一作的求婚用的是一件<b>要自己做的东西：「求婚花束」</b>。配方不是开局就有——源表第 6 条写的是「有花嫁的爱情度达到最大，和斯黛拉搭话」，之后才学会制作。材料六样：<b>${matList.map(E).join('、')}</b>（源文用引号逐个标出，这里以顿号连接）。</p>
+            <p class="p">六样里只有一样需要培育：<b>蓝色玫瑰</b>。源表的办法是拿白色玫瑰做成种子，<b>在开花状态培育 3 天</b>，第二天白玫瑰才会变成蓝玫瑰；而蓝色玫瑰的情报要先从艾莉丝那里拿到（第 10 条）。白色玫瑰则是跟迦娜莎对话收取的，结婚之前 30 天内可以多次收。</p>
+            <p class="p">材料里排第一的「鲸鱼触须」要走鲸鱼岛那条支线：花嫁爱情度 8 以上时去鲸鱼岛的洞窟入口跟鲸鱼对话，之后<b>每天可以在海岸边拾一个「潮汐石」</b>，攒着拿去跟鲸鱼换「鲸鱼的触须」——触须正是花束材料里的第一样。</p>` : ''}
+            <p class="p">婚礼之后还有一段：<b>买婴儿床，婚后 30～40 天有孩子</b>，再过 60 天生产，孩子 30 天后会爬、再 60 天会站。天数按日子走，急不得；<b>但婴儿床得自己买</b>。婚后每年结婚纪念日还能约一次会，约会里送花或首饰反应最好。</p>
+            <div class="note">这一页的数据是机翻整理稿（<code>js/rffevent.js</code> 的「结婚」组），<b>没有第二份源可校</b>。所以原文的措辞一律不动，包括那句「以上内容均为机翻整理，不保证完全准确」。数字（30～40 天、60 天）也照原样，不换算、不四舍五入。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= 海洋 RFO：先分离，才能结婚 ================= */
+    if (id === 'rfo') {
+        const S = (typeof RFO_SAIL !== 'undefined' && RFO_SAIL.tips) ? RFO_SAIL.tips : [];
+        const wed = S.filter(x => x.t === '结婚')[0];
+        const kid = S.filter(x => x.t === '生子')[0];
+        const p = wed ? wed.paras.map(x => x[1]) : [];
+        const k = kid ? kid.paras.map(x => x[1]) : [];
+        const candF = (typeof GAMES !== 'undefined' ? (GAMES.filter(g => g.id === 'rfo')[0] || {}).candF : 0) || 0;
+        const candM = (typeof GAMES !== 'undefined' ? (GAMES.filter(g => g.id === 'rfo')[0] || {}).candM : 0) || 0;
+        return `
+            <h2 class="h2">这一作的门槛不在好感，在主线</h2>
+            <p class="p"><b>只有通过主线、男女主分离之后，才能约会和结婚。</b>分离之前好感刷到顶也没用——这条闸不看好感，只看主线走到哪。</p>
+            <div class="key">所以那句提醒要放在最前面：<b>分离前存档</b>。分离之后另一位主角直接变成候补，你之前把好感花在谁身上、想跟谁结婚，都得以那一刻的存档为准。</div>
+            <p class="p">分离之后好感从哪开始，源文写得明确：另一位主角<b>直接 8 心</b>，其他候补 <b>6 心</b>起。之后跟 NPC 把好感提到 10，系统会提示可以约会——找那个 NPC 对话选第一项约定，日子大约排在 12 天后，按时间地点赴约。</p>
+            <h3 class="h3">第一次约会结不了婚，是因为手上没戒指</h3>
+            <p class="p">第一次约会时你<b>还没有结婚戒指</b>，走到切换场景的地方约会就结束了——不是出错，是流程本来就这样：这次约会之后，<b>任务板才会出现「找神父要结婚戒指」的委托</b>，做完当场把戒指给你。之后的约会里才能拿出戒指求婚——约会会显示在日历上，当天起床系统还会提醒。</p>
+            <h3 class="h3">婚后与孩子</h3>
+            ${k.length ? `<p class="p">${k.map(x => E(x)).join('').replace('结婚后20天', '婚后 20 天')}</p>` : ''}
+            <div class="note">候补计数是 <b>${candF} 位花嫁 ＋ ${candM} 位花婿</b>，两边各含一位主角（索妮娅、亚赛尔）。名单与分组见<a href="#/page/npcgift">村民喜好</a>页。本页原文出自《符文工厂海洋（最强攻略）》的「技巧」表第 ${wed ? wed.n : 10} 条，照录，不改写。</div>
+            ${TAIL}`;
+    }
+
+    /* ================= 龙之天地 azuma：站内没有这一作的恋爱资料 ================= */
+    if (id === 'azuma') {
+        const A = (typeof NPC_AZUMA !== 'undefined' && NPC_AZUMA.chars) ? NPC_AZUMA.chars : [];
+        return `
+            <h2 class="h2">这一作的恋爱系统，本站没有可核对的资料</h2>
+            <p class="p">先把能确定的写出来：候选是<b>男女各 7 位</b>，同性婚可选。这两条记在站内的作品数据里，能查。</p>
+            <p class="p">但<b>从好感到婚礼这条链的具体条件——要不要床、要不要道具、事件要跑到哪一步——本站没有源，所以不写</b>。不拿别的作品的条件套：这一作的房子、村庄、神格都与前七作不同，套过来的每一条都可能是错的。</p>
+            ${A.length ? `<p class="p">站内目前能给的，是 <b>${A.length} 位角色</b>的送礼喜好（分最喜欢／喜欢／讨厌／最讨厌四档），都在<a href="#/page/azuma_npc">角色详情</a>页。但那几页同样<b>没有求婚条件</b>——源文就没写这一段，不是收录时漏了。</p>` : ''}
+            <div class="note">如果你手上有这一作的攻略本或日文 wiki 条目，最有用的是三样：<b>求婚道具／仪式的名字</b>、<b>好感门槛</b>、<b>婚前必须完成的事件</b>。有这三样这一页就能补起来。</div>
+            ${TAIL}`;
+    }
+
+    return '';
+}
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -14745,7 +14926,7 @@ const PAGES = [
     },
     {
         key: 'love', group: 'event', title: '恋爱与结婚', icon: 'ring',
-        body: g => `
+        body: (g) => loveDeepHtml(g && g.id) || (`
             <h2 class="h2">流程</h2>
             <p class="p">系列的标准流程是：<b>提升好感 → 触发爱情事件 → 告白成为恋人 → 求婚 → 结婚 → 婚后生活（部分作品有孩子）</b>。</p>
             ${tbl(['阶段', '条件', '常见坑'], [
@@ -14761,7 +14942,7 @@ const PAGES = [
             <div class="key">送礼的正确做法：<b>先找出「最喜欢」的那一件，而不是每天换着花样送</b>。同一件最爱的礼物每天送，好感增长远高于随机送五件普通礼物。</div>
             <h2 class="h2">生日</h2>
             <p class="p">每位居民都有固定生日。生日当天送礼，好感加成显著。把「本周谁过生日」写进日程，比每天盲送效率高得多——本站「提醒」页就是为此做的。</p>
-        `
+        `)
     },
     {
         key: 'newly', group: 'event', title: '新婚模式', icon: 'star',

@@ -36,7 +36,6 @@
     "js/resist4.js",
     "js/rf2cal.js",
     "js/rf3cal.js",
-    "js/rf5cal.js",
     "js/festmore.js"
   ],
   "games": {
@@ -120,6 +119,7 @@
     "rf5": [
       "js/recipes.js",
       "js/items.js",
+      "js/rf5cal.js",
       "js/rf5cook.js",
       "js/rf5shop.js",
       "js/rf5request.js",
@@ -150,17 +150,17 @@
     ]
   },
   "sha": {
-    "core": "811b2bad8aa9f629",
-    "shared": "53909c3a855b98fd",
-    "cross": "226db472fe859d8a",
+    "core": "efb278efc934c9b6",
+    "shared": "267da3303c2f938a",
+    "cross": "5fd8b006aa35503b",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "bb35f7215f7d0513",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "9e3654e80e5964e0",
     "game:rf4": "c5bae67b1053da2a",
-    "game:rf5": "870736ffc3aa3c37",
+    "game:rf5": "08dbc0fb453445b8",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "b322322a2c1ff652"
+    "page:changelog": "1e5edbaa52025d86"
   }
 }
