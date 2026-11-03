@@ -2073,7 +2073,7 @@ function viewGames() {
                 <div class="gc-no ${g.no.length > 1 ? 'long' : ''}">${g.no}</div>
                 <div class="gc-name">${g.name}</div>
                 <div class="gc-sub">${platAll(g.plat)}</div>
-                <div class="gc-date">${g.date.slice(0, 7)}${g.orig ? `　原版 ${g.orig.date.slice(0, 7)}` : ''}</div>
+                <div class="gc-date">${g.date.slice(0, 7)}${g.orig ? `　原版 ${platAll(g.orig.plat)} ${g.orig.date.slice(0, 7)}` : ''}</div>
             </a>`).join('')}
     </div>
     <div class="copyright">

@@ -1039,6 +1039,7 @@ img {
     opacity: 0.72;
     margin-top: 0.1rem;
     line-height: 1.25;
+    word-break: break-word;
 }
 
 .game-card.cur {
