@@ -1573,6 +1573,12 @@ img {
     white-space: nowrap;
 }
 
+/* 说明型宽表（「材料」「解锁条件」这类长文字列）：窄屏给表格一个下限宽度，
+   让 .table 自带的 overflow-x 去横滑，而不是把中文压成每字一行 */
+.content .table.txtw table {
+    min-width: 34rem;
+}
+
 /* 强化倍数标注（10 倍铁 / 倍铁）用绿色点出来 */
 .content .table.wide .td b {
     color: #198d44;

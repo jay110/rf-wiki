@@ -150,8 +150,8 @@
     ]
   },
   "sha": {
-    "core": "75a62a94a6100162",
-    "shared": "9fb248dc225bbb63",
+    "core": "436606de35c7effe",
+    "shared": "9d14a9f18bfda16e",
     "cross": "17dd635ea10c0f65",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
@@ -161,6 +161,6 @@
     "game:rf4": "c5bae67b1053da2a",
     "game:rf5": "08dbc0fb453445b8",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "74a54f8459051c02"
+    "page:changelog": "efe6dc6fbab619b3"
   }
 }
