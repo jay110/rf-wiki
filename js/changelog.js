@@ -1,6 +1,13 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十：符文工房4 城镇商店（诚心杂货店／锻造屋／餐厅／花店／医院）接入 shop 页</h2>
+<div class="p">新增 <code>js/rf4shop.js</code>（<code>RF4_SHOP</code>，5 家店铺、23 个货架小节、222 条商品行），由 <code>_build_rf4_shop.py</code> 从 biligame《符文工厂4豪华版》城镇店铺商品列表（RF4Stown，中文）＋ april2016.pixnet 符文工廠4 商店簡介(鍛治屋，繁中)＋ guidestrats（Sincerity General Store／Clinic，英）三源交叉核实整理。</div>
+<div class="p">新增 <code>shopRf4Html()</code> 渲染函数（复制 <code>shopRf1Html</code> 的数据驱动逻辑，改读 <code>RF4_SHOP</code>、文案动态化），接入 shop 页分发器 <code>g.id==='rf4'</code>；<code>js/rf4shop.js</code> 注册进 <code>_manifest.json</code>（归 rf4 包）。</div>
+<div class="p">店铺：诚心杂货店（种子／杂货／家具）、锻造店「闲人之家」（农具／武器 8 系／防具 4 类／饰品）、餐厅「伯克利奴厨房」（配方面包／料理台／现成料理）、花店「康乃馨」（花草种子／生长保鲜道具）、医院「小纱布」（药品）。</div>
+<div class="p">跨源矛盾照录：白金之剑 biligame 与 fandom 记 95730G，april2016 记 957300G（疑似多一位），本页采多数源一致的 95730G。铁律：仅记商店买价不记出货卖价；武器防具的王子等级解锁未逐行标注（只按类别排）；家具与料理台的「木材＋石材订做」价列只记金钱、材料另列。</div>
+<div class="p">校验：<code>_verify</code> 356／0 异常、<code>_test_links</code> 0 坏链、<code>_build_chunks</code> 365 页逐字一致。</div>
+
 <h2 class="h2">2026-11-03　第一百七十九：符文工房2 锻造／农具／药学配方接入 craft 页</h2>
 <p class="p">给 RF2 做了锻造攻略：武器 7 系（短剑／长剑／斧／战锤／枪／法杖／盾）＋ 农具 1 系，共 128 条配方；药学 27 条（中文名／等级／材料／效果／卖价／买价）。武器与工具名保留英文（RF2 无官方中文），材料名转中文圈通用译名。<br>
 源：almarsguides.com（Rune Factory 2 Forging Recipes，英文）+ neoseeker（Forging FAQ Tools 段）+ wiki.biligame.com（RF2recipepharmacy，中文药学）。<br>
