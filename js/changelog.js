@@ -1,5 +1,5 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
-   改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
+   改动请直接改这个文件（格式：一整段 HTML 模板字符串，条目数由 _test_changelog.js 统计，不在此写死） */
 const CHANGELOG_HTML = `
 <h2 class="h2">2026-11-03　第一百九十二：符文工房1 支线剧情接入 request 页（8 条 35 步，补最后一作）</h2>
 <div class="txt-list">
