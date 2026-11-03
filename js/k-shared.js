@@ -6063,6 +6063,66 @@ function shopRf5Html() {
     <div class="note">数据文件 <code>js/rf5shop.js</code>（<code>RF5_SHOP</code>）由 <code>_build_rf5_shop.py</code> 从 neoseeker、game8、biligame 中文、fandom 四源交叉整理，逐行校验；页面里的所有统计（条数、占比、最贵、最便宜）都是<b>现算</b>，没有一处写死。</div>`;
 }
 
+function shopRfoHtml() {
+    const D = (typeof RFO_SHOP !== 'undefined') ? RFO_SHOP : null;
+    if (!D || !D.shops || !D.shops.length) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const money = v => (v == null || v === '') ? dash : (/[GＧ]$/.test(String(v)) ? E(v) : E(v) + 'G');
+    const pnum = v => { const m = String(v == null ? '' : v).replace(/[^0-9]/g, ''); return m ? Number(m) : null; };
+    const idx = (sec, re) => { for (let i = 0; i < sec.c.length; i++) if (re.test(sec.c[i])) return i; return -1; };
+
+    const all = [];
+    D.shops.forEach(sp => sp.secs.forEach(sec => {
+        const ni = idx(sec, /商品|名称/), pi = idx(sec, /售价|价格|费用/), di = idx(sec, /解锁|阶段|备注|说明/);
+        sec.r.forEach(r => all.push({ sp, sec, r, di, name: ni >= 0 ? r[ni] : r[0], price: pi >= 0 ? r[pi] : '', pl: pnum(pi >= 0 ? r[pi] : '') }));
+    }));
+
+    const priced = all.filter(x => x.pl != null);
+    const byP = priced.slice().sort((a, b) => b.pl - a.pl);
+    const hi = byP[0], lo = byP[byP.length - 1];
+    const fac = D.shops.filter(sp => !sp.secs.length);
+
+    const spRows = D.shops.map((sp, i) => {
+        let n = 0, mx = null;
+        sp.secs.forEach(sec => { const pi = idx(sec, /售价|价格/); sec.r.forEach(r => { n++; const v = pi >= 0 ? pnum(r[pi]) : null; if (v != null && (!mx || v > mx.v)) mx = { v: v, s: r[idx(sec, /商品|名称/)] }; }); });
+        return [String(i + 1), E(sp.n), sp.h ? E(sp.h) : dash, n ? n + ' 条' : '<span class="txc">纯设施</span>', mx ? '<b>' + E(mx.s) + '</b> ' + money(String(mx.v)) : dash];
+    });
+
+    const shopBlocks = D.shops.map((sp, i) => {
+        const secs = sp.secs.map(sec => {
+            const ni = idx(sec, /商品|名称/), pi = idx(sec, /售价|价格/);
+            const cols = sec.c.map(h => /^(商品|名称)$/.test(h) ? '10rem' : /^(售价|价格|费用)$/.test(h) ? '4.8rem' : 'auto');
+            const rows = sec.r.map(r => sec.c.map((h, j) => (j === ni) ? '<b class="nw">' + E(r[j]) + '</b>' : (j === pi) ? money(r[j]) : E(r[j])));
+            const leftCols = [0]; sec.c.forEach((h, j) => { if (/解锁|阶段|备注|说明/.test(h)) leftCols.push(j); });
+            return '<h3 class="h3">' + E(sec.t) + '<span class="txc">　' + sec.r.length + ' 条</span></h3>' +
+                tbl(sec.c, rows, { leftFirst: true, left: leftCols, colw: cols, cls: 'rf3shop' });
+        }).join('');
+        const desc = sp.desc ? '<p class="p">' + E(sp.desc) + '</p>' : '';
+        const fnote = (!sp.secs.length) ? '<p class="p txc">—— 这处是纯设施／服务，没有货架价目 ——</p>' : '';
+        const notes = (sp.notes && sp.notes.length) ? '<div class="note">' + sp.notes.map(E).join('<br>') + '</div>' : '';
+        return '<h2 class="h2">' + (i + 1) + '. ' + E(sp.n) + (sp.full && sp.full !== sp.n ? '　<span class="txc">' + E(sp.full) + '</span>' : '') + (sp.h ? '　<span class="txc">' + E(sp.h) + '</span>' : '') + '</h2>' + desc + fnote + secs + notes;
+    }).join('');
+
+    return '<h2 class="h2">海洋的芬尼斯岛：' + D.shops.length + ' 处设施</h2>' +
+        '<p class="p">本页按 GameFAQs 商店指南与 freyashawk 攻略交叉核实，整理出海洋城镇全部商店的<b>' + all.length + ' 条</b>买价，按店铺、店内小节原样排。海洋的店少而集中：杂货店、达达罗斯铁匠铺、教会诊所三家带货，另有节庆日的广场摊位卖符文能力（无逐项标价，作说明）。</p>' +
+        '<p class="p"><b>这些数字是买价，不是卖价。</b>源只给商店售价、不给出货价。海洋的货随剧情分阶段解锁（初始 → 春季岛 → 土之祠 → 火之祠），同件物品后期可能调价，已在「解锁」列注明。</p>' +
+        stat([['设施', D.shops.length + ' 处'], ['带货店', (D.shops.length - fac.length) + ' 家'], ['商品行', all.length + ' 条'], ['有标价', priced.length + ' 条'], ['最贵一件', hi ? money(String(hi.pl)) : dash], ['最便宜', lo ? money(String(lo.pl)) : dash]]) +
+        '<h2 class="h2">' + D.shops.length + ' 处一览</h2>' +
+        '<p class="p">先看规模：哪家东西最多、最贵的一件在谁家。</p>' +
+        tbl(['#', '设施', '营业时间', '条目', '最贵的一件'], spRows, { leftFirst: true, left: [0, 1], colw: ['2.2rem', '11rem', '12rem', '3.8rem', 'auto'], cls: 'rf3shop' }) +
+        '<h2 class="h2">逐店明细</h2>' +
+        '<p class="p">下面按<b>店铺</b>原样排，一家店一节，店内再按小节分。表格里的字没改过——价格一律带 G，和源一致。</p>' +
+        shopBlocks +
+        '<h2 class="h2">照录不改的几处</h2>' +
+        '<div class="txt-list">' +
+        '<p><b>只记买价</b>——源只给商店售价、不给出货价，本站不补卖价、不算差价。</p>' +
+        '<p><b>阶段解锁</b>——本作商店货按剧情推进分档（初始／春季岛／土之祠／火之祠），「解锁」列照源标注；耳环、吊坠等后期调价也照录。</p>' +
+        '<p><b>广场摊位无标价</b>——Joe 的符文能力按武器种类分项、无统一货架价，留作纯设施说明，不臆造数字。</p>' +
+        '</div>' +
+        '<div class="note">数据文件 <code>js/rfoshop.js</code>（<code>RFO_SHOP</code>）由 <code>_build_rfo_shop.py</code> 从 GameFAQs Store Guide 与 freyashawk 攻略交叉整理，逐行校验；页面统计（条数、最贵、最便宜）均为<b>现算</b>。</div>';
+}
+
 function shopRffHtml() {
     const D = (typeof RFF_SHOP !== 'undefined') ? RFF_SHOP : null;
     if (!D || !D.shops || !D.shops.length) return '';
@@ -10804,7 +10864,8 @@ const PAGES = [
             : g.id === 'rf1' ? shopRf1Html()
             : g.id === 'rf5' ? shopRf5Html()
             : g.id === 'rf4' ? shopRf4Html()
-            : g.id === 'rff' ? shopRffHtml() : ''}
+            : g.id === 'rff' ? shopRffHtml()
+            : g.id === 'rfo' ? shopRfoHtml() : ''}
         `
     },
     {

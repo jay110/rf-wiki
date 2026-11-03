@@ -5,6 +5,13 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十五：符文工房 海洋（rfo）城镇商店买价接入 shop 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：新建 <code>js/rfoshop.js</code>（<code>RFO_SHOP</code>），由 <code>_build_rfo_shop.py</code> 从 GameFAQs《Rune Factory: Tides of Destiny – Store Guide》(faqs/65623) 与 freyashawk《Tides of Destiny General Guide》交叉整理，<b>4 处设施共 52 条买价</b>——杂货店（食材／饰品）、达达罗斯铁匠铺 Elena（武器／农具／矿石／元素水晶）、教会诊所 Violet（药品／草）、广场摊位 Joe（符文能力，无标价，作说明）。仅记买价不记卖价。</p>
+<p><b>阶段解锁照录</b>：海洋的货按剧情分档（初始 → 春季岛后 → 土之祠后 → 火之祠后），「解锁」列照源标注；耳环／吊坠在土之祠后涨价（550G→1,000G／850G）照录。四元素水晶均 4,000G，地／火随春季岛、水／风随土之祠。铁匠铺每月 17 日、诊所／摊位每月 23 日打折 10-30%，表中为原价。</p>
+<p><b>渲染</b>：<code>js/pages.js</code> 新增 <code>shopRfoHtml()</code>（自带统计／一览／逐店明细，不套 RF5 文案），shop 页分发器加 <code>g.id==='rfo'</code> 分支；manifest 注册 rfoshop.js（归 rfo 包）。验证：_verify 356/0、_test_links 0 坏链、_build_chunks 365 页逐字一致、直接渲染确认 4 处设施全出、无空值异常。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十四：符文工房 边境（rff）城镇商店买价接入 shop 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：新建 <code>js/rffshop.js</code>（<code>RFF_SHOP</code>），由 <code>_build_rff_shop.py</code> 从 runefrontier 维基 Shops 页（runefrontier.fandom.com/wiki/Shops；2026-11 经 WebSearch 缓存核对，fandom 直连被本环境网络策略拦截）整理，<b>7 家店共 121 条买价</b>——丹尼杂货、Damascus 锻冶屋、Snowstyle 酒场、Erik 种子店、Rune Archives 图书馆（配方书）、Materia、Lara 教会药房。仅记买价不记卖价，与另 6 作 shop 页一致。</p>
