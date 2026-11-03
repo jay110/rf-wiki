@@ -261,7 +261,7 @@ const GAMES = [
         ],
     },
     {
-        id: 'rf4', no: 'Ⅳ', name: '符文工房4', short: 'RF4',
+        id: 'rf4', no: 'Ⅳ', name: '符文工房4/豪华版', short: 'RF4/DX',
         jp: 'ルーンファクトリー4', en: 'Rune Factory 4',
         date: '2012-07-19', plat: 'Nintendo 3DS', dev: 'Neverland', pub: 'Marvelous AQL',
         stage: '赛尔菲亚', stageJp: 'セルフィア', hero: '雷斯特／芙蕾', heroJp: 'レスト／フレイ',
