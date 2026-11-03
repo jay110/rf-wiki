@@ -1,5 +1,5 @@
 /* k-shared.js —— 自动生成，勿手改（node _build_chunks.js）
-   含 21 个源文件，按 js/_manifest.json 的顺序拼接：
+   含 20 个源文件，按 js/_manifest.json 的顺序拼接：
      js/monsters.js
      js/boss.js
      js/fish.js
@@ -18,7 +18,6 @@
      js/pot_old.js
      js/bd_ext.js
      js/faces.js
-     js/sched.js
      js/furniture.js
      js/pages.js
 */
@@ -3991,90 +3990,6 @@ var FACE_EXTRA = {
     'エゼルバード': 'xt_ethelberd',
     'ギルバート': 'xt_gilbert',
     '主角之子': 'xt_baby'
-};
-
-;
-/* 符文工厂1 村民每日行程表 —— 数据来自 biligame「RF1charactersschedule」（CC BY-SA） 
-   由 _build_sched.py 生成，勿手改。
-   times 19 个整点；spot = [建筑, 楼层, 分类]；person = [中文名, 日文名, 源页旧译, 每日编码]
-   每日编码 = 8 天 × 19 格，base62 下标指向 spots */
-var SCHED = {
- "rf1": {
-  "name": "符文工厂1",
-  "times": ["6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "0:00"],
-  "days": ["一", "二", "三", "四", "五", "祝", "平日（雨、雪）", "祝日（雨、雪）"],
-  "spots": [
-   ["密丝特的家", "", "home", ""],
-   ["牧场", "", "home", ""],
-   ["浴场", "1F", "shop", ""],
-   ["克莱门斯山", "", "out", ""],
-   ["拉格纳的家", "", "home", ""],
-   ["镇长府", "2F", "home", ""],
-   ["镇长府", "1F", "home", ""],
-   ["海岸", "", "out", ""],
-   ["图书馆", "1F", "pub", ""],
-   ["诺伊曼的农场", "1F", "home", ""],
-   ["中央广场", "", "pub", ""],
-   ["查克里努斯豪宅", "2F", "home", ""],
-   ["查克里努斯豪宅", "大厅", "home", ""],
-   ["杂货店", "1F", "shop", ""],
-   ["卡西米尔遗迹", "门口", "cave", "6洞"],
-   ["浴场", "2F", "shop", ""],
-   ["诺伊曼的农场", "2F", "home", ""],
-   ["酒馆", "1F", "shop", ""],
-   ["教堂", "1F", "pub", ""],
-   ["教堂", "2F", "pub", ""],
-   ["医院", "1F", "pub", ""],
-   ["镇第1排街道", "", "out", ""],
-   ["图书馆", "2F", "pub", ""],
-   ["镇第3排街道", "", "out", ""],
-   ["医院", "2F", "pub", ""],
-   ["卡缪的农场", "1F", "home", ""],
-   ["镇第2排街道", "", "out", ""],
-   ["杂货店", "2F", "shop", ""],
-   ["酒馆", "2F", "shop", ""],
-   ["旅馆", "2F", "shop", ""],
-   ["旅馆", "1F", "shop", ""],
-   ["卡麦特洞窟", "1F", "cave", "1洞"],
-   ["密丝特布鲁姆", "门口", "cave", "5洞"],
-   ["—", "", "none", ""],
-   ["卡西米尔遗迹", "1F", "cave", "6洞"],
-   ["铁匠铺", "2F", "shop", ""],
-   ["铁匠铺", "1F", "shop", ""],
-   ["海之家", "2F", "shop", ""],
-   ["海之家", "1F", "shop", ""]
-  ],
-  "people": [
-   ["密丝特", "", "", "00000011111100000000000001111110000000000000111111000000000000011111100000000000001111110002000000000000333000000000000044444400000000000004444440000000"],
-   ["萝洁塔", "", "萝赛塔", "RRRDDDDDDDD1RRRRRRRRRRDDDDDDDD122RRRRRRRRDDDDDDDD1RRRRRRRRRRDDDDDDDD1RRRRRRRRRRDDDDDDDD1RRRRRRRRRRIIIIIIQQQRRRRRRRRRRDDDDDDDD1RRRRRRRRRRIIIIII888888RRRR"],
-   ["拉碧丝", "", "", "JJJKKKKKKKKKK2JJJJJJJJKKKKKKKKKJJJJJJJJJJKKKKKKKKKJJJJJJJJJJKKKKKKKKKJJJJJJJJJJKKKKKKKKKJJJJJJJJJJKKKLLLLLLJJJJJJJJJJKKKKKKKKKJJJJJJJJJJKKKJJJJJJJJJJJJJ"],
-   ["美乐蒂", "", "", "FFFFFFFFF22222222FFFFFFFFFFF22222222FFFFF77777722222222FFFFFFFFFFF22222222FFFFFEEEEEE22222222FFFFFFFFFFF22222222FFFFFFFFFFF22222222FFFFFFFFFFF22222222FF"],
-   ["碧安卡", "ビアンカ", "比安卡", "BBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCC2BBBBBAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBB"],
-   ["塔巴莎", "", "塔芭莎", "BBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBDDDDDDCCCCCCC2BBBBBEEEEEEEEEBBBBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBB"],
-   ["菲尔", "フィル", "", "55599999999955555555559999999995555555555999999999555555555599999999955555555559999999999255555555555AAAAAA555555555599999999955555555556666666665555555"],
-   ["夏伦", "シャロン", "", "EEEEEEEEEEEEEEEUUUUEEEEEEEEEEEEEEEUUUUYYYYYYYYYYYYYYYUUUUEEEEEEEEEEEEEEEUUUUEEEEEEEEEEEEEEEUUUUEEEEEEEEEEEEEEEUUUUEEEEEEEEEEEEEEEUUUUEEEEEEEEEEEEEEEUUUU"],
-   ["托尔蒂", "トルテ", "", "TTT888888888TTTTTTTTTT8888888222222TTTTTT888888888TTTTTTTTTT88888882222TTTTTTTT888888888TTTTTTTTTTIIIIII7777773TTTTTT8888888222TTTTTTTTTTTTTTTTTTTTTTTTT"],
-   ["冥", "", "", "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUHHUUUUUUUU3333333332UUUUUU777777777UUUUUUUUUUUUUUUUUUUUUUUUUUXXXXXXXXXXXXXXXXXXXUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU"],
-   ["莉妮特", "", "琳妮特", "LLLLLLLLLLLLLLL0000QQQQQQQQQQQQQQQ0000NNNNNNNNNNNNNNN0000AAAAAAAAAAAAAAA00007777777777777770000IIIIIIIIIIII00000008888888888880000000cccccccccccc0000000"],
-   ["高德温", "ゴドウィン", "", "55566666666655555555556666666665555555555666666666555555555566666666655555555556666666665552555555577777777555555555566666666655525555558888888885552555"],
-   ["怀特", "ホワイト", "", "JJJIIIIIIIIIJJJJJJJJJJIIIIIIIIIJJJJJJJJJJIIIIIIIIIJJJJJJJJJJIIIIIIIIIJJJJJJJJJJIIIIIIAAAJJJJJJJJJJIIIIIIIIII2JJJJJJJJIIIIIIIIIJJJJJJJJJJIIIIIIIIIJJJJJJJ"],
-   ["查克里努斯", "ジャコリヌス", "", "BBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCC2BBBBBCCCCCCCCCBBBBBBBBBBCCCCCCCCCCCCBBBBBBBBBBAAAAAABBBBBBBBBBCCCCCCCCCCCCBBBBBBBCCCCCCCCCCCCBBBB"],
-   ["拉塞尔", "ラッセル", "", "MMM888888888MMMMMMMMMM888888888MMMMMMMMMM88888882222MMMMMMMM888888888MMMMMMMMMM888888888MMMMMMMMMMMMMNNNNNNMMMMMMMMMM88888888888MMMMMMMMMMMMMMMHHMMMMMMM"],
-   ["艾德", "エド", "艾特", "OOOKKKKKKKKKOOOOOOOOOOKKKKKKKKKOOOOOOOOOOKKKKKKKKK22OOOOOOOOKKKKKKKKKOOOOOOOOOOKKKKKKKKKOOOOOOOOOOKKKOOOOHHOOOOOOOOOOKKKKKKKKK22OOOOOOOOKKKOOOOOOOOOOOOO"],
-   ["卡缪", "カミュ", "", "OOOPPPPPPPPPOOOOOOOOOOPPPPPPPPPP2OOOOOOOOPPPPPPPPPOOOOOOOOOOPPPPPPPPP2OOOOOOOOOPPPPPPPPPOOOOOOOOOOOOOQQQQQQ2OOOOOOOOOPPPPPPPPPOOOOOOOOOO666666666OOOOOOO"],
-   ["杰夫", "ジェフ", "", "RRRDDDDDDDDD2RRRRRRRRRDDDDDDDDDDDDRRRRRRRDDDDDDDDDDDDRRRRRRRDDDDDDDDDDDDRRRRRRRDDDDDDDDDDDDRRRRRRRIIIIIHHRRRRRRRRRRRRDDDDDDDDD2RRRRRRRRRIIIIIIIIIRRRRRRR"],
-   ["塞巴斯蒂安", "セバスチャン", "", "SSSIIIIIIIIIIII2SSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSSSSSSSSHHHHHHHHHHHSS"],
-   ["安", "", "", "TTTUUUUUUUUUTTTTTTTTTTUUUUUUUUUUUUTTTTTTTUUUUUUHHHTTTTTTTTTTUUUUUUUUUU2TTTTTTTTUUUUUUUUUTTTTTTTTTTUUUUUUUUUUUUUTTTTTTUUUUUU333TTTTTTTTTTUUUUUUUUUTTTTTTT"],
-   ["萨赫", "", "", "TTTVVVVVVVVVTTTTTTTTTTVVVVVVVVVTTTTTTTTTTVVVVVVVVVTTTTTTTTTTVVVVVVVVVTTTTTTTTTTVVVVVVVVVTTTTTTTTTTWWWWWWWWWTTTTTTTTTTVVVVVVVVVTTTTTTTTTTTTTTTHH222TTTTTT"],
-   ["琉特", "リュード", "", "XXXXXXXXXXXXXXXXXXXUUUDDDDDDDDDUUUUUUUXXXXXXXXXXXXXXXXXXXUUUDDDDDDDDDUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUHHUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUEEEEEEUUUUUUU"],
-   ["雷昂", "", "", "ZZZaaaaaaaaaZZZZZZZZZZaaaaaaaaaZZZ2ZZZZZZaaaaaaaaaZZZZZZZZZZaaaaaaaaaZZZZZZZZZZaaaaaaaaaZZZZZZZZZZaaaaaaaaaZZZZZZZZZZZZZHHHHHHZZZZZZZZZZZZZZZZZZZZZHHZZZ"],
-   ["诺伊曼", "ノイマン", "", "GGG999999999GGGGGGGGGG999999999HHHGGGGGGG999999999HHHGGGGGGG999999999GGG2GGGGGG999999999HHHGGGGGGGIIIHHHHHHHHHGGGGGGGGGGGGGGGGGGGGGGGGGGGGGHHHHHHGGGGGGG"],
-   ["莎拉", "", "", "bbbcccccccccHHHbbbbbbbcccccccccbbbbbbbbbbcccccccccHHHbbbbbbbcccccccccbbbbbbbbbbccccccccc2bbbbbbbbbbbbHHHHHHHHHbbbbbbbcccccccccbbbbbbbbbbcccccccccHHHbbbb"],
-   ["尼克尔", "ニコル", "", "bbbAAAAAAA2222bbbbbbbbLLLLLLLbbbbbbbbbbbb9999999bbbbbbbbbbbbNNNNNNNbbbbbbbbbbbbAAAAAAAbbbbbbbbbbbb7777777bbbbbbbbbbbb8888888bbbbbbbbbbbbbbbbbbbbbbbbbbbb"],
-   ["伊万", "イヴァン", "", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXNNNNNNNNNNNNXXXXXXXXXXXXXXXXXXXXXXXXXXNNNNNNNNNNNNXXXX"],
-   ["塞西莉娅", "", "塞希莉娅", "MMMAAAAAAAMMMMMMMMMMMM7777777MMMMMMMMMMMMAAAAAAA2222MMMMMMMM7777777MMMMMMMMMMMMAAAAAAA2222MMMMMMMM7777777MMMMMMMMMMMM888888888MMMMMMMMMMMMMMMMMMMMMMMMMM"]
-  ]
- }
 };
 
 ;
@@ -12533,6 +12448,283 @@ function loveDeepHtml(id) {
     return '';
 }
 
+function timeDeepHtml(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const uniqStr = a => { const o = {}; a.forEach(x => { o[x] = 1; }); return Object.keys(o); };
+    const JUMP = `
+            <div class="jump">
+                <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">同一批店的另一面：卖什么、多少钱</div></a>
+                <a href="#/page/festival"><div class="jp-t">年度节日</div><div class="jp-s">一年里哪几天不开张：逐日日程表</div></a>
+                <a href="#/page/farm"><div class="jp-t">种田与作物</div><div class="jp-s">一季 30 天能种几茬，按季节排</div></a>
+            </div>`;
+
+    /* 从源文的营业时间里取时刻，只用来排序与算「几点开／几点关」；显示一律用原文，不改写。
+       PM0:00 与 AM12:00 都按正午 12 点算——源文就是这么写的。 */
+    const clocks = txt => {
+        const out = [];
+        const re = /(AM|PM)?\s*(\d{1,2}):(\d{2})/g;
+        let m;
+        while ((m = re.exec(String(txt || ''))) !== null) {
+            const hh = Number(m[2]);
+            let v = hh * 60 + Number(m[3]);
+            if (m[1] === 'PM' && hh < 12) v += 720;
+            if (m[1] === 'AM' && hh === 12) v = 720;
+            out.push(v);
+        }
+        return out;
+    };
+    const span = h => {
+        const a = clocks(h);
+        if (!a.length) return null;
+        const o = a[0];
+        let c = a.length > 1 ? a[1] : null;
+        if (c != null && c < o) c += 1440;
+        return { o: o, c: c };
+    };
+    const tstr = v => {
+        if (v == null) return '—';
+        const x = v >= 1440 ? v - 1440 : v;
+        return String(Math.floor(x / 60)) + ':' + String(x % 60).padStart(2, '0');
+    };
+
+    /* 把「店铺＋附属柜台」摊平：RF3 的浴场、土产屋是挂在旅馆下面的 subs */
+    const rowsOf = shops => {
+        const out = [];
+        (shops || []).forEach(s => {
+            if (s.h && span(s.h)) out.push({ n: s.n, h: s.h, s: span(s.h) });
+            (s.subs || []).forEach(u => {
+                if (u.h && span(u.h)) out.push({ n: u.n, h: u.h, s: span(u.h) });
+            });
+        });
+        return out.sort((a, b) => a.s.o - b.s.o);
+    };
+    const noTime = shops => {
+        const out = [];
+        (shops || []).forEach(s => {
+            if (!(s.h && span(s.h))) out.push(s.n);
+        });
+        return out;
+    };
+
+    const H2 = t => `<h2 class="h2">${t}</h2>`;
+    const NAME = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rf4: 'RF4', rf5: 'RF5', rff: '边境', rfo: '海洋', azuma: '龙之天地' };
+
+    const brief = (arr, gname) => {
+        const r = rowsOf(arr);
+        if (!r.length) return null;
+        const first = r.reduce((a, b) => (b.s.o < a.s.o ? b : a), r[0]);
+        const last = r.reduce((a, b) => (b.s.o > a.s.o ? b : a), r[0]);
+        const close = r.filter(x => x.s.c != null).reduce((a, b) => (b.s.c > a.s.c ? b : a), r[0]);
+        return {
+            g: gname, n: r.length,
+            total: (arr || []).length + (arr || []).reduce((a, s) => a + ((s.subs || []).length), 0),
+            first: first, last: last, close: close,
+            night: r.filter(x => x.s.c != null && x.s.c >= 20 * 60),
+            firstGrp: r.filter(x => x.s.o === first.s.o),
+            lastGrp: r.filter(x => x.s.o === last.s.o),
+            closeGrp: r.filter(x => x.s.c === close.s.c),
+        };
+    };
+
+
+    /* 没有时间数据的作品：保留系列通行的一天／季节／天气，不替它们编本作版 */
+    const BASE = `
+            <h2 class="h2">下面这段是系列通行的一天</h2>
+            <p class="p">清晨起床（多数作品为 6:00），当天可以自由安排耕作、采集、下迷宫、送礼、接委托。时间在户外与迷宫内都会流逝，进入室内、菜单、对话时会暂停。</p>
+            <p class="p">深夜之后仍不睡觉会开始扣体力，最终强制就寝。熬夜的代价通常是第二天起床变晚——而起床晚了，商店开门、NPC 出门的时间都会错过。</p>
+            <div class="key">效率原则：<b>把「会随时间流逝的事」和「不会流逝的事」分开排</b>。送礼、整理背包、看配方放在室内做；下迷宫和跑图放在同一天连续做。</div>
+            <h2 class="h2">季节</h2>
+            <p class="p">一年分春、夏、秋、冬四季，<b>每季 30 天</b>，一年共 120 天。季节一换，能种的作物、出现的采集物、部分 NPC 的行为与节日都会变。</p>
+            ${tbl(['季节', '主要作物类型', '注意'], [
+                ['春', '叶菜、根菜类起步作物', '开局季，优先把田地和工具等级拉起来'],
+                ['夏', '果菜、高价值作物', '高温作物收益高，但需要勤浇水'],
+                ['秋', '薯类、瓜类', '收入最好的一季，尽量留足体力'],
+                ['冬', '多数作物无法生长', '转向迷宫、采矿、锻造与小游戏产出'],
+            ], { leftFirst: true })}
+            <p class="p">冬季不能种地，是系列一贯设计。这段时间正好拿来刷迷宫素材、把锻造与药学的等级补上。</p>
+            <h2 class="h2">天气</h2>
+            <p class="p">晴、阴、雨、雪。雨天不必浇水，是推进迷宫与刷素材的好日子；暴风雨可能造成作物损失。天气预报可以在电视或公告处查看，前一天确认再决定第二天的安排。</p>`;
+
+    const B = [];
+    [['rf1', typeof RF1_SHOP !== 'undefined' ? RF1_SHOP : null],
+    ['rf3', typeof RF3_SHOP !== 'undefined' ? RF3_SHOP : null],
+    ['rf4', typeof RF4_SHOP !== 'undefined' ? RF4_SHOP : null],
+    ['rff', typeof RFF_SHOP !== 'undefined' ? RFF_SHOP : null],
+    ['rfo', typeof RFO_SHOP !== 'undefined' ? RFO_SHOP : null],
+    ['rf5', typeof RF5_SHOP !== 'undefined' ? RF5_SHOP : null]].forEach(x => {
+        if (x[1] && x[1].shops) { const b = brief(x[1].shops, x[0]); if (b) B.push(b); }
+    });
+
+    /* 并列时不能只报一家：1 家报名字，2～3 家全列，再多就只报处数 */
+    const NM = g => (g.length === 1 ? '<b>' + E(g[0].n) + '</b>' : (g.length <= 3 ? g.map(x => E(x.n)).join('、') : `<span class="mon-no">${g.length} 处</span>`));
+    const OVERVIEW = B.length ? `
+            ${H2('六作横向对照：一天里最先开、最后关的是谁')}
+            <p class="p">下面这张表只统计<b>源里真写了营业时间的设施</b>，不是全部设施——表头第二列写成「有时间 / 源里一共几家」，就是因为多数作品只交代了一部分（旅馆、教会、怪物小屋这类常在源文里是空的）。</p>
+            ${tbl(['作品', '有时间 / 源条目', '最早开门', '开门最晚', '关门最晚', '20 点后还开'], B.map(b => [
+        E(NAME[b.g]),
+        String(b.n) + ' / ' + String(b.total),
+        NM(b.firstGrp) + '<br>' + E(tstr(b.first.s.o)),
+        NM(b.lastGrp) + '<br>' + E(tstr(b.last.s.o)),
+        NM(b.closeGrp) + '<br>' + E(tstr(b.close.s.c)),
+        b.night.length ? String(b.night.length) + ' 家' : '<span class="mon-no">0</span>',
+    ]), { leftFirst: true, cls: 'rf3shop', colw: ['4rem', '5.4rem', 'auto', 'auto', 'auto', '5.2rem'] })}
+            <div class="key">一眼能看出两件事：<b>开门时间六作都压在 8～9 点</b>，差不了半小时；<b>关门时间却从 18 点铺到凌晨 3 点</b>——夜里有没有地方可去，才是各作真正不一样的地方。</div>` : '';
+
+    if (id === 'rf1') {
+        const S = (typeof RF1_SHOP !== 'undefined') ? RF1_SHOP.shops : [];
+        const R = rowsOf(S);
+        const hol = R.filter(x => /祝日休息/.test(x.h));
+        const openHol = R.filter(x => !/祝日休息/.test(x.h));
+        const rain = R.filter(x => /雨雪天休息/.test(x.h));
+        const night = R.filter(x => x.s.c != null && x.s.c >= 21 * 60);
+        const sch = (typeof SCHED !== 'undefined' && SCHED.rf1) ? SCHED.rf1 : null;
+        return `
+            ${H2('祝日：全镇关门的日子')}
+            <p class="p">RF1 的一天是围着<b>祝日</b>转的。源里写了营业时间的 ${R.length} 家设施中，<b>${hol.length} 家标着「祝日休息」</b>：${hol.map(x => E(x.n)).join('、')}。也就是说，买种子、改农具、跑杂货屋这些事，<b>都不能等到祝日再办</b>。</p>
+            <p class="p">祝日也进得去门的只有 ${openHol.length} 家，每家都有自己的限制：${openHol.map(x => '<b>' + E(x.n) + '</b>（' + E(x.h) + '）').join('；')}。注意伊万是反过来——<b>他只在祝日开</b>。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['11rem', 'auto'] })}
+            <div class="key">祝日与伊万的货是同一套日子：伊万的货按<b>每月 1／7／13／19／25 日</b>分五档摆出，而他只在祝日开业——两边对得上。想买床就等到 25 日那一档。</div>
+            ${H2('夜里还能去哪')}
+            <p class="p">开到 21 点以后的 ${night.length} 家是<b>${night.map(x => E(x.n)).join('、')}</b>。浴场 PM3:00 才开门、一直开到 PM11:00——<b>白天去是关着的</b>，这条最容易记错。酒吧写作 PM0:00～PM11:00，那个 0:00 是正午 12 点，不是半夜。医院是唯一「祝日也开、但只开到正午」的地方。</p>
+            ${H2('下雨天办不成的事')}
+            <p class="p">${rain.length} 家的营业时间后面直接缀了天气条件：<b>${rain.map(x => E(x.n)).join('、')}</b>，全是「雨雪天休息」。也就是说下雨下雪那天，<b>种子买不到、农具也改不了</b>——不是跑一趟的问题，是这一天干脆办不了。</p>
+            <p class="p">伊万是另一种写法：<b>雨雪天照常开，台风、暴雪不开</b>。所以真正会让他收摊的只有台风与暴雪两种。</p>
+            ${sch ? `<p class="p">村民的位置也按天气换表：站内行程表把一周拆成<b>${sch.days.length} 种状态</b>（周一至周五、祝日，各再分晴与雨雪），时间轴从<b>${E(sch.times[0])} 到 ${E(sch.times[sch.times.length - 1])}</b> 逐小时编。<b>雨天照晴天的表去找人，会扑空。</b>见<a href="#/sched/rf1">村民行程</a>。</p>` : ''}
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf3') {
+        const S = (typeof RF3_SHOP !== 'undefined') ? RF3_SHOP.shops : [];
+        const R = rowsOf(S);
+        const same = R.filter(x => /^9:00~18:00$/.test(String(x.h).trim()));
+        const odd = R.filter(x => !/^9:00~18:00$/.test(String(x.h).trim()));
+        const none = noTime(S);
+        const lateN = R.filter(x => x.s.c != null).reduce((a, b) => (b.s.c > a.s.c ? b : a), R[0]);
+        return `
+            ${H2('大部分店是同一个模子')}
+            <p class="p">RF3 的营业时间是八作里最整齐的：摊平附属柜台之后一共 ${R.length} 处，其中<b>${same.length} 处一字不差都是 9:00~18:00</b>——${same.map(x => E(x.n)).join('、')}。这一作真正要记的是那几个例外。</p>
+            <p class="p">最麻烦的是<b>艾莉莎的流行商店</b>：<b>只在周一、周三、周五开门</b>，12:00~17:30——一周三天、每天五个半小时。要买她的东西，先看今天星期几。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['16rem', 'auto'] })}
+            ${H2('一天怎么排顺序')}
+            <p class="p">按开门时间排，最早的是<b>${E(R[0].n)}（${E(R[0].h)}）</b>；开门最晚的是<b>${E(R[R.length - 1].n)}（${E(R[R.length - 1].h)}）</b>。关门最晚的是<b>${E(lateN.n)}（${E(lateN.h)}）</b>——种完地再去泡，顺序正好接得上。</p>
+            <p class="p">不属于 9:00~18:00 的有 ${odd.length} 处：${odd.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}。</p>
+            ${none.length ? `<p class="p">源文<b>没有写营业时间</b>的：${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}。表格里不出现，也不替它们填「9:00~18:00」。</p>` : ''}
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf4') {
+        const S = (typeof RF4_SHOP !== 'undefined') ? RF4_SHOP.shops : [];
+        const R = rowsOf(S);
+        const sun = R.filter(x => /周日/.test(x.h));
+        const late = R.filter(x => x.s.c != null && x.s.c > 18 * 60);
+        return `
+            ${H2('周日下午基本买不到东西')}
+            <p class="p">RF4 的五家店里，<b>${sun.length} 家写着「平日 9:00~18:00，周日提前关」</b>，而三个提前的时点还不一样：${sun.map(x => E(x.n) + '（周日 ' + E((String(x.h).match(/周日\s*([\d:]+~[\d:]+)/) || [])[1] || '') + '）').join('、')}。也就是<b>周日中午一过，镇上能买东西的地方就只剩餐厅和医院</b>。</p>
+            <p class="p">最容易踩的坑是<b>「周日买种子」</b>：早上把地浇完、跑一趟迷宫，回来正好关门。要买就先去。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['12rem', 'auto'] })}
+            ${H2('晚上只剩餐厅')}
+            <p class="p">${R.length} 家里 18 点之后还开着的只有<b>${late.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}</b>。医院那一格源文只写了 9:00~18:00、<b>没有「周日缩短」的字样</b>——但也只写了这一句，本站不替它补「周日也开」。</p>
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rff') {
+        const S = (typeof RFF_SHOP !== 'undefined') ? RFF_SHOP.shops : [];
+        const R = rowsOf(S);
+        const cross = R.filter(x => x.s.c != null && x.s.c > 24 * 60);
+        const mid = R.filter(x => x.s.o >= 12 * 60);
+        const none = noTime(S);
+        return `
+            ${H2('八作里唯一跨夜的店')}
+            <p class="p">边境的酒场写作<b>工作日 18:00-3:00</b>——黄昏开门、凌晨三点关。这是整个系列里<b>唯一一家跨过零点的店</b>：别的作品到 21、22、23 点就全关了。</p>
+            <p class="p">${cross.length ? `按数据算，${R.length} 处里跨夜的有 ${cross.length} 处：<b>${cross.map(x => E(x.n)).join('、')}</b>。` : ''}代价是它<b>白天不开</b>——18:00 之前去是关着的，和别的店正好错开。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['17rem', 'auto'] })}
+            ${H2('中午才开的店')}
+            <p class="p">${mid.length} 处中午以后才开门：${mid.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}。教会药房还多一层条件：<b>周一、周三、周五要等到 12:00，而且雨天不算</b>（原文「雨天除外」）。</p>
+            ${none.length ? `<p class="p">没有时刻可写的有：${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}。图书馆那一格源文写的是<b>「极不规律（Selphy 到镇后开）」</b>——只有一句前提，没有钟点。<b>照录，不替你换成 9:00-18:00</b>。</p>` : ''}
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rfo') {
+        const S = (typeof RFO_SHOP !== 'undefined') ? RFO_SHOP.shops : [];
+        const R = rowsOf(S);
+        const none = noTime(S);
+        const hol = R.filter(x => /节假日/.test(x.h));
+        return `
+            ${H2('节庆日全镇休息')}
+            <p class="p">海洋的营业时间写得很干脆：${hol.map(x => E(x.n)).join('、')}都是<b>9:00-18:00</b>，后面跟着<b>「节假日、节庆休」</b>；铁匠铺还多一条「游戏首日休」。这一作把节庆直接当假日处理——<b>那天店门是不开的</b>。</p>
+            <p class="p">所以要买装备、换药，得挑<b>非节庆的平常日</b>，而且要在 18 点前。这一作的节日有 ${(typeof FEST_RFO !== 'undefined') ? FEST_RFO.length : 0} 场，逐日清单在<a href="#/page/festival">年度节日</a>页——排计划时先看那天是不是节庆。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['19rem', 'auto'] })}
+            ${H2('只在周四出现的摊位')}
+            <p class="p">广场摊位（Joe 的符文能力摊）是这一页最特殊的一格：<b>只在周四与节庆日开，12:00-18:00</b>，烟火大会那天延到 22:00。也就是说<b>想找他，一周只有一次机会</b>；错过就等下一个周四，或者等一场节庆。</p>
+            ${none.length ? `<p class="p">${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}这一格源文写的是「营业时间以游戏内为准（源未单列）」——不是漏抄，是源表本身没有。本站不补。</p>` : ''}
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf5') {
+        const S = (typeof RF5_SHOP !== 'undefined') ? RF5_SHOP.shops : [];
+        const R = rowsOf(S);
+        const hol = R.filter(x => /节假日/.test(x.h));
+        const early = hol.map(x => (String(x.h).match(/节假日\s*[\d:]+\s*[-~]\s*([\d:]+)/) || [])[1]).filter(Boolean);
+        const none = noTime(S);
+        return `
+            ${H2('节假日只有半天')}
+            <p class="p">RF5 摊平后 ${R.length} 处，<b>${hol.length === R.length ? '全部' : hol.length + ' 处'}</b>工作日都是 9:00-18:00，节假日却缩到<b>${uniqStr(early).join(' 或 ')}</b>——<b>少了四五个小时</b>。这一作把「节假日」当成缩短营业的信号，而不是休息：店照开，只是开得短。</p>
+            <p class="p">落到玩法上就一句话：<b>节假日想买东西，上午必须办完</b>。中午之后不是排队的问题，是门已经关了。</p>
+            ${tbl(['设施', '营业时间（源文照录）'], R.map(x => ['<b>' + E(x.n) + '</b>', E(x.h)]), { leftFirst: true, colw: ['16rem', 'auto'] })}
+            ${H2('开着门和能做生意是两回事')}
+            <p class="p">水晶店那一格多了一句括号：<b>「Heinz 本人 15:00 后才现身交易」</b>。营业时间写的是 9:00-18:00，但真正能办成事是 15 点以后——<b>这一作只有这一家把这句话写出来了</b>。</p>
+            ${none.length ? `<p class="p">${none.map(x => '<b>' + E(x) + '</b>').join('、')}的营业时间源文写「以游戏内为准（源未单列）」，本站不补。</p>` : ''}
+            ${OVERVIEW}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf2') {
+        const S = (typeof RF2_SHOP !== 'undefined') ? RF2_SHOP : null;
+        const secs = (S && S.secs) ? S.secs : [];
+        const cnt = secs.map(s => {
+            let n = 0;
+            (s.subs || []).forEach(u => { n += (u.items || []).length; });
+            (s.items || []).forEach(() => n++);
+            return { k: s.k, n: n };
+        });
+        const fest = (typeof FEST_RF2 !== 'undefined') ? FEST_RF2 : [];
+        const byS = ['春', '夏', '秋', '冬'].map(s => [s, fest.filter(r => r[0] === s).length]);
+        const empty = byS.filter(x => !x[1]).map(x => x[0]);
+        return `
+            ${H2('本作没有营业时间可查')}
+            <div class="note">站内 RF2 的商店数据来自《RF2 攻略合辑》的「商店及售价」一章，那一章<b>只列商品与售价，没有一家店写了营业时间</b>。所以这一页不列时间表——<b>不拿别作「9:00-18:00」套过来</b>，也不按印象补。</div>
+            ${cnt.length ? `<p class="p">能确定的是<b>镇上分四类去处</b>，各自卖的东西差得很远：${cnt.map(x => '<b>' + E(x.k) + '</b>（' + String(x.n) + ' 条在售）').join('、')}，四类合计 ${cnt.reduce((a, b) => a + b.n, 0)} 条。具体商品与价钱在<a href="#/page/shop">商店与设施</a>页。</p>` : ''}
+            ${H2('能查的时间只有节日')}
+            <p class="p">这一作的节日共 ${fest.length} 场，四季分布是${byS.map(x => x[0] + '季 ' + x[1] + ' 场').join('、')}${empty.length ? `——<b>${empty.join('、')}一季一场都没有</b>` : ''}。几乎都由<b>公园的富豪</b>主持：要参赛，第一步都是先到他那儿报到。</p>
+            ${tbl(['季节', '场数'], byS.map(x => [x[0], String(x[1])]), { leftFirst: true, colw: ['4rem', '4rem'] })}
+            <p class="p">逐日清单（第几天、什么节、当天做什么）在<a href="#/page/festival">年度节日</a>页。至于「几点开门、哪天休息」，只有游戏内能确认——如果你手上有写明时刻的资料，这一页最值得补的就是那张表。</p>
+            ${BASE}
+            ${JUMP}`;
+    }
+
+    if (id === 'azuma') {
+        const A = (typeof SHOP_AZUMA !== 'undefined' && SHOP_AZUMA.rows) ? SHOP_AZUMA.rows : [];
+        const loc = {};
+        A.forEach(r => { loc[r[0]] = (loc[r[0]] || 0) + 1; });
+        const names = Object.keys(loc).sort((a, b) => loc[b] - loc[a]);
+        return `
+            ${H2('本作没有营业时间可查')}
+            <div class="note">站内龙之天地的店铺数据（<code>SHOP_AZUMA</code>，${A.length} 条商品）只有五列：地点、商品、价格、库存、备注。<b>没有营业时间，也没有星期几</b>。这一页不替它编。</div>
+            ${names.length ? `<p class="p">能确定的是<b>铺子摊在 ${names.length} 个地点</b>上，从茶屋、居酒屋到铁匠铺、种苗店都有。按在售条目排，最厚的是<b>${E(names[0])}</b>（${loc[names[0]]} 条）、<b>${E(names[1])}</b>（${loc[names[1]]} 条）、<b>${E(names[2])}</b>（${loc[names[2]]} 条）。</p>
+            ${tbl(['地点', '在售条目'], names.map(n => [E(n), String(loc[n])]), { leftFirst: true, cls: 'rf3shop', colw: ['auto', '5.6rem'] })}` : ''}
+            <p class="p">本作的节庆挂在四季村落与「大地舞者」的祭祀上，日程在版本更新里改过，本站手上没有能逐条核对的完整表——这也是<a href="#/page/festival">年度节日</a>页留空的原因。时间这一块，这一作目前是<b>整块空缺</b>，不是漏写。</p>
+            ${BASE}
+            ${JUMP}`;
+    }
+
+    return '';
+}
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -12586,7 +12778,7 @@ const PAGES = [
     },
     {
         key: 'time', group: 'basic', title: '时间与季节', icon: 'clock',
-        body: () => `
+        body: (g) => timeDeepHtml(g && g.id) || (`
             <h2 class="h2">一天怎么过</h2>
             <p class="p">清晨起床（多数作品为 6:00），当天可以自由安排耕作、采集、下迷宫、送礼、接委托。时间在户外与迷宫内都会流逝，进入室内、菜单、对话时会暂停。</p>
             <p class="p">深夜之后仍不睡觉会开始扣体力，最终强制就寝。熬夜的代价通常是第二天起床变晚——而起床晚了，商店开门、NPC 出门的时间都会错过。</p>
@@ -12602,7 +12794,7 @@ const PAGES = [
             <p class="p">冬季不能种地，是系列一贯设计。这段时间正好拿来刷迷宫素材、把锻造与药学的等级补上。</p>
             <h2 class="h2">天气</h2>
             <p class="p">晴、阴、雨、雪。雨天不必浇水，是推进迷宫与刷素材的好日子；暴风雨可能造成作物损失。天气预报可以在电视或公告处查看，前一天确认再决定第二天的安排。</p>
-        `
+        `)
     },
     {
         key: 'rp', group: 'basic', title: '体力与 RP', icon: 'bolt',

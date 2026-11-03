@@ -5,7 +5,8 @@ var K_PLAN = {
     "crossPages": [
         "battle",
         "festival",
-        "seriescmp"
+        "seriescmp",
+        "time"
     ],
     "games": {
         "rf1": "js/k-rf1.js",
