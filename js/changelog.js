@@ -1,6 +1,14 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十一：符文工房5 城镇商店（杂货店／水晶店／锻造屋／诊所／面包店／花店）接入 shop 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：新增 <code>js/rf5shop.js</code>（<code>RF5_SHOP</code>），<b>6 家店、21 个小节、283 条</b>商品行，由 neoseeker（Serendipity／Flowerstruck）＋ game8（The Crystalabra／True Strike Smithy／Sweet Hearth）＋ biligame 中文（Rigbarth Clinic）＋ therunefactory fandom 四源交叉核实：闪亮杂货店（种子 21／杂货 14／蔬菜 13／鱼 10）、克莱斯卓拉水晶店（魔法书 11／符文能力 10／水晶 17／宝石 7）、斯特赖克锻造屋（农具 22／武器 53／防具 24／饰品 29）、里格巴斯诊所（药品 8／花草 2／疫苗 7／治疗 1）、幸せ面包店（配方面包 5／服装 13）、花漾花店（种子 4／营养剂 16／花草 2）。</p>
+<p><b>渲染</b>：复制 <code>shopRf4Html</code> 数据驱动逻辑改读 <code>RF5_SHOP</code>、扩展说明列识别（RF5 用「解锁／阶段／备注」）得 <code>shopRf5Html()</code>，接入 shop 页分发器 <code>g.id==='rf5'</code>；<code>js/rf5shop.js</code> 注册 <code>_manifest.json</code>（归 rf5 包）。</p>
+<p><b>铁律</b>：只记买价、不记卖价；跨源矛盾照录（Ice/Electro Crystal、General's Hoe 源漏价标「—」，诊所「获得过的花草」按草种无统一价标「—」）；营养剂价格跨度极大（Formula A 1200G → Love Drink 3,000,000G）照录不修正；进度锁是 Studio Palmo 扩建＋委托解锁（非 RF4 的王子等级）。</p>
+<p><b>校验</b>：_verify 356/0、_test_links 0、_build_chunks 365 页逐字一致；changelog 加第 181 条。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十：符文工房4 城镇商店（诚心杂货店／锻造屋／餐厅／花店／医院）接入 shop 页</h2>
 <div class="p">新增 <code>js/rf4shop.js</code>（<code>RF4_SHOP</code>，5 家店铺、23 个货架小节、222 条商品行），由 <code>_build_rf4_shop.py</code> 从 biligame《符文工厂4豪华版》城镇店铺商品列表（RF4Stown，中文）＋ april2016.pixnet 符文工廠4 商店簡介(鍛治屋，繁中)＋ guidestrats（Sincerity General Store／Clinic，英）三源交叉核实整理。</div>
 <div class="p">新增 <code>shopRf4Html()</code> 渲染函数（复制 <code>shopRf1Html</code> 的数据驱动逻辑，改读 <code>RF4_SHOP</code>、文案动态化），接入 shop 页分发器 <code>g.id==='rf4'</code>；<code>js/rf4shop.js</code> 注册进 <code>_manifest.json</code>（归 rf4 包）。</div>

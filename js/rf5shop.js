@@ -1,0 +1,1578 @@
+// 由 _build_rf5_shop.py 生成｜RF5 城镇商店售卖列表（买价）
+// 源：neoseeker(Serendipity/Flowerstruck) + game8(Crystalabra/TrueStrike/SweetHearth) + biligame中文(RigbarthClinic) + fandom 交叉
+const RF5_SHOP = {
+ "shops": [
+  {
+   "n": "闪亮杂货店",
+   "full": "Serendipity（キラキラ雑貨店）",
+   "h": "工作日 9:00-18:00｜节假日 9:00-13:30",
+   "desc": "里格巴斯的杂货店。游戏初期由 Terry 与 Cecil 经营；通关 Whispering Woodlands 后交给 Misasagi 与 Hina。可经 Studio Palmo 扩建 3 次：1 扩后 Hina 开始卖鱼，2 扩后上架成熟蔬菜，3 扩后 Misasagi 上更多蔬菜。下表为各阶段售价。",
+   "secs": [
+    {
+     "t": "种子 Seeds",
+     "c": [
+      "商品",
+      "季节",
+      "天数",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Turnip Seed",
+       "夏/秋",
+       "3",
+       "10G",
+       "初始"
+      ],
+      [
+       "Potato Seed",
+       "春/夏",
+       "7",
+       "80G",
+       "出货土豆"
+      ],
+      [
+       "Spinach Seed",
+       "秋",
+       "2",
+       "60G",
+       "出货菠菜"
+      ],
+      [
+       "Radish Seed",
+       "秋",
+       "5",
+       "120G",
+       "收获 5 萝卜"
+      ],
+      [
+       "Yam Seed",
+       "夏/秋",
+       "8",
+       "250G",
+       "收获 5 萝卜"
+      ],
+      [
+       "Pumpkin Seed",
+       "春/夏",
+       "7",
+       "200G",
+       "出货 Lv5 蔬菜"
+      ],
+      [
+       "Cucumber Seed",
+       "夏/秋",
+       "5",
+       "320G",
+       "出货 Lv5 蔬菜"
+      ],
+      [
+       "Fodder Seed",
+       "全年",
+       "4",
+       "30G",
+       "建造怪物小屋"
+      ],
+      [
+       "Carrot Seed",
+       "秋",
+       "10",
+       "400G",
+       "收获 5 萝卜"
+      ],
+      [
+       "Corn Seed",
+       "春/夏",
+       "7",
+       "450G",
+       "出货 Lv2 芜菁"
+      ],
+      [
+       "Strawberry Seed",
+       "春/秋",
+       "16",
+       "400G",
+       "用锄耕玉米"
+      ],
+      [
+       "Leek Seed",
+       "春/秋",
+       "9",
+       "680G",
+       "出货 Lv2 芜菁"
+      ],
+      [
+       "Pink Turnip Seed",
+       "春",
+       "11",
+       "160G",
+       "收获 20 芜菁"
+      ],
+      [
+       "Green Pepper Seed",
+       "夏",
+       "7",
+       "800G",
+       "用锄耕玉米"
+      ],
+      [
+       "Bok Choy Seed",
+       "秋",
+       "5",
+       "1000G",
+       "收获 12 种作物"
+      ],
+      [
+       "Cabbage Seed",
+       "春/秋",
+       "8",
+       "980G",
+       "收获 12 种作物"
+      ],
+      [
+       "Onion Seed",
+       "秋",
+       "18",
+       "1480G",
+       "收获 12 种作物"
+      ],
+      [
+       "Tomato Seed",
+       "春/夏",
+       "7",
+       "1880G",
+       "收获白菜/洋葱/芜菁"
+      ],
+      [
+       "Pink Melon Seed",
+       "春/夏",
+       "7",
+       "2120G",
+       "收获白菜/洋葱/芜菁"
+      ],
+      [
+       "Sword Seed",
+       "全年",
+       "12",
+       "1500G",
+       "收获 6 种蔬菜"
+      ],
+      [
+       "Shield Seed",
+       "全年",
+       "12",
+       "1500G",
+       "收获 6 种蔬菜"
+      ]
+     ]
+    },
+    {
+     "t": "杂货 Other",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Rice 米",
+       "200G",
+       "初始"
+      ],
+      [
+       "Chocolate 巧克力",
+       "400G",
+       "初始"
+      ],
+      [
+       "Wine 葡萄酒",
+       "2000G",
+       "初始"
+      ],
+      [
+       "Flour 面粉",
+       "320G",
+       "初始"
+      ],
+      [
+       "Oil 油",
+       "650G",
+       "初始"
+      ],
+      [
+       "Curry Powder 咖喱粉",
+       "300G",
+       "初始"
+      ],
+      [
+       "Rice Flour 米粉",
+       "100G",
+       "初始"
+      ],
+      [
+       "Brush 毛刷",
+       "2400G",
+       "初始"
+      ],
+      [
+       "Clippers 修剪剪",
+       "1900G",
+       "初始"
+      ],
+      [
+       "Magnifying Glass 放大镜",
+       "2000G",
+       "初始"
+      ],
+      [
+       "Mixed Herbs 综合香草",
+       "750G",
+       "1 扩后"
+      ],
+      [
+       "Sweet Powder 甜粉",
+       "450G",
+       "1 扩后"
+      ],
+      [
+       "Sour Drop 酸滴",
+       "250G",
+       "1 扩后"
+      ],
+      [
+       "Heavy Spice 重香料",
+       "480G",
+       "1 扩后"
+      ]
+     ]
+    },
+    {
+     "t": "蔬菜 Vegetables",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Turnip 芜菁",
+       "200G",
+       "初始"
+      ],
+      [
+       "Spinach 菠菜",
+       "300G",
+       "初始"
+      ],
+      [
+       "Green Pepper 青椒",
+       "700G",
+       "初始"
+      ],
+      [
+       "Radish 萝卜",
+       "1580G",
+       "初始"
+      ],
+      [
+       "Carrot 胡萝卜",
+       "2600G",
+       "初始"
+      ],
+      [
+       "Cucumber 黄瓜",
+       "250G",
+       "初始"
+      ],
+      [
+       "Orange 橙子",
+       "500G",
+       "1 扩后"
+      ],
+      [
+       "Apple 苹果",
+       "850G",
+       "1 扩后"
+      ],
+      [
+       "Pink Turnip 粉芜菁",
+       "700G",
+       "1 扩后"
+      ],
+      [
+       "Bamboo Shoot 竹笋",
+       "200G",
+       "1 扩后"
+      ],
+      [
+       "Pumpkin 南瓜",
+       "420G",
+       "1 扩后"
+      ],
+      [
+       "Yam 山药",
+       "450G",
+       "1 扩后"
+      ],
+      [
+       "Leek 韭葱",
+       "4800G",
+       "1 扩后"
+      ]
+     ]
+    },
+    {
+     "t": "鱼 Fish（1 扩后 Hina 卖）",
+     "c": [
+      "商品",
+      "售价"
+     ],
+     "r": [
+      [
+       "Masu Trout 真鳟",
+       "2300G"
+      ],
+      [
+       "Pike 狗鱼",
+       "240G"
+      ],
+      [
+       "Pond Smelt 池白鱼",
+       "200G"
+      ],
+      [
+       "Cherry Salmon 樱鳟",
+       "350G"
+      ],
+      [
+       "Needlefish 颚针鱼",
+       "500G"
+      ],
+      [
+       "Shrimp 虾",
+       "1500G"
+      ],
+      [
+       "Turbot 大菱鲆",
+       "2500G"
+      ],
+      [
+       "Squid 鱿鱼",
+       "400G"
+      ],
+      [
+       "Crucian Carp 鲫鱼",
+       "620G"
+      ],
+      [
+       "Blowfish 河豚",
+       "57000G"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "价格一律带 G，和源一致。",
+    "蔬菜/鱼为「已成熟」品，种子需自行种植；鱼在 1 扩后由 Hina 贩卖，且为轮换库存。"
+   ]
+  },
+  {
+   "n": "克莱斯卓拉水晶店",
+   "full": "The Crystalabra",
+   "h": "工作日 9:00-18:00｜节假日 9:00-14:00（Heinz 本人 15:00 后才现身交易）",
+   "desc": "由 Heinz 经营的魔法与水晶店，兼作魔法书、符文能力、水晶、宝石的售卖处；Lucas 在 2 扩后可升级你的魔法。可经 Studio Palmo 扩建 3 次，每次增加魔法书/符文能力/水晶种类。",
+   "secs": [
+    {
+     "t": "魔法书 Magic Tomes",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Water Laser",
+       "2400G",
+       "初始"
+      ],
+      [
+       "Fireball",
+       "2200G",
+       "初始"
+      ],
+      [
+       "Rock Screw",
+       "2300G",
+       "1 扩"
+      ],
+      [
+       "Sonic Wind",
+       "2500G",
+       "1 扩"
+      ],
+      [
+       "Dark Ball",
+       "2800G",
+       "2 扩"
+      ],
+      [
+       "Medipoison",
+       "1800G",
+       "2 扩"
+      ],
+      [
+       "Light Barrier",
+       "3000G",
+       "2 扩"
+      ],
+      [
+       "Impact Laser",
+       "7800G",
+       "3 扩"
+      ],
+      [
+       "Grand Spike",
+       "6500G",
+       "3 扩"
+      ],
+      [
+       "Sparkle",
+       "8800G",
+       "3 扩"
+      ],
+      [
+       "Sonic Storm",
+       "8800G",
+       "3 扩"
+      ]
+     ]
+    },
+    {
+     "t": "符文能力 Rune Abilities",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Dash Slash",
+       "2000G",
+       "初始"
+      ],
+      [
+       "Power Wave",
+       "1300G",
+       "初始"
+      ],
+      [
+       "Flash Strike",
+       "9300G",
+       "初始"
+      ],
+      [
+       "Uppercut",
+       "3000G",
+       "1 扩"
+      ],
+      [
+       "Reaper Slash",
+       "2700G",
+       "1 扩"
+      ],
+      [
+       "Double Kick",
+       "7800G",
+       "1 扩"
+      ],
+      [
+       "Terra Swing",
+       "3000G",
+       "2 扩"
+      ],
+      [
+       "Gust",
+       "2600G",
+       "2 扩"
+      ],
+      [
+       "Rail Strike",
+       "3800G",
+       "2 扩"
+      ],
+      [
+       "Delta Strike",
+       "1500G",
+       "3 扩"
+      ]
+     ]
+    },
+    {
+     "t": "水晶 Crystals",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Ventus Crystal",
+       "50000G",
+       "1 扩"
+      ],
+      [
+       "Glacies Crystal",
+       "50000G",
+       "1 扩"
+      ],
+      [
+       "Terra Crystal",
+       "50000G",
+       "1 扩"
+      ],
+      [
+       "Gaia Crystal",
+       "50000G",
+       "1 扩"
+      ],
+      [
+       "Ignis Crystal",
+       "50000G",
+       "1 扩"
+      ],
+      [
+       "Light Crystal",
+       "3000G",
+       "初始"
+      ],
+      [
+       "Earth Crystal",
+       "2000G",
+       "初始"
+      ],
+      [
+       "Big Crystal",
+       "16000G",
+       "初始"
+      ],
+      [
+       "Small Crystal",
+       "120000G",
+       "初始"
+      ],
+      [
+       "Love Crystal",
+       "2080G",
+       "初始"
+      ],
+      [
+       "Water Crystal",
+       "2400G",
+       "初始"
+      ],
+      [
+       "Ice Crystal",
+       "—",
+       "初始（源未列价）"
+      ],
+      [
+       "Fire Crystal",
+       "1600G",
+       "初始"
+      ],
+      [
+       "Dark Crystal",
+       "1440G",
+       "初始"
+      ],
+      [
+       "Wind Crystal",
+       "2150G",
+       "初始"
+      ],
+      [
+       "Electro Crystal",
+       "—",
+       "初始（源未列价）"
+      ],
+      [
+       "Magic Crystal",
+       "350G",
+       "初始"
+      ]
+     ]
+    },
+    {
+     "t": "宝石 Jewels",
+     "c": [
+      "商品",
+      "售价"
+     ],
+     "r": [
+      [
+       "Aquamarine 海蓝宝",
+       "1500G"
+      ],
+      [
+       "Amethyst 紫水晶",
+       "500G"
+      ],
+      [
+       "Yellow Core Emerald",
+       "4800G"
+      ],
+      [
+       "Green Core",
+       "2700G"
+      ],
+      [
+       "Sapphire 蓝宝石",
+       "9800G"
+      ],
+      [
+       "Diamond 钻石",
+       "14400G"
+      ],
+      [
+       "Skull Crystal Blue Core Ruby",
+       "7000G"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "水晶中的 Ventus/Glacies/Terra/Gaia/Ignis 五种（各 50000G）需 1 扩后上架。",
+    "Heinz 的轮换库存（装备、能力、食物、材料）未逐条列入，仅列固定售卖项。"
+   ]
+  },
+  {
+   "n": "斯特赖克锻造屋",
+   "full": "True Strike Smithy（鍛冶屋「ストライク」）",
+   "h": "工作日 9:00-18:00｜节假日 9:00-14:00",
+   "desc": "Darroch 与徒弟 Martin 经营的锻造屋，卖农具、武器、防具与饰品。可经 Studio Palmo 扩建 3 次：1 扩上新农具与新武器，2 扩解锁双人锻造，3 扩上更多武器与农具。下表为初始货架售价（不含扩建新增项）。",
+   "secs": [
+    {
+     "t": "农具 Farm Tools",
+     "c": [
+      "名称",
+      "售价"
+     ],
+     "r": [
+      [
+       "Clippers 修剪剪",
+       "1900G"
+      ],
+      [
+       "Brush 毛刷",
+       "2400G"
+      ],
+      [
+       "Skilled Pole 熟练钓竿",
+       "25000G"
+      ],
+      [
+       "Beginner's Pole 新手钓竿",
+       "5000G"
+      ],
+      [
+       "Cheap Pole 便宜钓竿",
+       "1500G"
+      ],
+      [
+       "Silver Hammer 银锤",
+       "30000G"
+      ],
+      [
+       "Bronze Hammer 青铜锤",
+       "5000G"
+      ],
+      [
+       "Cheap Hammer 便宜锤",
+       "1500G"
+      ],
+      [
+       "Lumber Axe 伐木斧",
+       "30000G"
+      ],
+      [
+       "Chopping Axe 柴斧",
+       "5000G"
+      ],
+      [
+       "Cheap Axe 便宜斧",
+       "1500G"
+      ],
+      [
+       "Quality Sickle 良质镰",
+       "25000G"
+      ],
+      [
+       "Iron Sickle 铁镰",
+       "3000G"
+      ],
+      [
+       "Cheap Sickle 便宜镰",
+       "150G"
+      ],
+      [
+       "Lion Waterpot 狮水壶",
+       "25000G"
+      ],
+      [
+       "Tin Waterpot 锡水壶",
+       "3000G"
+      ],
+      [
+       "Cheap Waterpot 便宜水壶",
+       "150G"
+      ],
+      [
+       "Seasoned Hoe 老练锄",
+       "25000G"
+      ],
+      [
+       "Sturdy Hoe 结实锄",
+       "3000G"
+      ],
+      [
+       "Cheap Hoe 便宜锄",
+       "150G"
+      ],
+      [
+       "General's Hoe 将军锄",
+       "—（源未定 TBD）"
+      ],
+      [
+       "Magnifying Glass 放大镜",
+       "2000G"
+      ]
+     ]
+    },
+    {
+     "t": "武器 Weapons",
+     "c": [
+      "名称",
+      "售价"
+     ],
+     "r": [
+      [
+       "Hell Branch",
+       "409100G"
+      ],
+      [
+       "Mage's Staff 魔法师杖",
+       "120000G"
+      ],
+      [
+       "Lightning Wand 雷杖",
+       "65500G"
+      ],
+      [
+       "Silver Staff 银杖",
+       "13000G"
+      ],
+      [
+       "Staff 法杖",
+       "6280G"
+      ],
+      [
+       "Rod 短杖",
+       "1300G"
+      ],
+      [
+       "Demon Axe 恶魔斧",
+       "96666G"
+      ],
+      [
+       "Basilisk Fang 石化斧",
+       "71500G"
+      ],
+      [
+       "Pole Axe 杆斧",
+       "11800G"
+      ],
+      [
+       "Battle Scythe 战镰",
+       "6590G"
+      ],
+      [
+       "Battle Axe 战斧",
+       "1380G"
+      ],
+      [
+       "Chaos Edge 混沌刃",
+       "186550G"
+      ],
+      [
+       "Platinum Edge 白金刃",
+       "104400G"
+      ],
+      [
+       "Steel Blades 钢刃",
+       "71040G"
+      ],
+      [
+       "Thief Knives 盗贼匕",
+       "23900G"
+      ],
+      [
+       "Steel Edge 钢刃短剑",
+       "6500G"
+      ],
+      [
+       "Short Dagger 短匕",
+       "1310G"
+      ],
+      [
+       "Dragon Claws 龙爪",
+       "126000G"
+      ],
+      [
+       "Fists of Water 水拳",
+       "98000G"
+      ],
+      [
+       "Fists of the Earth 地拳",
+       "64000G"
+      ],
+      [
+       "Punching Gloves 拳套",
+       "21500G"
+      ],
+      [
+       "Brass Knuckles 黄铜指虎",
+       "4660G"
+      ],
+      [
+       "Leather Gloves 皮手套",
+       "290G"
+      ],
+      [
+       "Gigant Hammer 巨人锤",
+       "134980G"
+      ],
+      [
+       "Bone Hammer 骨锤",
+       "78800G"
+      ],
+      [
+       "Great Hammer 大锤",
+       "22400G"
+      ],
+      [
+       "War Hammer 战锤",
+       "6120G"
+      ],
+      [
+       "Battle Hammer 战锤（小）",
+       "340G"
+      ],
+      [
+       "Chaos Blade 混沌剑",
+       "125105G"
+      ],
+      [
+       "Platinum Sword 白金剑",
+       "95730G"
+      ],
+      [
+       "Aqua Sword 碧水剑",
+       "11800G"
+      ],
+      [
+       "Cutlass 弯刀",
+       "6380G"
+      ],
+      [
+       "Steel Sword 钢剑",
+       "1210G"
+      ],
+      [
+       "Broadsword 阔剑",
+       "90G"
+      ],
+      [
+       "Feather Lance 羽枪",
+       "124710G"
+      ],
+      [
+       "Heavy Lance 重枪",
+       "96800G"
+      ],
+      [
+       "Corsesca 短枪",
+       "58800G"
+      ],
+      [
+       "Trident 三叉戟",
+       "18800G"
+      ],
+      [
+       "Lance+ 长枪+",
+       "4580G"
+      ],
+      [
+       "Lance 长枪",
+       "1700G"
+      ],
+      [
+       "Spear 矛",
+       "200G"
+      ],
+      [
+       "Snow Crown 雪冠",
+       "130500G"
+      ],
+      [
+       "Bio Smasher 生化粉碎者",
+       "105000G"
+      ],
+      [
+       "Katzbalger 卡茨巴尔格",
+       "50080G"
+      ],
+      [
+       "Sea Cutter 海裂者",
+       "14600G"
+      ],
+      [
+       "Zweihander+ 双手巨剑+",
+       "4450G"
+      ],
+      [
+       "Zweihander 双手巨剑",
+       "1675G"
+      ],
+      [
+       "Claymore 克莱摩尔",
+       "160G"
+      ]
+     ]
+    },
+    {
+     "t": "防具 Armor",
+     "c": [
+      "名称",
+      "售价"
+     ],
+     "r": [
+      [
+       "Strider Boots 疾行靴",
+       "188000G"
+      ],
+      [
+       "Bone Boots 骨靴",
+       "68900G"
+      ],
+      [
+       "Silver Boots 银靴",
+       "14280G"
+      ],
+      [
+       "Cheep-Cheep Sandals 鱼嘴凉鞋",
+       "320G"
+      ],
+      [
+       "Leather Boots 皮靴",
+       "80G"
+      ],
+      [
+       "White Ribbon 白缎带",
+       "80000G"
+      ],
+      [
+       "Orange Ribbon 橙缎带",
+       "50000G"
+      ],
+      [
+       "Yellow Ribbon 黄缎带",
+       "10000G"
+      ],
+      [
+       "Blue Ribbon 蓝缎带",
+       "500G"
+      ],
+      [
+       "Brand Glasses 名牌眼镜",
+       "6500G"
+      ],
+      [
+       "Green Ribbon 绿缎带",
+       "500G"
+      ],
+      [
+       "Platinum Shield 白金盾",
+       "12700G"
+      ],
+      [
+       "Magic Shield 魔法盾",
+       "71500G"
+      ],
+      [
+       "Chaos Shield 混沌盾",
+       "21500G"
+      ],
+      [
+       "Round Shield 圆盾",
+       "5440G"
+      ],
+      [
+       "Warrior's Shield 战士盾",
+       "4100G"
+      ],
+      [
+       "Iron Shield 铁盾",
+       "1240G"
+      ],
+      [
+       "Small Shield 小盾",
+       "70G"
+      ],
+      [
+       "Wind Cloak 风披风",
+       "72780G"
+      ],
+      [
+       "Chain Mail 锁子甲",
+       "18000G"
+      ],
+      [
+       "Cotton Cloth 棉布",
+       "4980G"
+      ],
+      [
+       "Vest 背心",
+       "1300G"
+      ],
+      [
+       "Shirt 衬衫",
+       "120G"
+      ],
+      [
+       "Protector 护身甲",
+       "106200G"
+      ]
+     ]
+    },
+    {
+     "t": "饰品 Accessories",
+     "c": [
+      "名称",
+      "售价"
+     ],
+     "r": [
+      [
+       "Ruby Ring 红宝石戒",
+       "19800G"
+      ],
+      [
+       "Magic Earrings 魔法耳环",
+       "425000G"
+      ],
+      [
+       "Magic Charm 魔法护符",
+       "150000G"
+      ],
+      [
+       "Witch Earrings 魔女耳环",
+       "160000G"
+      ],
+      [
+       "Magic Ring 魔法戒",
+       "180000G"
+      ],
+      [
+       "Star Pendant 星坠",
+       "75000G"
+      ],
+      [
+       "Poison Ring 毒戒",
+       "19800G"
+      ],
+      [
+       "Platinum Bracelet 白金镯",
+       "1020000G"
+      ],
+      [
+       "Power Gloves 力量手套",
+       "312000G"
+      ],
+      [
+       "Paralysis Ring 麻痹戒",
+       "19800G"
+      ],
+      [
+       "Bronze Bracelet 青铜镯",
+       "8500G"
+      ],
+      [
+       "Silver Pendant 银坠",
+       "5000G"
+      ],
+      [
+       "Sturdy Gloves 结实手套",
+       "120000G"
+      ],
+      [
+       "Focus Earrings 专注耳环",
+       "1500G"
+      ],
+      [
+       "Shield Ring 盾戒",
+       "68000G"
+      ],
+      [
+       "Silent Ring 寂静戒",
+       "19800G"
+      ],
+      [
+       "Critical Ring 暴击戒",
+       "65000G"
+      ],
+      [
+       "Silver Bracelet 银镯",
+       "27200G"
+      ],
+      [
+       "Gold Bracelet 金镯",
+       "72800G"
+      ],
+      [
+       "Work Gloves 工作手套",
+       "1500G"
+      ],
+      [
+       "Leather Belt 皮带",
+       "1600G"
+      ],
+      [
+       "Charm 护身符",
+       "350G"
+      ],
+      [
+       "Emerald Ring 翡翠戒",
+       "19800G"
+      ],
+      [
+       "Amethyst Ring 紫晶戒",
+       "19800G"
+      ],
+      [
+       "Aquamarine Ring 海蓝戒",
+       "19800G"
+      ],
+      [
+       "Platinum Ring - Yarn 白金戒（毛线）",
+       "300G"
+      ],
+      [
+       "Talisman 符咒",
+       "60000G"
+      ],
+      [
+       "Cheap Bracelet 便宜镯",
+       "100G"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "武器/防具/饰品为初始货架价；扩建后新增项未逐条列入（源列项庞杂，且多为高阶货）。",
+    "价最高的 Platinum Bracelet 白金镯 1020000G、Magic Earrings 魔法耳环 425000G 为顶级饰品。"
+   ]
+  },
+  {
+   "n": "里格巴斯诊所",
+   "full": "Rigbarth Clinic（リグバース診療所）",
+   "h": "营业时间以游戏内为准（源未单列）",
+   "desc": "Simone 经营的诊所，卖药品、花草、疫苗，并提供治疗。可经 Studio Palmo 扩建 3 次：1 扩后上架更多药与疫苗，2 扩后上花草与更多疫苗，3 扩后 Simone 库存最终补全。下表按扩建阶段列售价。",
+   "secs": [
+    {
+     "t": "药品 Medicine",
+     "c": [
+      "商品",
+      "售价",
+      "阶段"
+     ],
+     "r": [
+      [
+       "恢复壶 Recovery Potion",
+       "80G",
+       "初始"
+      ],
+      [
+       "解麻药 Para-Gone",
+       "900G",
+       "初始"
+      ],
+      [
+       "解封丸 Roundoff",
+       "800G",
+       "初始"
+      ],
+      [
+       "疗愈壶 Healing Potion",
+       "500G",
+       "1 阶"
+      ],
+      [
+       "解毒药 Antidote Potion",
+       "1200G",
+       "1 阶"
+      ],
+      [
+       "感冒药 Cold Medicine",
+       "1000G",
+       "1 阶"
+      ],
+      [
+       "神秘壶 Mystery Potion",
+       "1500G",
+       "3 阶"
+      ],
+      [
+       "魔宝壶 Magical Potion",
+       "5000G",
+       "3 阶"
+      ]
+     ]
+    },
+    {
+     "t": "花草 Grass（出货后解锁）",
+     "c": [
+      "商品",
+      "售价",
+      "阶段"
+     ],
+     "r": [
+      [
+       "获得过的花草",
+       "—",
+       "2 阶"
+      ],
+      [
+       "获得过的花草",
+       "—",
+       "3 阶"
+      ]
+     ]
+    },
+    {
+     "t": "疫苗 Vaccine",
+     "c": [
+      "商品",
+      "售价",
+      "阶段"
+     ],
+     "r": [
+      [
+       "耐异常状态疫苗",
+       "50000G",
+       "1 阶"
+      ],
+      [
+       "耐属性疫苗",
+       "50000G",
+       "1 阶"
+      ],
+      [
+       "耐冲击疫苗",
+       "50000G",
+       "1 阶"
+      ],
+      [
+       "睡眠诱导疫苗",
+       "50000G",
+       "2 阶"
+      ],
+      [
+       "滋养强壮疫苗",
+       "50000G",
+       "2 阶"
+      ],
+      [
+       "肠道调理疫苗",
+       "50000G",
+       "3 阶"
+      ],
+      [
+       "生存本能疫苗",
+       "50000G",
+       "3 阶"
+      ]
+     ]
+    },
+    {
+     "t": "治疗 Treatment",
+     "c": [
+      "商品",
+      "售价",
+      "备注"
+     ],
+     "r": [
+      [
+       "HP 归零治愈",
+       "按难度上限",
+       "简单 10000G／普通 50000G／困难 1 亿-1"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "「获得过的花草」价依具体草种而异，源未给统一货架价，标 —。",
+    "疫苗均为 50000G，分 1/2/3 阶解锁，效果各异（毒/封印/麻痹/睡眠/疲劳/肠道/生存本能等）。"
+   ]
+  },
+  {
+   "n": "幸せ面包店",
+   "full": "Sweet Hearth（手作りパン「しあわせ」）",
+   "h": "工作日 9:00-18:00｜节假日 9:00-13:30",
+   "desc": "Randolph 与 Yuki 经营的面包店。初期每天限买 2 个配方面包，可经 Studio Palmo 扩建（2→4→6→9 个）。1 扩后 Yuki 开始卖服装。下表为售价。",
+   "secs": [
+    {
+     "t": "配方面包 Recipe Bread",
+     "c": [
+      "商品",
+      "售价"
+     ],
+     "r": [
+      [
+       "Crafting Bread 锻造面包",
+       "150G"
+      ],
+      [
+       "Weapon Bread 武器面包",
+       "180G"
+      ],
+      [
+       "Chemistry Bread 药学面包",
+       "120G"
+      ],
+      [
+       "Farming Bread 农具面包",
+       "250G"
+      ],
+      [
+       "Cooking Bread 料理面包",
+       "100G"
+      ]
+     ]
+    },
+    {
+     "t": "服装 Yuki's Fashion",
+     "c": [
+      "商品",
+      "售价"
+     ],
+     "r": [
+      [
+       "Pajamas 睡衣",
+       "980G"
+      ],
+      [
+       "Swimsuit 泳装",
+       "1500G"
+      ],
+      [
+       "Navy Casual / Pop Casual",
+       "2800G"
+      ],
+      [
+       "Gold Casual / Cool Casual",
+       "2800G"
+      ],
+      [
+       "Cream Formal / Cerezo Formal",
+       "24000G"
+      ],
+      [
+       "Sunset Formal / Sky Formal",
+       "24000G"
+      ],
+      [
+       "Cloud Formal / Snow Formal",
+       "24000G"
+      ],
+      [
+       "Soldier Style 士兵风",
+       "30000G"
+      ],
+      [
+       "Heavy Armor Style 重甲风",
+       "30000G"
+      ],
+      [
+       "Red Armor Style 红甲风",
+       "30000G"
+      ],
+      [
+       "Purple Wizard 紫巫师",
+       "36000G"
+      ],
+      [
+       "Blue Wizard 蓝巫师",
+       "36000G"
+      ],
+      [
+       "Green Wizard 绿巫师",
+       "36000G"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "配方面包用于学习对应技能配方（锻造/武器/药学/农具/料理），每天有购买上限。"
+   ]
+  },
+  {
+   "n": "花漾花店",
+   "full": "Flowerstruck",
+   "h": "工作日 9:00-18:00｜节假日 9:00-13:00",
+   "desc": "Ludmila 经营的花店，通关 Bandit King's Old Base 后于主线推进中解锁（位于诊所前空屋）。卖花种、营养剂与花草。可经 Studio Palmo 扩建 3 次：1 扩后上更多营养剂，2 扩后上农耕补充剂，3 扩后更多。种子种类还随你完成的委托而增多（下表仅为初始即有价的几种）。",
+   "secs": [
+    {
+     "t": "种子 Seeds",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Toyherb Seed 玩具草种",
+       "60G",
+       "初始"
+      ],
+      [
+       "Pink Cat Seed 粉猫种",
+       "110G",
+       "初始"
+      ],
+      [
+       "Moondrop Seed 月滴种",
+       "115G",
+       "初始"
+      ],
+      [
+       "Charm Blue Seed 魅蓝种",
+       "220G",
+       "初始"
+      ]
+     ]
+    },
+    {
+     "t": "营养剂 Nutrients",
+     "c": [
+      "商品",
+      "售价",
+      "解锁"
+     ],
+     "r": [
+      [
+       "Formula A",
+       "1200G",
+       "初始"
+      ],
+      [
+       "Formula B",
+       "3600G",
+       "初始"
+      ],
+      [
+       "Greenifier 绿肥",
+       "3000G",
+       "初始"
+      ],
+      [
+       "No Rot α 防腐α",
+       "2000G",
+       "初始"
+      ],
+      [
+       "Giantizer 巨化剂",
+       "12000G",
+       "初始"
+      ],
+      [
+       "Formula C",
+       "9800G",
+       "1 扩"
+      ],
+      [
+       "Greenifier+ 绿肥+",
+       "12000G",
+       "1 扩"
+      ],
+      [
+       "No Rot β 防腐β",
+       "8000G",
+       "1 扩"
+      ],
+      [
+       "Minimizer 微化剂",
+       "8000G",
+       "1 扩"
+      ],
+      [
+       "Wettable Powder 可湿粉",
+       "2000G",
+       "1 扩"
+      ],
+      [
+       "The Protein 蛋白剂",
+       "2000000G",
+       "2 扩"
+      ],
+      [
+       "Inteliigencer 智识剂",
+       "2000000G",
+       "2 扩"
+      ],
+      [
+       "Vital Gummi 活力胶",
+       "2000000G",
+       "2 扩"
+      ],
+      [
+       "Heart Drink 心饮",
+       "1500000G",
+       "2 扩"
+      ],
+      [
+       "Love Drink 爱饮",
+       "3000000G",
+       "2 扩"
+      ],
+      [
+       "Inviciroid 无敌剂",
+       "1120000G",
+       "3 扩"
+      ]
+     ]
+    },
+    {
+     "t": "花草 Flowers",
+     "c": [
+      "商品",
+      "售价"
+     ],
+     "r": [
+      [
+       "Toyherb 玩具草",
+       "250G"
+      ],
+      [
+       "Pink Cat 粉猫",
+       "450G"
+      ]
+     ]
+    }
+   ],
+   "notes": [
+    "营养剂价格跨度极大（Formula A 1200G 到 Love Drink 3000000G），照源录入不修正。",
+    "种子名单随委托解锁而增长，更多花种（Autumn Grass、Clover、Emery Flower 等）上架后才有价，未列入。"
+   ]
+  }
+ ]
+};
