@@ -5,6 +5,13 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十六：符文工房 边境（rff）锻造配方接入 craft 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：新建 <code>js/rffforge.js</code>（<code>RFF_FORGE</code>），由 <code>_build_rff_forge.py</code> 从边境专属 <code>runefrontier.fandom.com/wiki/Recipe_Books</code>（WebSearch 缓存核对）整理，<b>7 类 45 条</b>——单手剑（初级＋进阶）、双手剑（初级）、枪、锤、斧、法杖。按「配方书 → 配方 → 材料 → 锻造Lv」录入，书价随大类标（入门 1,000G／法杖 2,000G／进阶单手剑 10,000G）。</p>
+<p><b>数据核验</b>：源表武器类每行末尾两个数字实为同一列锻造等级在文本抽取时的重复——19 处相邻行首尾完全相接（10=10、20=20…27=27），取每行首值即得单列；且与 IGN 边境攻略 REQ SKL 独立核对：Flame Sabre=20、Defender=45、Durandel=48、Dragonslayer=75、Smash Blade=80、Rune Blade=95 全部吻合。法杖类则确是两个数字（魔力＋锻造），无法可靠区分，故只列配方与材料。</p>
+<p><b>渲染</b>：<code>js/pages.js</code> 新增 <code>craftRffHtml()</code>（仿 craftAzumaHtml，只读 RFF_FORGE.families），craft 页分发器加 <code>g.id==='rff'</code> 分支；manifest 注册 rffforge.js（归 rff 包）。未收该项如实注明：进阶双手剑配方书、盾／饰品／药学配方书源页未完整抓取，材料名照录源站英文原名。验证：_verify 356/0、_test_links 0 坏链、_build_chunks 365 页逐字一致、直接渲染确认 7 类全出、无空值异常。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十五：符文工房 海洋（rfo）城镇商店买价接入 shop 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：新建 <code>js/rfoshop.js</code>（<code>RFO_SHOP</code>），由 <code>_build_rfo_shop.py</code> 从 GameFAQs《Rune Factory: Tides of Destiny – Store Guide》(faqs/65623) 与 freyashawk《Tides of Destiny General Guide》交叉整理，<b>4 处设施共 52 条买价</b>——杂货店（食材／饰品）、达达罗斯铁匠铺 Elena（武器／农具／矿石／元素水晶）、教会诊所 Violet（药品／草）、广场摊位 Joe（符文能力，无标价，作说明）。仅记买价不记卖价。</p>

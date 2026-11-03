@@ -7805,6 +7805,7 @@ const PAGES = [
             ${(g && /^rf3/.test(g.id)) ? craftRf3Html() : ''}
             ${(g && /^rf4/.test(g.id)) ? craftRf4Html() : ''}
             ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
+            ${(g && g.id === 'rff') ? craftRffHtml() : ''}
             ${(g && g.id === 'rf2') ? craftRf2Html() : ''}
             ${(g && g.id === 'rf1') ? craftRf1Html() : ''}
             ${(g && g.id === 'azuma') ? craftAzumaHtml() : ''}
@@ -11523,6 +11524,23 @@ function craftAzumaHtml() {
     out += '<h2 class="h2">龙之天地锻造：五类武器，无农具</h2>';
     out += '<p class="p">《符文工房 龙之天地》（2025）的锻造只覆盖<b>五类武器</b>：单手剑、双手剑、双剑、弓、符咒。本作<b>取消了传统农具</b>（锄头／镰刀／水壶），改由「神器」系统替代，所以这一页<b>没有农具锻造</b>。武器配方主要来自各地「祠堂」献舞解锁，再于铁匠铺锻造；表里「买价」为商店／直接购入价，卖价不录。符咒一栏的物理攻击记「—」、数值记在「魔攻」列。</p>';
     out += stat([['武器大类', D.families.length + ' 类'], ['武器配方', famRows + ' 条']]);
+    D.families.forEach(f => {
+        out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
+        out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    });
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。' + E(D.note) + ' 料理配方归到<a href="#/page/cook">料理配方</a>页，本页不收。</div>';
+    return out;
+}
+
+function craftRffHtml() {
+    const D = (typeof RFF_FORGE !== 'undefined') ? RFF_FORGE : null;
+    if (!D) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
+    let out = '';
+    out += '<h2 class="h2">边境锻造：买配方书逐级解锁，五类武器＋法杖</h2>';
+    out += '<p class="p">《符文工房 边境》的锻造靠买「配方书」解锁——入门书 1,000G 一本包办单手剑／双手剑／枪／锤／斧的初级配方；法杖另买 2,000G 的魔法杖书；进阶单手剑再买 10,000G。下表按武器大类排，列「配方／材料／锻造Lv」；法杖因源表技能列有两个数字、无法可靠区分魔力与锻造，故只列配方与材料。</p>';
+    out += stat([['配方大类', D.families.length + ' 类'], ['锻造配方', famRows + ' 条']]);
     D.families.forEach(f => {
         out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
         out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
