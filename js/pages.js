@@ -7590,6 +7590,7 @@ const PAGES = [
             ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
             ${(g && g.id === 'rf2') ? craftRf2Html() : ''}
             ${(g && g.id === 'rf1') ? craftRf1Html() : ''}
+            ${(g && g.id === 'azuma') ? craftAzumaHtml() : ''}
             ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
             <div class="jump">
                 <a href="#/page/recipe">
@@ -11292,6 +11293,23 @@ function craftRf1Html() {
     out += '<p class="p">HP／RP 回复药、异常状态解除药，以及火／水／风／土四元素与作物营养剂。作用是<b>调和素材直接给</b>，等级门槛写在「药学LV」。</p>';
     out += tbl(D.pharmacy.cols.map(E), D.pharmacy.rows.map(r => r.map(E)), { cls: 'rf1craft' });
     out += '<div class="note">源：<b>' + E(D.src) + '</b>。料理（刀／煎锅／锅／烤箱／蒸锅／搅拌器／无厨具）本页不收，归到<a href="#/page/cook">料理配方</a>页。</div>';
+    return out;
+}
+
+function craftAzumaHtml() {
+    const D = (typeof AZUMA_FORGE !== 'undefined') ? AZUMA_FORGE : null;
+    if (!D) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
+    let out = '';
+    out += '<h2 class="h2">龙之天地锻造：五类武器，无农具</h2>';
+    out += '<p class="p">《符文工房 龙之天地》（2025）的锻造只覆盖<b>五类武器</b>：单手剑、双手剑、双剑、弓、符咒。本作<b>取消了传统农具</b>（锄头／镰刀／水壶），改由「神器」系统替代，所以这一页<b>没有农具锻造</b>。武器配方主要来自各地「祠堂」献舞解锁，再于铁匠铺锻造；表里「买价」为商店／直接购入价，卖价不录。符咒一栏的物理攻击记「—」、数值记在「魔攻」列。</p>';
+    out += stat([['武器大类', D.families.length + ' 类'], ['武器配方', famRows + ' 条']]);
+    D.families.forEach(f => {
+        out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
+        out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    });
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。' + E(D.note) + ' 料理配方归到<a href="#/page/cook">料理配方</a>页，本页不收。</div>';
     return out;
 }
 

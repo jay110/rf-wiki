@@ -5,6 +5,14 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十二：龙之天地（azuma）武器锻造配方接入 craft 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：新增 <code>js/azuma_forge.js</code>（<code>AZUMA_FORGE</code>），<b>5 类武器、111 条</b>配方：单手剑 23／双手剑（大剑）24／双剑 21／弓 21／符咒 22，由 <code>_build_azuma_forge.py</code> 从 gametoeasy《符文工房:龙之天地》武器配方五帖（单手剑 post/1814、大剑 post/1815、双剑 post/1813、弓 post/1286、符咒 post/1812，2025-06）解析；官方站 asia.runefactory.com 与 IGN 中国评测交叉确认本作武器仅五类。</p>
+<p><b>渲染</b>：新增 <code>craftAzumaHtml()</code>（仿 <code>craftRf1Html</code> 数据驱动逻辑，改读 <code>AZUMA_FORGE.families</code>；因本作无 <code>accessory</code>／<code>pharmacy</code> 两项，不再渲染这两节），接入 craft 页分发器 <code>g.id==='azuma'</code>；<code>js/azuma_forge.js</code> 注册 <code>_manifest.json</code>（归 azuma 包）。</p>
+<p><b>铁律</b>：只记买价、不记卖价；本作<b>取消传统农具</b>（锄头／镰刀／水壶）改「神器」系统，故无农具锻造，note 已注明；符咒一栏物理攻击记「—」、数值记「魔攻」列；材料列合并为单串（材料 1-4 用「／」连接、无料记「—」），跨源矛盾照录。</p>
+<p><b>校验</b>：_verify 356／0、_test_links 0 坏链、_build_chunks 365 页逐字一致；changelog 加第 182 条。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十一：符文工房5 城镇商店（杂货店／水晶店／锻造屋／诊所／面包店／花店）接入 shop 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：新增 <code>js/rf5shop.js</code>（<code>RF5_SHOP</code>），<b>6 家店、21 个小节、283 条</b>商品行，由 neoseeker（Serendipity／Flowerstruck）＋ game8（The Crystalabra／True Strike Smithy／Sweet Hearth）＋ biligame 中文（Rigbarth Clinic）＋ therunefactory fandom 四源交叉核实：闪亮杂货店（种子 21／杂货 14／蔬菜 13／鱼 10）、克莱斯卓拉水晶店（魔法书 11／符文能力 10／水晶 17／宝石 7）、斯特赖克锻造屋（农具 22／武器 53／防具 24／饰品 29）、里格巴斯诊所（药品 8／花草 2／疫苗 7／治疗 1）、幸せ面包店（配方面包 5／服装 13）、花漾花店（种子 4／营养剂 16／花草 2）。</p>
