@@ -1042,6 +1042,42 @@ img {
     word-break: break-word;
 }
 
+/* RF1 锻造/药学表：窄屏横滑，避免长材料串撑破页面 */
+.rf1craft {
+    overflow-x: auto;
+}
+.rf1craft table {
+    min-width: 30rem;
+}
+@media (max-width: 560px) {
+    .rf1craft table {
+        min-width: 38rem;
+    }
+}
+/* 各系终级素材累计：可折叠块 */
+.rf1craft-detail {
+    margin: 0.6rem 0 1rem;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    background: #f8fafb;
+    padding: 0.4rem 0.7rem;
+}
+.rf1craft-detail > summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--ink-2);
+    padding: 0.25rem 0;
+}
+.rf1craft-detail > summary::marker {
+    font-size: 0.7rem;
+}
+.rf1craft-detail h4.h4 {
+    font-size: 0.74rem;
+    margin: 0.7rem 0 0.3rem;
+    color: var(--ink-1);
+}
+
 .game-card.cur {
     outline: 2px solid #e8c86a;
     outline-offset: -2px;

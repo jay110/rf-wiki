@@ -44,6 +44,7 @@
       "js/rf1mon.js",
       "js/rf1term.js",
       "js/rf1shop.js",
+      "js/rf1craft.js",
       "js/rf1cook.js",
       "js/fishspot_rf1.js",
       "js/crop1.js"
@@ -133,9 +134,9 @@
   },
   "sha": {
     "core": "12f5ca9f5d2a1c0e",
-    "shared": "f66de7ceeb7e503e",
+    "shared": "6a4d3afae8fa1c41",
     "cross": "226db472fe859d8a",
-    "game:rf1": "fe61de707ec9db96",
+    "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "820ea6d4fa19fb6c",
     "game:rf3": "40f8a6c782a20ef1",
     "game:rff": "6a6e6f0d54bfc863",

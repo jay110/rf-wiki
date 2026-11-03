@@ -11353,6 +11353,7 @@ const PAGES = [
             ${(g && /^rf3/.test(g.id)) ? craftRf3Html() : ''}
             ${(g && /^rf4/.test(g.id)) ? craftRf4Html() : ''}
             ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
+            ${(g && g.id === 'rf1') ? craftRf1Html() : ''}
             ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
             <div class="jump">
                 <a href="#/page/recipe">
@@ -15028,6 +15029,36 @@ function rfoStyleHtml() {
 /* 符文工房 4 的锻造：成品上限由「材料等级总数」与「材料稀有度总数」两个数决定，
    强化栏共九格。源：《RF4 装备锻造/强化详解》（百度贴吧·呼兒將出換美酒）。
    数据由 _build_rf4_forge.py 从源文本拆出，存在 RF4_FORGE 里。 */
+function craftRf1Html() {
+    const D = (typeof RF1_CRAFT !== 'undefined') ? RF1_CRAFT : null;
+    if (!D) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
+    let out = '';
+    out += '<h2 class="h2">一代锻造：七大类装备，逐级进化</h2>';
+    out += '<p class="p">RF1 的锻造是「拿上一阶的成品当下一阶的素材」——每把武器、每件农具都不是孤立配方，而是一条<b>进化链</b>。下面是源里按大类排的全表，<b>照原文顺序</b>，连「初始素材」那行也留着。源里长枪系、战锤系各有一处换行断掉的效果词（「封印攻击」「毒素攻击」），已并入上一行的「附加效果」，不另起、不丢字。</p>';
+    out += stat([['装备大类', D.families.length + ' 系'], ['锻造配方', famRows + ' 条'], ['饰品·睡袋', D.accessory.rows.length + ' 条'], ['药学', D.pharmacy.rows.length + ' 条']]);
+    D.families.forEach(f => {
+        out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
+        out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    });
+    out += '<details class="rf1craft-detail"><summary>各系「终级」配方所需全部素材（从最初级算起）</summary>';
+    D.families.forEach(f => {
+        if (!f.totals.length) return;
+        out += '<h4 class="h4">' + E(f.name.replace('系', '')) + '</h4>';
+        out += tbl(['名称', '所需素材一览'], f.totals.map(t => [E(t[0]), E(t[1])]), { cls: 'rf1craft', leftFirst: true, left: [1] });
+    });
+    out += '</details>';
+    out += '<h3 class="h3">饰品与睡袋（' + D.accessory.rows.length + ' 条）</h3>';
+    out += '<p class="p">指轮、腕轮、胸针、吊坠、靴子、腰带与睡袋——大多是<b>抗性／属性加成</b>，毕业向的「幸运指轮」「星之吊坠」都在这一栏。</p>';
+    out += tbl(D.accessory.cols.map(E), D.accessory.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    out += '<h3 class="h3">药学（' + D.pharmacy.rows.length + ' 条）</h3>';
+    out += '<p class="p">HP／RP 回复药、异常状态解除药，以及火／水／风／土四元素与作物营养剂。作用是<b>调和素材直接给</b>，等级门槛写在「药学LV」。</p>';
+    out += tbl(D.pharmacy.cols.map(E), D.pharmacy.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。料理（刀／煎锅／锅／烤箱／蒸锅／搅拌器／无厨具）本页不收，归到<a href="#/page/cook">料理配方</a>页。</div>';
+    return out;
+}
+
 function craftRf4Html() {
     const D = (typeof RF4_FORGE !== 'undefined') ? RF4_FORGE : null;
     if (!D) return '';
