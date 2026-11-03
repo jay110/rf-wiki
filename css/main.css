@@ -1031,6 +1031,14 @@ img {
     font-size: 0.6rem;
     opacity: 0.8;
     margin-top: 0.2rem;
+    line-height: 1.25;
+    word-break: break-word;
+}
+.game-card .gc-date {
+    font-size: 0.58rem;
+    opacity: 0.72;
+    margin-top: 0.1rem;
+    line-height: 1.25;
 }
 
 .game-card.cur {

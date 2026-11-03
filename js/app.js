@@ -188,7 +188,7 @@ function viewWelcome() {
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
-                <div class="wcard-meta">${x.date.slice(0, 4)}　${platShort(x.plat)}</div>
+                <div class="wcard-meta">${x.date.slice(0, 4)}　${platAll(x.plat)}${x.orig ? `　原版${x.orig.date.slice(0, 4)}` : ''}</div>
             </a>`;}).join('')}
     </div>
 
@@ -916,7 +916,8 @@ function viewGames() {
                style="background:linear-gradient(140deg, ${g.grad[0]}, ${g.grad[1]})">
                 <div class="gc-no ${g.no.length > 1 ? 'long' : ''}">${g.no}</div>
                 <div class="gc-name">${g.name}</div>
-                <div class="gc-sub">${g.plat.split('／')[0]}　${g.date.slice(0, 7)}</div>
+                <div class="gc-sub">${platAll(g.plat)}</div>
+                <div class="gc-date">${g.date.slice(0, 7)}${g.orig ? `　原版 ${g.orig.date.slice(0, 7)}` : ''}</div>
             </a>`).join('')}
     </div>
     <div class="copyright">
