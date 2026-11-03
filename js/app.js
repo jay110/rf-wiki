@@ -254,8 +254,19 @@ function viewHome(g) {
     </div>
     ${g.orig ? `
     <div class="verhist">
-        <div class="vh-row"><span class="vh-k">原版</span><span class="vh-v">${g.orig.plat}　${g.orig.date.replace(/-/g, '.')}</span></div>
-        <div class="vh-row"><span class="vh-k">${escHtml((g.name.split('/')[1] || '本作').trim())}</span><span class="vh-v">${platAll(g.plat)}　${g.date.replace(/-/g, '.')}</span></div>
+        <div class="vh-title">版本与发行</div>
+        <div class="vh-sec">
+            <div class="vh-sec-h">原版</div>
+            <div class="vh-row"><span class="vh-k">平台</span><span class="vh-v">${platAll(g.orig.plat)}</span></div>
+            <div class="vh-row"><span class="vh-k">时间</span><span class="vh-v">${g.orig.date.replace(/-/g, '.')}</span></div>
+        </div>
+        <div class="vh-sec">
+            <div class="vh-sec-h">${escHtml((g.name.split('/')[1] || '本作').trim())}</div>
+            <div class="vh-row"><span class="vh-k">发布平台</span><span class="vh-v">${platAll(g.plat)}</span></div>
+            <div class="vh-row"><span class="vh-k">发布时间</span><span class="vh-v">${g.date.replace(/-/g, '.')}</span></div>
+            <div class="vh-row"><span class="vh-k">开发商</span><span class="vh-v">${escHtml(g.dev)}</span></div>
+            <div class="vh-row"><span class="vh-k">发行商</span><span class="vh-v">${escHtml(g.pub)}</span></div>
+        </div>
         ${g.ver ? `<div class="vh-note">${escHtml(g.ver)}</div>` : ''}
     </div>` : ''}
     <div class="search">

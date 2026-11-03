@@ -351,6 +351,24 @@ img {
     font-size: 0.64rem;
     color: var(--ink-4);
     line-height: 1.55;
+    border-top: 1px solid var(--line-2);
+}
+.verhist .vh-title {
+    background: var(--ink-3);
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.42rem 0.7rem;
+}
+.verhist .vh-sec + .vh-sec { border-top: 1px solid var(--line-2); }
+.verhist .vh-sec-h {
+    background: #eef3f4;
+    color: var(--ink-2);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.32rem 0.7rem;
 }
 
 /* ============ 图标网格 ============ */
