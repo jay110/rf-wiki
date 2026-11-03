@@ -11538,10 +11538,24 @@ function craftRffHtml() {
     const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
     let out = '';
-    out += '<h2 class="h2">边境锻造：买配方书逐级解锁，五类武器＋法杖</h2>';
-    out += '<p class="p">《符文工房 边境》的锻造靠买「配方书」解锁——入门书 1,000G 一本包办单手剑／双手剑／枪／锤／斧的初级配方；法杖另买 2,000G 的魔法杖书；进阶单手剑再买 10,000G。下表按武器大类排，列「配方／材料／锻造Lv」；法杖因源表技能列有两个数字、无法可靠区分魔力与锻造，故只列配方与材料。</p>';
-    out += stat([['配方大类', D.families.length + ' 类'], ['锻造配方', famRows + ' 条']]);
+    const G_W = ['单手剑', '双手剑', '长枪', '战锤', '战斧', '法杖'];
+    const G_F = ['农具'];
+    const G_A = ['饰品', '头饰', '颈饰', '服饰', '指环与手环', '玩具', '泳装'];
+    const G_P = ['药学'];
+    const inG = (f, ks) => ks.some(k => f.name.indexOf(k) === 0);
+    const grp = ks => D.families.filter(f => inG(f, ks)).reduce((a, f) => a + f.rows.length, 0);
+    out += '<h2 class="h2">边境锻造：买配方书逐级解锁</h2>';
+    out += '<p class="p">《符文工房 边境》的配方靠买「配方书」解锁，书本身标着价格与解锁阶段：入门锻造书 1,000G 一本包办单手剑／双手剑／枪／锤／斧的初级配方，法杖书 2,000G；进阶书按武器各买一本（8,000～10,000G），农具进阶书 12,000G。饰品走 Crafting（制作）技能、药学走 Pharmacy（药学）技能，跟锻造不是同一条技能线，本页一并收。</p>';
+    out += '<p class="p">技能按源表拆两列：<b>锻造Lv</b>是做这件东西本身要的等级，<b>需求武器／魔力／工具Lv</b>是源表最右列的配套门槛——两者不等时（Broadsword 锻造 1／武器 3、Gungnir 锻造 94／需求 99）必须分开看。同一配方在表里出现两次，是源站并列的两种材料组合。</p>';
+    out += stat([['配方书', D.families.length + ' 本'], ['配方合计', famRows + ' 条'],
+        ['武器', grp(G_W) + ' 条'], ['农具', grp(G_F) + ' 条'],
+        ['饰品', grp(G_A) + ' 条'], ['药学', grp(G_P) + ' 条']]);
+    let curGrp = '';
     D.families.forEach(f => {
+        const c = inG(f, G_W) ? '武器（锻造）'
+            : inG(f, G_F) ? '农具（锻造）'
+                : inG(f, G_A) ? '饰品（Crafting 制作）' : '药学（Pharmacy）';
+        if (c !== curGrp) { curGrp = c; out += '<h2 class="h2">' + E(c) + '</h2>'; }
         out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
         out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
     });

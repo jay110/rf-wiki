@@ -5,6 +5,12 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十八：符文工房 边境（rff）锻造配方补全（22 本配方书 249 条）</h2>
+<p>边境的 craft 页此前只有 7 类 45 条，note 里挂着「进阶双手剑、盾／饰品／药学配方书未收」。这次把源页整本抓下来补全，也顺手纠掉一处旧错。</p>
+<p><b>数据</b>：重写 <code>_build_rff_forge.py</code> 生成 <code>js/rffforge.js</code>（<code>RFF_FORGE</code>，LF），源为 runefrontier 维基 Recipe Books 页——<code>fandom.com</code> 域名在本环境被网络策略拦截，改用 <code>wikia.com</code> 旧域名整页抓取成功。<b>22 本配方书 249 条</b>：武器 87（单手剑初 4／进 13、双手剑初 4／进 12、长枪初 4／进 13、战锤初 4／进 9、战斧初 5／进 8、法杖 11）、农具 54、饰品 88、药学 20。</p>
+<p><b>纠错</b>：旧版把源表<b>最右一列（Needed weapon skill）当成了「锻造Lv」</b>，两者多数行数值相同所以没暴露——但 Broadsword 实际锻造只要 1、武器技能要 3，旧数据记成了 3。这次四列齐全，拆成「锻造Lv」与「需求武器／魔力／工具Lv」两列，Gungnir（94／99）、Great Hammer（30／38）这类差距也如实分开。法杖那两列（锻造 2～75／魔力 1～99）上一版因无法区分而整列丢弃，现已补回。</p>
+<p><b>照录不臆造</b>：同一配方在表里出现两次（Tomahawk、Shiny Blade、Feathered Hat、Water Cape、Critical 7、Whale Hat、Gae Bolg、Myurnil、Flood Hammer、Flame Axe、Corsage 等）是源站并列的两种材料组合，不合并也不删；《Farm master》源表最右列标题字面写 Needed magic skill，按农具语境照录并在 note 注明疑为笔误；材料名保留英文原名未译。<b>源页没有任何盾／防具配方书</b>——边境防具在 craft table 做、不走锻造，故本页无护盾系，note 已写明。</p>
+<p><b>渲染</b>：<code>craftRffHtml()</code> 改为按「武器（锻造）／农具（锻造）／饰品（Crafting 制作）／药学（Pharmacy）」四组加小标题，统计块给出配方书本数与四条技能线的条数；每族自带表头，故武器四列、农具五列、饰品与药学三列并存。<b>验证</b>：_verify 356／0、_test_links 0 坏链、_build_chunks 365 页逐字一致；直接渲染 craft/rff 由 8,565 增至 41,432 字符、22 张表、271 个表格行（249 条＋22 行表头）、无空值。</p>
 <h2 class="h2">2026-11-03　第一百八十七：符文工房 海洋（rfo）锻造配方表接入 craft 页（10 类 147 条）</h2>
 <p>海洋的 craft 页此前只讲「物品等级 − 技能等级」的合成难度机制和 ☆ 优质品，<b>没有一张配方表</b>——是八作里最后一块薄的地方。这次补上。</p>
 <p><b>数据</b>：新建 <code>_build_rfo_forge.py</code> 生成 <code>js/rfoforge.js</code>（<code>RFO_FORGE</code>，LF），单一来源 crimsontear.com《Rune Factory: Tides of Destiny》Game Guide 的 <code>recipes/forge</code> 页。<b>10 类 147 条</b>：斧 20、双剑 19、双手剑 19、长枪 19、武士刀 19、锤 19、法杖 14、魔杖 5、镰刀 8、钓竿 5。</p>

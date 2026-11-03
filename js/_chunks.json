@@ -141,17 +141,17 @@
     ]
   },
   "sha": {
-    "core": "c8d286f1a3c9b8d6",
-    "shared": "fb95bf1b7378a332",
+    "core": "5ae7cab10b351e69",
+    "shared": "1b2b1ba8d25b5772",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "40f8a6c782a20ef1",
-    "game:rff": "c994bd08f66c7c35",
+    "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "c1a5d66ff3d8302f",
     "game:rf4": "d53decc02743cf38",
     "game:rf5": "67b8f0237e8cd311",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "06d8b65f5de6dc2e"
+    "page:changelog": "c8bdc184c9586d6d"
   }
 }
