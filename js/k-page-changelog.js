@@ -5,6 +5,14 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十三：符文工房5 锻造／药学基础配方接入 craft 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：复用既有 <code>js/recipes.js</code> 的 <code>RECIPE</code>（RF5 全配方 661 条），取其中<b>锻造／药学部分</b>——武器八类（单手剑／双手剑／双剑／枪／斧／锤／拳／魔杖）、防具四类（盾／铠甲／帽子／鞋子）、饰品、农具、药学——共 <b>477 条</b>，与「配方大全」页同源，未新增任何外部抓取。</p>
+<p><b>渲染</b>：新增 <code>craftRf5Html()</code>，按「武器／防具／饰品／农具／药学」五组、组内按设计图小类分表，列「配方／技能Lv／素材」，复用 <code>RECIPE_CATS</code>／<code>RECIPE_CNT</code> 与 recipe 页同一套素材拼法；craft 页分发器对 <code>g.id==='rf5'</code> 改调 <code>craftRf5Html()</code>，原「倍铁」引导段仅保留在「无指定作」的 craft 总览（<code>!g</code>），RF5 自身由本函数自带倍铁说明并链到装备打造页。</p>
+<p><b>说明</b>：RF5 的锻造分两层——基础配方（本页）＋ 倍铁强化（毕业套页），故本页只列基础配方、不做强化；<b>技能等级不够做不出</b>、成品等级由素材等级与技能等级共定，与 recipe 页口径一致。</p>
+<p><b>校验</b>：_verify 356／0、_test_links 0 坏链、_build_chunks 365 页逐字一致；changelog 加第 183 条。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十二：龙之天地（azuma）武器锻造配方接入 craft 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：新增 <code>js/azuma_forge.js</code>（<code>AZUMA_FORGE</code>），<b>5 类武器、111 条</b>配方：单手剑 23／双手剑（大剑）24／双剑 21／弓 21／符咒 22，由 <code>_build_azuma_forge.py</code> 从 gametoeasy《符文工房:龙之天地》武器配方五帖（单手剑 post/1814、大剑 post/1815、双剑 post/1813、弓 post/1286、符咒 post/1812，2025-06）解析；官方站 asia.runefactory.com 与 IGN 中国评测交叉确认本作武器仅五类。</p>

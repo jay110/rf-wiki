@@ -11670,7 +11670,8 @@ const PAGES = [
             ${(g && g.id === 'rf2') ? craftRf2Html() : ''}
             ${(g && g.id === 'rf1') ? craftRf1Html() : ''}
             ${(g && g.id === 'azuma') ? craftAzumaHtml() : ''}
-            ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
+            ${(!g) ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
+            ${(g && g.id === 'rf5') ? craftRf5Html() : ''}
             <div class="jump">
                 <a href="#/page/recipe">
                     <div class="jp-t">配方大全</div>
@@ -15389,6 +15390,38 @@ function craftAzumaHtml() {
         out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
     });
     out += '<div class="note">源：<b>' + E(D.src) + '</b>。' + E(D.note) + ' 料理配方归到<a href="#/page/cook">料理配方</a>页，本页不收。</div>';
+    return out;
+}
+
+function craftRf5Html() {
+    const rec = (typeof RECIPE !== 'undefined') ? RECIPE : [];
+    const cats = (typeof RECIPE_CATS !== 'undefined') ? RECIPE_CATS : [];
+    const cnt = (typeof RECIPE_CNT !== 'undefined') ? RECIPE_CNT : [];
+    if (!rec.length) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const short = s => s.replace(/(食谱|设计图|配方)$/, '');
+    const kindOf = s => /^(盾|铠甲|帽子|鞋子)/.test(short(s)) ? '防具'
+        : s.indexOf('农具') >= 0 ? '农具'
+        : s.indexOf('饰品') >= 0 ? '饰品'
+        : s.indexOf('药学') >= 0 ? '药学' : '武器';
+    const idxByKind = {};
+    cats.forEach((c, i) => { if (i >= 7) (idxByKind[kindOf(c)] = idxByKind[kindOf(c)] || []).push(i); });
+    const forgeCount = cats.reduce((a, c, i) => i >= 7 ? a + (cnt[i] || 0) : a, 0);
+    let out = '';
+    out += '<h2 class="h2">五代锻造：先做配方，再用倍铁乘到顶</h2>';
+    out += '<p class="p">RF5 的「锻造」分两层：<b>第一层是配方</b>——下面的武器／防具／饰品／农具／药学设计图，靠技能等级解锁、凑齐素材做出成品；<b>第二层是强化</b>——把成品丢进强化栏，用「倍铁／10 倍铁／不明物体」把数值乘上去，那套算法单独放在<a href="#/page/gear">装备打造·毕业套</a>页。所以这一页只列<b>基础配方</b>，不做强化。</p>';
+    out += stat([['锻造·药学配方', forgeCount + ' 条'], ['武器类型', (idxByKind['武器'] || []).length + ' 类'], ['防具', (idxByKind['防具'] || []).length + ' 类'], ['饰品·农具·药学', ((idxByKind['饰品'] || []).length + (idxByKind['农具'] || []).length + (idxByKind['药学'] || []).length) + ' 类']]);
+    ['武器', '防具', '饰品', '农具', '药学'].forEach(k => {
+        const idxs = idxByKind[k] || [];
+        if (!idxs.length) return;
+        out += '<h3 class="h3">' + E(k) + '（' + idxs.reduce((a, i) => a + (cnt[i] || 0), 0) + ' 条）</h3>';
+        idxs.forEach(i => {
+            const rows = rec.filter(x => x.c === i).map(x => [E(x.n), E(x.lv), E(x.m.join('、'))]);
+            out += '<h4 class="h4">' + E(short(cats[i])) + '（' + (cnt[i] || 0) + ' 条）</h4>';
+            out += tbl(['配方', '技能Lv', '素材'], rows, { cls: 'rf1craft' });
+        });
+    });
+    out += '<div class="note">数据取自《符文工房5 全配方》表（<code>js/recipes.js</code> 的 <code>RECIPE</code>，661 条中的锻造／药学部分），与<a href="#/page/recipe">配方大全</a>页同源；配方名沿用汉化版译名，与官方中文版可能个别差异。<b>技能等级不够做不出</b>，成品实际等级由素材等级与技能等级共同决定。</div>';
     return out;
 }
 
