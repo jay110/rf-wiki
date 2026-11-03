@@ -28,6 +28,7 @@
     "js/bd_ext.js",
     "js/faces.js",
     "js/sched.js",
+    "js/furniture.js",
     "js/pages.js"
   ],
   "cross": [
@@ -147,8 +148,8 @@
     ]
   },
   "sha": {
-    "core": "9278a8c911173a76",
-    "shared": "5b5d3cf61b16c7a4",
+    "core": "80160aaa1a3b37ec",
+    "shared": "6139055e407c9b60",
     "cross": "226db472fe859d8a",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
@@ -158,6 +159,6 @@
     "game:rf4": "5d468d1d94dc4342",
     "game:rf5": "766394d24d1376c0",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "d6c3ec39343ab2c1"
+    "page:changelog": "2de681de3f33b05a"
   }
 }

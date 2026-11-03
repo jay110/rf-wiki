@@ -6178,6 +6178,177 @@ function farmDeepHtml(id) {
     return '';
 }
 
+function decorateDeepHtml(id) {
+    if (typeof FURN === 'undefined' || !FURN) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const num = v => Number(String(v == null ? '' : v).replace(/[^0-9]/g, '')) || 0;
+    const G = v => E(v) + 'G';
+    const D = v => (v == null || v === '—') ? '—' : E(v);
+
+    if (id === 'rf4') {
+        const R = FURN.rf4.rows;
+        const by = m => R.filter(r => r[0] === m);
+        const kitchen = by('食堂·『伯克利奴的厨房』');
+        const store = by('『真心诚意杂货店』');
+        const fshop = by('家具店的辉夜');
+        const cloth = by('服装店的枫');
+        const cheap = a => a.reduce((x, y) => num(y[3]) < num(x[3]) ? y : x);
+        const dear = a => a.reduce((x, y) => num(y[3]) > num(x[3]) ? y : x);
+        const pick = (a, k) => a.filter(r => r[1] === k)[0] || [];
+        const lic = kitchen.filter(r => r[2] === '执照').length;
+        const frozen = kitchen.filter(r => r[2] === '成功制作1次料理').length;
+        const dolls = fshop.filter(r => num(r[3]) === 800).length;
+        const pots = fshop.filter(r => num(r[3]) === 700).length;
+        const shirts = cloth.filter(r => num(r[3]) === 2800).length;
+        const bed = pick(store, '双人床'), cal = pick(store, '日历');
+        const pair6000 = store.filter(r => num(r[3]) === 6000);
+        const hayS = pick(store, '小牧草箱'), hayL = pick(store, '大牧草箱');
+        const box = pair6000[0] || ['', '—', '—', '—', '—', '—'], keep = pair6000[1] || ['', '—', '—', '—', '—', '—'];
+        const wMax = store.reduce((x, y) => num(y[4]) > num(x[4]) ? y : x);
+        const sMax = store.reduce((x, y) => num(y[5]) > num(x[5]) ? y : x);
+        const matRows = (a, withUnlock) => a.map(r => withUnlock
+            ? [E(r[1]), D(r[2]), G(r[3]), D(r[4]), D(r[5])]
+            : [E(r[1]), G(r[3]), D(r[4]), D(r[5])]);
+
+        return `
+        <h2 class="h2">本作 ${R.length} 件家具与成衣，分四家卖</h2>
+        <p class="p">先说一件容易搞混的事：<b>本作的「装饰台」不做家具</b>。它是做饰品的工作台，在锻造店买、要过「装饰许可」，配方靠 ${G('150')} 的「装饰配方面包」开——跟本页的桌子床柜子是两条线。家具没有制作入口，<b>只能买</b>，而且分散在四个地方：餐厅卖料理台与厨具、杂货店卖功能性家具、家具店卖纯装饰、服装店卖成衣。四家计价方式还不一样——<b>杂货店的 ${store.length} 件全都要木材＋石材</b>，家具店的 ${fshop.length} 件只收钱。所以「攒钱」和「攒木头」是两条平行的准备线。</p>
+        ${stat([
+            ['餐厅 · 料理台', kitchen.length + ' 件'],
+            ['杂货店 · 家具', store.length + ' 件'],
+            ['家具店 · 装饰', fshop.length + ' 件'],
+            ['服装店 · 成衣', cloth.length + ' 件'],
+        ])}
+        <h2 class="h2">餐厅：${kitchen.length} 件料理台，只有第一件是白送的</h2>
+        <p class="p">第一件徒手调理台是开局白送的，其余 ${kitchen.length - 1} 件分两道门槛：<b>${lic} 件等执照</b>，<b>${frozen} 台冰箱等「成功制作 1 次料理」</b>。注意冰箱<b>不看执照</b>——执照到手后先随便做一道菜，两台冰箱就一起开了；反过来只拿执照不做菜，货架上会一直少这两格。</p>
+        ${tbl(['商品', '解锁', '价格', '木材', '石材'], matRows(kitchen, true), { leftFirst: true })}
+        <h2 class="h2">杂货店：${store.length} 件家具，全部要木材＋石材</h2>
+        <p class="p">这一批是<b>功能性</b>家具：睡觉、储物、放武器农具、出货箱、牧草桶、肥料盒，全靠这里。买价之外还要付木材与石材，两样都得砍树挖石——所以杂货店门口真正缺的往往不是钱。</p>
+        ${tbl(['商品', '价格', '木材', '石材'], matRows(store, false), { leftFirst: true })}
+        <p class="p">源表里能直接读出来的几处坑：<b>${E(box[1])}与${E(keep[1])}同价 ${G('6000')}</b>，材料却正好反过来（${E(box[1])} 木材 ${box[4]}／石材 ${box[5]}，${E(keep[1])} 木材 ${keep[4]}／石材 ${keep[5]}）——缺木头先做${E(keep[1])}，缺石头先做${E(box[1])}。<b>日历只要木材 ${cal[4]}、石材 ${cal[5]}</b>，是全店最便宜的一件，但没有任何储物功能。<b>${E(hayL[1])} ${G(hayL[3])} 比 ${E(hayS[1])} ${G(hayS[3])} 还便宜</b>，源表就是这么写的，不是笔误照抄——买之前别想当然。材料吃得最狠的两件是<b>${E(wMax[1])}</b>（木材 ${wMax[4]}）与<b>${E(sMax[1])}</b>（石材 ${sMax[5]}）。</p>
+        <div class="note">全店最贵的是<b>${E(dear(store)[1])}</b>：${G(dear(store)[3])}，材料 木材 ${dear(store)[4]}／石材 ${dear(store)[5]}，解锁条件挂在委托「${E(dear(store)[2])}」上。第二贵的是床——<b>双人床 ${G('30000')}</b>（木材 ${bed[4]}／石材 ${bed[5]}），也是这家店里唯一一张床。</div>
+        <h2 class="h2">家具店「辉夜」：${fshop.length} 件，只收钱</h2>
+        <p class="p">这一家卖的以装饰为主——椅子、桌子、玩偶、盆栽、摆件、杂物，材料两列整列是破折号——<b>不用木材也不用石材，给钱就行</b>。价钱跨度极大：最便宜 ${E(cheap(fshop)[1])} ${G(cheap(fshop)[3])}，最贵 ${E(dear(fshop)[1])} ${G(dear(fshop)[3])}，相差 ${Math.round(num(dear(fshop)[3]) / num(cheap(fshop)[3]))} 倍。</p>
+        ${tbl(['商品', '价格'], fshop.map(r => [E(r[1]), G(r[3])]), { leftFirst: true })}
+        <p class="p">定价是成组的：<b>${dolls} 个玩偶一律 ${G('800')}</b>（苹苹果、莫可莫可、奇罗利、鸭子、狼），<b>${pots} 件盆栽一律 ${G('700')}</b>（春夏秋冬四季＋仙人掌）——想凑收集，玩偶一件 800 是全店最便宜的装饰。摆件三档：雪人 ${G('14000')}／可爱的塑像 ${G('28000')}／柱子塑像 ${G('32000')}。</p>
+        <h2 class="h2">服装店「枫」：${cloth.length} 件成衣</h2>
+        <p class="p">源表把这批跟家具列在同一张表里，实际是<b>穿在身上的</b>，不是摆件，所以防具页里查不到它们。价位三档：睡衣与泳装 ${G('980')}／${G('1500')}，日常穿着 ${G('2800')}（共 ${shirts} 件彩色 T 恤），布偶装 ${G('24000')} 与士兵服 ${G('36000')}。</p>
+        ${tbl(['商品', '价格'], cloth.map(r => [E(r[1]), G(r[3])]), { leftFirst: true })}
+        <div class="note">本页只记买价。源表还有一列「数量」，${R.length} 行全是「—」，没有实质内容，未录；卖价也一并不取——想看回源站。</div>
+        <div class="jump">
+            <a href="#/page/shop"><div class="jp-t">商店</div><div class="jp-s">四家店的营业时间与全部商品</div></a>
+            <a href="#/page/armor"><div class="jp-t">防具</div><div class="jp-s">铠甲、帽子、靴、盾与饰品</div></a>
+        </div>`;
+    }
+
+    if (id === 'rff') {
+        const ex = FURN.rff.expand.rows;
+        const I = FURN.rff.items.rows;
+        const cat = c => I.filter(r => r[0] === c);
+        const fur = cat('家具'), cook = cat('厨具'), mach = cat('加工机');
+        const priceOf = a => a.map(r => num(r[2]));
+        const gated = fur.filter(r => r[4] !== '—');
+        const gateCount = k => gated.filter(r => r[4] === k).length;
+        const cookGate = cook.filter(r => r[4] !== '—');
+        const allHol = I.filter(r => r[3] === '所有祝日').length;
+        const daySet = [];
+        I.forEach(r => r[3].split('、').forEach(d => {
+            const m = d.match(/^(\d+)日$/);
+            if (m && daySet.indexOf(Number(m[1])) < 0) daySet.push(Number(m[1]));
+        }));
+        daySet.sort((a, b) => a - b);
+        const tiers = [...new Set(priceOf(cook))].sort((a, b) => a - b);
+        /* 厨具按「去掉档名前缀」归类，顺手记下每一类的供货日——源表里五类的日子各不相同 */
+        const ZH = { 'フライパン': '平底锅', '鍋': '锅', 'オーブン': '烤箱', 'ミキサー': '搅拌器', '蒸し器': '蒸笼' };
+        const cookKind = [];
+        const cookDays = {};
+        cook.forEach(r => {
+            const k = r[1].replace(/^(お手軽|本格|伝説|鉄人|宮廷|神秘|名人)の?/, '');
+            if (cookDays[k] === undefined) { cookDays[k] = []; cookKind.push(k); }
+            if (cookDays[k].indexOf(r[3]) < 0) cookDays[k].push(r[3]);
+        });
+        const dayTxt = k => cookDays[k].join('／');
+        const furPeek = p => fur.filter(r => num(r[2]) === p).map(r => r[1]);
+        const mat = a => a.map(r => [E(r[1]), G(r[2]), D(r[3]), D(r[4])]);
+        const exRow = k => ex.filter(r => r[0] === k)[0] || [];
+
+        return `
+        <h2 class="h2">先扩建房子，才轮得到买家具</h2>
+        <p class="p">本作家具有一个硬前提：<b>房子没扩建，那一批家具根本不上货架</b>。扩建本身也是「金钱＋木材」，所以前期真正的瓶颈是木头——砍树、买木材、让魔物去砍，三条路都得用上。扩建共 ${ex.length} 档，含魔物小屋的两级扩建。</p>
+        ${tbl(['种类', '金钱', '木材'], ex.map(r => [E(r[0]), G(r[1]), E(r[2])]), { leftFirst: true })}
+        <p class="p">最贵的是<b>2 楼卧室 ${G(exRow('2楼卧室')[1])}＋木材 ${exRow('2楼卧室')[2]}</b>，它也是家具解锁的总闸——下面 ${gated.length} 件有前置的家具里，有 ${gateCount('扩建2楼寝室')} 件卡在它后面。</p>
+        <h2 class="h2">家具 ${fur.length} 件：${G(Math.min.apply(null, priceOf(fur)))} 到 ${G(Math.max.apply(null, priceOf(fur)))}</h2>
+        <p class="p">全部由<b>卢特</b>一家卖，而且<b>只在祝日摆摊</b>。源表给的售卖日只出现 ${daySet.join('／')} 这 ${daySet.length} 天，另有 ${allHol} 条直接写「所有祝日」——反过来说，本作的祝日就是这 ${daySet.length} 天，错过一天要等六天。价钱按功能分层：${G('500')} 一档 ${furPeek(500).length} 件（五张挂画加一台小冰箱）、${G('10000')} 一档 ${furPeek(10000).length} 件（桌子、收纳箱、窗帘、大冰箱）、${G('20000')} 一档只有两张床，最贵的 ${G('28000')} 是 ${furPeek(28000).map(E).join('、')}。</p>
+        ${tbl(['商品', '价格', '售卖日', '解锁'], mat(fur), { leftFirst: true })}
+        <p class="p">看「解锁」那一列就知道这批家具其实是<b>剧情进度表</b>：${gated.length} 件有前置——「扩建2楼寝室」${gateCount('扩建2楼寝室')} 件（双人床与五张挂画）、「扩建厨房后」${gateCount('扩建厨房后')} 件、「扩建锻造房间后」${gateCount('扩建锻造房间后')} 件、「扩建调合房间后」${gateCount('扩建调合房间后')} 件；剩下两件最狠，<b>儿童床要结婚后、儿童玩具箱要怀孕后</b>，进度不到就是买不到。</p>
+        <h2 class="h2">厨具 ${cook.length} 件：五类，每类三档，价阶固定</h2>
+        <p class="p">平底锅、锅、烤箱、搅拌器、蒸笼各三档，<b>价格一律 ${tiers.map(G).join('／')}</b>，档名却各不相同（传说／铁人／宫廷／神秘／名人）——名字花，价阶是死的，每一类都是「お手軽 → 本格 → 顶级」这三级。供货日按类分开：${cookKind.map(k => `${ZH[k] || k} ${dayTxt(k)}`).join('；')}。也就是说<b>同一天去只买得到其中几类</b>，别指望一趟买齐。</p>
+        ${tbl(['商品', '价格', '售卖日', '解锁'], mat(cook), { leftFirst: true })}
+        <div class="note">${cook.length} 件里有 ${cookGate.length} 件标了「扩建厨房后」——${cookGate.map(r => E(r[1])).join('、')}，都是各类里最便宜的「お手軽」档。也就是说<b>厨房没盖出来时，这三台是真的不出现</b>；其余 ${cook.length - cookGate.length} 台随时可买。厨房本身要 ${G(exRow('厨房')[1])}＋木材 ${exRow('厨房')[2]}。</div>
+        <h2 class="h2">加工机 ${mach.length} 件：把原料变成材料</h2>
+        <p class="p">四台机器分别做种子、酸奶、毛线球、奶酪，${mach.every(r => r[4] === '—') ? '都没有解锁条件' : '解锁条件见下表'}，${mach.every(r => r[3] === '所有祝日') ? '四个都写着「所有祝日」，祝日去就一定买得到' : '售卖日见下表'}。产出直接喂给料理与锻造，属于「买了就一直在用」的那类家具。</p>
+        ${tbl(['商品', '价格', '售卖日', '解锁'], mat(mach), { leftFirst: true })}
+        <div class="note">这批商品名<b>源站仍是日文原名</b>（大きな収納箱、ダブルベッド 这类），本站没有逐条核到官方汉化译名，所以照录原文、不擅自套译——按价格和类别对号，别按译名去搜。</div>
+        <div class="jump">
+            <a href="#/page/farm"><div class="jp-t">农场与田地</div><div class="jp-s">扩建之后能用上的田地、农药与野外田</div></a>
+            <a href="#/page/shop"><div class="jp-t">商店</div><div class="jp-s">卢特与各店铺的营业时间</div></a>
+        </div>`;
+    }
+
+
+    if (id === 'rf5') {
+        const R = FURN.rf5.rows;
+        const num = v => Number(String(v == null ? '' : v).replace(/[^0-9]/g, '')) || 0;
+        const WORK = ['制药台', '锻造台', '装饰台', '徒手料理台', '菜刀', '平底锅', '搅拌机', '烤箱', '蒸笼', '锅子'];
+        const STORE = ['小型冰箱', '豪华冰箱', '书架', '收纳箱', '武器库', '农具箱', '衣柜', '小牧草桶', '牧草柜', '肥料盒', '出货箱', '汲水池', '木材、石材架'];
+        const NAME = { '工作台与厨具': WORK, '储物与生活': STORE };
+        const groupOf = n => {
+            for (const k in NAME) if (NAME[k].indexOf(n) >= 0) return k;
+            return '装饰与内装';
+        };
+        const series = ['简约', '摩可摩可', '摩奇摩奇', '东方风格'];
+        const inSeries = (n, k) => n.indexOf(k) >= 0;
+        const withMat = R.filter(r => r[3] !== '—' || r[4] !== '—');
+        const noMat = R.length - withMat.length;
+        const dear = R.reduce((x, y) => num(y[1]) > num(x[1]) ? y : x);
+        const cheap = R.reduce((x, y) => num(y[1]) < num(x[1]) ? y : x);
+        const stoneMax = R.reduce((x, y) => num(y[3]) > num(x[3]) ? y : x);
+        const woodMax = R.reduce((x, y) => num(y[4]) > num(x[4]) ? y : x);
+        const bed = R.filter(r => r[0] === '双人床')[0] || [];
+        const remark = R.filter(r => r[5] !== '—');
+        const cnt = g => R.filter(r => groupOf(r[0]) === g).length;
+        const serCnt = k => R.filter(r => inSeries(r[0], k) && r[0].indexOf('布娃娃') < 0).length;
+
+        return `
+        <h2 class="h2">${R.length} 件家具，全在「帕尔摩工房」一家订</h2>
+        <p class="p">本作的家具不分散，<b>只有一家工房卖</b>：先付金币，一部分再补石材与木材。所以「攒钱」之外还有第二条线——但只在 ${withMat.length} 件上成立，其余 ${noMat} 件纯付钱。源表里还有一列 SEED 点，家具这一整列是破折号：<b>家具不收 SEED 点</b>，收 SEED 点的是同一张表里的店铺扩建与魔物小屋扩建，那属于村庄建设，不在这页算。</p>
+        ${stat([
+            ['工作台与厨具', cnt('工作台与厨具') + ' 件'],
+            ['储物与生活', cnt('储物与生活') + ' 件'],
+            ['装饰与内装', cnt('装饰与内装') + ' 件'],
+            ['要石材或木材的', withMat.length + ' 件'],
+        ])}
+        <h2 class="h2">前 ${WORK.length} 件是工作台与厨具，也是唯一必须补材料的一批</h2>
+        <p class="p">做东西的四张台子（制药、锻造、装饰、料理）在最上面，接着是六件厨具——<b>本作的「装饰台」在这里，卖 ${G('3000')}、要石材 ${(R.filter(r => r[0] === '装饰台')[0] || [])[3]}` + `／木材 ${(R.filter(r => r[0] === '装饰台')[0] || [])[4]}</b>。它做的是饰品，跟桌床柜子不是一条线；家具本身没有制作入口，只能买。</p>
+        <h2 class="h2">仓储与生活：${STORE.length} 件，和四代几乎是同一批东西</h2>
+        <p class="p">书架、收纳箱、武器库、农具箱、衣柜、牧草桶、肥料盒、出货箱、汲水池——这一批是<b>功能件</b>，跟四代杂货店那张表几乎一一对应，价钱也一样。材料吃得最狠的是 ${stoneMax[0] === woodMax[0] ? `<b>${E(stoneMax[0])}</b>（石材 ${stoneMax[3]}／木材 ${woodMax[4]}）` : `<b>${E(stoneMax[0])}</b>（石材 ${stoneMax[3]}）与 <b>${E(woodMax[0])}</b>（木材 ${woodMax[4]}）`}。</p>
+        <div class="note">两作的表有一处对不上：四代表头是「木材｜石材」，本作是「石材｜木材」，同一件东西的数值看着就换了个位置（例：收纳箱 ${G('6000')}，四代记 木材100／石材160，本作记 石材100／木材160）。<b>这里照两边的原文各自录，不替谁改列</b>——真要下单时按游戏里显示的缺什么补什么。</div>
+        <h2 class="h2">装饰与内装：${cnt('装饰与内装')} 件，四套配色打包卖</h2>
+        <p class="p">剩下 ${cnt('装饰与内装')} 件是纯装饰，本作的做法是<b>成套卖</b>：${series.map(k => `${k} ${serCnt(k)} 件`).join('、')}，每套都有桌子与椅子，再配窗帘／壁纸／地板；照明只有「简约」与「东方风格」两套有。四张地板都是 ${G('50000')}，是全表最贵的东西——比双人床 ${G('30000')} 还贵。</p>
+        <p class="p">单价跨度也大：最便宜的 ${E(cheap[0])} ${G(cheap[1])}，最贵的 ${E(dear[0])} ${G(dear[1])}，差 ${Math.round(num(dear[1]) / num(cheap[1]))} 倍。<b>${R.filter(r => num(r[1]) === 700).length} 件绿植一律 ${G('700')}</b>（四季盆栽、盆栽、仙人掌、观叶植物），跟四代一个价。</p>
+        ${remark.length ? `<div class="key">全表只有一件带备注：<b>${E(remark[0][0])}</b>（${G(remark[0][1])}）写着「${E(remark[0][5])}」——源表在这一行专门提了结婚，别的家具都没有备注。</div>` : ''}
+        <h2 class="h2">全表</h2>
+        <p class="p">按功能分组排，同一组里保持源表顺序。</p>
+        ${tbl(['分类', '商品', '金币', '石材', '木材'], R.map(r => [groupOf(r[0]), E(r[0]), G(r[1]), D(r[3]), D(r[4])]), { leftFirst: true, colw: ['7rem', 'auto', '5.5rem', '4rem', '4rem'] })}
+        <div class="note">本页只记买价。扩建（店铺三阶段、魔物小屋五级）在源表里与本表同页，但那些是村庄与牧场的建设费用，属<a class="link" href="#/page/home">自宅</a>与村庄线，不在本页重复。</div>
+        <div class="jump">
+            <a href="#/page/shop"><div class="jp-t">商店</div><div class="jp-s">里格巴斯六家店的营业时间与商品</div></a>
+            <a href="#/page/home"><div class="jp-t">自宅</div><div class="jp-s">房子、家具与生活设施</div></a>
+        </div>`;
+    }
+    return '';
+}
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -8387,17 +8558,17 @@ const PAGES = [
     },
     {
         key: 'decorate', group: 'life', title: '装饰与家具', icon: 'chair',
-        body: () => `
+        body: (g) => decorateDeepHtml(g && g.id) || (`
             <h2 class="h2">装饰系统能干什么</h2>
-            <p class="p">做家具、饰品、摆件，改变自宅与房间的样子。表面上只是外观，实际上有两层实用价值：部分饰品带属性加成，部分家具影响房间功能（储物、展示、双人床）。</p>
+            <p class="p">家具在各作几乎都是<b>买</b>来的（部分作品要木材与石材订做），饰品另算，摆件属纯装饰。表面上只是外观，实际上有两层实用价值：部分饰品带属性加成，部分家具影响房间功能（储物、展示、双人床）。</p>
             ${tbl(['类别', '作用'], [
                 ['家具', '储物、床、桌椅等基础功能'],
                 ['饰品', '可装备，提供属性或 RP 加成'],
                 ['摆件', '收集与美观，部分可出货'],
-                ['装饰台', '以上三类的制作入口'],
+                ['装饰台', '部分作品里做<b>饰品</b>的工作台，不做家具'],
             ], { leftFirst: true })}
             <div class="note">这是系列里最容易被忽略的系统。前期不用碰，中期开始做几件带属性的饰品，性价比意外地高。</div>
-        `
+        `)
     },
     {
         key: 'rfosys', group: 'life', title: '奖杯与许愿', icon: 'note',
