@@ -116,6 +116,7 @@
     "js/azuma_forge.js",
     "js/azuma_armor.js",
     "js/furniture.js",
+    "js/ore.js",
     "js/changelog.js",
     "js/pages-meta.js",
     "js/pages.js",

@@ -6349,6 +6349,252 @@ function decorateDeepHtml(id) {
     return '';
 }
 
+/* 采矿与钓鱼：八作各写各的。
+   采矿——逐矿点的资料只有 RF4 可核对（biligame《鉱石类》条目 RF4 表 → js/ore.js）；
+   其余作品源站没有矿点表，本页不替它们编，只保留机制说明。
+   钓鱼——本页走「钓点 → 能钓什么」的视角，与 fish 页「鱼 → 钓点」互为反面。
+   数据全部来自站内既有文件：SPOT_RF1／RF2／RF3／RFF／SPOT4／SPOT_RF5／SPOT_AZUMA／RFO_FISH_SPOT。 */
+function mineDeepHtml(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const uniq = a => { const o = {}; a.forEach(x => { o[x] = 1; }); return Object.keys(o); };
+    const maxBy = (a, f) => a.reduce((x, y) => (f(y) > f(x) ? y : x), a[0]);
+    const JUMP = `
+            <div class="jump">
+                <a href="#/page/fish"><div class="jp-t">鱼类图鉴</div><div class="jp-s">反过来查：某条鱼在哪些钓点、什么季节、多长算金杯</div></a>
+                <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">矿石都去哪了：装备强化与配方</div></a>
+            </div>`;
+
+    const NOORE = `
+            <div class="note">逐矿点的资料只有 RF4 可核对——源站的《矿石类》条目只写了 RF4 一节。本作的矿点分布没有可引用的表，<b>本站不编</b>，下面只写钓鱼。</div>`;
+
+    const HEAD_MINE = `
+            <h2 class="h2">采矿</h2>
+            <p class="p">矿点是地图上带边框的矿石与岩石，只能用锤子敲。敲一次消耗 RP，敲下来的矿石与宝石是锻造、强化与农具升级的原料。越深的地方越容易出稀有金属，所以真正卡人的不是运气，而是<b>锤子等级够不够、RP 带得够不够</b>——锤子敲不动高硬度矿点，RP 不够连下两层都难。</p>`;
+
+    if (id === 'rf4' && typeof ORE_RF4 !== 'undefined') {
+        const O = ORE_RF4;
+        const pick = n => O.filter(r => r[0] === n)[0] || ['', [], [], [], []];
+        const j = a => (a && a.length) ? a.map(E).join('、') : '<span class="mon-no">—</span>';
+        const widest = maxBy(O, r => r[1].length);
+        const forge = O.filter(r => r[1][0] === '故意锻造失败');
+        const lastOnly = O.filter(r => r[1].length === 1 && r[1][0] === '符文之息').map(r => r[0]);
+        const monSame = O.filter(r => r[3].length && r[3].join('、') === pick('银')[3].join('、')).map(r => r[0]);
+        const rowsO = O.map(r => [E(r[0]), j(r[1]), j(r[3]), j(r[2]), j(r[4])]);
+        return HEAD_MINE + `
+            <p class="p">本作的矿石共 ${O.length} 种，源站把每一种的来路拆成四类：<b>采集</b>（矿点直接敲）、<b>宝箱</b>、<b>木箱</b>、<b>魔物掉落</b>。四类里只有「采集」跟锤子有关，其余三类是跑图与刷怪的副产物——所以「缺矿」和「缺锤子」经常是两回事。</p>
+            <div class="note">下表来自 biligame《鉱石类》条目的 RF4 一节，八种矿石的来路照录。除 RF4 外，源站在其余作品的矿石条目里没有列矿点与掉落，<b>本站不为那七作编矿点表</b>——这一页的采矿部分因此只有 RF4 是逐条的。</div>
+            ${tbl(['矿石', '采集（矿点）', '魔物掉落', '宝箱', '木箱'], rowsO, { leftFirst: true, cls: 'txt', colw: ['4.4rem', 'auto', '7rem', '8rem', '6rem'] })}
+            <p class="p">能直接从表里读出来的几件事：<b>${E(widest[0])} 是分布最广的矿石</b>，${widest[1].length} 处矿点都能敲到，且一路铺到「${E(widest[1][widest[1].length - 1])}」——前期缺铁基本不用专门去挖。<b>${lastOnly.length ? E(lastOnly.join('、')) : '—'}只在「符文之息」一处能采集</b>，除这一处之外只有宝箱产出——采集流拿不到，只能翻箱子。<b>${monSame.length ? E(monSame.join('、')) : '—'} 的魔物掉落名单完全相同</b>（${j(pick('银')[3])}），打这三种石头人是一次补两种矿的买卖。</p>
+            <p class="p">还有一条不是矿点、但常被问起的：<b>${forge.length ? E(forge[0][0]) : '—'}</b>。源站把它归在矿石类里，来源写的是「故意锻造失败」——它不是敲出来的，是锻造时炸炉的产物。想要它就别怕失败。</p>
+            <h2 class="h2">钓鱼：先看钓点，再看鱼</h2>
+            <p class="p">鱼类图鉴那一页是「鱼 → 钓点」，本页反过来：<b>站在哪个点、这一竿可能出什么</b>。RF4 的解包表按 21 个环境列记录出现率——8 个季节列（四季各带一个雨天列）＋13 个钓点列，逐列归一化。下表只给「每个环境里有几种鱼」，出现率请看鱼类图鉴。</p>
+            ${(() => {
+                if (typeof SPOT4 === 'undefined' || !SPOT4.length) return '';
+                const S = SPOT4;
+                const seasons = ['春', '春·雨', '夏', '夏·雨', '秋', '秋·雨', '冬', '冬·雨'];
+                const spots = ['沙池', '伊德拉 B2', '伊德拉 B1', '约克米尔瀑布', '约克米尔池', '水之遗迹', '玛雅之路', '塞克斯洞窟'];
+                const rows = [];
+                seasons.forEach((n, i) => rows.push([E(n), String(S.filter(r => r[i + 1] > 0).length), '季节']));
+                spots.forEach((n, i) => rows.push([E(n), String(S.filter(r => r[i + 9] > 0).length), '钓点']));
+                const junk = [];
+                for (let c = 17; c <= 21; c++) junk.push(S.filter(r => r[c] > 0).map(r => r[0]));
+                const junkNames = uniq([].concat.apply([], junk));
+                const junkCnt = junk.map(k => k.length);
+                for (let c = 17; c <= 21; c++) rows.push(['源表未命名第 ' + (c + 1) + ' 列', String(junk[c - 17].length), '未命名']);
+                const best = maxBy(rows.slice(8, 16), r => Number(r[1]));
+                return `
+            <h3 class="h3">21 个环境列，各能出几种</h3>
+            ${tbl(['环境', '有记录的鱼种', '类型'], rows, { leftFirst: true, colw: ['10rem', '6rem', 'auto'] })}
+            <p class="p">钓点列里记录最多的是<b>${E(best[0])}</b>（${best[1]} 种）。最后 5 列源表没给地名，本站照列不猜名字——但这五列里出现过的只有<b>${junkNames.map(E).join('、')}</b>，每列 ${Math.min.apply(null, junkCnt) === Math.max.apply(null, junkCnt) ? junkCnt[0] : Math.min.apply(null, junkCnt) + '～' + Math.max.apply(null, junkCnt)} 种，其余的鱼在这五列里一律为 0。<b>这五列的分布跟前面八个钓点完全不同</b>（前面那些列动辄二三十种鱼），更像是固定的杂物／单一鱼点，所以单独标出来，不当成正常钓点看。</p>`;
+            })()}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf1' && typeof SPOT_RF1 !== 'undefined') {
+        const D = SPOT_RF1, R = D.rows, maps = [];
+        R.forEach(r => {
+            let m = maps.filter(x => x.n === r[0])[0];
+            if (!m) { m = { n: r[0], c: 0, f: {}, lv: {} }; maps.push(m); }
+            m.c++; m.f[r[2]] = 1; m.lv[r[3]] = 1;
+        });
+        const rows = maps.map(m => [E(m.n), String(m.c), String(Object.keys(m.f).length), Object.keys(m.lv).sort().join('、')]);
+        const big = maxBy(maps, m => m.c);
+        const lv = [];
+        R.forEach(r => {
+            let x = lv.filter(y => y.n === r[3])[0];
+            if (!x) { x = { n: r[3], f: {} }; lv.push(x); }
+            x.f[r[2]] = 1;
+        });
+        lv.sort((a, b) => Number(a.n) - Number(b.n));
+        const lvRows = lv.map(x => ['蓄力 ' + E(x.n) + ' 级', String(Object.keys(x.f).length), Object.keys(x.f).map(E).join('、')]);
+        const topLv = lv.length ? lv[lv.length - 1] : { n: '', f: {} };
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：按地图分区查</h2>
+            <p class="p">本作的钓鱼表按<b>地图分区</b>列：${maps.length} 个分区、${R.length} 条「某区能钓到某条鱼」的记录、${D.fishes.length} 种可钓物（含空罐、高筒靴这类杂物）。表里最关键的一列是<b>蓄力等级</b>——钓竿要蓄到那一级，这条鱼才咬钩；所以同一片水里，1 级蓄力够得着的和 5 级才够得着的，完全是两批鱼。</p>
+            ${tbl(['地图分区', '记录', '鱼种', '蓄力等级'], rows, { leftFirst: true, colw: ['8rem', '4rem', '4rem', 'auto'] })}
+            <p class="p">记录最厚的是<b>${E(big.n)}</b>：${big.c} 条记录、${Object.keys(big.f).length} 种鱼。八个洞窟里，洞的层数越深，高蓄力才咬钩的鱼越多——想凑图鉴就别指望在 1 号洞凑齐。</p>
+            <h3 class="h3">按蓄力等级再看一遍</h3>
+            <p class="p">同一张表换个角度：<b>钓竿要蓄到几级</b>才有这条鱼。低级的鱼在哪个水面都有，高级的只在特定分区——升级钓竿之前，下面那几行高等级鱼对你等于不存在。</p>
+            ${tbl(['蓄力等级', '鱼种', '鱼名'], lvRows, { leftFirst: true, colw: ['6.4rem', '4rem', 'auto'] })}
+            ${Object.keys(topLv.f).length ? `<div class="key">蓄力 ${E(topLv.n)} 级才咬钩的 ${Object.keys(topLv.f).length} 种：<b>${Object.keys(topLv.f).map(E).join('、')}</b>。这一批是图鉴的最后一段，也是「为什么我钓不到」的常见答案。</div>` : ''}
+            <div class="note">站内另一处 RF1 钓鱼数据（鱼类图鉴页）来自 Fandom，划分成 <b>12 个钓点</b>并带出现率；本页这张来自 biligame 的目录，按 <b>${maps.length} 个地图分区</b>列、没有出现率。两边粒度不同，<b>不合并也不裁决</b>，想看出现率请回鱼类图鉴。</div>
+            ${JUMP}`;
+    }
+
+    if (id === 'rf2' && typeof SPOT_RF2 !== 'undefined') {
+        const D = SPOT_RF2, R = D.rows, locs = [];
+        R.forEach(r => {
+            let a = locs.filter(x => x.n === r[0])[0];
+            if (!a) { a = { n: r[0], area: r[1], c: 0, f: {}, se: {} }; locs.push(a); }
+            a.c++; a.f[r[3]] = 1; a.se[r[2]] = 1;
+        });
+        const rows = locs.map(a => [E(a.n), E(a.area), String(a.c), String(Object.keys(a.f).length), Object.keys(a.se).sort().join('、')]);
+        const main = maxBy(locs, a => a.c);
+        const colors = {};
+        locs.forEach(a => { colors[a.area] = (colors[a.area] || 0) + 1; });
+        const colorTxt = Object.keys(colors).map(k => `${E(k)} ${colors[k]} 处`).join('、');
+        const odd = locs.filter(a => a.area.indexOf('（') >= 0);
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：按区域颜色查</h2>
+            <p class="p">本作的钓鱼表按<b>区域</b>分组，区域的写法是颜色：蓝色、红色。整张表 ${R.length} 条记录、${D.maps.length} 个地点、${D.fishes.length} 种可钓物（含石头、树枝、空罐、高筒靴这些杂物），并逐条标了季节与所需钓竿等级。</p>
+            <p class="p">按区域颜色分，${colorTxt}。下表逐地点列——同一片水面在不同季节能钓到的东西并不一样，所以「记录数」不等于「鱼种数」。</p>
+            ${tbl(['地点', '区域', '记录', '鱼种', '季节'], rows, { leftFirst: true, colw: ['auto', '6.4rem', '4rem', '4rem', '8rem'] })}
+            <p class="p">记录最多的是<b>${E(main.n)}</b>：${main.c} 条记录、${Object.keys(main.f).length} 种鱼。${odd.length ? `有一处区域的写法是「${E(odd[0].area)}」（${E(odd[0].n)}），${odd[0].c} 条记录——<b>这是源表的原话，照录</b>，不是本站的分区。` : ''}</p>
+            <div class="note">季节列的写法不统一：有「春」，也有「春~夏」「春、秋~冬」这种跨度写法。源表怎么分就怎么记，<b>不拆成逐季</b>——拆了就变成本站自己推的了。</div>
+            ${JUMP}`;
+    }
+
+    if (id === 'rf3' && typeof SPOT_RF3 !== 'undefined') {
+        const S = SPOT_RF3, spotRows = S.spots.map(s => {
+            const list = s[1] || [];
+            const dear = list.length ? maxBy(list, x => Number(x[2]) || 0) : null;
+            return [E(s[0]), String(list.length), dear ? `${E(dear[0])}（${E(String(dear[2]))}G）` : '<span class="mon-no">—</span>'];
+        });
+        const res = S.resort || { fish: [] };
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：${S.spots.length} 个常驻钓点 ＋ 一处度假村</h2>
+            <p class="p">本作的钓鱼表很干净：<b>${S.spots.length} 个常驻钓点</b>各有一张「鱼 × 鱼影大小 × 买价」的目录，另有几组特殊规则（见下）。没有出现率，也没有 RF4／RF5 那种「金杯线」——同样一条鱼，鱼影只有最小／小／中／大四档。</p>
+            ${tbl(['钓点', '鱼种', '买价最高的一种'], spotRows, { leftFirst: true, colw: ['9rem', '4.4rem', 'auto'] })}
+            <h3 class="h3">三组特殊规则</h3>
+            <ul class="ul">
+                <li class="li"><b>全图通用 5 种</b>：${(S.everywhere || []).map(x => E(x[0])).join('、') || '—'}。这五种不看钓点，任何水面都能出。</li>
+                <li class="li"><b>随季节轮换的 2 处</b>：${(S.seasonal || []).map(x => E(x.name)).join('、') || '—'}。源表只在有一行明细（${(S.seasonal || []).filter(x => (x.fish || []).length).map(x => E(x.fish.map(f => f[0]).join('、'))).join('；') || '—'}），其余写「当前季节的所有鱼」，本站照录不补。</li>
+                <li class="li"><b>${(S.none || []).map(E).join('、') || '—'} 没有鱼</b>。这是源表明确写「无」的钓点，别在那儿浪费时间。</li>
+            </ul>
+            <h3 class="h3">卡尔洛斯度假村：要花钱、还要好感</h3>
+            <p class="p">度假村是单独的钓场，<b>基础入场费 ${res.entry == null ? '—' : E(String(res.entry)) + 'G'}</b>；源表还逐条给了每种鱼自己的「入场费」与解锁条件——上表第二列就是源表的入场费，第三列是「伊奥与卡尔洛斯的好感度总和」要到多少。好感不够，那个鱼种就不出现在池子里。想在这里凑图鉴，先把这两个人的好感刷起来。</p>
+            ${tbl(['鱼', '入场费', '解锁条件'], res.fish.map(f => [E(f[0]), f[1] == null ? '—' : E(String(f[1])) + 'G', E(String(f[3] || '—'))]), { leftFirst: true, colw: ['7rem', '5.4rem', 'auto'] })}
+            ${JUMP}`;
+    }
+
+    if (id === 'rff' && typeof SPOT_RFF !== 'undefined') {
+        const D = SPOT_RFF, R = D.rows, spots = [];
+        R.forEach(r => {
+            let s = spots.filter(x => x.n === r[0])[0];
+            if (!s) { s = { n: r[0], c: 0, f: {}, sub: {} }; spots.push(s); }
+            s.c++; s.f[r[3]] = 1; s.sub[r[1]] = 1;
+        });
+        const rows = spots.map(s => [E(s.n), String(Object.keys(s.sub).length), String(s.c), String(Object.keys(s.f).length)]);
+        const rich = maxBy(spots, s => s.c);
+        const noSea = R.filter(r => r[2] === '—');
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：${spots.length} 个钓点，按塔与遗迹的层数分</h2>
+            <p class="p">本作的钓鱼表 ${R.length} 条记录、${spots.length} 个钓点、${D.fishes.length} 种鱼，每个钓点下面还细分成若干「分区」（鲸鱼岛各部位、四座塔的庭院、若草／蔓草／雪草遗迹的地下层数）。<b>等级范围</b>那一列说的不是鱼的实力，而是它能出现的钓点等级区间——同一条鱼，在高级水域钓上来的等级更高。</p>
+            ${tbl(['钓点', '分区', '记录', '鱼种'], rows, { leftFirst: true, colw: ['10rem', '5rem', '5rem', '5rem'] })}
+            <p class="p">记录最厚的是<b>${E(rich.n)}</b>：${Object.keys(rich.sub).length} 个分区、${rich.c} 条记录、${Object.keys(rich.f).length} 种鱼。想刷某条鱼，直接看它的钓点栏里有哪几层，按层数排行程比乱跑省时间。</p>
+            ${noSea.length ? `<div class="note">有 ${noSea.length} 条记录的季节列写的是「—」（如「${E(noSea[0][0])}／${E(noSea[0][1])}」），源表没标季节，本站照录，不当成「四季都有」。</div>` : ''}
+            ${JUMP}`;
+    }
+
+    if (id === 'rf5' && typeof SPOT_RF5 !== 'undefined') {
+        const R = SPOT_RF5, pools = [];
+        R.forEach(r => {
+            const k = r[0] + '·' + r[1];
+            let p = pools.filter(x => x.k === k)[0];
+            if (!p) { p = { k: k, town: r[0], name: r[1], c: 0, f: {} }; pools.push(p); }
+            p.c++; p.f[r[2]] = 1;
+        });
+        const rows = pools.map(p => [E(p.town), p.name ? E(p.name) : '（源表池名空白）', String(p.c), String(Object.keys(p.f).length)]);
+        const rich = maxBy(pools, p => p.c);
+        const tie = pools.filter(p => p.c === rich.c).length;
+        const fp = {};
+        R.forEach(r => { const k = r[0] + (r[1] ? '·' + r[1] : ''); (fp[r[2]] = fp[r[2]] || {})[k] = 1; });
+        const fishNames = Object.keys(fp);
+        const one = fishNames.filter(n => Object.keys(fp[n]).length === 1);
+        const few = fishNames.filter(n => Object.keys(fp[n]).length === 2 || Object.keys(fp[n]).length === 3);
+        const many = fishNames.filter(n => Object.keys(fp[n]).length >= 4);
+        const blank = pools.filter(p => !p.name);
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：${pools.length} 个水域分组，带逐池出现率</h2>
+            <p class="p">本作是全系列里钓鱼数据最细的一作：${R.length} 条记录、${uniq(R.map(r => r[2])).length} 种鱼，<b>每个池子每条鱼都记了四季的出现率区间</b>（源表一格两列，逐列归一化）。鱼类图鉴页给的是按鱼查；本页给的是按池查——先决定去哪，再看那儿有什么。</p>
+            ${tbl(['镇', '水域', '记录', '鱼种'], rows, { leftFirst: true, colw: ['6.4rem', 'auto', '5rem', '5rem'] })}
+            <p class="p">记录最多的是<b>${E(rich.town)}·${E(rich.name || '（池名空白）')}</b>，${rich.c} 条记录、${Object.keys(rich.f).length} 种鱼${tie > 1 ? `（另有 ${tie - 1} 个池子与它并列）` : ''}。${blank.length ? `最后有一组源表只写了镇名、<b>池名是空白</b>（${blank[0].c} 条记录），本站照录为「（源表池名空白）」，没有替它起名。` : ''}</p>
+            <h3 class="h3">鱼种分布：哪种鱼只在一个池子里</h3>
+            <p class="p">把表再翻一次——<b>这条鱼出现在几个水域</b>。只在一个池子里的，换地方就钓不到；满世界都有的，不用特意跑。</p>
+            ${tbl(['出现的池数', '鱼种', '例'], [
+                ['只有 1 个池', String(one.length), one.slice(0, 8).map(E).join('、') + (one.length > 8 ? '…' : '')],
+                ['2～3 个池', String(few.length), few.slice(0, 8).map(E).join('、') + (few.length > 8 ? '…' : '')],
+                ['4 个池以上', String(many.length), many.slice(0, 8).map(E).join('、') + (many.length > 8 ? '…' : '')],
+            ], { leftFirst: true, colw: ['7rem', '4.4rem', 'auto'] })}
+            <h3 class="h3">提竿时机：三条硬规则</h3>
+            <p class="p">本作的钓鱼判定由两件事决定：<b>鱼竿蓄力等级</b>与<b>钓鱼等级</b>。源站写得很直白——</p>
+            <ul class="ul">
+                <li class="li">鱼竿蓄力等级越高，鱼咬钩所需的时间越长；</li>
+                <li class="li">钓鱼等级越高，鱼「直接咬钩」需要的次数越少；</li>
+                <li class="li">判断咬钩看<b>鱼竿是否弯曲</b>，比听声音可靠。</li>
+            </ul>
+            <div class="note">这三条是源站《RF5fishing》条目的原话改写，不是本站推测。它没写的（具体每一级的数值）本站也不补。</div>
+            ${JUMP}`;
+    }
+
+    if (id === 'rfo' && typeof RFO_FISH_SPOT !== 'undefined') {
+        const R = RFO_FISH_SPOT, isl = [];
+        R.forEach(r => {
+            let s = isl.filter(x => x.n === r[0])[0];
+            if (!s) { s = { n: r[0], c: 0, loc: {}, f: {}, rare: 0, se: {} }; isl.push(s); }
+            s.c++; s.loc[r[1]] = 1; if (r[2]) s.se[r[2]] = 1;
+            (r[4] || []).forEach(f => { s.f[f[0]] = 1; if (f[1]) s.rare++; });
+        });
+        const rows = isl.map(s => [E(s.n), String(Object.keys(s.loc).length), String(s.c), String(Object.keys(s.f).length), String(s.rare), Object.keys(s.se).length ? Object.keys(s.se).join('、') : '<span class="mon-no">—</span>']);
+        const big = maxBy(isl, s => s.c);
+        const seasonOnly = isl.filter(s => Object.keys(s.se).length);
+        const rares = [];
+        R.forEach(r => (r[4] || []).forEach(f => { if (f[1]) rares.push([r[0], r[1], r[3], f[0]]); }));
+        return HEAD_MINE + `
+            <div class="note">本作的「采矿」其实是巨人挖海底：B 键挖掘海底岩石、岛屿与沉船，从海底抬出的是整座岛而不是矿石，这一套在<a href="#/page/rfosail">岛屿与打捞</a>页。逐矿点的矿石表没有可引用的来源，<b>本站不编</b>。</div>
+            <h2 class="h2">钓鱼：按岛查，${isl.length} 座岛 ${uniq(R.map(r => r[0] + '|' + r[1])).length} 个地点</h2>
+            <p class="p">本作的钓鱼记录来自攻略本的「鱼群」实测表：${R.length} 条记录、${isl.length} 座岛、${uniq(R.map(r => r[0] + '|' + r[1])).length} 个地点，每条记录写着<b>时段</b>（昼／夜）与这段水里出现的鱼，<b>稀有鱼单独标出</b>。原表不带概率，本站也不推算。</p>
+            ${tbl(['岛', '地点', '记录', '鱼种', '稀有记录', '分季节'], rows, { leftFirst: true, colw: ['7rem', '4.4rem', '4.4rem', '4.4rem', '5rem', 'auto'] })}
+            <p class="p">记录最厚的是<b>${E(big.n)}</b>：${Object.keys(big.loc).length} 个地点、${big.c} 条记录、${Object.keys(big.f).length} 种鱼。${seasonOnly.length === 1 ? `季节只有 <b>${E(seasonOnly[0].n)}</b> 一座岛分了春夏秋冬，其余岛原表没分季——<b>不是四季都有，是没记</b>，本页不做补全。` : ''}</p>
+            <h3 class="h3">稀有鱼：一共 ${rares.length} 条记录</h3>
+            <p class="p">原表在鱼名旁标了「稀有」的，下面全列出来。<b>稀有是原表的标记，不是本站按价格推的</b>；同一座岛可能昼夜各出一次。</p>
+            ${tbl(['岛', '地点', '时段', '稀有鱼'], rares.map(r => [E(r[0]), E(r[1]), E(r[2]), E(r[3])]), { leftFirst: true, colw: ['8rem', '6.4rem', '4rem', 'auto'] })}
+            ${JUMP}`;
+    }
+
+    if (id === 'azuma' && typeof SPOT_AZUMA !== 'undefined') {
+        const S = SPOT_AZUMA, keys = Object.keys(S.spots || {});
+        const rows = keys.map(k => [E(k), String((S.spots[k] || []).length), (S.spots[k] || []).slice(0, 4).map(E).join('、') + ((S.spots[k] || []).length > 4 ? '…' : '')]);
+        const rich = keys.length ? maxBy(keys, k => (S.spots[k] || []).length) : '';
+        const rain = keys.filter(k => k.indexOf('雨') >= 0);
+        const night = keys.filter(k => k.indexOf('夜晚') >= 0);
+        return HEAD_MINE + `
+            ${NOORE}
+            <h2 class="h2">钓鱼：${keys.length} 个钓点，按地形分组</h2>
+            <p class="p">本作的钓鱼攻略是「鱼 → 钓点」倒着写的：${S.fishes.length} 种鱼，每种列了能钓到它的地点、卖价与商店。把这张表翻过来，就是下面这张<b>钓点 → 能钓什么</b>。地形按「春之台地」「夏之里」这样的大区记，${rain.length ? `其中 ${rain.length} 个是<b>雨天变体</b>（带「雨」字的地点）、${night.length} 个是<b>夜晚变体</b>（带「夜晚」），都跟晴天／白天算两个地点——源表就是这么分的，<b>雨天与夜晚的鱼跟白天不一样</b>。` : ''}</p>
+            ${tbl(['钓点', '鱼种', '前几种鱼'], rows, { leftFirst: true, colw: ['10rem', '4.4rem', 'auto'] })}
+            ${rich ? `<p class="p">鱼种最多的是<b>${E(rich)}</b>（${(S.spots[rich] || []).length} 种）。</p>` : ''}
+            ${JUMP}`;
+    }
+
+    return '';
+}
+
 const PAGES = [
     /* ================= 基础知识 ================= */
     {
@@ -7929,7 +8175,7 @@ const PAGES = [
     },
     {
         key: 'mine', group: 'life', title: '采矿与钓鱼', icon: 'pick',
-        body: () => `
+        body: (g) => mineDeepHtml(g && g.id) || (`
             <h2 class="h2">采矿</h2>
             <p class="p">用锤子敲矿石点获得矿石与宝石，深层会出稀有金属。挖矿消耗大量 RP，是「体力预算」最紧张的活。带上回复再进去，别空手深入。</p>
             ${tbl(['层级', '产出', '建议'], [
@@ -7952,7 +8198,7 @@ const PAGES = [
                     <div class="jp-s">RF4 32 种鱼的长度、金杯线、钓点与金杯鱼影目标；RF5 42 种水产</div>
                 </a>
             </div>
-        `
+        `)
     },
     {
         key: 'cook', group: 'life', title: '料理', icon: 'pot',

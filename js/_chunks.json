@@ -114,7 +114,8 @@
       "js/fx4s.js",
       "js/cropdata.js",
       "js/fxdata.js",
-      "js/rune.js"
+      "js/rune.js",
+      "js/ore.js"
     ],
     "rf5": [
       "js/recipes.js",
@@ -148,17 +149,17 @@
     ]
   },
   "sha": {
-    "core": "80160aaa1a3b37ec",
-    "shared": "6139055e407c9b60",
+    "core": "cedfba85c24d5f5b",
+    "shared": "4e5f594fc159daa0",
     "cross": "226db472fe859d8a",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "bb35f7215f7d0513",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "9e3654e80e5964e0",
-    "game:rf4": "5d468d1d94dc4342",
+    "game:rf4": "c5bae67b1053da2a",
     "game:rf5": "766394d24d1376c0",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "2de681de3f33b05a"
+    "page:changelog": "c5e9a4088d886055"
   }
 }
