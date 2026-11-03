@@ -9310,7 +9310,7 @@ const PAGES = [
         key: 'intro', group: 'basic', title: '游戏简介', icon: 'scroll',
         body: g => `
             <h2 class="h2">${g.name}</h2>
-            ${stat([['发售日', g.date], ['平台', g.plat.split('／')[0]], ['开发', g.dev], ['舞台', g.stage]])}
+            ${stat([['发售日', g.date], ['平台', platAll(g.plat)], ['舞台', g.stage]])}
             <p class="p">${g.intro}</p>
             <div class="note">本文为本站整理的中文资料。作品名、角色名以官方中文版（世嘉／Marvelous 亚洲）译名为优先，未推出官方中文的作品保留常见译名并附原文。</div>
             <h2 class="h2">本作特色</h2>

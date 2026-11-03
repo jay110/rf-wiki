@@ -153,7 +153,7 @@ const GAMES = [
     {
         id: 'rf3', no: 'Ⅲ', name: '符文工房3/特别版', short: 'RF3/SP',
         jp: 'ルーンファクトリー3', en: 'Rune Factory 3: A Fantasy Harvest Moon',
-        date: '2023-03-02', plat: 'Nintendo Switch／PC', dev: 'Neverland', pub: 'Marvelous Entertainment',
+        date: '2023-03-02', plat: 'Nintendo Switch／PC', dev: 'Marvelous', pub: 'Marvelous',
         orig: { date: '2009-10-22', plat: 'Nintendo DS' },
         ver: '日版 Switch 2023.03.02｜亚洲 2023.03.30｜欧美 Switch／PC 2023.09.05',
         stage: '西亚廉斯镇', stageJp: 'シアレンス', hero: '麦斯', heroJp: 'マイス',
@@ -265,7 +265,7 @@ const GAMES = [
     {
         id: 'rf4', no: 'Ⅳ', name: '符文工房4/豪华版', short: 'RF4/DX',
         jp: 'ルーンファクトリー4', en: 'Rune Factory 4',
-        date: '2019-07-25', plat: 'Nintendo Switch／PC／PS4／Xbox One', dev: 'Neverland', pub: 'Marvelous AQL',
+        date: '2019-07-25', plat: 'Nintendo Switch／PC／PS4／Xbox One', dev: 'Marvelous', pub: 'Marvelous',
         orig: { date: '2012-07-19', plat: 'Nintendo 3DS' },
         ver: '日版 Switch 2019.07.25｜中文·亚洲 2019.12.05｜欧美 Switch 2020.02｜PS4／Xbox One／PC 2021.12.07',
         stage: '赛尔菲亚', stageJp: 'セルフィア', hero: '雷斯特／芙蕾', heroJp: 'レスト／フレイ',
