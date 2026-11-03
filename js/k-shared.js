@@ -12261,6 +12261,8 @@ const PAGES = [
             if (g && g.id === 'rf2') return requestRf2Html();
             /* 四代的委托在门口委托箱里，源站按「报酬去向」分成三张子表，单独一页 */
             if (g && g.id === 'rf4') return requestRf4Html();
+            /* 三代的委托挂在村民身上，三条入线（布告栏／邮箱／猫头鹰），另有一张 280 条大表 */
+            if (g && g.id === 'rf3') return requestRf3Html();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -16060,6 +16062,93 @@ function rfoCraftHtml() {
    主表＝终有依天《【RF2】【一周目】任务大全》（贴吧，118 条，带触发条件与奖励，只写一周目）；
    补表＝安打《任务、居民、怪物攻略》（TGBUS，123 条，奖励混在内容里，含二代）。
    两源大面积重叠，所以只补主表没覆盖的 6 条，不做同名合并——译名两套、口径两套，合并不了就照录。 */
+function requestRf3Html() {
+    const Q = (typeof RF3_REQUEST !== 'undefined') ? RF3_REQUEST : null;
+    if (!Q || !Q.groups || !Q.groups.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + esc(s) + '</span>';
+    const cell = v => (v === null || v === undefined || v === '') ? dash : Lf(v);
+
+    const nAll = Q.groups.reduce((a, g) => a + g.rows.length, 0);
+    /* 村民 × 渠道统计与最高好感：全部从行数据现算，不写死 */
+    const P = {};
+    Q.groups.forEach(g => g.rows.forEach(r => {
+        const parts = String(r[0] || '').split('-');
+        const who = parts[0] || '（未编号）', ch = parts[1] || '';
+        const p = P[who] || (P[who] = { n: who, c: 0, k: {}, maxLv: 0 });
+        p.c++;
+        p.k[ch] = (p.k[ch] || 0) + 1;
+        const m = String(r[3] || '').match(/❤(\d+)/);
+        if (m) p.maxLv = Math.max(p.maxLv, +m[1]);
+    }));
+    const ppl = Object.keys(P).map(k => P[k]).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : a.n > b.n ? 1 : 0));
+    const chKey = ['布告栏', '邮箱', '猫头鹰'];
+    /* 每类实际覆盖到多少人，也现算 */
+    const gStat = Q.groups.map(g => {
+        const set = {};
+        g.rows.forEach(r => { set[String(r[0] || '').split('-')[0]] = 1; });
+        const lv = g.rows.map(r => { const m = String(r[3] || '').match(/❤(\d+)/); return m ? +m[1] : 0; });
+        return { name: g.name, n: g.rows.length, ppl: Object.keys(set).length, maxLv: Math.max.apply(null, lv.concat([0])) };
+    });
+
+    return `
+    <div class="note">源：<b>${esc(Q.src)}</b>。${esc(Q.note)}</div>
+    ${stat([
+        ['委托条目', nAll + ' 条'],
+        ['支线／惩治／简单', Q.groups.map(g => g.rows.length).join(' ／ ')],
+        ['涉及村民', ppl.length + ' 位'],
+        ['入线渠道', '布告栏／邮箱／猫头鹰'],
+    ])}
+
+    <h2 class="h2">一、三代没有公共委托板，任务挂在人身上</h2>
+    <p class="p">RF3 的委托分三条线进来：<b>布告栏</b>（村口的板）、<b>邮箱</b>（送到家里的信）、<b>猫头鹰</b>（第三方转交）。同一个人身上往往两条线并行，所以下面的「总序号」写成 <code>希雅-布告栏-02</code> 这种形式——<b>前缀是人名，中段是入口，末尾是这条链上的第几环</b>。这个编号是源站自己的写法，本站照录。</p>
+    <p class="p">按编号就能读出链条形状：<code>前置支线</code>那一列写着上一条是哪一号，<b>照着串下去就是一条完整的角色线</b>。写成两个编号的是<b>两条线并到了一条</b>（比如「希雅-邮箱-02」要同时接完「希雅-布告栏-04」和「莫妮卡-邮箱-01」）。</p>
+
+    <h2 class="h2">二、三种委托，条数和覆盖面对不上是有原因的</h2>
+    <p class="p">源表用「种类」分成三类。三类不是同一套东西，所以人数、条数都不一样——下面这几个数字全是从表里数出来的：</p>
+    ${tbl(['种类', '条数', '覆盖村民', '好感度要求', '这一类的特征（从表里看得出）'], gStat.map(g => [
+        '<b>' + esc(g.name) + '</b>',
+        String(g.n),
+        g.ppl + ' 位',
+        g.maxLv ? '最高 ❤' + g.maxLv : dash,
+        g.name === '支线' ? '一条链一环扣一环，多数带好感度门槛，走到最后往往触发剧情或正体暴露'
+            : g.name === '【惩治委托】' ? '清一色「打败指定数量／种类的魔物」，入口多为布告栏，集中在少数几位村民身上'
+            : '可反复接的杂活，报酬常写「随机」，主要用来刷素材和好感',
+    ]), { leftFirst: true, left: [1, 2, 3, 4], colw: ['8rem', '5rem', '6rem', '7rem', 'auto'], cls: 'rf1craft' })}
+    <div class="key">别把三类混着刷：<b>支线</b>是推进角色线的唯一办法（很多人结婚前必须走完）；<b>惩治委托</b>只认「打倒某只／某几只」，不认素材；<b>简单委托</b>给的东西大多是随机，指望它出指定道具会很难受。</div>
+
+    <h2 class="h2">三、${ppl.length} 位村民的委托数量一览</h2>
+    <p class="p">按条数从多到少排。<b>条数差异很大</b>——有的村民三十条上下，有的只有几条，这跟他在剧情里的分量有关，<b>不是本站漏收</b>。</p>
+    ${tbl(['村民', '合计', '布告栏', '邮箱', '猫头鹰', '最高好感'], ppl.map(p => [
+        '<b>' + esc(p.n) + '</b>',
+        String(p.c),
+        p.k['布告栏'] ? String(p.k['布告栏']) : dash,
+        p.k['邮箱'] ? String(p.k['邮箱']) : dash,
+        p.k['猫头鹰'] ? String(p.k['猫头鹰']) : dash,
+        p.maxLv ? '❤' + p.maxLv : dash,
+    ]), { colw: ['9rem', '4.6rem', '4.6rem', '4.6rem', '4.6rem', '5.6rem'], left: [0], cls: 'rf1craft' })}
+
+    <h2 class="h2">四、${nAll} 条委托，按种类分三张表</h2>
+    <p class="p">表头照源站：<b>总序号／中文名／前置支线／好感度／前置条件／内容／变化／报酬</b>。<code>内容</code>里的 ①②③ 是<b>步骤顺序</b>，不是并列选项；<code>变化</code>写的是「这条任务会因什么而不同」，空着就是没有变化。</p>
+    ${Q.groups.map(g => `<h3 class="h3">${esc(g.name)}　${g.rows.length} 条</h3>
+    ${tbl(g.cols.map(esc), g.rows.map(r => r.map(cell)), { cls: 'rf1craft', left: [0, 1, 2, 3, 4, 5, 6, 7], colw: ['9rem', '12rem', '9rem', '5.6rem', '10rem', 'auto', '9rem', '9rem'] })}`).join('\n')}
+
+    <h2 class="h2">五、本站照录、不动手的几处</h2>
+    <div class="note"><b>源表有一行是残行：</b>wikitext 里混进了一行只有一个单元格的内容，凑不成一条委托，<b>本站未收</b>——所以总数是 ${nAll} 条，不是源页行数减一那么整齐。</div>
+    <div class="note"><b>「—」不是缺数据：</b>源站用单个半角减号表示「这一格没有」，本站统一显示为「—」。<code>前置支线</code>为空＝这条是链条起点；<code>好感度</code>为空＝不设门槛（多见于【简单委托】和【惩治委托】）。</div>
+    <div class="note"><b>好感度那一列是源站写法：</b>写成 <code>希雅❤3</code> 这样，把人名和心数写在同一格里。本站照录，<b>没有拆成两列</b>——因为一拆就得替源站决定「空着的心数算 0 还是算无要求」，那是本站无权替它判的。</div>
+    <div class="note"><b>人名译法与别页不完全一致：</b>源站这里写作「恩德珐」「泽杰」「威尔兹」「克璐璐法」，站内别处可能用别的音译。本站不跨页统一译名，各页照各自来源的写法。</div>
+
+    <div class="jump">
+        <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">委托要送的东西谁喜欢</div></a>
+        <a href="#/page/love"><div class="jp-t">恋爱与结婚</div><div class="jp-s">好感度门槛与结婚线</div></a>
+        <a href="#/page/request"><div class="jp-t">委托任务</div><div class="jp-s">其他作品的委托结构</div></a>
+        <a href="#/page/source"><div class="jp-t">素材出处</div><div class="jp-s">报酬里的素材去哪打</div></a>
+    </div>
+    <div class="note">数据文件 <code>js/rf3request.js</code>（<code>RF3_REQUEST</code>），由 <code>_build_rf3_request.py</code> 从源站 wikitext 表解析生成（280 条内嵌在脚本里，可离线复现）。脚本只拆字段、去 wiki 链接与换行标记、把空的「-」统一成「—」，不改写、不合并、不补全。</div>`;
+}
+
 function requestRf4Html() {
     const Q = (typeof RF4_REQUEST !== 'undefined') ? RF4_REQUEST : null;
     if (!Q || !Q.groups || !Q.groups.length) return '';

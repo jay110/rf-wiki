@@ -61,6 +61,7 @@
       "js/mon3.js",
       "js/rf3shop.js",
       "js/rf3mat.js",
+      "js/rf3request.js",
       "js/rf3data.js",
       "js/rf3cook.js",
       "js/rf3recipes.js",
@@ -142,17 +143,17 @@
     ]
   },
   "sha": {
-    "core": "660ee6f09fb81356",
-    "shared": "525f9b283b0a300d",
+    "core": "58988edf2dd67843",
+    "shared": "b2c9a608656a45af",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "a04cf7bc3dceb418",
-    "game:rf3": "40f8a6c782a20ef1",
+    "game:rf3": "bb35f7215f7d0513",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "c1a5d66ff3d8302f",
     "game:rf4": "5d468d1d94dc4342",
     "game:rf5": "67b8f0237e8cd311",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "6806e0f07757d711"
+    "page:changelog": "bcd23213eb30b618"
   }
 }
