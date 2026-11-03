@@ -1579,6 +1579,12 @@ img {
     min-width: 34rem;
 }
 
+/* 术语对照表（日文／简中／繁中／英文／说明／出处，六列）：窄屏横滑，
+   不把「是什么」那一列压成竖排 */
+.content .table.termw table {
+    min-width: 38rem;
+}
+
 /* 强化倍数标注（10 倍铁 / 倍铁）用绿色点出来 */
 .content .table.wide .td b {
     color: #198d44;
