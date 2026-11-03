@@ -2697,3 +2697,21 @@ img {
 .sch-at .c-out  { background: #eef1f3; color: #4a5a64; }
 .sch-at .c-cave { background: #f0ecf9; color: #5b468c; }
 .sch-at .c-none { background: #f4f6f7; color: #8f9aa1; }
+
+/* 原文引用块：日文台词／叙述照录时用，与正文区分但不抢眼 */
+.content .quote {
+    margin: 0.45rem 0;
+    padding: 0.5rem 0.9rem;
+    border-left: 2px solid #d3d9dd;
+    border-radius: 0 0.35rem 0.35rem 0;
+    background: #fafbfb;
+    color: #5e6a71;
+    font-size: 0.84rem;
+    line-height: 1.75;
+    word-break: break-word;
+}
+
+/* lore 页的四列长表：窄屏横滑，避免「是什么」列被压成一字一行 */
+.content .table.tw table {
+    min-width: 40rem;
+}
