@@ -77,6 +77,7 @@
       "js/rffmon.js",
       "js/rffterm.js",
       "js/rffcook.js",
+      "js/rffshop.js",
       "js/fishspot_rff.js",
       "js/rffevent.js",
       "js/rffcrop.js"
@@ -137,17 +138,17 @@
     ]
   },
   "sha": {
-    "core": "241fab9026baca85",
-    "shared": "614cef6607d1faf4",
+    "core": "ddc93252f4f62bbb",
+    "shared": "7b6b8f6fe13f16f9",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "40f8a6c782a20ef1",
-    "game:rff": "6a6e6f0d54bfc863",
+    "game:rff": "07ee53723e768d6e",
     "game:rfo": "2b49d9a15f591e57",
     "game:rf4": "d53decc02743cf38",
     "game:rf5": "67b8f0237e8cd311",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "89ba483fb657fe7d"
+    "page:changelog": "4a483464fcd48e63"
   }
 }

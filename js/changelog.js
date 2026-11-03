@@ -1,6 +1,13 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十四：符文工房 边境（rff）城镇商店买价接入 shop 页</h2>
+<div class="txt-list">
+<p><b>数据</b>：新建 <code>js/rffshop.js</code>（<code>RFF_SHOP</code>），由 <code>_build_rff_shop.py</code> 从 runefrontier 维基 Shops 页（runefrontier.fandom.com/wiki/Shops；2026-11 经 WebSearch 缓存核对，fandom 直连被本环境网络策略拦截）整理，<b>7 家店共 121 条买价</b>——丹尼杂货、Damascus 锻冶屋、Snowstyle 酒场、Erik 种子店、Rune Archives 图书馆（配方书）、Materia、Lara 教会药房。仅记买价不记卖价，与另 6 作 shop 页一致。</p>
+<p><b>进度锁照录</b>：锻冶屋 Lv3/Lv5 元素水晶、Rune Archives 进阶配方书需击败绿废墟／熔岩废墟 boss 后才上架；教会药房进阶花草需好感度（FP）等级；Materia／药房随 Rosetta／Lara 到镇开张。原表未给卖价与属性，本站不臆测补价、单源未做多源交叉。</p>
+<p><b>渲染</b>：<code>js/pages.js</code> 新增 <code>shopRffHtml()</code>（骨架照 RF5 shop，定制边境进度锁逻辑），shop 页分发器加 <code>g.id==='rff'</code> 分支；manifest 注册 rffshop.js（归 rff 包）。验证：_verify 356/0、_test_links 0 坏链、_build_chunks 365 页逐字一致、直接渲染确认 7 家店全出、无空值异常。</p>
+</div>
+
 <h2 class="h2">2026-11-03　第一百八十三：符文工房5 锻造／药学基础配方接入 craft 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：复用既有 <code>js/recipes.js</code> 的 <code>RECIPE</code>（RF5 全配方 661 条），取其中<b>锻造／药学部分</b>——武器八类（单手剑／双手剑／双剑／枪／斧／锤／拳／魔杖）、防具四类（盾／铠甲／帽子／鞋子）、饰品、农具、药学——共 <b>477 条</b>，与「配方大全」页同源，未新增任何外部抓取。</p>

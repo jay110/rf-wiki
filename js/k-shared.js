@@ -6063,6 +6063,161 @@ function shopRf5Html() {
     <div class="note">数据文件 <code>js/rf5shop.js</code>（<code>RF5_SHOP</code>）由 <code>_build_rf5_shop.py</code> 从 neoseeker、game8、biligame 中文、fandom 四源交叉整理，逐行校验；页面里的所有统计（条数、占比、最贵、最便宜）都是<b>现算</b>，没有一处写死。</div>`;
 }
 
+function shopRffHtml() {
+    const D = (typeof RFF_SHOP !== 'undefined') ? RFF_SHOP : null;
+    if (!D || !D.shops || !D.shops.length) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const money = v => (v == null || v === '') ? dash : (/[GＧ]$/.test(String(v)) ? E(v) : E(v) + 'G');
+    const pnum = v => { const m = String(v == null ? '' : v).replace(/[^0-9]/g, ''); return m ? Number(m) : null; };
+    const idx = (sec, re) => { for (let i = 0; i < sec.c.length; i++) if (re.test(sec.c[i])) return i; return -1; };
+
+    const all = [];
+    D.shops.forEach(sp => sp.secs.forEach(sec => {
+        const ni = idx(sec, /商品|名称|农具/), pi = idx(sec, /售价|价格|费用/), di = idx(sec, /说明|作用|英文名|解锁|阶段|备注/);
+        sec.r.forEach(r => all.push({
+            sp, sec, r, di,
+            name: ni >= 0 ? r[ni] : r[0],
+            price: pi >= 0 ? r[pi] : '',
+            pl: pnum(pi >= 0 ? r[pi] : ''),
+        }));
+    }));
+
+    const priced = all.filter(x => x.pl != null);
+    const byP = priced.slice().sort((a, b) => b.pl - a.pl);
+    const hi = byP[0], hi2 = byP[1], lo = byP[byP.length - 1];
+    const noPrice = all.filter(x => x.pl == null);
+
+    const stageOf = s => {
+        const t = String(s || '');
+        if (!t || /初始/.test(t)) return '开局可买';
+        if (/绿废墟/.test(t)) return '绿废墟 boss 后';
+        if (/熔岩废墟/.test(t)) return '熔岩废墟 boss 后';
+        if (/FP/.test(t)) return '好感度（FP）门';
+        return '其他';
+    };
+    const STAGE_ORDER = ['开局可买', '绿废墟 boss 后', '熔岩废墟 boss 后', '好感度（FP）门', '其他'];
+    const stageCount = {}, stageEg = {};
+    let noCol = 0;
+    const noColSecs = [];
+    all.forEach(x => {
+        if (x.di < 0) {
+            noCol++;
+            const k = x.sp.n + '·' + x.sec.t;
+            if (noColSecs.indexOf(k) < 0) noColSecs.push(k);
+            return;
+        }
+        const s = stageOf(x.r[x.di]);
+        stageCount[s] = (stageCount[s] || 0) + 1;
+        (stageEg[s] = stageEg[s] || []).push(x.name);
+    });
+    const pct = n => { const v = n / all.length * 100; return (v > 0 && v < 1) ? '<1%' : Math.round(v) + '%'; };
+    const stageRows = STAGE_ORDER.filter(s => stageCount[s]).map(s => [s, stageCount[s] + ' 条', pct(stageCount[s]), stageEg[s].slice(0, 4).join('、')]);
+
+    const fac = D.shops.filter(sp => !sp.secs.length);
+    const spRows = D.shops.map((sp, i) => {
+        let n = 0, mx = null;
+        sp.secs.forEach(sec => sec.r.forEach(r => {
+            n++;
+            const pi = idx(sec, /售价|价格|费用/);
+            const v = pi >= 0 ? pnum(r[pi]) : null;
+            if (v != null && (!mx || v > mx.v)) mx = { v: v, s: r[idx(sec, /商品|名称|农具/)] };
+        }));
+        return [String(i + 1), E(sp.n), sp.h ? E(sp.h) : dash, (n ? n + ' 条' : '<span class="txc">纯设施</span>'),
+            mx ? '<b>' + E(mx.s) + '</b> ' + money(String(mx.v)) : dash];
+    });
+
+    const allRows = all.map(x => {
+        const st = x.di >= 0 ? (String(x.r[x.di]).trim() || '—') : '—';
+        return [
+            [x.name, x.sp.n, x.sec.t, st].join(' ').replace(/"/g, ''),
+            [E(x.name), '<span class="txc">' + E(x.sp.n) + '</span>', '<span class="txc">' + E(x.sec.t) + '</span>', money(x.price), E(st)]
+        ];
+    });
+
+    const shopBlocks = D.shops.map((sp, i) => {
+        const secs = sp.secs.map(sec => {
+            const ni = idx(sec, /商品|名称|农具/), pi = idx(sec, /售价|价格|费用/);
+            const cols = sec.c.map(h => /^(商品|名称|农具)$/.test(h) ? '8.4rem'
+                : /^(属性)$/.test(h) ? '2.4rem'
+                : /^(售价|价格|费用)$/.test(h) ? '4.8rem' : 'auto');
+            const rows = sec.r.map(r => sec.c.map((h, j) =>
+                (j === ni) ? '<b class="nw">' + E(r[j]) + '</b>'
+                    : (j === pi) ? money(r[j]) : E(r[j])));
+            const leftCols = [0];
+            sec.c.forEach((h, j) => { if (/说明|作用|英文名|效果|所需材料|解锁|阶段|备注|季节|天数/.test(h)) leftCols.push(j); });
+            return `<h3 class="h3">${E(sec.t)}<span class="txc">　${sec.r.length} 条</span></h3>
+            ${tbl(sec.c, rows, { leftFirst: true, left: leftCols, colw: cols, cls: 'rf3shop' })}`;
+        }).join('');
+
+        const desc = sp.desc ? `<p class="p">${E(sp.desc)}</p>` : '';
+        const fnote = (!sp.secs.length) ? `<p class="p txc">—— 这处是纯设施，没有货架价目 ——</p>` : '';
+        const notes = (sp.notes && sp.notes.length) ? `<div class="note">${sp.notes.map(E).join('<br>')}</div>` : '';
+        return `
+        <h2 class="h2">${i + 1}. ${E(sp.n)}${sp.full && sp.full !== sp.n ? `　<span class="txc">${E(sp.full)}</span>` : ''}${sp.h ? `　<span class="txc">${E(sp.h)}</span>` : ''}</h2>
+        ${desc}${fnote}${secs}${notes}`;
+    }).join('');
+
+    const facList = fac.map(sp => `<p><b>${E(sp.n)}</b>${sp.full && sp.full !== sp.n ? '　<span class="txc">' + E(sp.full) + '</span>' : ''}${sp.h ? '　<span class="txc">' + E(sp.h) + '</span>' : ''}${sp.desc ? '　' + E(sp.desc) : ''}</p>`).join('');
+    const facSec = fac.length ? `
+    <h2 class="h2">纯设施（无货架）</h2>
+    <p class="p">这 ${fac.length} 处只提供服务或场所，不卖货，所以没有价目表。它们的简介照录：</p>
+    <div class="txt-list">${facList}</div>` : '';
+
+    return `
+    <h2 class="h2">边境的 Trampoli 镇：${D.shops.length} 处设施，${D.shops.length - fac.length} 家带货</h2>
+    <p class="p">本页是 runefrontier 维基 Shops 页（runefrontier.fandom.com/wiki/Shops；2026-11 经搜索缓存核对）整理出的<b>全部 ${all.length} 条</b>，按店铺、店内小节原样排。7 家店（丹尼杂货、Damascus 锻冶屋、Snowstyle 酒场、Erik 种子店、Rune Archives 图书馆、Materia、Lara 教会药房）都带货，没有纯设施。</p>
+    <p class="p"><b>这些数字是买价，不是卖价。</b>维基只给商店售价、不给出货价，所以本页<b>不算买进再卖出赚多少</b>——少了一半，算出来的差价都是假的。维基没有的，这里也不补。</p>
+    ${stat([
+        ['设施', D.shops.length + ' 处'],
+        ['带货店', (D.shops.length - fac.length) + ' 家'],
+        ['商品行', all.length + ' 条'],
+        ['有标价', priced.length + ' 条'],
+        ['最贵一件', hi ? money(String(hi.pl)) : dash],
+        ['最便宜', lo ? money(String(lo.pl)) : dash],
+    ])}
+
+    <h2 class="h2">${D.shops.length} 处一览</h2>
+    <p class="p">先看规模：哪家东西最多、最贵的一件在谁家。多数店工作日 9:00-18:00（酒场傍晚才开、Rune Archives 时间极不规律），具体见各店营业时间一行。</p>
+    ${tbl(['#', '设施', '营业时间', '条目', '最贵的一件'], spRows, { leftFirst: true, left: [0, 1], colw: ['2.2rem', '10rem', '11rem', '3.8rem', 'auto'], cls: 'rf3shop' })}
+
+    <h2 class="h2">价格的两头：${hi ? E(hi.name) + ' ' + money(String(hi.pl)) : ''}，和最便宜的 ${lo ? money(String(lo.pl)) : ''}</h2>
+    <p class="p">全表 ${priced.length} 条有价商品，最贵的和最便宜的差 <b>${hi && lo ? Math.round(hi.pl / lo.pl).toLocaleString('en-US') : 0} 倍</b>：一头是 Rune Archives 的顶级配方书（Happy Toys 30000G）与 Materia 的进阶花草（Emeryflower 26000G、各色水晶 22000G），另一头是教会药房的草（20G）与锻冶屋的基础武器（500G）。花草与水晶是价格天花板，基础作物种子与草是地板。</p>
+    ${tbl(['名次', '商品', '店', '价格'], [
+        ['最贵', E(hi.name), E(hi.sp.n), money(String(hi.pl))],
+        ['第二', E(hi2.name), E(hi2.sp.n), money(String(hi2.pl))],
+        ['最便宜', E(lo.name), E(lo.sp.n), money(String(lo.pl))],
+    ], { leftFirst: true, left: [1], colw: ['4.4rem', 'auto', '9.4rem', '6rem'], cls: 'rf3shop' })}
+    <div class="key">真正把高端货全摆出来靠的是<b>剧情推进</b>——锻冶屋的 Lv3/Lv5 元素水晶、Rune Archives 的进阶配方书都要先击败绿废墟／熔岩废墟的 boss；Materia 与教会药房则要等 Rosetta、Lara 到镇才开。原表只给买价、不给卖价和属性细节，所以本站<b>不评价它值不值这个价</b>。</div>
+
+    <h2 class="h2">什么进度能买到什么</h2>
+    <p class="p">这张表把 ${all.length} 条按「什么时候上架」重新分一遍。边境的进度锁主要有三类：<b>废墟 boss</b>（绿废墟／熔岩废墟，对应上级水晶与进阶配方书）、<b>好感度（FP）</b>（教会药房的进阶花草）、以及<b>角色到镇</b>（Materia、药房随剧情开）；标注「初始」的即开局可买。</p>
+    ${tbl(['上架时点', '条数', '占比', '举例'], [['开局可买（说明为「初始」）', (stageCount['开局可买'] || 0) + ' 条', pct(stageCount['开局可买'] || 0), (stageEg['开局可买'] || []).slice(0, 4).join('、')]].concat(stageRows).concat([['原文未单列说明（视作随时可购）', noCol + ' 条', pct(noCol), noColSecs.join('、')]]), { leftFirst: true, left: [0, 3], colw: ['13rem', '4.6rem', '4rem', 'auto'], cls: 'rf3shop' })}
+    <div class="key">真正卡进度的还是<b>武器与配方书</b>：从初始的阔剑／基础配方书，到顶级的 Lv5 水晶与 Happy Toys（30000G），要一路把绿废墟、熔岩废墟的 boss 推过去；教会药房的进阶花草还要先把对应角色的 FP 刷上去。</div>
+
+    <h2 class="h2">一张表查全部 ${all.length} 条</h2>
+    <p class="p">按商品名、店名、小节名或上架时点（如「绿废墟」「3FP」）搜都行。下面是摊平版，同一件东西在两家店出现就占两行。</p>
+    <details class="mon-fold">
+        <summary>展开／收起：${all.length} 条总表</summary>
+        ${ftableOwn(['商品', '店', '小节', '价格', '上架时点'], ['8.4rem', '8.6rem', '7rem', '4.8rem', 'auto'], allRows, { ph: '输入商品名、店名或「绿废墟」', cls: 'rf3shopall' })}
+    </details>
+
+    <h2 class="h2">逐店明细</h2>
+    <p class="p">下面按<b>店铺</b>原样排，一家店一节，店内再按原文的小节分。表格里的字没改过——价格一律带 G，和源一致。</p>
+    ${shopBlocks}
+
+    ${facSec}
+
+    <h2 class="h2">照录不改的几处</h2>
+    <div class="txt-list">
+        <p><b>进度锁是废墟 boss＋FP＋角色到镇</b>——边境不像 RF5 有 Studio Palmo 扩建，而是靠打通绿废墟／熔岩废墟解锁上级水晶与进阶配方书，靠刷 FP 解锁教会药房花草，靠 Rosetta／Lara 到镇开 Materia 与药房。</p>
+        <p><b>水晶价格跨度大</b>——Lv1 元素水晶 2500G 到 Lv5 4500G，照源录入不修正。</p>
+        <p><b>价格一律带 G</b>——维基所有价格都写成「500G」这类带单位的形式，本站不改写法、不去掉 G。</p>
+        <p><b>单源未交叉</b>——本页仅 runefrontier 维基 Shops 页一源（2026-11 经搜索缓存核对），未做多源交叉；若与游戏内实机有出入，以游戏内为准，本站不臆测补价。</p>
+    </div>
+    <div class="note">数据文件 <code>js/rffshop.js</code>（<code>RFF_SHOP</code>）由 <code>_build_rff_shop.py</code> 从 runefrontier 维基 Shops 页整理，逐行校验；页面里的所有统计（条数、占比、最贵、最便宜）都是<b>现算</b>，没有一处写死。</div>`;
+}
+
 function shopRf3Html() {
     const D = (typeof RF3_SHOP !== 'undefined') ? RF3_SHOP : null;
     if (!D || !D.shops || !D.shops.length) return '';
@@ -10648,7 +10803,8 @@ const PAGES = [
             : g.id === 'rf3' ? shopRf3Html()
             : g.id === 'rf1' ? shopRf1Html()
             : g.id === 'rf5' ? shopRf5Html()
-            : g.id === 'rf4' ? shopRf4Html() : ''}
+            : g.id === 'rf4' ? shopRf4Html()
+            : g.id === 'rff' ? shopRffHtml() : ''}
         `
     },
     {
