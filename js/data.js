@@ -76,12 +76,14 @@ const GAMES = [
     {
         id: 'rf3', no: 'Ⅲ', name: '符文工房3/特别版', short: 'RF3/SP',
         jp: 'ルーンファクトリー3', en: 'Rune Factory 3: A Fantasy Harvest Moon',
-        date: '2009-10-22', plat: 'Nintendo DS', dev: 'Neverland', pub: 'Marvelous Entertainment',
+        date: '2023-03-02', plat: 'Nintendo Switch／PC', dev: 'Neverland', pub: 'Marvelous Entertainment',
+        orig: { date: '2009-10-22', plat: 'Nintendo DS' },
+        ver: '日版 Switch 2023.03.02｜亚洲 2023.03.30｜欧美 Switch／PC 2023.09.05',
         stage: '西亚廉斯镇', stageJp: 'シアレンス', hero: '麦斯', heroJp: 'マイス',
         god: '希雅蕾斯之树',
         grad: ['#7a4f9e', '#b899d8'], hue: 272,
         tagline: '人类与魔物的混血，站在两边的中间',
-        intro: '倒卧在花店门前的金色莫可莫可被少女希雅救回家，醒来时已经变成人形、并且失去记忆——他的本体是魔物。为了阻止人类与魔物之间延续五十年的对立，麦斯在希雅蕾斯之树下开始生活。本站把 2009 年 NDS 原版与 2023 年 Switch／PC 重制版（特别版）合在这一个条目下，两版差异见「移植版对照」。',
+        intro: '倒卧在花店门前的金色莫可莫可被少女希雅救回家，醒来时已经变成人形、并且失去记忆——他的本体是魔物。为了阻止人类与魔物之间延续五十年的对立，麦斯在希雅蕾斯之树下开始生活。本站把 2009 年 NDS 原版与 2023 年 Switch／PC 重制版（特别版）合在这一个条目下，两版差异见本页「版本」。',
         systems: [
             ['变身', '主角可在人形与莫可莫可形态间自由切换。形态改变战斗动作，也改变 NPC 的对话与反应——居民并不知道他的秘密。'],
             ['生活 AI', 'NPC 按各自的兴趣、性格、交友关系自主行动，不再是固定脚本站桩。时间带不同，全镇的分布会变。'],
@@ -186,12 +188,14 @@ const GAMES = [
     {
         id: 'rf4', no: 'Ⅳ', name: '符文工房4/豪华版', short: 'RF4/DX',
         jp: 'ルーンファクトリー4', en: 'Rune Factory 4',
-        date: '2012-07-19', plat: 'Nintendo 3DS', dev: 'Neverland', pub: 'Marvelous AQL',
+        date: '2019-07-25', plat: 'Nintendo Switch／PC／PS4／Xbox One', dev: 'Neverland', pub: 'Marvelous AQL',
+        orig: { date: '2012-07-19', plat: 'Nintendo 3DS' },
+        ver: '日版 Switch 2019.07.25｜中文·亚洲 2019.12.05｜欧美 Switch 2020.02｜PS4／Xbox One／PC 2021.12.07',
         stage: '赛尔菲亚', stageJp: 'セルフィア', hero: '雷斯特／芙蕾', heroJp: 'レスト／フレイ',
         god: '风幻龙 赛尔泽薇德（Ventuswill）',
         grad: ['#3f7f3a', '#93c977'], hue: 120,
         tagline: '掉在龙身上，然后当上了王子／公主',
-        intro: '主角在前往赛尔菲亚的途中被盗贼袭击，失去记忆并从飞行船坠落，正好落在风幻龙赛尔泽薇德身上。为了回报收留之恩，主角代理王族职务，成了这座小镇的王子或公主。本站把 2012 年 3DS 原版与 2019 年起的豪华版合在这一个条目下，两版差异见「移植版对照」。',
+        intro: '主角在前往赛尔菲亚的途中被盗贼袭击，失去记忆并从飞行船坠落，正好落在风幻龙赛尔泽薇德身上。为了回报收留之恩，主角代理王族职务，成了这座小镇的王子或公主。本站把 2012 年 3DS 原版与 2019 年起的豪华版合在这一个条目下，两版差异见本页「版本」。',
         systems: [
             ['王子／公主点数', '完成居民委托累积点数，用来举办节日、修建设施、推进开发计划。本作的「经营小镇」感是系列最强的一作。'],
             ['大地之绊', '主角与生俱来的天赋，能与龙对话——这也是整条主线的钥匙。'],

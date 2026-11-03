@@ -68,6 +68,21 @@ function platShort(p) {
         .trim();
 }
 
+/* 平台全名压缩（保留所有平台，不截断到第一个 ／） */
+function platAll(p) {
+    return p
+        .replace(/Nintendo 3DS/g, '3DS')
+        .replace(/Nintendo DS/g, 'NDS')
+        .replace(/Nintendo Switch/g, 'Switch')
+        .replace(/PlayStation 3/g, 'PS3')
+        .replace(/PlayStation 4/g, 'PS4')
+        .replace(/Xbox One/g, 'XB1')
+        .replace(/Xbox Series X\|S/g, 'XsX')
+        .replace(/Switch 2/g, 'NS2')
+        .replace(/Windows/g, 'PC')
+        .trim();
+}
+
 /* ---------- 日期工具：每季 30 天，一年 120 天 ---------- */
 const YEAR_DAYS = 120;
 function absDay(p) { return p.s * 30 + (p.d - 1); }
@@ -227,16 +242,22 @@ function viewHome(g) {
         <div class="cover-name">${g.name}</div>
         <div class="cover-en">${g.en}</div>
         <div class="cover-meta">
-            <span>${g.plat}</span>
+            <span>${platAll(g.plat)}</span>
             <span>${g.date}</span>
         </div>
     </div>
     <div class="quick">
         <div><div class="qk">发售</div><div class="qv">${g.date.replace(/-/g, '.')}</div></div>
-        <div><div class="qk">平台</div><div class="qv">${platShort(g.plat)}</div></div>
+        <div><div class="qk">平台</div><div class="qv">${platAll(g.plat)}</div></div>
         <div><div class="qk">舞台</div><div class="qv">${g.stage}</div></div>
         <div><div class="qk">主角</div><div class="qv">${g.hero}</div></div>
     </div>
+    ${g.orig ? `
+    <div class="verhist">
+        <div class="vh-row"><span class="vh-k">原版</span><span class="vh-v">${g.orig.plat}　${g.orig.date.replace(/-/g, '.')}</span></div>
+        <div class="vh-row"><span class="vh-k">${escHtml((g.name.split('/')[1] || '本作').trim())}</span><span class="vh-v">${platAll(g.plat)}　${g.date.replace(/-/g, '.')}</span></div>
+        ${g.ver ? `<div class="vh-note">${escHtml(g.ver)}</div>` : ''}
+    </div>` : ''}
     <div class="search">
         <input id="q" type="search" autocomplete="off" placeholder="搜索条目，如「生命果冻」「锻造」" />
         <button id="qbtn">搜索</button>

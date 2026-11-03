@@ -316,6 +316,43 @@ img {
     text-overflow: ellipsis;
 }
 
+/* ============ 版本沿革（原版 / 特别版·豪华版） ============ */
+.verhist {
+    margin: 0.5rem 1rem 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--line-2);
+    border: 1px solid var(--line-2);
+}
+.verhist .vh-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fbfcfc;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.72rem;
+}
+.verhist .vh-row + .vh-row { margin-top: 1px; }
+.verhist .vh-k {
+    color: #a4aeb4;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    flex: 0 0 auto;
+    margin-right: 0.8rem;
+}
+.verhist .vh-v {
+    color: var(--ink-2);
+    font-weight: 600;
+    text-align: right;
+}
+.verhist .vh-note {
+    background: #f4f7f8;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.64rem;
+    color: var(--ink-4);
+    line-height: 1.55;
+}
+
 /* ============ 图标网格 ============ */
 .menu {
     padding: 0.9rem 0.3rem 1.15rem;
