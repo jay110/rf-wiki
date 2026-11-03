@@ -71,7 +71,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-03",
-    latest: ["第一百七十七：把 100 个脚本拆成 3 个包，首页从 1.2MB 降到 413KB", "第一百七十六：3 代八家店的价目表接上，341 条商品一次查清", "第一百七十五：删掉「3 特别版」「4 豪华版」两条作品页，内容全部并回 3 与 4", "第一百七十四：3 代物品表补齐漏收的 19 条，顺带更正上一批「枪类一一对应」的说法", "第一百七十三：3 代物品一览接上极击网出货清单，顺手查出说明列 783 条全对错…", "第一百七十二：3 代的素材强化补齐 96 行，状态效果的数值与触发率首次进站"],
+    latest: ["第一百七十八：4 部有 PC 版的作补上 Steam 系统需求，写进「版本与发行」块", "第一百七十七：把 100 个脚本拆成 3 个包，首页从 1.2MB 降到 413KB", "第一百七十六：3 代八家店的价目表接上，341 条商品一次查清", "第一百七十五：删掉「3 特别版」「4 豪华版」两条作品页，内容全部并回 3 与 4", "第一百七十四：3 代物品表补齐漏收的 19 条，顺带更正上一批「枪类一一对应」的说法", "第一百七十三：3 代物品一览接上极击网出货清单，顺手查出说明列 783 条全对错…"],
 };
 
 ;
@@ -156,6 +156,17 @@ const GAMES = [
         date: '2023-03-02', plat: 'Nintendo Switch／PC', dev: 'Marvelous', pub: 'Marvelous',
         orig: { date: '2009-10-22', plat: 'Nintendo DS', dev: 'Neverland', pub: 'Marvelous Entertainment' },
         ver: '日版 Switch 2023.03.02｜亚洲 2023.03.30｜欧美 Switch／PC 2023.09.05',
+        pc: {
+            note: 'Steam（Windows）版系统需求，数据取自 Steam 商店页各作页面。',
+            rows: [
+                ['操作系统', 'Windows 10', 'Windows 10'],
+                ['处理器', 'Intel Core i5-1135G7', 'Intel Core i5-9300H'],
+                ['内存', '8 GB RAM', '16 GB RAM'],
+                ['显卡', 'Intel Iris Xe Graphics', 'NVIDIA GTX 1650Q'],
+                ['DirectX', 'Version 12', 'Version 12'],
+                ['存储空间', '4 GB 可用空间', '4 GB 可用空间']
+            ]
+        },
         stage: '西亚廉斯镇', stageJp: 'シアレンス', hero: '麦斯', heroJp: 'マイス',
         god: '希雅蕾斯之树',
         grad: ['#7a4f9e', '#b899d8'], hue: 272,
@@ -268,6 +279,17 @@ const GAMES = [
         date: '2019-07-25', plat: 'Nintendo Switch／PC／PS4／Xbox One', dev: 'Marvelous', pub: 'Marvelous',
         orig: { date: '2012-07-19', plat: 'Nintendo 3DS', dev: 'Neverland', pub: 'Marvelous AQL' },
         ver: '日版 Switch 2019.07.25｜中文·亚洲 2019.12.05｜欧美 Switch 2020.02｜PS4／Xbox One／PC 2021.12.07',
+        pc: {
+            note: 'Steam（Windows）版系统需求（60FPS 目标），数据取自 Steam 商店页与官网。需 64 位系统。',
+            rows: [
+                ['操作系统', 'Windows 10（64 位）', 'Windows 10（64 位）'],
+                ['处理器', 'Intel Core i5-6400', 'Intel Core i5-9300H'],
+                ['内存', '8 GB RAM', '16 GB RAM'],
+                ['显卡', 'Intel HD Graphics HD530', 'NVIDIA GTX 1650Q'],
+                ['DirectX', 'Version 11', 'Version 11'],
+                ['存储空间', '5 GB 可用空间', '5 GB 可用空间']
+            ]
+        },
         stage: '赛尔菲亚', stageJp: 'セルフィア', hero: '雷斯特／芙蕾', heroJp: 'レスト／フレイ',
         god: '风幻龙 赛尔泽薇德（Ventuswill）',
         grad: ['#3f7f3a', '#93c977'], hue: 120,
@@ -301,6 +323,17 @@ const GAMES = [
         id: 'rf5', no: 'Ⅴ', name: '符文工房5', short: 'RF5',
         jp: 'ルーンファクトリー5', en: 'Rune Factory 5',
         date: '2021-05-20', plat: 'Switch／Windows（2022-07-13）', dev: 'HAKAMA', pub: 'Marvelous／世嘉（亚洲）',
+        pc: {
+            note: 'Steam（Windows）版系统需求，数据取自官网 runefactory-5.com 与 Steam 商店页。需 64 位系统。',
+            rows: [
+                ['操作系统', 'Windows 8.1 or later（64 位）', 'Windows 8.1 or later（64 位）'],
+                ['处理器', 'Intel Core i5-6500', 'Intel Core i5-9400'],
+                ['内存', '8 GB RAM', '16 GB RAM'],
+                ['显卡', 'Nvidia GTX 660 Ti', 'Nvidia GTX 1660 Ti'],
+                ['DirectX', 'Version 11', 'Version 11'],
+                ['存储空间', '9 GB 可用空间', '9 GB 可用空间']
+            ]
+        },
         stage: '里格巴斯', stageJp: 'リグバース', hero: '亚雷斯／爱丽丝', heroJp: 'アレス／アリス',
         god: '诺鲁德王国的守护龙',
         grad: ['#9a5b3a', '#d8a37c'], hue: 24,
@@ -340,6 +373,17 @@ const GAMES = [
         id: 'azuma', no: '龍', name: '符文工房 龙之天地', short: '龙之天地',
         jp: 'ルーンファクトリー 龍の国', en: 'Rune Factory: Guardians of Azuma',
         date: '2025-06-05', plat: 'Switch／Switch 2／Windows（PS5／XsX 2026-02-13）', dev: 'Marvelous', pub: 'Marvelous',
+        pc: {
+            note: 'Steam（Windows）版系统需求，数据取自 Steam 商店页。需 64 位系统。',
+            rows: [
+                ['操作系统', 'Windows 10／11', 'Windows 10／11'],
+                ['处理器', 'Intel Core i5-10400', 'Intel Core i7-9700'],
+                ['内存', '8 GB RAM', '16 GB RAM'],
+                ['显卡', 'NVIDIA GeForce GTX 1650 SUPER', 'NVIDIA GeForce RTX 2060 SUPER'],
+                ['DirectX', 'Version 11', 'Version 11'],
+                ['存储空间', '20 GB 可用空间', '20 GB 可用空间']
+            ]
+        },
         stage: '东国', stageJp: 'アズマ', hero: '昴流／辉夜', heroJp: 'スバル／カグヤ',
         god: '东国的诸神',
         grad: ['#8f2f4a', '#d98aa0'], hue: 344,
@@ -1408,16 +1452,17 @@ function viewHome(g) {
         <div><div class="qk">舞台</div><div class="qv">${g.stage}</div></div>
         <div><div class="qk">主角</div><div class="qv">${g.hero}</div></div>
     </div>
-    ${g.orig ? `
+    ${g.orig || g.pc ? `
     <div class="verhist">
         <div class="vh-title">版本与发行</div>
+        ${g.orig ? `
         <div class="vh-sec">
             <div class="vh-sec-h">原版</div>
             <div class="vh-row"><span class="vh-k">发布平台</span><span class="vh-v">${platAll(g.orig.plat)}</span></div>
             <div class="vh-row"><span class="vh-k">发布时间</span><span class="vh-v">${g.orig.date.replace(/-/g, '.')}</span></div>
             <div class="vh-row"><span class="vh-k">开发商</span><span class="vh-v">${escHtml(g.orig.dev)}</span></div>
             <div class="vh-row"><span class="vh-k">发行商</span><span class="vh-v">${escHtml(g.orig.pub)}</span></div>
-        </div>
+        </div>` : ''}
         <div class="vh-sec">
             <div class="vh-sec-h">${escHtml((g.name.split('/')[1] || '本作').trim())}</div>
             <div class="vh-row"><span class="vh-k">发布平台</span><span class="vh-v">${platAll(g.plat)}</span></div>
@@ -1425,6 +1470,21 @@ function viewHome(g) {
             <div class="vh-row"><span class="vh-k">开发商</span><span class="vh-v">${escHtml(g.dev)}</span></div>
             <div class="vh-row"><span class="vh-k">发行商</span><span class="vh-v">${escHtml(g.pub)}</span></div>
         </div>
+        ${(() => {
+            if (!g.pc) return '';
+            const rows = g.pc.rows.map(r => `<tr><td class="pct-k">${escHtml(r[0])}</td><td>${escHtml(r[1])}</td><td>${escHtml(r[2])}</td></tr>`).join('');
+            return `
+        <div class="vh-sec vh-pc">
+            <div class="vh-sec-h">PC 版配置（Steam）</div>
+            <div class="vh-note">${escHtml(g.pc.note || '')}</div>
+            <div class="pct-wrap">
+                <table class="pctab">
+                    <thead><tr><th>项目</th><th>最低配置</th><th>推荐配置</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        </div>`;
+        })()}
         ${g.ver ? `<div class="vh-note">${escHtml(g.ver)}</div>` : ''}
     </div>` : ''}
     <div class="search">

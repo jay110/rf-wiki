@@ -5,6 +5,16 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百七十八：4 部有 PC 版的作补上 Steam 系统需求，写进「版本与发行」块</h2>
+<ul class="ul">
+<li class="li"><b>哪 4 部：</b>符文工房3/特别版、符文工房4/豪华版、符文工房5、符文工房 龙之天地——这四部有 Windows（Steam）版，其余作没有 PC 版，所以不写。</li>
+<li class="li"><b>写在哪里：</b>每作「版本与发行」块新增一节「PC 版配置（Steam）」，一张「项目／最低配置／推荐配置」三列表。5 代与龙之天地此前没有版本块（无原版/重制之分），这轮一并补出「本作」一节，让它们也显示平台/发售/开发商/发行商。</li>
+<li class="li"><b>数据口径：</b>全部取自各作官方 Steam 商店页，龙之天地另对 SteamDB／PCGamingWiki 交叉核对；需要 64 位系统的档位照原样标了，RF4 最低是 DirectX 11（不是 12）。</li>
+<li class="li"><b>关键数字（最低 → 推荐）：</b>3 特别版 i5-1135G7→i5-9300H、核显 Iris Xe→GTX 1650Q；4 豪华版 i5-6400→i5-9300H、HD530→GTX 1650Q；5 代 i5-6500→i5-9400、GTX 660Ti→GTX 1660Ti；龙之天地 i5-10400→i7-9700、GTX 1650S→RTX 2060S；四部都是 8GB→16GB 内存、存储 4／5／9／20 GB。</li>
+<li class="li"><b>工程：</b><code>GAMES</code> 给这 4 作各加一个 <code>pc</code> 字段（note ＋ 6 行 rows）；<code>viewHome</code> 的版本块渲染条件从「有原版才显示」放宽到「有原版或有 PC 配置就显示」，块内用 IIFE 渲染 PC 表；CSS 新增 <code>.pctab</code>／<code>.pct-wrap</code>（宽表内部横滑，不撑破窄屏）。</li>
+<li class="li"><b>校验：</b><code>_verify</code> 356 实例／0 异常；<code>_test_links</code> 0 坏链；<code>_build_chunks.js</code> 自检 365 页与基线逐字一致；PC 表在 <code>.pct-wrap</code>（overflow-x:auto）内，不撑破窄屏。</li>
+</ul>
+
 <h2 class="h2">2026-11-03　第一百七十七：把 100 个脚本拆成 3 个包，首页从 1.2MB 降到 413KB</h2>
 <ul class="ul">
 <li class="li"><b>改的是加载方式，不是内容。</b>此前首页要串行下完 <b>100 个 <code>&lt;script&gt;</code></b>：原始 4.26MB、gzip 后 1217KB，其中 <code>pages.js</code> 一家就 506KB。现在 <code>index.html</code> 只引三个包，其余按「进哪一作、开哪一页」现下——<b>365 个页面的输出与拆包前逐字一致</b>，一个字的正文都没动。</li>

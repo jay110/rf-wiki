@@ -370,6 +370,23 @@ img {
     letter-spacing: 0.05em;
     padding: 0.32rem 0.7rem;
 }
+.verhist .vh-pc .vh-note { border-top: 1px solid var(--line-2); }
+.pct-wrap { overflow-x: auto; background: #fbfcfc; }
+.pctab { width: 100%; border-collapse: collapse; font-size: 0.72rem; background: #fff; }
+.pctab th {
+    background: #eef3f4; color: var(--ink-2); font-weight: 700;
+    padding: 0.42rem 0.7rem; text-align: left; white-space: nowrap;
+    border-bottom: 1px solid var(--line-2);
+}
+.pctab td {
+    padding: 0.42rem 0.7rem; color: var(--ink-2);
+    vertical-align: top; border-bottom: 1px solid var(--line-2); line-height: 1.4;
+}
+.pctab tr:last-child td { border-bottom: none; }
+.pctab .pct-k {
+    color: #a4aeb4; font-size: 0.62rem; letter-spacing: 0.04em;
+    white-space: nowrap; width: 1%;
+}
 
 /* ============ 图标网格 ============ */
 .menu {
