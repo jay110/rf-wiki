@@ -15996,7 +15996,7 @@ function rfoCraftHtml() {
     const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const lv = C.levels;
 
-    return `
+    let out = `
             <h2 class="h2">海洋的合成难度：看「物品等级 − 技能等级」</h2>
             <p class="p">这一作的成败不看运气条怎么按，而是先看一个差值：<b>要做的物品等级，减去你对应的技能等级</b>。差值落在哪一档，就决定了这一步是「根本做不了」还是「几乎必成」——</p>
             ${tbl(['差值（物品等级 − 技能等级）', '原表写的难度'],
@@ -16012,6 +16012,28 @@ function rfoCraftHtml() {
                 ${C.starB.map(s => `<li class="li">${esc(s)}</li>`).join('')}
             </ul>
             <div class="note">这两组数字本站不做任何推演：原表自己标了「未经验证」，而且第一组只给了 6 个难度对应的概率，没说两者怎么叠加。真要靠优质品做装备，实际做法还是<b>把技能等级刷高、用带 ☆ 的素材</b>，比记概率可靠。</div>`;
+
+    /* ---- 锻造配方表。单一来源 crimsontear 的 recipes/forge；各类武器原表列数不同，按原表出表。 ---- */
+    const D = (typeof RFO_FORGE !== 'undefined') ? RFO_FORGE : null;
+    if (D && D.families && D.families.length) {
+        const E2 = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
+        out += '<h2 class="h2">锻造配方表：' + D.families.length + ' 类，' + famRows + ' 条</h2>';
+        out += '<p class="p">下面每张表的<b>表头长得不一样，不是漏列</b>：原攻略页里各类武器的列数本来就不同——斧、锤、双手剑、镰刀有「攻击·防御·魔攻·魔防」四列，双剑、武士刀、长枪只有「攻击·魔防」，法杖是「攻击·魔攻·魔防」，魔杖只有「魔攻·魔防」，钓竿则连战斗属性和效果列都没有。缺的列本站<b>不补 0</b>，免得把「原表没写」看成「数值是 0」。</p>';
+        out += stat([['武器大类', D.families.length + ' 类'], ['配方条目', famRows + ' 条']]);
+        D.families.forEach(f => {
+            out += '<h3 class="h3">' + E2(f.name) + '（' + f.rows.length + ' 条）</h3>';
+            out += tbl(f.cols.map(E2), f.rows.map(r => r.map(E2)), { cls: 'rf1craft' });
+        });
+        out += '<div class="note"><b>「锻造Lv」是原表的 Skill 列</b>——做出这件东西所要求的锻造技能等级，不是物品等级。<b>「配方书」</b>是原表最后一列，本站只剥掉与类目重复的前缀（原表写「Axes Lv 1」，这里记「Lv1」），LvS 即最高级配方书。<b>「价值」是原表的 Value 列（物品价值），不是商店买价</b>，本页不据此换算任何买卖价；商店实际卖多少，看<a href="#/page/shop">商店</a>页。</div>';
+        if (D.warns && D.warns.length) {
+            out += '<div class="note"><b>录表时遇到的矛盾与异常，一律照录、不作裁决：</b><ul class="ul">';
+            D.warns.forEach(w => { out += '<li class="li">' + E2(w) + '</li>'; });
+            out += '</ul></div>';
+        }
+        out += '<div class="note">源：<b>' + E2(D.src) + '</b>。' + E2(D.note) + '</div>';
+    }
+    return out;
 }
 
 /* 符文工房 海洋（RFO）委托任务：单一来源《符文工厂海洋（最强攻略）》xls「任务」工作表。

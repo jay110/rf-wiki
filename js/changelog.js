@@ -1,6 +1,12 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十七：符文工房 海洋（rfo）锻造配方表接入 craft 页（10 类 147 条）</h2>
+<p>海洋的 craft 页此前只讲「物品等级 − 技能等级」的合成难度机制和 ☆ 优质品，<b>没有一张配方表</b>——是八作里最后一块薄的地方。这次补上。</p>
+<p><b>数据</b>：新建 <code>_build_rfo_forge.py</code> 生成 <code>js/rfoforge.js</code>（<code>RFO_FORGE</code>，LF），单一来源 crimsontear.com《Rune Factory: Tides of Destiny》Game Guide 的 <code>recipes/forge</code> 页。<b>10 类 147 条</b>：斧 20、双剑 19、双手剑 19、长枪 19、武士刀 19、锤 19、法杖 14、魔杖 5、镰刀 8、钓竿 5。</p>
+<p><b>关键处理</b>：原攻略页是纯文本展平表，<b>各类武器的列数并不统一</b>——斧／锤／双手剑／镰刀有「攻·防·魔攻·魔防」四列，双剑／武士刀／长枪只有「攻击·魔防」，法杖是「攻击·魔攻·魔防」，魔杖只有「魔攻·魔防」，钓竿连战斗属性和效果列都没有。本站按 <code>families[].cols</code> 让每类各自带表头，<b>缺的列不补 0</b>（否则「原表没写」会被读成「数值是 0」）。另把原表 Skill 列单独立为「锻造Lv」（要求技能等级，非物品等级）；「配方书」列只剥掉与类目重复的前缀（原表「Axes Lv 1」记「Lv1」）；「价值」注明是原表 Value 列（物品价值），<b>不是商店买价</b>，不据此换算买卖价。</p>
+<p><b>跨源矛盾照录、不作裁决</b>：原表把双剑 Legendary Blades、双手剑 Legendary Sword、长枪 Legion 三条最终武器都标成「Lv 2」，而 fogu／IGN 的配方书清单里对应的是 Lv S；锤表里 Heavy Hammer（锻造 Lv 39）的配方要 Spiked Hammer（锻造 Lv 45）；原文拼写 Sharp Talpn、Elemnetal Defense、Sappling Spirit Wand、Flameberge／Icifer 一律保留。以上六条全部写进页面 <code>warns</code> 列表，数据里一个都没改。</p>
+<p><b>渲染</b>：<code>rfoCraftHtml()</code> 由「直接 return 模板串」改为「先拼机制段、再追加配方表」，新增统计块、十张分类表、列义说明与矛盾清单；manifest 注册 rfoforge.js（归 rfo 包）。验证：_verify 356/0、_test_links 0 坏链、_build_chunks 365 页逐字一致、_test_changelog 一致；直接渲染确认 craft/rfo 输出 46886 字符、10 类全出、无空值异常。</p>
 <h2 class="h2">2026-11-03　第一百八十六：符文工房 边境（rff）锻造配方接入 craft 页</h2>
 <div class="txt-list">
 <p><b>数据</b>：新建 <code>js/rffforge.js</code>（<code>RFF_FORGE</code>），由 <code>_build_rff_forge.py</code> 从边境专属 <code>runefrontier.fandom.com/wiki/Recipe_Books</code>（WebSearch 缓存核对）整理，<b>7 类 45 条</b>——单手剑（初级＋进阶）、双手剑（初级）、枪、锤、斧、法杖。按「配方书 → 配方 → 材料 → 锻造Lv」录入，书价随大类标（入门 1,000G／法杖 2,000G／进阶单手剑 10,000G）。</p>
