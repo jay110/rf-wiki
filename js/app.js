@@ -188,7 +188,7 @@ function viewWelcome() {
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
-                <div class="wcard-meta">${x.date.slice(0, 4)}　${platAll(x.plat)}${x.orig ? `　原版${x.orig.date.slice(0, 4)}` : ''}</div>
+                <div class="wcard-meta">${x.date.slice(0, 4)}　${platAll(x.plat)}${x.orig ? `　原版 ${platAll(x.orig.plat)} ${x.orig.date.slice(0, 4)}` : ''}</div>
             </a>`;}).join('')}
     </div>
 

@@ -1,6 +1,11 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百七十九：符文工房2 锻造／农具／药学配方接入 craft 页</h2>
+<p class="p">给 RF2 做了锻造攻略：武器 7 系（短剑／长剑／斧／战锤／枪／法杖／盾）＋ 农具 1 系，共 128 条配方；药学 27 条（中文名／等级／材料／效果／卖价／买价）。武器与工具名保留英文（RF2 无官方中文），材料名转中文圈通用译名。<br>
+源：almarsguides.com（Rune Factory 2 Forging Recipes，英文）+ neoseeker（Forging FAQ Tools 段）+ wiki.biligame.com（RF2recipepharmacy，中文药学）。<br>
+落地：<code>_build_rf2_forge.py</code> 生成 <code>js/rf2forge.js</code>（RF2_CRAFT），新增 <code>craftRf2Html()</code> 并接入 craft 页分发器（g.id==='rf2'）；RF2_CRAFT 归入 rf2 作包。验证：_verify 0 异常、_test_links 0 坏链、_build_chunks 365 页逐字一致。</p>
+
 <h2 class="h2">2026-11-03　第一百七十八：4 部有 PC 版的作补上 Steam 系统需求，写进「版本与发行」块</h2>
 <ul class="ul">
 <li class="li"><b>哪 4 部：</b>符文工房3/特别版、符文工房4/豪华版、符文工房5、符文工房 龙之天地——这四部有 Windows（Steam）版，其余作没有 PC 版，所以不写。</li>

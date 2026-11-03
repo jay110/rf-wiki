@@ -2032,6 +2032,8 @@ img {
     margin-top: 0.34rem;
     font-size: 0.6rem;
     opacity: 0.74;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 /* 最近更新 */

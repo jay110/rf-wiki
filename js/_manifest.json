@@ -25,6 +25,7 @@
   "js/rf2data.js",
   "js/rf2quest.js",
   "js/rf2shop.js",
+  "js/rf2forge.js",
   "js/rf3shop.js",
   "js/rf3mat.js",
   "js/rf4forge.js",

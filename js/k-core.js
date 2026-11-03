@@ -71,7 +71,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-03",
-    latest: ["第一百七十八：4 部有 PC 版的作补上 Steam 系统需求，写进「版本与发行」块", "第一百七十七：把 100 个脚本拆成 3 个包，首页从 1.2MB 降到 413KB", "第一百七十六：3 代八家店的价目表接上，341 条商品一次查清", "第一百七十五：删掉「3 特别版」「4 豪华版」两条作品页，内容全部并回 3 与 4", "第一百七十四：3 代物品表补齐漏收的 19 条，顺带更正上一批「枪类一一对应」的说法", "第一百七十三：3 代物品一览接上极击网出货清单，顺手查出说明列 783 条全对错…"],
+    latest: ["第一百七十九：符文工房2 锻造／农具／药学配方接入 craft 页", "第一百七十八：4 部有 PC 版的作补上 Steam 系统需求，写进「版本与发行」块", "第一百七十七：把 100 个脚本拆成 3 个包，首页从 1.2MB 降到 413KB", "第一百七十六：3 代八家店的价目表接上，341 条商品一次查清", "第一百七十五：删掉「3 特别版」「4 豪华版」两条作品页，内容全部并回 3 与 4", "第一百七十四：3 代物品表补齐漏收的 19 条，顺带更正上一批「枪类一一对应」的说法"],
 };
 
 ;
@@ -1388,7 +1388,7 @@ function viewWelcome() {
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
-                <div class="wcard-meta">${x.date.slice(0, 4)}　${platAll(x.plat)}${x.orig ? `　原版${x.orig.date.slice(0, 4)}` : ''}</div>
+                <div class="wcard-meta">${x.date.slice(0, 4)}　${platAll(x.plat)}${x.orig ? `　原版 ${platAll(x.orig.plat)} ${x.orig.date.slice(0, 4)}` : ''}</div>
             </a>`;}).join('')}
     </div>
 

@@ -53,6 +53,7 @@
       "js/rf2data.js",
       "js/rf2quest.js",
       "js/rf2shop.js",
+      "js/rf2forge.js",
       "js/rf2cook.js",
       "js/fishspot_rf2.js"
     ],
@@ -133,17 +134,17 @@
     ]
   },
   "sha": {
-    "core": "9ce4b85c6c952797",
-    "shared": "6a4d3afae8fa1c41",
+    "core": "53c1239da84e5a29",
+    "shared": "660d16740f16e9c2",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
-    "game:rf2": "820ea6d4fa19fb6c",
+    "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "40f8a6c782a20ef1",
     "game:rff": "6a6e6f0d54bfc863",
     "game:rfo": "2b49d9a15f591e57",
     "game:rf4": "995cc681a4eb35f7",
     "game:rf5": "1d75038895ec3f75",
     "game:azuma": "9f5fcdee3948fe94",
-    "page:changelog": "22455221b4ccf970"
+    "page:changelog": "8c1c82d99e09076d"
   }
 }

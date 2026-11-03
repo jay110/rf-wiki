@@ -7274,6 +7274,7 @@ const PAGES = [
             ${(g && /^rf3/.test(g.id)) ? craftRf3Html() : ''}
             ${(g && /^rf4/.test(g.id)) ? craftRf4Html() : ''}
             ${(g && g.id === 'rfo') ? rfoCraftHtml() : ''}
+            ${(g && g.id === 'rf2') ? craftRf2Html() : ''}
             ${(g && g.id === 'rf1') ? craftRf1Html() : ''}
             ${(!g || g.id === 'rf5') ? `<p class="p">量产和「做一件毕业的」是两件事。前者看配方表，后者看强化顺序——<b>倍铁怎么排位置，比用什么配方更决定成败</b>，那套算法单独放在了装备打造那一页。</p>` : ''}
             <div class="jump">
@@ -10977,6 +10978,26 @@ function craftRf1Html() {
     out += '<p class="p">HP／RP 回复药、异常状态解除药，以及火／水／风／土四元素与作物营养剂。作用是<b>调和素材直接给</b>，等级门槛写在「药学LV」。</p>';
     out += tbl(D.pharmacy.cols.map(E), D.pharmacy.rows.map(r => r.map(E)), { cls: 'rf1craft' });
     out += '<div class="note">源：<b>' + E(D.src) + '</b>。料理（刀／煎锅／锅／烤箱／蒸锅／搅拌器／无厨具）本页不收，归到<a href="#/page/cook">料理配方</a>页。</div>';
+    return out;
+}
+
+function craftRf2Html() {
+    const D = (typeof RF2_CRAFT !== 'undefined') ? RF2_CRAFT : null;
+    if (!D) return '';
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const famRows = D.families.reduce((a, f) => a + f.rows.length, 0);
+    let out = '';
+    out += '<h2 class="h2">二代锻造：八系装备，逐级进化</h2>';
+    out += '<p class="p">《符文工房2》没有官方中文译名，所以<b>武器和工具名一律保留英文</b>；材料名用中文圈通用叫法（青铜、铁、银、金、白金……）。锻造同样是「拿上一阶成品当下一阶素材」的<b>进化链</b>——表里「素材一览」若出现前一级武器／工具名，就是从那把升级而来。源里 7 个武器系（短剑／长剑／斧／战锤／枪／法杖／盾）＋ 1 个农具系，全表照原文顺序排。</p>';
+    out += stat([['装备大类', D.families.length + ' 系'], ['锻造配方', famRows + ' 条'], ['药学', D.pharmacy.rows.length + ' 条']]);
+    D.families.forEach(f => {
+        out += '<h3 class="h3">' + E(f.name) + '（' + f.rows.length + ' 条）</h3>';
+        out += tbl(f.cols.map(E), f.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    });
+    out += '<h3 class="h3">药学（' + D.pharmacy.rows.length + ' 条）</h3>';
+    out += '<p class="p">HP／RP 回复、异常状态解除，以及火／水／风／土四元素与作物营养剂。作用是<b>调和素材直接给</b>，等级门槛写在「等级」；卖价／买价照 biligame 中文 wiki 录入。</p>';
+    out += tbl(D.pharmacy.cols.map(E), D.pharmacy.rows.map(r => r.map(E)), { cls: 'rf1craft' });
+    out += '<div class="note">源：<b>' + E(D.src) + '</b>。' + E(D.note) + ' 料理配方归到<a href="#/page/cook">料理配方</a>页，本页不收。</div>';
     return out;
 }
 
