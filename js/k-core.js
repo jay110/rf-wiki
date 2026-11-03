@@ -151,7 +151,7 @@ const GAMES = [
         ],
     },
     {
-        id: 'rf3', no: 'Ⅲ', name: '符文工房3', short: 'RF3',
+        id: 'rf3', no: 'Ⅲ', name: '符文工房3/特别版', short: 'RF3/SP',
         jp: 'ルーンファクトリー3', en: 'Rune Factory 3: A Fantasy Harvest Moon',
         date: '2009-10-22', plat: 'Nintendo DS', dev: 'Neverland', pub: 'Marvelous Entertainment',
         stage: '西亚廉斯镇', stageJp: 'シアレンス', hero: '麦斯', heroJp: 'マイス',
@@ -182,7 +182,7 @@ const GAMES = [
         ],
     },
     {
-        id: 'rff', no: 'F', name: '符文工房 边境', short: '边境',
+        id: 'rff', no: 'F', name: '符文工房未知大地', short: '未知大地',
         jp: 'ルーンファクトリー フロンティア', en: 'Rune Factory Frontier',
         date: '2008-11-27', plat: 'Wii', dev: 'Neverland', pub: 'Marvelous Entertainment',
         stage: '特兰鲁皮亚', stageJp: 'トランルピア', hero: '拉格那', heroJp: 'ラグナ',
