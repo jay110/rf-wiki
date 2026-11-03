@@ -104,6 +104,7 @@
       "js/items4.js",
       "js/rf4forge.js",
       "js/rf4shop.js",
+      "js/rf4request.js",
       "js/rf4cook.js",
       "js/fishspot4.js",
       "js/fx4s.js",
@@ -141,17 +142,17 @@
     ]
   },
   "sha": {
-    "core": "5ae7cab10b351e69",
-    "shared": "1b2b1ba8d25b5772",
+    "core": "660ee6f09fb81356",
+    "shared": "525f9b283b0a300d",
     "cross": "226db472fe859d8a",
     "game:rf1": "ed9bece74f147cbd",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "40f8a6c782a20ef1",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "c1a5d66ff3d8302f",
-    "game:rf4": "d53decc02743cf38",
+    "game:rf4": "5d468d1d94dc4342",
     "game:rf5": "67b8f0237e8cd311",
     "game:azuma": "65335158b0019a86",
-    "page:changelog": "c8bdc184c9586d6d"
+    "page:changelog": "6806e0f07757d711"
   }
 }

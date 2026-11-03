@@ -1,6 +1,17 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，177 条） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-03　第一百八十九：符文工房4 委托任务接入 request 页（3 张子表 93 条 + 可重复 4 类）</h2>
+<div class="txt-list">
+<p><b>为什么做这一页</b>：request 页原先只覆盖 rf2／rff／rfo／azuma 四作，rf1／rf3／rf4／rf5 都落在那段通用机制说明上（渲染仅 768 字符）。这是全站最大的结构性空洞之一，本次先补<b>四代</b>。</p>
+<p><b>数据</b>：新建 <code>_build_rf4_request.py</code> → <code>js/rf4request.js</code>（<code>RF4_REQUEST</code>，LF）。源为 Rune Factory Wiki《Requests (RF4)》。三张子表共 <b>93 条</b>：物品／配方奖励 54 条、杂货店种子奖励 24 条、花店种子奖励 15 条，另收可重复委托 4 类（出货作物／出货鱼／送货／清怪）。</p>
+<p><b>为什么按「报酬去向」分表</b>：源站自己就是按报酬引到哪里分（给物品配方的／放开杂货店种子的／放开花店种子的），不是按委托人分。想解锁某种种子直接查后两张表，比按人名排有用。</p>
+<p><b>英文原样搬，不译</b>：沿 rff 锻造那次的做法——本表只做三件事：拆字段、去掉 wiki 的斜体星号与 <code>Note =</code> 前缀、空单元格留空显示「—」。行内文字一律英文原文，表头中英并列；转写一次就可能失真，宁可让人对照原文。</p>
+<p><b>照录不对齐的三处</b>：①源站正文写「共 92 条」，逐行数却是 <b>93 条</b>（54＋24＋15），差 1 条无法确认是哪一条没算进去——两个数字都摆出来，不改数、不删行凑数；②3 处写 <code>???</code>（两条缺解锁条件、一条缺完成方式）保留原样，不拿别的攻略猜填；③原文错字全照录：<i>Comeplete</i>、<i>A Cheep Axe</i>、<i>Raise at least on skill</i>、<i>Grow and orange tree</i>、<i>available at the General.</i>、<i>Dylas is such a horse.</i>。</p>
+<p><b>没收的两类</b>：个人委托（Personal）源站只有一段描述、无表；角色版 <i>Special Requests</i> 表把「物品／魔物／物品」三格挤成一串、行内错位，抽取不可靠——两者都如实注明，不拿错位数据凑数。</p>
+<p><b>渲染</b>：<code>js/pages.js</code> 新增 <code>requestRf4Html()</code>（机制原文段＋三种委托对照＋三张子表＋可重复表＋照录说明），request 分发器加 <code>g.id==='rf4'</code> 分支；manifest 注册 rf4request.js（归 rf4 包）；pages.js 保持 CRLF。</p>
+<p><b>验证</b>：_verify 356 实例 0 异常、_test_links 0 坏链、_build_chunks 365 页逐字一致、_test_changelog 一致；直接渲染 request/rf4 输出 <b>73707 字符</b>、5 张表、105 个表格行（100 条数据＋5 行表头），无空值。</p>
+</div>
 <h2 class="h2">2026-11-03　第一百八十八：符文工房 边境（rff）锻造配方补全（22 本配方书 249 条）</h2>
 <p>边境的 craft 页此前只有 7 类 45 条，note 里挂着「进阶双手剑、盾／饰品／药学配方书未收」。这次把源页整本抓下来补全，也顺手纠掉一处旧错。</p>
 <p><b>数据</b>：重写 <code>_build_rff_forge.py</code> 生成 <code>js/rffforge.js</code>（<code>RFF_FORGE</code>，LF），源为 runefrontier 维基 Recipe Books 页——<code>fandom.com</code> 域名在本环境被网络策略拦截，改用 <code>wikia.com</code> 旧域名整页抓取成功。<b>22 本配方书 249 条</b>：武器 87（单手剑初 4／进 13、双手剑初 4／进 12、长枪初 4／进 13、战锤初 4／进 9、战斧初 5／进 8、法杖 11）、农具 54、饰品 88、药学 20。</p>

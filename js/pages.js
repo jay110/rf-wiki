@@ -8180,6 +8180,8 @@ const PAGES = [
             if (g && g.id === 'rff') return requestRffHtml();
             /* 二代没有任务板，委托挂在人身上；两套攻略源拼成一张表，单独一页 */
             if (g && g.id === 'rf2') return requestRf2Html();
+            /* 四代的委托在门口委托箱里，源站按「报酬去向」分成三张子表，单独一页 */
+            if (g && g.id === 'rf4') return requestRf4Html();
             return `
             <h2 class="h2">委托是什么</h2>
             <p class="p">居民或组织发布的短期任务：交素材、做料理、打倒某只魔物、送东西。完成得到金钱、道具与好感，部分作品还会给「点数」用于公共建设。</p>
@@ -11979,6 +11981,75 @@ function rfoCraftHtml() {
    主表＝终有依天《【RF2】【一周目】任务大全》（贴吧，118 条，带触发条件与奖励，只写一周目）；
    补表＝安打《任务、居民、怪物攻略》（TGBUS，123 条，奖励混在内容里，含二代）。
    两源大面积重叠，所以只补主表没覆盖的 6 条，不做同名合并——译名两套、口径两套，合并不了就照录。 */
+function requestRf4Html() {
+    const Q = (typeof RF4_REQUEST !== 'undefined') ? RF4_REQUEST : null;
+    if (!Q || !Q.groups || !Q.groups.length) return '';
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dash = '<span class="mon-no">—</span>';
+    const Lf = s => '<span style="display:block;text-align:left;width:100%">' + esc(s) + '</span>';
+    const cell = v => (v === null || v === undefined || v === '') ? dash : Lf(v);
+
+    const nAll = Q.groups.reduce((a, g) => a + g.rows.length, 0);
+    const claim = 92;
+    /* ??? 与空单元格数量一律现算，不写死 */
+    let nQ = 0, nEmpty = 0;
+    Q.groups.forEach(g => g.rows.forEach(r => r.forEach(v => {
+        if (v === '???') nQ++;
+        else if (v === null || v === undefined || v === '') nEmpty++;
+    })));
+    const nRep = (Q.repeat && Q.repeat.rows) ? Q.repeat.rows.length : 0;
+    const cnt = Q.groups.map(g => g.rows.length);
+
+    return `
+    <div class="note">源：<b>${esc(Q.src)}</b>。${esc(Q.note)}</div>
+    ${stat([
+        ['不可重复委托', nAll + ' 条'],
+        ['三张子表', cnt.join(' ／ ')],
+        ['可重复委托', nRep + ' 条'],
+        ['源站自述总数', claim + ' 条'],
+    ])}
+
+    <h2 class="h2">一、委托箱的规矩（原文照录）</h2>
+    <p class="p">RF4 的委托不走人物链，走<b>自宅门口的委托箱</b>。它的规则源站写得很直白，照录如下：</p>
+    ${Q.mech.map(m => `<p class="p" style="padding-left:1.2rem;border-left:3px solid var(--line,#ddd)">${esc(m)}</p>`).join('')}
+    <div class="key">能直接用的是前两句：<b>一开始一天只能接一条</b>，做下去才放开到两三条；<b>同时只能挂着一条委托箱任务</b>——接错了要放弃，当天的次数就废了。第三句（「先把条件做完再接也算」）原文写得绕，本站照录、<b>不替它解释成确定规则</b>。还有一条容易忽略：<b>做完不可重复委托不涨好感</b>，别指望靠刷委托攻略角色。</div>
+
+    <h2 class="h2">二、三种委托，本站只收了前两种</h2>
+    <p class="p">源站把 RF4 的委托分成三类。前两类源头都在委托箱、结构清楚，本站全收；第三类没有表，本站不补。</p>
+    ${tbl(['种类', '从哪来', '本站收了多少', '说明'], [
+        ['<b>解锁型</b><br><span class="mon-no">Unlockable</span>', '自宅门口委托箱', '<b>' + nAll + '</b> 条', '一次性的成长任务：教你系统、解锁商店货、给配方。做完不涨好感，但会开新东西'],
+        ['<b>可重复</b><br><span class="mon-no">Repeatable</span>', '委托箱，每天早上换一批', '<b>' + nRep + '</b> 类', '出货／打怪／送东西，报酬随机且多半是便宜货，主要拿来刷王子点数'],
+        ['<b>个人</b><br><span class="mon-no">Personal</span>', '直接和居民对话时被拜托', '<span class="mon-no">未收</span>', '源站这里<b>只有一段说明、没有表</b>——没数据就不编，见第五节'],
+    ], { leftFirst: true, left: [1, 2, 3], colw: ['8.6rem', '9rem', '6.4rem', 'auto'], cls: 'rf1craft' })}
+
+    <h2 class="h2">三、${nAll} 条解锁型委托，按奖励去向分三张表</h2>
+    <p class="p">源站不是按「委托人」分，而是<b>按报酬把你引到哪里去</b>分：给物品／配方的、放开杂货店种子的、放开花店种子的。这个分法比按人名分有用——想解锁某种种子，直接查后面两张表就行。</p>
+    <p class="p">每张表里「解锁条件」那一列是<b>前置委托</b>；写 <code>Complete XXX</code> 的意思就是「把 XXX 做完」。多条前置用 <code>/</code> 并列的，原文就是这么写的。</p>
+    ${Q.groups.map(g => `<h3 class="h3">${esc(g.name)}　${g.rows.length} 条</h3>
+    ${tbl(g.cols.map(esc), g.rows.map(r => r.map(cell)), { cls: 'rf1craft', left: [0, 1, 2, 3, 4], colw: ['11rem', '12rem', 'auto', '12rem', '13rem'] })}`).join('\n')}
+
+    <h2 class="h2">四、${nRep} 类可重复委托</h2>
+    <p class="p">每天早上换一批，要的东西和数量都不一样。源站对它的定位说得很清楚，照录：</p>
+    <p class="p" style="padding-left:1.2rem;border-left:3px solid var(--line,#ddd)">${esc(Q.repeatIntro)}</p>
+    ${tbl(Q.repeat.cols.map(esc), Q.repeat.rows.map(r => r.map(cell)), { cls: 'rf1craft', left: [0, 1, 2, 3], colw: ['10rem', 'auto', '6rem', 'auto'] })}
+    <div class="key">两条容易踩的：<b>「出货」类要等到早上 8:00 出货结算才算完成</b>，当天放进去当晚不会结账；<b>报酬是随机的</b>，接之前不知道给什么——所以它<u>不是</u>刷特定道具的路子，是刷王子点数用的。</div>
+
+    <h2 class="h2">五、本站照录、不动手的几处</h2>
+    <div class="note"><b>源站自己数不对：</b>正文写「共 ${claim} 条」，可三张子表逐行数下来是 <b>${nAll} 条</b>（${cnt.join(' ＋ ')}）。差 ${nAll - claim} 条，<b>无法确认是哪一条没被算进去</b>——本站既不改数字、也不删行去凑，两个数字都摆出来。</div>
+    <div class="note"><b>${nQ} 处写的是 <code>???</code>：</b>那是源站没查到解锁条件（<i>Raise a skill level to 80!</i>、<i>Complete the Sharance Maze!</i>）或没写完成方式（<i>Prepare for Marriage!</i>）的地方。表里保留 <code>???</code>，<b>不拿别的攻略猜填</b>。</div>
+    <div class="note"><b>${nEmpty} 个空单元格：</b>页面上显示为「—」。其中 <i>First Task!</i> 那一行源站只写了四格（首条委托没有「解锁条件」），不是本站漏抄。</div>
+    <div class="note"><b>原文的错字与怪写法一律照录，不修：</b><i>Comeplete</i>（Complete 拼错）、<i>A Cheep Axe</i>（Cheap）、<i>Raise at least on skill</i>（one）、<i>Grow and orange tree</i>（a）、<i>available at the General.</i>（漏 Store）、<i>Complete Harvest a large gold Crop!</i>（别处都写 crop）、<i>Complete ship a level 5 veggie!</i>（句首小写）、<i>Dylas is such a horse.</i>（备注是句玩笑话）。同类的小写／单复数不一还有几处，都在表里原样躺着。</div>
+    <div class="note"><b>没收到的那两类：</b>①<b>个人委托（Personal）</b>——源站只有一段描述，明说「通常是给一件不常见的魔物掉落」，没有逐条表，本站不编；②源站另有一张按角色排的 <i>Special Requests</i> 表，但它把「要的物品／魔物／物品」三格挤成了一串、行内互相错位，<b>抽取结果不可靠，本站宁可不收</b>，也不拿错位数据凑数。</div>
+
+    <div class="jump">
+        <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">委托要送的东西谁喜欢</div></a>
+        <a href="#/page/source"><div class="jp-t">素材出处</div><div class="jp-s">委托要的素材去哪打</div></a>
+        <a href="#/page/crop"><div class="jp-t">农作</div><div class="jp-s">种子解锁与等级作物</div></a>
+        <a href="#/page/love"><div class="jp-t">恋爱与结婚</div><div class="jp-s">结婚前置那条委托</div></a>
+    </div>
+    <div class="note">数据文件 <code>js/rf4request.js</code>（<code>RF4_REQUEST</code>），由 <code>_build_rf4_request.py</code> 生成。脚本只做三件事：拆字段、去掉 wiki 的斜体星号与 <code>Note =</code> 前缀、把空单元格留空。不改写、不合并、不翻译。</div>`;
+}
+
 function requestRf2Html() {
     const Q = (typeof RF2_QUEST !== 'undefined') ? RF2_QUEST : null;
     if (!Q || !Q.quests || !Q.quests.length) return '';
