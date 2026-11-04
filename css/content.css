@@ -244,6 +244,16 @@
     text-align: left;
 }
 
+/* 不许拆词的格子（tbl 的 nw: [列号]）。
+   这里必须显式关掉 word-break —— .content 上的 word-break: break-word 会盖过 nowrap，
+   日期「2006-08-24」被折成两行、版本号「4SP」被拆成「4S／P」都是它干的。 */
+.content .th.nw,
+.content .td.nw {
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
 /* 海洋宠物产出：出现点列是多地点长文本，允许换行（默认 nowrap 会让窄屏横滑） */
 .content .table.rfoprod td,
 .content .table.rfoprod th {
