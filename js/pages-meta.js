@@ -16,6 +16,12 @@ var PAGES_META = [
         ]
     },
     {
+        "key": "spec",
+        "group": "basic",
+        "title": "配置与模拟器",
+        "icon": "gear"
+    },
+    {
         "key": "world",
         "group": "basic",
         "title": "世界设定·符文",

@@ -71,7 +71,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-04",
-    latest: ["第两百零三：国家与幻龙——四条龙不是四个打手，是四种职能；八作各掀开一角（511…", "第两百零二：种族拆页——一个「精灵」对三个日文词，八作把种族当过标签、伤口、身份…", "第两百零一：世界设定拆页——同一套符文，八作做成了八种东西，从货架上的一本书到配…", "第两百：体力与 RP 拆页——同一道菜从 30 点写到 2000 点，八作的「刻…", "第一百九十九：时间与季节拆页——六作的营业时间逐家排上时间轴，RF1 的祝日制与…", "第一百九十八：恋爱与结婚拆页——八作各有各的门槛，RF1 的 11 条条件逐条落…"],
+    latest: ["第两百零四：新开「配置与模拟器」页——把 PC 配置从作品首页搬出来，补上五个平…", "第两百零三：国家与幻龙——四条龙不是四个打手，是四种职能；八作各掀开一角（511…", "第两百零二：种族拆页——一个「精灵」对三个日文词，八作把种族当过标签、伤口、身份…", "第两百零一：世界设定拆页——同一套符文，八作做成了八种东西，从货架上的一本书到配…", "第两百：体力与 RP 拆页——同一道菜从 30 点写到 2000 点，八作的「刻…", "第一百九十九：时间与季节拆页——六作的营业时间逐家排上时间轴，RF1 的祝日制与…"],
 };
 
 ;
@@ -663,6 +663,12 @@ var PAGES_META = [
             "rf3",
             "rf4"
         ]
+    },
+    {
+        "key": "spec",
+        "group": "basic",
+        "title": "配置与模拟器",
+        "icon": "gear"
     },
     {
         "key": "world",
@@ -1470,21 +1476,7 @@ function viewHome(g) {
             <div class="vh-row"><span class="vh-k">开发商</span><span class="vh-v">${escHtml(g.dev)}</span></div>
             <div class="vh-row"><span class="vh-k">发行商</span><span class="vh-v">${escHtml(g.pub)}</span></div>
         </div>
-        ${(() => {
-            if (!g.pc) return '';
-            const rows = g.pc.rows.map(r => `<tr><td class="pct-k">${escHtml(r[0])}</td><td>${escHtml(r[1])}</td><td>${escHtml(r[2])}</td></tr>`).join('');
-            return `
-        <div class="vh-sec vh-pc">
-            <div class="vh-sec-h">PC 版配置（Steam）</div>
-            <div class="vh-note">${escHtml(g.pc.note || '')}</div>
-            <div class="pct-wrap">
-                <table class="pctab">
-                    <thead><tr><th>项目</th><th>最低配置</th><th>推荐配置</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-        </div>`;
-        })()}
+        ${g.pc ? `<div class="vh-note">PC 版系统配置、各平台模拟器设置见 <a class="link" href="#/page/spec">配置与模拟器 ›</a></div>` : ''}
         ${g.ver ? `<div class="vh-note">${escHtml(g.ver)}</div>` : ''}
     </div>` : ''}
     <div class="search">

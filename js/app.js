@@ -270,21 +270,7 @@ function viewHome(g) {
             <div class="vh-row"><span class="vh-k">开发商</span><span class="vh-v">${escHtml(g.dev)}</span></div>
             <div class="vh-row"><span class="vh-k">发行商</span><span class="vh-v">${escHtml(g.pub)}</span></div>
         </div>
-        ${(() => {
-            if (!g.pc) return '';
-            const rows = g.pc.rows.map(r => `<tr><td class="pct-k">${escHtml(r[0])}</td><td>${escHtml(r[1])}</td><td>${escHtml(r[2])}</td></tr>`).join('');
-            return `
-        <div class="vh-sec vh-pc">
-            <div class="vh-sec-h">PC 版配置（Steam）</div>
-            <div class="vh-note">${escHtml(g.pc.note || '')}</div>
-            <div class="pct-wrap">
-                <table class="pctab">
-                    <thead><tr><th>项目</th><th>最低配置</th><th>推荐配置</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-        </div>`;
-        })()}
+        ${g.pc ? `<div class="vh-note">PC 版系统配置、各平台模拟器设置见 <a class="link" href="#/page/spec">配置与模拟器 ›</a></div>` : ''}
         ${g.ver ? `<div class="vh-note">${escHtml(g.ver)}</div>` : ''}
     </div>` : ''}
     <div class="search">
