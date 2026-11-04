@@ -6601,6 +6601,28 @@ function homeDeepHtml(id) {
     const G = v => E(v) + 'G';
     const D = v => (v === '—' || v === '' || v == null ? '<span class="mon-no">—</span>' : E(v));
 
+    /* 八作共用的页尾：跨作对照 + 存档提醒。各分支末尾都挂它 */
+    const CMN = `
+        <h2 class="h2">八作摆在一起：房子能不能盖，家具怎么来</h2>
+        <p class="p">上面每段写的是这一作自家的流程。并成一张表之后，能看出这一页真正该记的一件事：<b>「盖房子」和「买家具有时候不是同一个钱包」</b>。</p>
+        ${tbl(['作品', '房子能不能扩建', '家具从哪来', '要什么'], [
+            ['RF1', '能——两座农场代做', '伊万的流动店，只在祝日', '只收 G（增筑金额源站没写）'],
+            ['RF2', '站内无表', '站内无表', '—'],
+            ['RF3', '能——二楼靠剧情，工具台在两家店改', '杂货屋三件', 'G＋木材'],
+            ['边境', '能——七档，卢特的摊子', '同一个摊子', 'G＋木材'],
+            ['海洋', '能——扩建住宅／增加二楼', '木工台自己做', '站内无价目'],
+            ['RF4', '站内无表', '四家店，其中 24 件是订做', '订做那 24 件要木材＋石材'],
+            ['RF5', '不能——扩建表里没有自宅', '帕尔摩工房', 'SEED 点＋石材＋木材'],
+            ['龙之天地', '能——建筑物 29 种，含三档民居', '站内无表', '木材＋石材＋制作费']
+        ], { left: [0, 1, 2, 3], cls: 'tw', colw: ['5.4rem', '11rem', '9.6rem', 'auto'] })}
+        <div class="key">材料口径三档：<b>边境、RF3 是「钱＋木材」；RF4 与龙之天地再加石材；RF5 还要 SEED 点</b>——所以别把上一作攒的东西带进下一作的习惯里。反过来，<b>站内收了价目的那几作里，只有 RF1 的家具一件都不收木材石材</b>——有钱就能买齐。</div>
+        <p class="p">另一个容易忽略的差别：<b>扩建与家具往往不是同一个入口</b>。RF1 在农场上增筑、去流动店买家具；边境两件事在同一个摊子上，但要等祝日；RF4 的家具全在店里订做，房子那边站内没有可引用的表。<b>先确认这一作的家具在哪买，再决定要不要立刻攒木头</b>，否则会攒一堆这一作根本用不上的材料。</p>
+
+        <h2 class="h2">存档只能靠一张床</h2>
+        <p class="p">系列传统是<b>床上存档</b>：一天的行动不可回退（个别作品另有中断存档）。所以「床」在这条线上不只是家具——它是存档点，也常是结婚的硬条件。重要节点前先睡一觉存上：告白、求婚、Boss 战、节日比赛。</p>
+        <div class="note">各作的增筑／扩建价目，本站只收有出处的那几作（RF1／RF3／RF5／边境／海洋／RF4／龙之天地）；<b>RF2 站内没有来源，这一页与家具页都留空</b>，不拿别作的数字类推。</div>
+    `;
+
     /* ================= RF1：增筑在农场做，家具在流动店买 ================= */
     if (id === 'rf1') {
         const S = (typeof RF1_SHOP !== 'undefined' && RF1_SHOP.shops) || [];
@@ -6635,7 +6657,8 @@ function homeDeepHtml(id) {
         <div class="jump">
             <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">伊万与两座农场的营业时间</div></a>
             <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">各作的家具入口与价格</div></a>
-        </div>`;
+        </div>
+            ${CMN}`;
     }
 
     /* ================= RF3：大树长出二楼之后才能改建 ================= */
@@ -6678,7 +6701,8 @@ function homeDeepHtml(id) {
         <div class="jump">
             <a href="#/page/newly"><div class="jp-t">新婚模式</div><div class="jp-s">双人床与婚约指轮那六步</div></a>
             <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">装饰台只做饰品，家具只能买</div></a>
-        </div>`;
+        </div>
+            ${CMN}`;
     }
 
     /* ================= RF5：本作没有自家增筑，扩的是镇上的店 ================= */
@@ -6729,7 +6753,8 @@ function homeDeepHtml(id) {
         <div class="jump">
             <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">店铺三阶扩展开了哪些货</div></a>
             <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">帕尔摩工房 74 件家具全表</div></a>
-        </div>`;
+        </div>
+            ${CMN}`;
         }
         return '';
     }
@@ -6772,14 +6797,222 @@ function homeDeepHtml(id) {
         <div class="jump">
             <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">卢特的祝日摊与 17 件有前置的家具</div></a>
             <a href="#/page/farm"><div class="jp-t">农场与田地</div><div class="jp-s">野外田地与农药</div></a>
-        </div>`;
+        </div>
+            ${CMN}`;
         }
         return '';
     }
 
+    /* ================= RF2：站内没有增筑表，能写的只有「家里的人会变多」 ================= */
+    if (id === 'rf2') {
+        return `
+        <h2 class="h2">先说清楚：这一页没有 RF2 的价目</h2>
+        <p class="p">RF2 的商店资料是按「春／夏／秋／冬」四季分货的四家店（杂货屋、武具行、行商、诊所），<b>里面没有家具，也没有增筑项目</b>。家具与房屋的价目，本站<b>没有找到可引用的来源</b>——所以这一段不写成「应该多少钱」，只写能核实的部分。</p>
+
+        <h2 class="h2">这一作的「家」是八作里唯一成员会变多的</h2>
+        <p class="p">八作的自宅在结构上高度相似：一间屋子、一张床、几件收纳，从头到尾住的就是主角（加配偶）。RF2 是唯一例外，因为它的时间线本身就跨了一代：</p>
+        ${tbl(['阶段', '屋子里的成员'], [
+            ['开局', '主角凯尔一个人'],
+            ['成家之后', '加上配偶'],
+            ['孩子长大', '加上孩子——主线到这时才真正展开']
+        ], { left: [0, 1], colw: ['6.4rem', 'auto'] })}
+        <p class="p">别的作品里房子是「设施」，够用就行；RF2 里房子是<b>一段时间的容器</b>——你会看着这个屋子里的人从一口变成三口。这也是为什么这一作的房屋扩建即使有，也不是重点：<b>真正的「扩建」是家庭本身</b>。</p>
+        <div class="note">要查 RF2 的增筑与家具价目，去向是攻略本或游戏内的木工／家具商。本站不拿别作的数字类推，也不给估值——这一页与<a href="#/page/decorate">装饰与家具</a>页在 RF2 下都会缺少这一块，是缺来源，不是漏做。</div>
+        <div class="jump">
+            <a href="#/page/stage"><div class="jp-t">舞台与主角</div><div class="jp-s">阿尔巴那与两代人的时间线</div></a>
+            <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">四季分货的四家店</div></a>
+        </div>
+            ${CMN}`;
+    }
+
+    /* ================= RF4：家具是「订做」，不是买成品 ================= */
+    if (id === 'rf4') {
+        const F = (typeof FURN !== 'undefined' && FURN.rf4 && FURN.rf4.rows) ? FURN.rf4 : null;
+        if (!F) return '';
+        const rows = F.rows;
+        const num = v => Number(String(v).replace(/[^\d]/g, '')) || 0;
+        const shops = [];
+        rows.forEach(r => { if (shops.indexOf(r[0]) < 0) shops.push(r[0]); });
+        const needMat = rows.filter(r => !/^—$/.test(r[4]) || !/^—$/.test(r[5]));
+        const pureG = rows.filter(r => /^—$/.test(r[4]) && /^—$/.test(r[5]));
+        const get = n => rows.filter(r => r[1] === n)[0] || null;
+        const bed = get('双人床'), ship = get('出货箱'), pond = get('水池');
+        const fridge = get('冰箱'), bigFridge = get('大冰箱');
+        const box = get('收纳箱'), shopBox = get('店箱');
+        const priced = rows.filter(r => num(r[3]) > 0).sort((a, b) => num(b[3]) - num(a[3]));
+        const top = priced[0];
+        const above = rows.filter(r => num(r[3]) > num(bed ? bed[3] : 0)).sort((a, b) => num(b[3]) - num(a[3]));
+        const kaguya = rows.filter(r => r[0].indexOf('辉夜') >= 0);
+        const kaede = rows.filter(r => r[0].indexOf('枫') >= 0);
+        const gated = rows.filter(r => r[2] !== '—');
+        const byUnlock = {};
+        gated.forEach(r => { byUnlock[r[2]] = (byUnlock[r[2]] || 0) + 1; });
+        const shopRow = shops.map(s => {
+            const sub = rows.filter(r => r[0] === s);
+            const m = sub.filter(r => !/^—$/.test(r[4]) || !/^—$/.test(r[5]));
+            return ['<b>' + E(s) + '</b>', String(sub.length), m.length ? m.length + ' 件要材料' : '全都不需要'];
+        });
+
+        return `
+        <h2 class="h2">本作的家具不叫「买」，叫「订做」</h2>
+        <p class="p">RF4 的家具表 ${rows.length} 件、分在 ${shops.length} 家店里，其中 <b>${needMat.length} 件要木材＋石材</b>，剩下 <b>${pureG.length} 件纯付钱</b>。这不是随手定的：<b>凡是带收纳功能的（箱子、柜子、冰箱、农具箱、牧草箱）全在订做那一侧</b>，凡是纯装饰的（玩偶、盆栽、塑像、画）全都只收钱。</p>
+        ${tbl(['店', '件数', '要不要材料'], shopRow, { left: [0, 1, 2], colw: ['11rem', '5.4rem', 'auto'] })}
+        <p class="p">「服装店的枫」那 ${kaede.length} 件其实是<b>衣服不是家具</b>（睡衣、泳装、布偶装、士兵服），放作家具表是源站的归类，本站照录。真正的家具来自另外三家：食堂的调理台、杂货店的容器、家具店辉夜的装饰。</p>
+
+        <h2 class="h2">三件最该先算清楚的</h2>
+        ${tbl(['商品', '价格', '木材', '石材', '备注'], [
+            ['<b>双人床</b>', bed ? G(bed[3]) : '—', bed ? E(bed[4]) : '—', bed ? E(bed[5]) : '—', '结婚的硬条件'],
+            ['<b>出货箱</b>', ship ? G(ship[3]) : '—', ship ? E(ship[4]) : '—', ship ? E(ship[5]) : '—', '每天的收成从这里变成钱'],
+            ['<b>水池</b>', pond ? G(pond[3]) : '—', pond ? E(pond[4]) : '—', pond ? E(pond[5]) : '—', '石材要得最多的一件']
+        ], { left: [0, 1, 2, 3, 4], colw: ['7.4rem', '6rem', '4.4rem', '4.4rem', 'auto'] })}
+        <p class="p">双人床 ${bed ? G(bed[3]) : '—'} <b>同时要木材与石材</b>——结婚前攒钱是不够的，木头和石头也得留出来。它在全表 ${rows.length} 件里排第 ${above.length + 1} 贵：比它贵的 ${above.length} 件是 ${above.map(r => E(r[1]) + '（' + G(r[3]) + '）').join('、')}，<b>没有一件是「住」必须的东西</b>。</p>
+
+        <h2 class="h2">两组「同价不同货」，别看串</h2>
+        <p class="p">源表里有几组价格几乎一样、只差容量或材料配比，照着买容易拿错：</p>
+        ${tbl(['对比', '价格', '木材', '石材', '怎么选'], [
+            ['冰箱（小）', fridge ? G(fridge[3]) : '—', fridge ? E(fridge[4]) : '—', fridge ? E(fridge[5]) : '—', '—'],
+            ['冰箱（大）', bigFridge ? G(bigFridge[3]) : '—', bigFridge ? E(bigFridge[4]) : '—', bigFridge ? E(bigFridge[5]) : '—', '材料完全一样，只多花 1000G'],
+            ['收纳箱', box ? G(box[3]) : '—', box ? E(box[4]) : '—', box ? E(box[5]) : '—', '木材多、石材少'],
+            ['店箱', shopBox ? G(shopBox[3]) : '—', shopBox ? E(shopBox[4]) : '—', shopBox ? E(shopBox[5]) : '—', '同价，木材与石材对调']
+        ], { left: [0, 1, 2, 3, 4], colw: ['7.4rem', '5.4rem', '4.4rem', '4.4rem', 'auto'] })}
+        <div class="key">两件冰箱的材料一模一样（木 ${fridge ? E(fridge[4]) : '—'}、石 ${fridge ? E(fridge[5]) : '—'}），只差 ${fridge && bigFridge ? G(num(bigFridge[3]) - num(fridge[3])) : '—'}——<b>没有理由买小的</b>。收纳箱与店箱反过来：价格同为 ${box && shopBox ? G(box[3]) : '—'}，但一个吃木材、一个吃石材，看你手头哪种富余。</div>
+
+        <h2 class="h2">${gated.length} 件有前置，卡的是料理执照</h2>
+        <p class="p">表里 <b>${gated.length} 件标着解锁条件</b>，其余 ${rows.length - gated.length} 件随时可买。前置集中在调理台上：</p>
+        <ul class="ul">
+            ${Object.keys(byUnlock).map(k => `<li class="li"><b>${E(k)}</b>：${byUnlock[k]} 件${k === '执照' ? '（六台调理台与锅具全部压在这张执照后面）' : ''}</li>`).join('')}
+        </ul>
+        <p class="p">也就是说<b>厨房的六件器具不是有钱就能买，得先把飞行船执照那条线推掉</b>；冰箱与冰柜再等一次「成功制作 1 次料理」。最贵的单件是<b>${top ? E(top[1]) : '—'}（${top ? G(top[3]) : '—'}）</b>，属于纯装饰，不影响任何系统。</p>
+        <div class="note">家具店的辉夜 ${kaguya.length} 件全是装饰（玩偶、四季盆栽、塑像、画、屏风），最贵的「${top ? E(top[1]) : '—'}」${top ? G(top[3]) : '—'} 就在其中；这一档在<a href="#/page/decorate">装饰与家具</a>页有全表，本页不重复列。</div>
+        <div class="jump">
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">四家店 ${rows.length} 件全表</div></a>
+            <a href="#/page/newly"><div class="jp-t">新婚模式</div><div class="jp-s">双人床与婚约那条线</div></a>
+        </div>
+            ${CMN}`;
+    }
+
+    /* ================= 海洋：房子能扩建，家具自己做 ================= */
+    if (id === 'rfo') {
+        const T = (typeof CN_RFO !== 'undefined' && CN_RFO) ? CN_RFO : null;
+        if (!T) return '';
+        const fac = T.filter(r => r[0] === '设施').map(r => r[2]);
+        const ex = fac.filter(n => /扩建住宅|增加二楼/.test(n));
+        const keep = fac.filter(n => /保管箱/.test(n));
+        const fam = fac.filter(n => /双人床|儿童用床|儿童玩具箱/.test(n));
+        const catOf = n => {
+            if (/锻造场/.test(n)) return '锻造场';
+            if (/装饰台/.test(n)) return '装饰台';
+            if (/调合台/.test(n)) return '调合台';
+            if (/厨房/.test(n)) return '厨房';
+            if (/平底锅/.test(n)) return '平底锅';
+            if (/火锅|^煮锅|锅$/.test(n)) return '锅';
+            if (/烤箱/.test(n)) return '烤箱';
+            if (/搅拌机/.test(n)) return '搅拌机';
+            if (/蒸笼/.test(n)) return '蒸笼';
+            if (/木工台|木工大师/.test(n)) return '木工台';
+            return '';
+        };
+        const tierOf = n => /^简易/.test(n) ? 1 : /^(本格|高级|专业)/.test(n) ? 2 : 3;
+        const cats = [];
+        fac.forEach(n => {
+            const c = catOf(n);
+            if (!c) return;
+            if (cats.indexOf(c) < 0) cats.push(c);
+        });
+        const grid = cats.map(c => {
+            const three = [1, 2, 3].map(t => {
+                const hit = fac.filter(n => catOf(n) === c && tierOf(n) === t)[0];
+                return hit ? E(hit) : '<span class="mon-no">—</span>';
+            });
+            return ['<b>' + E(c) + '</b>'].concat(three);
+        });
+        const w2 = ['本格', '高级', '专业'].filter(w => grid.some(r => r[2].indexOf(w) >= 0));
+        const w2cnt = {};
+        w2.forEach(w => { w2cnt[w] = grid.filter(r => r[2].indexOf(w) >= 0).length; });
+
+        return `
+        <h2 class="h2">房子分两步长：先变大，再加一层</h2>
+        <p class="p">海洋的扩建在<b>自宅的菜单里</b>，不是找木匠——汉化定稿术语表里这两行就是菜单原文：</p>
+        <ul class="ul">
+            ${ex.map(n => `<li class="li"><b>${E(n)}</b></li>`).join('')}
+        </ul>
+        <p class="p">两步之外，家具也在这个菜单里买——<b>双人床、儿童用床、儿童玩具箱</b>三件（${fam.map(E).join('、')}）。后两件要等结婚与孩子，跟扩建不是同一条门槛。</p>
+        <div class="quote">低等级物品的合成可以在特定的地方进行（参照上边的岛上设施介绍），不过高级的物品必须要扩建自宅后才能合成。</div>
+        <p class="p">这句是攻略本原文。它把「扩建」从装修问题变成了<b>生产力问题</b>：不扩建，高级合成根本做不了——所以在这作里，房子是<b>工作台的前提</b>，而不是装修的终点。</p>
+
+        <h2 class="h2">家具不是买，是在木工台上做出来的</h2>
+        <p class="p">十类器具、每类三档，靠「简易 → 中间档 → 顶级」往上换。第一档一律叫「简易」，<b>第二档开始名字就乱了</b>——本格、高级、专业三种叫法混着用；第三档十件一个都不重名：</p>
+        ${tbl(['类别', '第一档', '第二档', '第三档'], grid, { left: [0, 1, 2, 3], cls: 'tw', colw: ['6rem', 'auto', 'auto', 'auto'] })}
+        <p class="p">中段那 ${grid.length} 件里只有 <b>${w2.length} 种叫法</b>（${w2.map(w => w + ' ' + w2cnt[w] + ' 件').join('／')}），看表的时候别按字面猜档位——<b>「高级装饰台」和「本格调合台」是同一档</b>，就差一个字，进游戏是两件东西。第三档更没规律：名匠、名工、名医、主厨、传说、铁人、宫廷、神秘、名人、木工大师，十个头衔对应十类器具，是照着各自的职业取的。</p>
+        <div class="note">译名按<b>海洋汉化定稿术语表</b>照录（Wii 亚洲版官方中文，PS3 版汉化沿用同一套）。里面有一处明显的直译痕迹：鍋 译成「<b>本格火锅</b>」而不是「锅」——本站不改，因为玩家在游戏里看到的就是四个字。保管箱三档同理：${keep.map(E).join('／')}。</div>
+
+        <h2 class="h2">这一作没有价目表</h2>
+        <p class="p">站内收录的海洋资料里<b>没有器具与扩建的售价</b>，所以这一页不列价格。攻略本里只有一句侧面的话，可以当参考口径：</p>
+        <div class="quote">自宅最好也扩建一下备齐工具，反正买那些器具也不太贵。</div>
+        <p class="p">「不太贵」是原文的判断，不是数字。想算总价，只能进游戏看菜单——本站不填这个空。</p>
+        <p class="p">另一件只有这一作有的事：<b>巨人自带传送门，可以直接回到「家」</b>。海上航行到一半想回去换装备、收菜、睡觉存档，不用先开到某个岛。</p>
+        <div class="jump">
+            <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">各档工作台的产出</div></a>
+            <a href="#/page/decorate"><div class="jp-t">装饰与家具</div><div class="jp-s">各作的家具入口</div></a>
+        </div>
+            ${CMN}`;
+    }
+
+    /* ================= 龙之天地：房子是「造」出来的 ================= */
+    if (id === 'azuma') {
+        const R = (typeof RECIPE_AZUMA !== 'undefined') ? RECIPE_AZUMA : null;
+        const cat = R && R.cats ? R.cats.filter(c => c.k === '建筑物')[0] : null;
+        if (!cat) return '';
+        const h = cat.head, rows = cat.rows;
+        const iName = h.indexOf('名称'), iCost = h.indexOf('制作花费'), iUnl = h.indexOf('解锁条件');
+        const num = v => Number(String(v).replace(/[^\d]/g, '')) || 0;
+        const pick = n => rows.filter(r => r[iName] === n)[0] || null;
+        const house = ['简陋民居', '朴素民居', '气派民居'].map(pick).filter(Boolean);
+        const main = pick('主屋');
+        const costs = rows.map(r => num(r[iCost])).filter(v => v > 0);
+        const minC = Math.min.apply(null, costs), maxC = Math.max.apply(null, costs);
+        const lvl = rows.filter(r => /村子等级/.test(r[iUnl]));
+        const quest = rows.filter(r => /^任务：/.test(r[iUnl]));
+        const none = rows.filter(r => r[iUnl] === '—');
+        const vill = {};
+        lvl.forEach(r => {
+            const m = r[iUnl].match(/^(春|夏|秋|冬)之里\s*村子等级\s*(\d)/);
+            if (m) vill[m[1] + '之里'] = (vill[m[1] + '之里'] || []).concat([m[2]]);
+        });
+        const villTxt = Object.keys(vill).map(k => k + ' ' + vill[k].filter((v, i) => vill[k].indexOf(v) === i).join('／') + ' 级').join('；');
+        const iEff = h.indexOf('特殊效果');
+        const withEff = rows.filter(r => r[iEff] && r[iEff] !== '—');
+        const noEff = rows.length - withEff.length;
+        const hpRows = withEff.filter(r => /最大 HP/.test(r[iEff]) && !/民居/.test(r[iName]));
+        const rpRows = withEff.filter(r => /最大 RP/.test(r[iEff]) && !/民居/.test(r[iName]));
+
+        return `
+        <h2 class="h2">本作没有「买房子」，只有「造房子」</h2>
+        <p class="p">龙之天地是八作里唯一把「住」做成建造系统的一作：建筑物配方共 <b>${rows.length} 条</b>，全部在制作菜单里造，材料以<b>木材＋石材</b>为主，少数几条再加铁。制作花费从 ${G(minC)} 到 ${G(maxC)}，越往后的村子要得越贵。</p>
+        <p class="p">其中跟「住」直接相关的，是三档民居——它们的效果写得非常直白，<b>盖房子直接换最大 HP</b>：</p>
+        ${tbl(['建筑', '材料', '制作花费', '效果'], house.map(r => ['<b>' + E(r[iName]) + '</b>', E([r[1], r[2], r[3]].filter(v => v && v !== '—').join('＋')), E(r[iCost]), E(r[h.indexOf('特殊效果')])]), { left: [0, 1, 2, 3], colw: ['7.6rem', 'auto', '6rem', 'auto'] })}
+        <p class="p">三档材料差得很悬殊：<b>木材从 30 涨到 120，石材从 10 涨到 30</b>，换回来的是最大 HP 从 +5 到 +30。所以在这一作里，<b>造民居不是「给村民盖房」，是给自己加血</b>。</p>
+
+        <h2 class="h2">主屋在表里，但整行是空的</h2>
+        <p class="p">配方表最后一条是「主屋」——除了名字，<b>材料、买价、卖价、效果、系列、制作花费、解锁条件、宝箱获取十余栏全是破折号</b>。本站按原样留空，<b>不补 0，也不猜它是不是自宅</b>。要确认主屋怎么来，只能进游戏看。</p>
+
+        <h2 class="h2">解锁两条路：村子等级，或者任务</h2>
+        <p class="p">${rows.length} 条里 <b>${lvl.length} 条看村子等级</b>、<b>${quest.length} 条看任务</b>、${none.length} 条不设条件、其余 1 条是地图拾取。村子等级那 ${lvl.length} 条分布如下——注意只有三个村出现在条件里：</p>
+        <ul class="ul">
+            ${Object.keys(vill).map(k => `<li class="li"><b>${E(k)}</b>：${vill[k].filter((v, i) => vill[k].indexOf(v) === i).map(v => v + ' 级').join('、')}（${vill[k].length} 条）</li>`).join('')}
+        </ul>
+        <p class="p">${villTxt}。<b>冬之里一次都没出现在解锁条件里</b>——冬之原野只在「茅草房」那一条里出现，条件是去山岳西的雪屋捡一块青蛙石。也就是说，想解锁大部分建筑，得先把春／夏／秋三个村的等级推上去，冬之里在这条线上是空白。</p>
+        <div class="note">这 ${rows.length} 条里 <b>${withEff.length} 条带属性、${noEff} 条完全不带效果</b>，后者包括药店、居酒屋、出货仓库、大型牧场与主屋——源表就是破折号，不是漏写。带属性的也不只有民居：<b>除三档民居外还有 ${hpRows.length} 条加最大 HP</b>（${hpRows.map(r => E(r[iName]) + ' ' + E(r[iEff])).join('、')}），${rpRows.length} 条加最大 RP（${rpRows.map(r => E(r[iName]) + ' ' + E(r[iEff])).join('、')}）。全表在<a href="#/page/craft">锻造与药学</a>页的建筑物一类。</div>
+        <div class="jump">
+            <a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">建筑物 29 条配方全表</div></a>
+            <a href="#/page/stage"><div class="jp-t">舞台与主角</div><div class="jp-s">四个村与大地能量</div></a>
+        </div>
+            ${CMN}`;
+    }
+
+
     return '';
 }
-
 function loveDeepHtml(id) {
     const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const G = v => E(v) + 'G';
