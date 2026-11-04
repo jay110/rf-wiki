@@ -56,7 +56,6 @@ function npcLink(gid, s) {
 }
 
 
-
 /* 物品大表：rows = [筛选键, 搜索文本, [单元格…]]
    opts.chips 用按钮筛选，opts.sel 用下拉筛选 */
 /* 独立搜索表：与 ftable 同外观，但每块自带搜索框。
@@ -7685,6 +7684,20 @@ function timeDeepHtml(id) {
         return out;
     };
 
+    const hhmm = v => (v == null ? '—' : String(Math.floor((v % 1440) / 60)) + ':' + String(v % 60).padStart(2, '0'));
+
+    /* 「全部同时营业」的那一段：把写了起止时间的设施叠起来找共同区间。
+       起点永远是最后开门那家，终点永远是最早关门那家。
+       边境算出来是空的——酒场 18:00 开门的那一刻，其余五家正好关门。 */
+    const winOf = R => {
+        const ok = R.filter(x => x.s.c != null);
+        if (!ok.length) return null;
+        let a = -1, b = -1;
+        for (let t = 6 * 60; t < 30 * 60; t += 5) {
+            if (ok.every(x => x.s.o <= t && t < x.s.c)) { if (a < 0) a = t; b = t + 5; }
+        }
+        return a < 0 ? null : { a: a, b: b, h: (b - a) / 60, n: ok.length };
+    };
     const H2 = t => `<h2 class="h2">${t}</h2>`;
     const NAME = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rf4: 'RF4', rf5: 'RF5', rff: '边境', rfo: '海洋', azuma: '龙之天地' };
 
@@ -7708,30 +7721,25 @@ function timeDeepHtml(id) {
 
     /* 没有时间数据的作品：保留系列通行的一天／季节／天气，不替它们编本作版 */
     const BASE = `
-            <h2 class="h2">下面这段是系列通行的一天</h2>
-            <p class="p">清晨起床（多数作品为 6:00），当天可以自由安排耕作、采集、下迷宫、送礼、接委托。时间在户外与迷宫内都会流逝，进入室内、菜单、对话时会暂停。</p>
-            <p class="p">深夜之后仍不睡觉会开始扣体力，最终强制就寝。熬夜的代价通常是第二天起床变晚——而起床晚了，商店开门、NPC 出门的时间都会错过。</p>
-            <div class="key">效率原则：<b>把「会随时间流逝的事」和「不会流逝的事」分开排</b>。送礼、整理背包、看配方放在室内做；下迷宫和跑图放在同一天连续做。</div>
-            <h2 class="h2">季节</h2>
-            <p class="p">一年分春、夏、秋、冬四季，<b>每季 30 天</b>，一年共 120 天。季节一换，能种的作物、出现的采集物、部分 NPC 的行为与节日都会变。</p>
-            ${tbl(['季节', '主要作物类型', '注意'], [
-                ['春', '叶菜、根菜类起步作物', '开局季，优先把田地和工具等级拉起来'],
-                ['夏', '果菜、高价值作物', '高温作物收益高，但需要勤浇水'],
-                ['秋', '薯类、瓜类', '收入最好的一季，尽量留足体力'],
-                ['冬', '多数作物无法生长', '转向迷宫、采矿、锻造与小游戏产出'],
-            ], { leftFirst: true })}
-            <p class="p">冬季不能种地，是系列一贯设计。这段时间正好拿来刷迷宫素材、把锻造与药学的等级补上。</p>
-            <h2 class="h2">天气</h2>
-            <p class="p">晴、阴、雨、雪。雨天不必浇水，是推进迷宫与刷素材的好日子；暴风雨可能造成作物损失。天气预报可以在电视或公告处查看，前一天确认再决定第二天的安排。</p>`;
+            <h2 class="h2">这一作没有钟点可查</h2>
+            <div class="note">站内这一作的商店数据只到「卖什么、多少钱」，<b>没有一家写了营业时间</b>；节日之外的日程也没有可核对的时间轴。所以这一页不列时间表，<b>不拿别作的 9:00-18:00 套过来</b>。</div>
+            <p class="p">能确定的只有下面这条，而且是从别处看来的：站内唯一一份逐小时行程表是 RF1 的<a class="link" href="#/sched/rf1">村民行程</a>，时间轴<b>从 6:00 编到 0:00，共 19 个时点</b>。这是整个系列里「一天」被记录得最细的一次——其余各作都只记商店开关门，没有人逐小时的位置。</p>
+            <div class="key">没有时间表时，唯一通用的排法是<b>把「会随时间流逝的事」和「不会流逝的事」分开</b>：送礼、整理背包、看配方放室内做；跑图与下迷宫连着做。这不是本作的数据，是系列共同的结构。</div>`;
 
-    const B = [];
+
+    const B = [], W = [];
     [['rf1', typeof RF1_SHOP !== 'undefined' ? RF1_SHOP : null],
     ['rf3', typeof RF3_SHOP !== 'undefined' ? RF3_SHOP : null],
     ['rf4', typeof RF4_SHOP !== 'undefined' ? RF4_SHOP : null],
     ['rff', typeof RFF_SHOP !== 'undefined' ? RFF_SHOP : null],
     ['rfo', typeof RFO_SHOP !== 'undefined' ? RFO_SHOP : null],
     ['rf5', typeof RF5_SHOP !== 'undefined' ? RF5_SHOP : null]].forEach(x => {
-        if (x[1] && x[1].shops) { const b = brief(x[1].shops, x[0]); if (b) B.push(b); }
+        if (x[1] && x[1].shops) {
+            const b = brief(x[1].shops, x[0]);
+            if (b) B.push(b);
+            const R = rowsOf(x[1].shops).filter(r => r.s.c != null);
+            if (R.length) W.push({ g: x[0], n: R.length, w: winOf(R), a18: R.filter(r => r.s.c > 18 * 60).length });
+        }
     });
 
     /* 并列时不能只报一家：1 家报名字，2～3 家全列，再多就只报处数 */
@@ -7748,6 +7756,34 @@ function timeDeepHtml(id) {
         b.night.length ? String(b.night.length) + ' 家' : '<span class="mon-no">0</span>',
     ]), { leftFirst: true, cls: 'rf3shop', colw: ['4rem', '5.4rem', 'auto', 'auto', 'auto', '5.2rem'] })}
             <div class="key">一眼能看出两件事：<b>开门时间六作都压在 8～9 点</b>，差不了半小时；<b>关门时间却从 18 点铺到凌晨 3 点</b>——夜里有没有地方可去，才是各作真正不一样的地方。</div>` : '';
+    const WIN = W.length ? `
+            ${H2('几点去，才不会白跑')}
+            <p class="p">把六作里<b>写了钟点的设施</b>按时段叠一遍，能得到这一页最实用的一个数：<b>全部同时营业</b>的那一段。只有落在这一段里，随便进哪家都开着；出了这一段，就得挑着去。</p>
+            ${tbl(['作品', '全部开着', '时长', '18 点后<br>还剩'], W.map(w => [
+        E(NAME[w.g]),
+        w.w ? E(hhmm(w.w.a)) + '–' + E(hhmm(w.w.b)) : '<span class="mon-no">没有</span>',
+        w.w ? String(w.w.h) + ' 小时' : '<span class="mon-no">—</span>',
+        w.a18 ? String(w.a18) + ' 处' : '<span class="mon-no">0</span>',
+    ]), { leftFirst: true, colw: ['4rem', 'auto', '4.4rem', '5.2rem'] })}
+            <div class="key">六个数字把六作的一天说清楚了：<b>RF5 有整整 9 小时五家全开</b>，因为它五家时间表一字不差；<b>RF1 只有 3 小时</b>——浴场要等到 15:00 才开门，而其余大半 18:00 就关，中间只夹出三小时；<b>边境一处都没有</b>——酒场 18:00 开门的那一刻，另外五家正好关门，六处时间表<b>一分钟都不重叠</b>。</div>
+            <p class="p">两处细节值得记：三代的窗口是被<b>艾莉莎的流行商店</b>一个人掐住两头的——她 12:00 开、17:30 关，比谁都晚开、比谁都早关，那 5.5 小时其实是<b>她一个人的作息</b>；四代反过来，要等<b>餐厅 11:00 开门</b>才算全开，比杂货与锻造晚两个小时。</p>
+            <p class="p">最右一列是另一半答案：<b>18 点是一道分水岭</b>。海洋与 RF5 到 18 点<b>一处不剩</b>；RF1 还剩 3 处、RF3 与 RF4 各剩 1 处；边境那 1 处是反过来的——它 18 点才开张。所以「晚上还能办点什么事」，六作里有<b>两作</b>的答案是「什么也办不了」。</p>` : '';
+    const SEA = `
+            ${H2('一季 30 天：这个数能从日历自己验出来')}
+            <p class="p">「一季 30 天、一年 120 天」是系列的老规矩，但这里不打算只把它当常识抄一遍——站内五套节日日历自己就划出了这条边界：<b>冬季最后一场一律落在第 30 天</b>，写的是「除夕」或「年末祭」；<b>五套里没有一套出现过第 31 天</b>。四套的春季第一场落在第 1 天（元旦／年始祭），只有海洋是从第 7 天的春精灵祭才开始。</p>
+            ${tbl(['作品', '春季第 1 天', '冬季第 30 天'], [
+        ['RF2', '元旦', '除夕'],
+        ['RF3', '元旦', '除夕'],
+        ['边境', '年始祭', '年末祭'],
+        ['海洋', '<span class="mon-no">无（最早 7 日）</span>', '年末祭'],
+        ['RF5', '元旦', '除夕'],
+    ], { leftFirst: true, colw: ['4rem', 'auto', 'auto'] })}
+            <p class="p">换季当天变的不只是作物：三代的杂货屋「钻石」在源文里<b>按季节分四张种子表</b>——春季种子、夏季种子、秋季种子、冬季种子，每张六条，末尾都是同一瓶 600G 的营养酒。<b>同一个月买得到什么种子，取决于今天是第几季</b>。</p>`;
+    const WEA = `
+            ${H2('天气不是背景，它写在营业时间里')}
+            <p class="p">这一页最容易写成「雨天不用浇水」这类通用建议。站内数据能证明的是另一件事：<b>天气直接改营业</b>。RF1 的诺伊曼农场与锻冶屋，营业时间后面就缀着<b>「雨雪天休息」</b>；伊万更细——<b>雨雪照常，台风与暴雪不开</b>；边境的教会药房写着<b>「雨天除外」</b>；海洋把「节假日、节庆」直接当休息日；RF5 则相反，节假日不休息，只把营业缩到 13:00～14:00。</p>
+            <div class="key">所以下雨那天要问的不是「要不要浇水」，而是<b>「今天这家开不开」</b>。要买种子、要改农具，先看天气再看钟点——顺序反了，跑到门口才发现关门。</div>`;
+
 
     if (id === 'rf1') {
         const S = (typeof RF1_SHOP !== 'undefined') ? RF1_SHOP.shops : [];
@@ -7770,6 +7806,9 @@ function timeDeepHtml(id) {
             <p class="p">伊万是另一种写法：<b>雨雪天照常开，台风、暴雪不开</b>。所以真正会让他收摊的只有台风与暴雪两种。</p>
             ${sch ? `<p class="p">村民的位置也按天气换表：站内行程表把一周拆成<b>${sch.days.length} 种状态</b>（周一至周五、祝日，各再分晴与雨雪），时间轴从<b>${E(sch.times[0])} 到 ${E(sch.times[sch.times.length - 1])}</b> 逐小时编。<b>雨天照晴天的表去找人，会扑空。</b>见<a href="#/sched/rf1">村民行程</a>。</p>` : ''}
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7790,6 +7829,9 @@ function timeDeepHtml(id) {
             <p class="p">不属于 9:00~18:00 的有 ${odd.length} 处：${odd.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}。</p>
             ${none.length ? `<p class="p">源文<b>没有写营业时间</b>的：${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}。表格里不出现，也不替它们填「9:00~18:00」。</p>` : ''}
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7806,6 +7848,9 @@ function timeDeepHtml(id) {
             ${H2('晚上只剩餐厅')}
             <p class="p">${R.length} 家里 18 点之后还开着的只有<b>${late.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}</b>。医院那一格源文只写了 9:00~18:00、<b>没有「周日缩短」的字样</b>——但也只写了这一句，本站不替它补「周日也开」。</p>
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7824,6 +7869,9 @@ function timeDeepHtml(id) {
             <p class="p">${mid.length} 处中午以后才开门：${mid.map(x => E(x.n) + '（' + E(x.h) + '）').join('、')}。教会药房还多一层条件：<b>周一、周三、周五要等到 12:00，而且雨天不算</b>（原文「雨天除外」）。</p>
             ${none.length ? `<p class="p">没有时刻可写的有：${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}。图书馆那一格源文写的是<b>「极不规律（Selphy 到镇后开）」</b>——只有一句前提，没有钟点。<b>照录，不替你换成 9:00-18:00</b>。</p>` : ''}
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7841,6 +7889,9 @@ function timeDeepHtml(id) {
             <p class="p">广场摊位（Joe 的符文能力摊）是这一页最特殊的一格：<b>只在周四与节庆日开，12:00-18:00</b>，烟火大会那天延到 22:00。也就是说<b>想找他，一周只有一次机会</b>；错过就等下一个周四，或者等一场节庆。</p>
             ${none.length ? `<p class="p">${none.map(x => '<b>' + E(x.n) + '</b>').join('、')}这一格源文写的是「营业时间以游戏内为准（源未单列）」——不是漏抄，是源表本身没有。本站不补。</p>` : ''}
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7859,6 +7910,9 @@ function timeDeepHtml(id) {
             <p class="p">水晶店那一格多了一句括号：<b>「Heinz 本人 15:00 后才现身交易」</b>。营业时间写的是 9:00-18:00，但真正能办成事是 15 点以后——<b>这一作只有这一家把这句话写出来了</b>。</p>
             ${none.length ? `<p class="p">${none.map(x => '<b>' + E(x) + '</b>').join('、')}的营业时间源文写「以游戏内为准（源未单列）」，本站不补。</p>` : ''}
             ${OVERVIEW}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
@@ -7883,10 +7937,36 @@ function timeDeepHtml(id) {
             ${tbl(['季节', '场数'], byS.map(x => [x[0], String(x[1])]), { leftFirst: true, colw: ['4rem', '4rem'] })}
             <p class="p">逐日清单（第几天、什么节、当天做什么）在<a href="#/page/festival">年度节日</a>页。至于「几点开门、哪天休息」，只有游戏内能确认——如果你手上有写明时刻的资料，这一页最值得补的就是那张表。</p>
             ${BASE}
+            ${WIN}
+            ${SEA}
+            ${WEA}
             ${JUMP}`;
     }
 
     if (id === 'azuma') {
+        const CZ = (typeof CROP_AZUMA !== 'undefined' && CROP_AZUMA.rows) ? CROP_AZUMA : null;
+        let AZSEA = '';
+        if (CZ) {
+            const hz = CZ.head || [];
+            const iS = hz.indexOf('适宜季节'), iD = hz.indexOf('生长天数');
+            const se = {}, dd = {};
+            CZ.rows.forEach(r => {
+                if (iS >= 0 && r[iS] && r[iS] !== '×') se[r[iS]] = (se[r[iS]] || 0) + 1;
+                const d = Number(r[iD]);
+                if (!isNaN(d) && d > 0) dd[d] = (dd[d] || 0) + 1;
+            });
+            const seN = Object.keys(se).sort((a, b) => se[b] - se[a]);
+            const ddN = Object.keys(dd).map(Number).sort((a, b) => a - b);
+            const seasonRows = seN.reduce((a, k) => a + se[k], 0);
+            const dayRows = ddN.reduce((a, d) => a + dd[d], 0);
+            const best = ddN.length ? ddN.reduce((a, b) => (dd[b] > dd[a] ? b : a), ddN[0]) : 0;
+            const second = ddN.filter(d => d !== best).sort((a, b) => dd[b] - dd[a])[0];
+            AZSEA = `
+            ${H2('本作的一年：日历没有，作物的天数有')}
+            <p class="p">上面说过本作排不出日历，那这一页还能给什么？<b>作物表</b>。它比日历实在：<b>${CZ.rows.length} 行里有 ${seasonRows} 行标了「适宜季节」</b>——${seN.map(k => '<b>' + E(k) + '</b> ' + se[k] + ' 行').join('、')}；另有 <b>${dayRows} 行标了生长天数</b>，从 <b>${ddN[0]} 天到 ${ddN[ddN.length - 1]} 天</b>，其中 ${best} 天的最多（${dd[best]} 行）${second ? `、${second} 天次之（${dd[second]} 行）` : ''}。</p>
+            <p class="p">剩下 ${CZ.rows.length - seasonRows} 行是花木——樱花、梅、紫藤、榉树这一类，既没有生长天数也没有适宜季节。它们不是作物，<b>不拿它们的空白当「一季有多长」的证据</b>；本作一季几天，本站手上没有能对上的资料，所以不把前七作的 30 天套过来。</p>`;
+        }
+
         const A = (typeof SHOP_AZUMA !== 'undefined' && SHOP_AZUMA.rows) ? SHOP_AZUMA.rows : [];
         const loc = {};
         A.forEach(r => { loc[r[0]] = (loc[r[0]] || 0) + 1; });
@@ -7895,8 +7975,9 @@ function timeDeepHtml(id) {
             ${H2('本作没有营业时间可查')}
             <div class="note">站内龙之天地的店铺数据（<code>SHOP_AZUMA</code>，${A.length} 条商品）只有五列：地点、商品、价格、库存、备注。<b>没有营业时间，也没有星期几</b>。这一页不替它编。</div>
             ${names.length ? `<p class="p">能确定的是<b>铺子摊在 ${names.length} 个地点</b>上，从茶屋、居酒屋到铁匠铺、种苗店都有。按在售条目排，最厚的是<b>${E(names[0])}</b>（${loc[names[0]]} 条）、<b>${E(names[1])}</b>（${loc[names[1]]} 条）、<b>${E(names[2])}</b>（${loc[names[2]]} 条）。</p>
-            ${tbl(['地点', '在售条目'], names.map(n => [E(n), String(loc[n])]), { leftFirst: true, cls: 'rf3shop', colw: ['auto', '5.6rem'] })}` : ''}
+            ${tbl(['地点', '在售条目'], names.map(n => [E(n), String(loc[n])]), { leftFirst: true, colw: ['auto', '6rem'] })}` : ''}
             <p class="p">本作的节庆挂在四季村落与「大地舞者」的祭祀上，日程在版本更新里改过，本站手上没有能逐条核对的完整表——这也是<a href="#/page/festival">年度节日</a>页留空的原因。时间这一块，这一作目前是<b>整块空缺</b>，不是漏写。</p>
+            ${AZSEA}
             ${BASE}
             ${JUMP}`;
     }

@@ -48,6 +48,32 @@ console.log('脚本数', files.length);
     }
 }
 
+/* ---------- 0c. 离线预缓存清单 ----------
+   sw.js 的 PRECACHE 里只要有一条路径不存在，装 SW 时就会白打一次 404；
+   更早的写法用 cache.addAll，一条失败会让整套预缓存整体 reject，
+   离线其实是坏的，但控制台只有一行被 catch 吞掉的报错。这里钉死清单与实际文件一致。 */
+{
+    const src = fs.readFileSync(ROOT + 'sw.js', 'utf8');
+    const m = src.match(/const PRECACHE = \[([\s\S]*?)\];/);
+    if (!m) {
+        console.log('!! sw.js 里找不到 PRECACHE 清单');
+        process.exitCode = 1;
+    } else {
+        const list = (m[1].match(/'[^']*'/g) || []).map(s => s.slice(1, -1));
+        const miss = list.filter(u => u !== './' && !fs.existsSync(ROOT + u));
+        if (miss.length) {
+            console.log('!! 预缓存清单里有不存在的文件：' + miss.join('、'));
+            process.exitCode = 1;
+        } else {
+            console.log('预缓存 ' + list.length + ' 项，全部存在');
+        }
+        if (/c\.addAll\(/.test(src)) {
+            console.log('!! sw.js 又用回 cache.addAll：一条 404 会让整套预缓存失效');
+            process.exitCode = 1;
+        }
+    }
+}
+
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {
     console,

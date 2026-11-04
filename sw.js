@@ -9,7 +9,10 @@
  * 升级：改了 index.html / 本文件后，把下方 CACHE 版本号 +1，activate 会清掉旧缓存重预热。
  * 常规数据更新（k-*.js 内容变、文件名不变）由 SWR 自动处理，无需改版本号。
  */
-const CACHE = 'rfwiki-swr-v2';
+const CACHE = 'rfwiki-swr-v3';
+/* 预缓存清单：这里列出的每个路径都必须真实存在，否则会白白发一次 404。
+ * 逐条 add 而不是 addAll —— addAll 只要有一条失败就整体 reject，
+ * 一个失效路径就能让整套离线缓存悄悄失效。 */
 const PRECACHE = [
     './',
     'index.html',
@@ -18,17 +21,17 @@ const PRECACHE = [
     'js/k-core.js',
     'css/main.css',
     'css/content.css',
-    'css/todo.css',
-    'css/weui.min.css',
     'assets/icon/icon-192.png',
-    'assets/icon/icon-512.png',
+    'assets/icon/apple-touch-icon.png',
     'favicon.ico',
 ];
 
 self.addEventListener('install', function (e) {
     e.waitUntil(
         caches.open(CACHE).then(function (c) {
-            return c.addAll(PRECACHE).catch(function () { /* 单文件/离线预缓存失败不阻塞安装 */ });
+            return Promise.all(PRECACHE.map(function (u) {
+                return c.add(u).catch(function () { /* 单条失败不影响其余 */ });
+            }));
         }).then(function () { return self.skipWaiting(); })
     );
 });
