@@ -15,7 +15,7 @@ console.log('脚本数', files.length);
     const shaOf = l => crypto.createHash('sha1')
         .update(l.map(f => fs.readFileSync(ROOT + f, 'utf8')).join('\n;\n') + '\n')
         .digest('hex').slice(0, 16);
-    const pairs = [['core', plan.core], ['shared', plan.shared], ['cross', plan.cross]];
+    const pairs = [['core', plan.core], ['shared', plan.shared], ['cross', plan.cross], ['body', plan.body]];
     for (const gid of Object.keys(plan.games || {})) pairs.push(['game:' + gid, plan.games[gid]]);
     for (const k of Object.keys(plan.pages || {})) pairs.push(['page:' + k, plan.pages[k]]);
     const stale = pairs.filter(([k, l]) => plan.sha && plan.sha[k] !== shaOf(l));
@@ -27,6 +27,26 @@ console.log('脚本数', files.length);
     }
 })();
 
+
+/* ---------- 0b. 行尾 ----------
+   这四个文件是手改的主力，一直是 CRLF；某次用脚本/编辑器整篇重写会悄悄变成裸 LF，
+   整份文件在 git 里就成了「全改」，review 时什么都看不出来。这里直接钉死。 */
+{
+    const must = ['js/pages.js', 'js/app.js', 'js/data.js', 'js/changelog.js'];
+    const bad = [];
+    for (const f of must) {
+        const b = fs.readFileSync(ROOT + f);
+        let crlf = 0, lf = 0;
+        for (let i = 0; i < b.length; i++) if (b[i] === 10) (i > 0 && b[i - 1] === 13) ? crlf++ : lf++;
+        if (lf) bad.push(f + '（裸 LF ' + lf + ' 行）');
+    }
+    if (bad.length) {
+        console.log('!! 行尾不是 CRLF：' + bad.join('、'));
+        process.exitCode = 1;
+    } else {
+        console.log('行尾 CRLF ' + must.length + ' 个文件');
+    }
+}
 
 const stubEl = { innerHTML: '', textContent: '', value: '', style: {}, dataset: {}, classList: { add() { }, remove() { }, toggle() { } }, addEventListener() { }, appendChild() { }, querySelectorAll: () => [], scrollIntoView() { } };
 const ctx = {

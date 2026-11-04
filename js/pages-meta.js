@@ -1,3 +1,32 @@
+/* 与本页数据同源的分组表，供菜单与标题用；正文包里有同名的 GROUPS，
+   所以这里换个名字，免得多一个 <script> 就撞一次 const 重声明。 */
+var GROUPS_META = [
+    {
+        "key": "basic",
+        "title": "基础知识",
+        "en": "BASICS"
+    },
+    {
+        "key": "life",
+        "title": "牧场生活",
+        "en": "FARM LIFE"
+    },
+    {
+        "key": "event",
+        "title": "活动事件",
+        "en": "EVENTS"
+    },
+    {
+        "key": "item",
+        "title": "物品道具",
+        "en": "ITEMS"
+    },
+    {
+        "key": "lore",
+        "title": "资料与设定",
+        "en": "LORE"
+    }
+];
 var PAGES_META = [
     {
         "key": "intro",
@@ -553,3 +582,9 @@ var PAGES_META = [
     }
 ];
 var PAGE_COUNT = PAGES_META.length;
+
+/* 条目可见性：带 gms 的条目只在指定作品下出现。
+   放这里而不是 pages.js —— 首页、目录、名册都要用它，但那时正文包还没下。 */
+function pageVis(p, g) {
+    return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
+}

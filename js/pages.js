@@ -16052,10 +16052,7 @@ PAGES.forEach(p => { PAGE_MAP[p.key] = p; });
     PAGE_MAP['rf5' + old] = PAGE_MAP[k];
 });
 
-/* 条目可见性：带 gms 的条目只在指定作品下出现 */
-function pageVis(p, g) {
-    return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
-}
+/* pageVis 已挪到 pages-meta.js —— 首页/目录/名册要用它，那时本包还没下 */
 
 /* 跨作机制对照：把各作放在一张表里并排看。
    所有数字取自已加载的数据全局（GAMES / 各作料理与钓鱼数据表），零臆造；

@@ -55,13 +55,20 @@ var K = (function () {
             if (!P) return true;
             return !!loaded[P.cross];
         },
-        /* need = { game, page, cross } */
+        /* 正文包（PAGES + PAGE_MAP）：只有真正要画条目正文和跑搜索时才需要 */
+        hasBody: function () {
+            var P = plan();
+            if (!P) return true;
+            return !P.pagesAll || !!loaded[P.pagesAll];
+        },
+        /* need = { game, page, cross, pages } */
         ready: function (need) {
             var P = plan();
             if (!P) return Promise.resolve();
             var list = [P.shared];
             if (need.game && P.games[need.game]) list.push(P.games[need.game]);
             if (need.page && P.pages[need.page]) list.push(P.pages[need.page]);
+            if (need.pages && P.pagesAll) list.push(P.pagesAll);
             if (need.cross) {
                 /* 跨作页要读所有作品的数据，一作都不能少 */
                 Object.keys(P.games).forEach(function (k) { list.push(P.games[k]); });
@@ -71,6 +78,16 @@ var K = (function () {
             var seen = {}, out = [];
             list.forEach(function (s) { if (s && !seen[s]) { seen[s] = 1; out.push(s); } });
             return seq(out);
+        },
+        /* 空闲预热：首屏画完后趁浏览器闲着把正文包取下来，点条目就不用等。
+           只做一次；省流模式与 2G/3G 不碰——那是用户的流量，不是我们的带宽。 */
+        warm: function () {
+            var P = plan();
+            if (!P || !P.pagesAll || loaded[P.pagesAll]) return;
+            if (typeof requestIdleCallback !== 'function') return;
+            var c = navigator.connection || navigator.mozConnection || null;
+            if (c && (c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))) return;
+            requestIdleCallback(function () { one(P.pagesAll).catch(function () { }); }, { timeout: 4000 });
         },
         /* 调试/审计用：报告当前载入了哪些包 */
         report: function () { return Object.keys(loaded); },

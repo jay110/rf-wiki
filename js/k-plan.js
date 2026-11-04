@@ -1,6 +1,8 @@
 /* 分包清单 —— 自动生成，勿手改（node _build_chunks.js） */
 var K_PLAN = {
     "shared": "js/k-shared.js",
+    "body": "js/k-body.js",
+    "pagesAll": "js/k-body.js",
     "cross": "js/k-cross.js",
     "crossPages": [
         "battle",

@@ -85,8 +85,10 @@
         }
     </script>
 
-    <!-- 三个包：清单、加载器、内核。其余 99 个源文件由 _build_chunks.js 打进 js/k-*.js，
-         进哪一作、开哪一页才下哪一个。源文件顺序见 js/_manifest.json -->
+    <!-- 三个包：清单、加载器、内核。其余源文件由 _build_chunks.js 打成 js/k-*.js，
+         进哪一作、开哪一页才下哪一个。源文件顺序见 js/_manifest.json。
+         k-body.js（全部条目正文，近 500KB gzip）不在首屏之列：首页、作品目录、居民名册
+         都用 pages-meta.js 里的元数据画，不需要正文；点开条目才拉它。 -->
     <script src="js/k-plan.js"></script>
     <script src="js/k-loader.js"></script>
     <script src="js/k-core.js"></script>

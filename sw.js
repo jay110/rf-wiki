@@ -9,7 +9,7 @@
  * 升级：改了 index.html / 本文件后，把下方 CACHE 版本号 +1，activate 会清掉旧缓存重预热。
  * 常规数据更新（k-*.js 内容变、文件名不变）由 SWR 自动处理，无需改版本号。
  */
-const CACHE = 'rfwiki-swr-v1';
+const CACHE = 'rfwiki-swr-v2';
 const PRECACHE = [
     './',
     'index.html',

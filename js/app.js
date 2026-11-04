@@ -215,8 +215,8 @@ function viewWelcome() {
 }
 
 function viewHome(g) {
-    const groups = GROUPS.map(grp => {
-        const items = PAGES.filter(p => p.group === grp.key && pageVis(p, g));
+    const groups = GROUPS_META.map(grp => {
+        const items = PAGES_META.filter(p => p.group === grp.key && pageVis(p, g));
         if (!items.length) return '';
         return `
         <div class="section-title">
@@ -294,16 +294,16 @@ function footer(g) {
     return `
     <div class="copyright">
         <div>符文工房攻略百科　·　非官方中文资料站</div>
-        <div>当前收录：${g.name}　|　共 ${PAGES.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
+        <div>当前收录：${g.name}　|　共 ${PAGES_META.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
         <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
     </div>`;
 }
 
 function viewCat(key) {
-    const grp = GROUPS.find(x => x.key === key);
+    const grp = GROUPS_META.find(x => x.key === key);
     if (!grp) return viewError('没有这个分类');
     const g = cur();
-    const items = PAGES.filter(p => p.group === key && pageVis(p, g));
+    const items = PAGES_META.filter(p => p.group === key && pageVis(p, g));
     if (!items.length) return viewError('这个分类下当前作品还没有条目');
     return `
     <div class="section-title"><span>${grp.title}</span><span class="en">${grp.en}</span></div>
@@ -321,7 +321,7 @@ function viewPage(key) {
     const p = PAGE_MAP[key];
     if (!p) return viewError('没有这个条目');
     const g = cur();
-    const grp = GROUPS.find(x => x.key === p.group);
+    const grp = GROUPS_META.find(x => x.key === p.group);
     if (!pageVis(p, g)) {
         /* 可用作品可能不止一部（例：BOSS 战收 4 作、状态与抗性收 RF4/RF4S），
            所以按 p.gms 逐个列出来，不再写死某一作 */
@@ -1413,7 +1413,7 @@ function viewSearch(q) {
     }
 
     /* ① 页面级命中：标题 */
-    const pgHit = PAGES.filter(p => pageVis(p, g) && (
+    const pgHit = PAGES_META.filter(p => pageVis(p, g) && (
         p.title.toLowerCase().includes(kw) || (p.en || '').toLowerCase().includes(kw)));
 
     /* ② 条目级命中：数据表每一行 */
@@ -1516,11 +1516,12 @@ let lastHash = null;
    跨作页（系列对照／节日／战斗）与更新日志各自单独一包，用到才下。 */
 function chunkNeed(r) {
     if (typeof K === 'undefined' || typeof K_PLAN === 'undefined' || !K_PLAN) return null;
-    const none = { game: null, page: null, cross: false };
+    const none = { game: null, page: null, cross: false, pages: false };
     if (r.name === 'home' || r.name === 'games' || r.name === 'switch') return none;
     const g = cur();
-    const need = { game: g.id, page: null, cross: false };
-    if (r.name === 'search') { need.cross = true; return need; }
+    const need = { game: g.id, page: null, cross: false, pages: false };
+    /* 搜索要逐页调 body() 建条目索引与正文索引，正文包同样躲不掉 */
+    if (r.name === 'search') { need.cross = true; need.pages = true; return need; }
     if (r.name === 'resident' || r.name === 'char' || r.name === 'sched') {
         const gg = GAMES.find(x => x.id === r.args[0]);
         need.game = gg ? gg.id : g.id;
@@ -1528,6 +1529,8 @@ function chunkNeed(r) {
     }
     if (r.name === 'page') {
         const key = r.args[0];
+        /* 正文包：PAGES 与 PAGE_MAP 都在里面，任何条目（含 beast/animal 这类旧别名）都要 */
+        need.pages = true;
         if (K_PLAN.pages && K_PLAN.pages[key]) need.page = key;
         if (K_PLAN.crossPages && K_PLAN.crossPages.indexOf(key) >= 0) need.cross = true;
     }
@@ -1547,6 +1550,7 @@ function render() {
     if (need) {
         const lack = (need.game && !K.has(need.game))
             || (need.page && !K.hasPage(need.page))
+            || (need.pages && !K.hasBody())
             || (need.cross && !K.hasCross());
         if (lack) {
             const sig = location.hash;
@@ -1941,4 +1945,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const sb = document.getElementById('searchBtn');
     if (sb) sb.addEventListener('click', () => go('/search'));
     render();
+    /* 首屏画完之后再预热正文包（PAGES／PAGE_MAP，近 500KB gzip）。
+       首页与目录页本身不需要它，没理由让它们在首访时一起等。 */
+    if (typeof K !== 'undefined' && K.warm) setTimeout(() => K.warm(), 900);
 });

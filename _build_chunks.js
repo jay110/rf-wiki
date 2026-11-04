@@ -31,6 +31,13 @@ const CORE = ['js/changelog-head.js', 'js/data.js', 'js/icons.js',
 const PAGE_CHUNKS = { changelog: ['js/changelog.js'] };
 const PAGE_FILES = new Set(Object.values(PAGE_CHUNKS).flat());
 
+/* 正文包：pages.js 是 66 个条目共用的渲染正文 + PAGES/PAGE_MAP。
+   它被所有条目、被搜索读，却一个数据文件都不含——放在「进作品就下」的共用包里，
+   首页、作品目录、居民名册都得白等 500KB。单独成包，点了条目才下。
+   判定不靠「谁引用它」：它反过来引用所有数据，剔除测试永远把它算成 shared。 */
+const BODY_CHUNK = ['js/pages.js'];
+const BODY_FILES = new Set(BODY_CHUNK);
+
 const SRC = {};
 for (const f of files) SRC[f] = fs.readFileSync(ROOT + f, 'utf8');
 
@@ -75,8 +82,15 @@ const GAMES = base.GAMES, PAGES = base.PAGES;
 const BASE = renderAll(base);
 console.log('作品 ' + GAMES.length + ' 部，页面 ' + PAGES.length + ' 条，基线已建');
 
+/* 反证：正文包一旦漏装，PAGES 就没了，下面的逐页比对会静默通过（比了个空）。
+   这条断言把「比对有效」本身钉住。 */
+if (build(files.filter(f => !BODY_FILES.has(f))).PAGES) {
+    console.error('!! 去掉正文包仍能拿到 PAGES，逐页比对会空转');
+    process.exit(1);
+}
+
 /* ---------- 2. 逐文件剔除，记录「去掉它谁变了」 ---------- */
-const other = files.filter(f => !CORE.includes(f) && !PAGE_FILES.has(f));
+const other = files.filter(f => !CORE.includes(f) && !PAGE_FILES.has(f) && !BODY_FILES.has(f));
 /* aff[f][game] = 受影响的页面 key 集合 */
 const aff = {};
 for (const f of other) {
@@ -123,7 +137,7 @@ for (const f of other) {
         }
     }
 }
-const plan = { core: CORE.slice(), shared: [], cross: [], games: {}, pages: PAGE_CHUNKS };
+const plan = { core: CORE.slice(), shared: [], cross: [], games: {}, pages: PAGE_CHUNKS, body: BODY_CHUNK };
 for (const g of GAMES) plan.games[g.id] = [];
 const unassigned = [];
 for (const f of other) {
@@ -149,7 +163,7 @@ for (const key of Object.keys(PAGE_CHUNKS)) {
 
 /* 断言：每个文件恰好归一处 */
 const seen = {};
-for (const f of [...plan.core, ...plan.shared, ...plan.cross, ...PAGE_FILES, ...Object.values(plan.games).flat()]) {
+for (const f of [...plan.core, ...plan.shared, ...plan.cross, ...PAGE_FILES, ...BODY_FILES, ...Object.values(plan.games).flat()]) {
     seen[f] = (seen[f] || 0) + 1;
 }
 const dup = Object.keys(seen).filter(f => seen[f] > 1);
@@ -194,21 +208,23 @@ function verify(list, gid, skipCrossPage) {
 /* 跨作页要读所有作品的数据，所以打开它时把全部作品包一起装上——这里按那个组合自检 */
 const ALLGAME = Object.values(plan.games).flat();
 for (const gid of Object.keys(plan.games)) {
-    verify([...plan.core, ...plan.shared, ...plan.games[gid]], gid, true);
-    verify([...plan.core, ...plan.shared, ...ALLGAME, ...plan.cross, ...PAGE_FILES], gid, false);
+    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...plan.games[gid]], gid, true);
+    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...ALLGAME, ...plan.cross, ...PAGE_FILES], gid, false);
 }
 
 /* ---------- 6. 体积 ---------- */
 const gz = l => l.reduce((n, f) => n + zlib.gzipSync(SRC[f]).length, 0);
 const fmt = n => (n / 1024).toFixed(0) + ' KB';
-const coreGz = gz(plan.core), sharedGz = gz(plan.shared), crossGz = gz(plan.cross);
+const coreGz = gz(plan.core), sharedGz = gz(plan.shared), crossGz = gz(plan.cross), bodyGz = gz(BODY_CHUNK);
 console.log('\n内核    ' + String(plan.core.length).padStart(3) + ' 个  gzip ' + fmt(coreGz).padStart(8));
 console.log('共用    ' + String(plan.shared.length).padStart(3) + ' 个  gzip ' + fmt(sharedGz).padStart(8));
+console.log('正文    ' + String(BODY_CHUNK.length).padStart(3) + ' 个  gzip ' + fmt(bodyGz).padStart(8) + '  （点条目才下）');
 console.log('跨作    ' + String(plan.cross.length).padStart(3) + ' 个  gzip ' + fmt(crossGz).padStart(8));
+console.log('首屏    ' + fmt(coreGz + sharedGz) + '（首页／目录／名册）');
 for (const gid of Object.keys(plan.games)) {
     const l = plan.games[gid];
     console.log('  ' + gid.padEnd(6) + String(l.length).padStart(3) + ' 个  gzip ' + fmt(gz(l)).padStart(8)
-        + '  → 进游戏 ' + fmt(coreGz + sharedGz + gz(l)));
+        + '  → 看一页 ' + fmt(coreGz + sharedGz + gz(l) + bodyGz));
 }
 if (bad) { console.error('\n!! 自检失败 ' + bad + ' 处，未写包'); process.exit(1); }
 console.log('\n自检通过：每作只装自己的包，365 个页面输出与基线逐字一致');
@@ -225,6 +241,7 @@ function emit(name, list) {
 let bytes = 0;
 bytes += emit('k-core.js', plan.core);
 bytes += emit('k-shared.js', plan.shared);
+bytes += emit('k-body.js', BODY_CHUNK);
 bytes += emit('k-cross.js', plan.cross);
 for (const gid of Object.keys(plan.games)) bytes += emit('k-' + gid + '.js', plan.games[gid]);
 for (const key of Object.keys(PAGE_CHUNKS)) bytes += emit('k-page-' + key + '.js', PAGE_CHUNKS[key]);
@@ -232,6 +249,8 @@ fs.writeFileSync(ROOT + 'js/k-plan.js',
     '/* 分包清单 —— 自动生成，勿手改（node _build_chunks.js） */\n'
     + 'var K_PLAN = ' + JSON.stringify({
         shared: 'js/k-shared.js',
+        body: 'js/k-body.js',
+        pagesAll: 'js/k-body.js',
         cross: 'js/k-cross.js',
         crossPages: CROSS,
         games: Object.fromEntries(Object.keys(plan.games).map(g => [g, 'js/k-' + g + '.js'])),
@@ -241,8 +260,8 @@ fs.writeFileSync(ROOT + 'js/k-plan.js',
 const crypto = require('crypto');
 const shaOf = l => crypto.createHash('sha1')
     .update(l.map(f => SRC[f]).join('\n;\n') + '\n').digest('hex').slice(0, 16);
-plan.sha = { core: shaOf(plan.core), shared: shaOf(plan.shared), cross: shaOf(plan.cross) };
+plan.sha = { core: shaOf(plan.core), shared: shaOf(plan.shared), cross: shaOf(plan.cross), body: shaOf(BODY_CHUNK) };
 for (const gid of Object.keys(plan.games)) plan.sha['game:' + gid] = shaOf(plan.games[gid]);
 for (const key of Object.keys(PAGE_CHUNKS)) plan.sha['page:' + key] = shaOf(PAGE_CHUNKS[key]);
 fs.writeFileSync(ROOT + 'js/_chunks.json', JSON.stringify(plan, null, 2) + '\n');
-console.log('已写 ' + (Object.keys(plan.games).length + 3) + ' 个包，合计 ' + (bytes / 1048576).toFixed(2) + ' MB');
+console.log('已写 ' + (Object.keys(plan.games).length + 4) + ' 个包，合计 ' + (bytes / 1048576).toFixed(2) + ' MB');

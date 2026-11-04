@@ -71,7 +71,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-04",
-    latest: ["第两百零六：自宅与扩建——八作补齐，房子、家具、材料是三笔不同的账（272～77…", "第两百零五：舞台与主角——八作拆页，四个失忆、六条「被动落下」，两种舞台走向（5…", "第两百零四：新开「配置与模拟器」页——把 PC 配置从作品首页搬出来，补上五个平…", "第两百零三：国家与幻龙——四条龙不是四个打手，是四种职能；八作各掀开一角（511…", "第两百零二：种族拆页——一个「精灵」对三个日文词，八作把种族当过标签、伤口、身份…", "第两百零一：世界设定拆页——同一套符文，八作做成了八种东西，从货架上的一本书到配…"],
+    latest: ["第两百零七：首屏瘦身——把「全部条目正文」从共用包里拆出来（663KB → 20…", "第两百零六：自宅与扩建——八作补齐，房子、家具、材料是三笔不同的账（272～77…", "第两百零五：舞台与主角——八作拆页，四个失忆、六条「被动落下」，两种舞台走向（5…", "第两百零四：新开「配置与模拟器」页——把 PC 配置从作品首页搬出来，补上五个平…", "第两百零三：国家与幻龙——四条龙不是四个打手，是四种职能；八作各掀开一角（511…", "第两百零二：种族拆页——一个「精灵」对三个日文词，八作把种族当过标签、伤口、身份…"],
 };
 
 ;
@@ -647,6 +647,35 @@ var NPC_FULL = {
 };
 
 ;
+/* 与本页数据同源的分组表，供菜单与标题用；正文包里有同名的 GROUPS，
+   所以这里换个名字，免得多一个 <script> 就撞一次 const 重声明。 */
+var GROUPS_META = [
+    {
+        "key": "basic",
+        "title": "基础知识",
+        "en": "BASICS"
+    },
+    {
+        "key": "life",
+        "title": "牧场生活",
+        "en": "FARM LIFE"
+    },
+    {
+        "key": "event",
+        "title": "活动事件",
+        "en": "EVENTS"
+    },
+    {
+        "key": "item",
+        "title": "物品道具",
+        "en": "ITEMS"
+    },
+    {
+        "key": "lore",
+        "title": "资料与设定",
+        "en": "LORE"
+    }
+];
 var PAGES_META = [
     {
         "key": "intro",
@@ -1203,6 +1232,12 @@ var PAGES_META = [
 ];
 var PAGE_COUNT = PAGES_META.length;
 
+/* 条目可见性：带 gms 的条目只在指定作品下出现。
+   放这里而不是 pages.js —— 首页、目录、名册都要用它，但那时正文包还没下。 */
+function pageVis(p, g) {
+    return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
+}
+
 ;
 /* ============================================================
    路由与视图
@@ -1421,8 +1456,8 @@ function viewWelcome() {
 }
 
 function viewHome(g) {
-    const groups = GROUPS.map(grp => {
-        const items = PAGES.filter(p => p.group === grp.key && pageVis(p, g));
+    const groups = GROUPS_META.map(grp => {
+        const items = PAGES_META.filter(p => p.group === grp.key && pageVis(p, g));
         if (!items.length) return '';
         return `
         <div class="section-title">
@@ -1500,16 +1535,16 @@ function footer(g) {
     return `
     <div class="copyright">
         <div>符文工房攻略百科　·　非官方中文资料站</div>
-        <div>当前收录：${g.name}　|　共 ${PAGES.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
+        <div>当前收录：${g.name}　|　共 ${PAGES_META.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
         <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
     </div>`;
 }
 
 function viewCat(key) {
-    const grp = GROUPS.find(x => x.key === key);
+    const grp = GROUPS_META.find(x => x.key === key);
     if (!grp) return viewError('没有这个分类');
     const g = cur();
-    const items = PAGES.filter(p => p.group === key && pageVis(p, g));
+    const items = PAGES_META.filter(p => p.group === key && pageVis(p, g));
     if (!items.length) return viewError('这个分类下当前作品还没有条目');
     return `
     <div class="section-title"><span>${grp.title}</span><span class="en">${grp.en}</span></div>
@@ -1527,7 +1562,7 @@ function viewPage(key) {
     const p = PAGE_MAP[key];
     if (!p) return viewError('没有这个条目');
     const g = cur();
-    const grp = GROUPS.find(x => x.key === p.group);
+    const grp = GROUPS_META.find(x => x.key === p.group);
     if (!pageVis(p, g)) {
         /* 可用作品可能不止一部（例：BOSS 战收 4 作、状态与抗性收 RF4/RF4S），
            所以按 p.gms 逐个列出来，不再写死某一作 */
@@ -2619,7 +2654,7 @@ function viewSearch(q) {
     }
 
     /* ① 页面级命中：标题 */
-    const pgHit = PAGES.filter(p => pageVis(p, g) && (
+    const pgHit = PAGES_META.filter(p => pageVis(p, g) && (
         p.title.toLowerCase().includes(kw) || (p.en || '').toLowerCase().includes(kw)));
 
     /* ② 条目级命中：数据表每一行 */
@@ -2722,11 +2757,12 @@ let lastHash = null;
    跨作页（系列对照／节日／战斗）与更新日志各自单独一包，用到才下。 */
 function chunkNeed(r) {
     if (typeof K === 'undefined' || typeof K_PLAN === 'undefined' || !K_PLAN) return null;
-    const none = { game: null, page: null, cross: false };
+    const none = { game: null, page: null, cross: false, pages: false };
     if (r.name === 'home' || r.name === 'games' || r.name === 'switch') return none;
     const g = cur();
-    const need = { game: g.id, page: null, cross: false };
-    if (r.name === 'search') { need.cross = true; return need; }
+    const need = { game: g.id, page: null, cross: false, pages: false };
+    /* 搜索要逐页调 body() 建条目索引与正文索引，正文包同样躲不掉 */
+    if (r.name === 'search') { need.cross = true; need.pages = true; return need; }
     if (r.name === 'resident' || r.name === 'char' || r.name === 'sched') {
         const gg = GAMES.find(x => x.id === r.args[0]);
         need.game = gg ? gg.id : g.id;
@@ -2734,6 +2770,8 @@ function chunkNeed(r) {
     }
     if (r.name === 'page') {
         const key = r.args[0];
+        /* 正文包：PAGES 与 PAGE_MAP 都在里面，任何条目（含 beast/animal 这类旧别名）都要 */
+        need.pages = true;
         if (K_PLAN.pages && K_PLAN.pages[key]) need.page = key;
         if (K_PLAN.crossPages && K_PLAN.crossPages.indexOf(key) >= 0) need.cross = true;
     }
@@ -2753,6 +2791,7 @@ function render() {
     if (need) {
         const lack = (need.game && !K.has(need.game))
             || (need.page && !K.hasPage(need.page))
+            || (need.pages && !K.hasBody())
             || (need.cross && !K.hasCross());
         if (lack) {
             const sig = location.hash;
@@ -3147,5 +3186,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const sb = document.getElementById('searchBtn');
     if (sb) sb.addEventListener('click', () => go('/search'));
     render();
+    /* 首屏画完之后再预热正文包（PAGES／PAGE_MAP，近 500KB gzip）。
+       首页与目录页本身不需要它，没理由让它们在首访时一起等。 */
+    if (typeof K !== 'undefined' && K.warm) setTimeout(() => K.warm(), 900);
 });
 

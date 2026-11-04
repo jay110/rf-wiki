@@ -1,6 +1,16 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，条目数由 _test_changelog.js 统计，不在此写死） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-04　第两百零七：首屏瘦身——把「全部条目正文」从共用包里拆出来（663KB → 203KB）</h2>
+<div class="txt-list">
+<p><b>问题出在哪</b>：分包早就做了，但 <code>pages.js</code>（66 个条目的渲染正文，1.5MB）一直被算进「共用包」——因为分包是靠<b>剔除法</b>判定的：去掉某个数据文件看哪些页的输出变了。而 <code>pages.js</code> 恰恰相反，<b>它引用所有数据，自己一条数据都不含</b>，于是永远被判成「人人要读」，塞进了共用包。结果是打开首页、作品目录、居民名册，都得先把 475KB（gzip）的正文拖完，而这三类页面<b>一个字都用不到它</b>。</p>
+<p><b>怎么拆的</b>：新增正文包 <code>k-body.js</code>，只在 <code>#/page/*</code> 与 <code>#/search/*</code> 时加载；<code>_build_chunks.js</code> 里给它单独一条 <code>BODY_CHUNK</code>，不再参与剔除法归类。<b>真正的门槛不在拆，而在拆完还敢相信自检</b>：原来的逐页比对靠「装齐该装的包再渲染 365 页」，正文包一漏装，<code>PAGES</code> 直接是 undefined，比对循环一次都不跑、<b>0 处不一致，静默通过</b>。所以加了一条反证——<b>去掉正文包必须拿不到 PAGES</b>，拿得到就报错退出。这条断言比新代码本身重要。</p>
+<p><b>首屏 663KB → 203KB（gzip）</b>，约三分之一。看一页的总量基本没变（745KB 上下），因为正文本来就得下——<b>变的是「不该下的时候不下」</b>：首页、目录、名册、角色页都不再为它买单。另外补了一手<b>空闲预热</b>：首屏画完 0.9 秒后，趁浏览器闲着（<code>requestIdleCallback</code>）把正文包取下来，点条目就不用等；<b>省流模式与 2G／3G 直接跳过</b>——那是用户的流量，不是站点的带宽。</p>
+<p><b>拆包带出的第二个问题</b>：首页与目录靠 <code>PAGES</code> 画菜单和「共 N 个条目」，<code>GROUPS</code> 与 <code>pageVis</code> 又都定义在 <code>pages.js</code> 里。正文包一延后，它们全成了未定义。修法是让 <code>gen_pages_meta.js</code> 一并输出 <code>GROUPS_META</code> 与 <code>pageVis</code>（本来就是打包时从 <code>PAGES</code> 自动生成的，不新增第二个真相）。<b>这里踩到一个坑记一下</b>：分组表在两个 <code>&lt;script&gt;</code> 里都叫 <code>GROUPS</code> 会撞「<code>const</code> 已声明」直接抛错，所以元数据那份换名 <code>GROUPS_META</code>，而不是让两份同名并存。</p>
+<p><b>app.js 里四处读全量 PAGES 的地方改成读元数据</b>：作品目录的菜单、条目标题命中、目录页列表、「共 N 个条目」计数——它们只要 key／标题／图标／gms。<b>搜索是例外，仍然必须读全量</b>，因为条目索引与正文索引都要逐页调 <code>body()</code>；所以搜索路由同时要三样：全部作品包、跨作包、正文包。这也解释了为什么本站的搜索一直是「最重的一步」。</p>
+<p><b>顺手做的事</b>：<code>_verify.js</code> 的分包指纹加上 <code>body</code>（改了 <code>pages.js</code> 忘了重打包会当场报错）；<code>sw.js</code> 缓存版本 v1 → v2，让旧壳子自己换掉；<code>index.html</code> 的注释改掉「其余 99 个源文件」这种会过期的说法。</p>
+<p><b>验证</b>：<code>_build_chunks</code> 365 页逐字一致、<code>_verify</code> 364 实例 0 异常、<code>_test_links</code> 0 坏链、<code>_test_changelog</code> 摘要与正文一致。另外用 Edge 无头逐个路由实跑了一遍：<code>#/</code>、<code>#/wiki</code>、<code>#/cat/basic</code>、<code>#/resident/rf4</code> 不加载正文包也能正常出页；<code>#/page/spec</code>、<code>#/page/home</code>、<code>#/page/animal</code>（旧别名）、<code>#/page/rf5weapon</code>（旧别名）、<code>#/search/药草</code> 都能正常拉到正文，没有「正在载入」卡住、没有「没有这个条目」。</p>
+</div>
 <h2 class="h2">2026-11-04　第两百零六：自宅与扩建——八作补齐，房子、家具、材料是三笔不同的账（272～775 → 964～1,448）</h2>
 <div class="txt-list">
 <p><b>改的是什么</b>：这一页此前只有 RF1／RF3／RF5／边境四作分支，<b>RF2、RF4、海洋、龙之天地四作退回同一段 272 字的通用文案</b>。这一版把四作补上，八作全部单独写；页尾加了一节八作共用的跨作表与存档提醒（八个分支都挂同一段）。</p>
