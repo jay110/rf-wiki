@@ -9241,16 +9241,60 @@ const PAGES = [
                 + (i === 0 ? '它是系列首作' : `距首作《${nm('rf1')}》已 ${span(mo(ORD[0][1], me[1]))}`)
                 + (prev ? `；上一部是《${nm(prev[0])}》（${prev[1]}），隔 ${span(mo(prev[1], me[1]))}` : '，前面没有别的作品')
                 + (next ? `；下一部是《${nm(next[0])}》（${next[1]}），隔 ${span(mo(me[1], next[1]))}。` : '；后面还没有新作，它是目前最新的一部。');
+            /* 平台串里的日期（如 2026-02-13）不许从中间折行，否则会看成两个数。 */
+            const platTxt = platAll(g.plat).replace(/(\d{4}-\d{2}-\d{2})/g, '<span style="white-space:nowrap;word-break:normal">$1</span>');
+            /* 各作的开发方沿革。事实来源：Neverland 官方停业公告与维基百科
+               （1993-05-07 成立、2013-11-29 停止全部业务并申请破产、RF4 为最后一作）；
+               RF5 中文维基「开发」段（2014 Marvelous AQL 接收前成员、
+               桥本嘉史 2018 年在 Marvelous 旗下开设 HAKAMA）；
+               Marvelous 官方稿（龙之天地 2025-06-05 全球同步、Switch 2 首发作之一、亚洲由 GSE 发行）。 */
+            const WHO = {
+                rf1: '开发 <b>Neverland</b>、发行 <b>Marvelous Interactive</b>，2006-08-24 在 NDS 上市。',
+                rf2: '开发 <b>Neverland</b>、发行 <b>Marvelous Interactive</b>，2008-01-03 在 NDS 上市。',
+                rff: '开发 <b>Neverland</b>、发行 <b>Marvelous Entertainment</b>，2008-11-27 在 Wii 上市。',
+                rfo: '开发 <b>Neverland</b>、发行 <b>Marvelous Entertainment</b>，2011-02-24 在 Wii 与 PS3 上市。',
+                rf3: '原版由 <b>Neverland</b> 开发（2009-10-22，NDS），2023 年特别版改由 <b>HAKAMA</b> 开发；两版都由 <b>Marvelous</b> 发行。',
+                rf4: '原版由 <b>Neverland</b> 开发（2012-07-19，3DS），2019 年起的豪华版改由 <b>HAKAMA</b> 开发；两版都由 <b>Marvelous</b> 发行。',
+                rf5: '开发 <b>HAKAMA</b>、发行 <b>Marvelous</b>（亚洲版由世嘉发行），2021-05-20 在 Switch 上市。',
+                azuma: '开发 <b>Marvelous</b> 自家、发行 <b>Marvelous</b>（亚洲实体版由 GSE），2025-06-05 全球同步上市。'
+            }[g.id] || '';
+            const DEV = {
+                rf1: 'Neverland 1993 年 5 月成立，此前以《四狂神战记（Lufia）》系列知名。RF 是这家工作室从零做起的原创系列，本作即第一部。',
+                rf2: '距首作 1 年 4 个月，仍是同一个工作室做的。',
+                rff: '距 2 代只有 10 个月——这一段 NDS 与 Wii 两条线在同时推进，本作是家用机那条线的第一部。',
+                rfo: '这是 Neverland 做的最后一部家用机作品；之后的 4 代又回到掌机（3DS）。',
+                rf3: 'NDS 上三作（1、2、3）的最后一部就是它。',
+                rf4: '<b>这是 Neverland 的最后一部作品</b>——公司 2013-11-29 停止全部业务并申请破产，距本作上市 1 年 4 个月。',
+                rf5: 'HAKAMA 是系列制作人桥本嘉史 2018 年在 Marvelous 旗下开设的工作室。本作 2019-02-14 的任天堂直面会公布，原定 2020 年，后延到 2021 年 5 月；亚洲中文版 2021-09-02，PC 版 2022-07-13。',
+                azuma: '发售当天 Switch 2、Switch 与 PC 三平台同时上架，是系列第一次把新主机首发日算进自己的档期。'
+            }[g.id] || '';
+            const MAKER = `
+            <h2 class="h2">九年空白：Neverland 之后</h2>
+            <p class="p">把八作的开发方排成一条线，会看到一段很长的空白。它不是系列被放弃，而是做它的公司没了。</p>
+            ${tbl(['时期', '开发', '作品'], [
+                ['1993–2013', 'Neverland', 'RF1、RF2、未知大地、海洋、RF3、RF4'],
+                ['2018–', 'HAKAMA', 'RF4 豪华版、RF5、RF3 特别版'],
+                ['2025–', 'Marvelous 自家', '龙之天地'],
+            ], { leftFirst: true, left: [1, 2], colw: ['5.4rem', '8.4rem', 'auto'] })}
+            <p class="p">2013 年 11 月 29 日，Neverland 停止全部业务并申请破产，<b>RF4 成了这家公司的最后一部作品</b>。2014 年 Marvelous AQL 表示已接收包括系列制作人桥本嘉史在内的前 RF 开发人员，先做了一部 3DS 的《禁忌的玛格娜》过渡；桥本 2018 年离开董事职位、在 Marvelous 旗下开设 HAKAMA，4 代豪华版、5 代与 3 代特别版都出自这里。</p>
+            <p class="p">所以 <b>RF4（2012-07）到 RF5（2021-05）的 8 年 10 个月，是从破产那天算起整整 7 年 5 个月没有新作</b>。系列页把这个跨度记作最长的一次断档，原因就在这里——不是雪藏，是做它的公司没了。</p>`;
             const twoVer = (g.id === 'rf3' || g.id === 'rf4');
             return `
             <h2 class="h2">${g.name}</h2>
-            ${stat([['发售日', g.date], ['平台', platAll(g.plat)], ['舞台', g.stage]])}
+            ${stat([['发售日', g.date], ['平台', platTxt], ['舞台', g.stage]])}
             <p class="p">${g.intro}</p>
             <div class="note">本文为本站整理的中文资料。作品名、角色名以官方中文版（世嘉／Marvelous 亚洲）译名为优先，未推出官方中文的作品保留常见译名并附原文。</div>
             <h2 class="h2">这一作在系列里的位置</h2>
             <p class="p">${ordLine}</p>
             ${twoVer ? `<div class="note">上面「发售日」那一格写的是 <b>${g.date}</b>，那是<b>加强版</b>的日期，不是原版：原版 ${me[1]}，到加强版隔 ${span(mo(me[1], g.date))}。<b>排序一律用原版</b>——真照站内那个日期排，${g.id === 'rf3' ? '三代（2023）会跑到五代（2021）的后面' : '四代（2019）会紧贴在五代（2021）前面，与三代互换位置'}。</div>` : ''}
             <p class="p">前后作的完整十一行（含两款加强版与尚未定档的六代）在<a class="link" href="#/page/series">系列作品一览</a>；机制上的差别见<a class="link" href="#/page/seriescmp">跨作机制对照</a>。</p>
+            <h2 class="h2">名字</h2>
+            <p class="p">日文名一律是「ルーンファクトリー」加编号或副标题，只有 1 代在副标题里挂了「<b>-新牧場物語-</b>」。英文名在 <b>1、2、3 代</b>后面都拖着 <i>A Fantasy Harvest Moon</i>，<b>4 代起没有了</b>——从 4 代开始，英文标题里不再出现 Harvest Moon 这个词。</p>
+            <div class="note">中文有两种写法：官方中文版（世嘉亚洲）用「<b>符文工厂</b>」，本站条目名沿用「<b>符文工房</b>」。两种指的是一回事，本站不统一成一种，因为老玩家的叫法、老攻略的书名都还是「工房」。</div>
+            <h2 class="h2">谁做的</h2>
+            <p class="p">${WHO}</p>
+            <p class="p">${DEV}</p>
+            ${MAKER}
             <h2 class="h2">本作特色</h2>
             ${g.systems.map(([t, d]) => `<h3 class="h3">${t}</h3><p class="p">${d}</p>`).join('')}
             <div class="key">一句话定位：<b>${g.tagline}</b></div>

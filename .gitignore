@@ -2,6 +2,9 @@
 _p_*.html
 _dump_*.txt
 _probe_*.js
+# 一次性补丁/探针脚本与中间片段，跑完即删；万一忘了删也别让它入库
+_tmp_*.js
+_tmp_*.txt
 # 截别的作品用的临时首页（从 ?g=xxx 写 localStorage，截完即删）
 _shot*
 
