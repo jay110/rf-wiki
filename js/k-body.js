@@ -10226,10 +10226,37 @@ const PAGES = [
             <h2 class="h2">名字</h2>
             <p class="p">日文名一律是「ルーンファクトリー」加编号或副标题，只有 1 代在副标题里挂了「<b>-新牧場物語-</b>」。英文名在 <b>1、2、3 代</b>后面都拖着 <i>A Fantasy Harvest Moon</i>，<b>4 代起没有了</b>——从 4 代开始，英文标题里不再出现 Harvest Moon 这个词。</p>
             <div class="note">中文有两种写法：官方中文版（世嘉亚洲）用「<b>符文工厂</b>」，本站条目名沿用「<b>符文工房</b>」。两种指的是一回事，本站不统一成一种，因为老玩家的叫法、老攻略的书名都还是「工房」。</div>
+            <h2 class="h2">八作的三个名字：四部按编号，四部挂副标题</h2>
+            <p class="p">把日文名与英文名并排摊开，规律只在日文那边成立：</p>
+            ${tbl(['作', '日文名<br>英文名'], (() => {
+                const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return ORD.map(o => {
+                    const t = G.filter(x => x.id === o[0])[0] || {};
+                    const cur = o[0] === g.id;
+                    const B = v => cur ? '<b>' + v + '</b>' : v;
+                    return [B(t.short || o[0]), esc(t.jp) + '<br>' + esc(t.en)];
+                });
+            })(), { leftFirst: true, left: [1], colw: ['6rem', 'auto'] })}
+            <p class="p">日文一边最规矩，而且正好对半分：<b>四部按编号</b>（2、3、4、5），<b>四部挂副标题</b>（新牧場物語、フロンティア、オーシャンズ、龍の国）。<b>初代是唯一没有数字的一部</b>——日文名里根本没有「1」，就叫「ルーンファクトリー」，加一个「-新牧場物語-」当副标题。所以「初代」这个叫法是玩家与中文资料给的，不是标题里带的。</p>
+            <p class="p">英文一边做了一件日文没做的事：<b>1、2、3 代的英文名后面都绑着 A Fantasy Harvest Moon</b>（初代英文名干脆就叫 Rune Factory，没有数字），借《牧场物语》的招牌卖；<b>4 代起彻底甩掉</b>，两个数字作只叫 Rune Factory 4／5。四部署名作本来就不带。</p>
+            <p class="p">真正对不上的是两处副标题。<b>日文的「オーシャンズ」（海洋）在英文里成了 Tides of Destiny（命运之潮）</b>；<b>日文的「龍の国」（龙之国）成了 Guardians of Azuma（阿兹玛的守护者）</b>——都不是直译。中文这边又是第三套：两者分别叫「海洋」与「龙之天地」，<b>既不照日文也不照英文</b>，是官方中文版自己定的。</p>
+            <div class="key">这直接影响查资料：日文攻略站搜「オーシャンズ」，英文站搜 Tides of Destiny，两边是同一作；而中文的「海洋」在日英两边都搜不出东西。<b>手上有哪个名字，就去对哪一种语言的站</b>——本站在各作页顶都留了日文原名，就是为这一步。</div>
             <h2 class="h2">谁做的</h2>
             <p class="p">${WHO}</p>
             <p class="p">${DEV}</p>
             ${MAKER}
+            <h2 class="h2">八作之间的间隔：前六作平均 ${Math.round((mo(ORD[0][1], ORD[1][1]) + mo(ORD[1][1], ORD[2][1]) + mo(ORD[2][1], ORD[3][1]) + mo(ORD[3][1], ORD[4][1]) + mo(ORD[4][1], ORD[5][1])) / 5)} 个月，然后断了 ${span(mo(ORD[5][1], ORD[6][1]))}</h2>
+            <p class="p">把八作按原版发售日排开、算出每一作与上一作隔了多久，节奏的形状就出来了——<b>它不是匀速的，也不是越来越慢，而是先密集、再断掉</b>。</p>
+            ${tbl(['作', '原版发售', '距上一作'], ORD.map((o, k) => {
+                const t = G.filter(x => x.id === o[0])[0];
+                const gap = k === 0 ? '<span class="mon-no">首作</span>' : span(mo(ORD[k - 1][1], o[1]));
+                const name = t ? t.short : o[0];
+                return [o[0] === g.id ? '<b>' + name + '</b>' : name, o[1], gap];
+            }), { leftFirst: true, nw: [2], colw: ['auto', '7rem', '7rem'] })}
+            <p class="p">前六作挤在 <b>${span(mo(ORD[0][1], ORD[5][1]))}</b>里，五个间隔平均 <b>${Math.round((mo(ORD[0][1], ORD[1][1]) + mo(ORD[1][1], ORD[2][1]) + mo(ORD[2][1], ORD[3][1]) + mo(ORD[3][1], ORD[4][1]) + mo(ORD[4][1], ORD[5][1])) / 5)} 个月</b>，最短只有 ${span(Math.min(mo(ORD[0][1], ORD[1][1]), mo(ORD[1][1], ORD[2][1]), mo(ORD[2][1], ORD[3][1]), mo(ORD[3][1], ORD[4][1]), mo(ORD[4][1], ORD[5][1])))}——<b>2008 年一年出了两作</b>（1 月的 2 代与 11 月的未知大地），NDS 与 Wii 两条线在同时推进。</p>
+            <p class="p">然后断掉：4 代到 5 代隔 <b>${span(mo(ORD[5][1], ORD[6][1]))}</b>，比前六作加起来的总跨度（${span(mo(ORD[0][1], ORD[5][1]))}）还长。5 代到龙之天地又隔 <b>${span(mo(ORD[6][1], ORD[7][1]))}</b>。</p>
+            <div class="key">所以「19 年 8 作」这句话会骗人：<b>其中 6 作出在前 ${span(mo(ORD[0][1], ORD[5][1]))}，剩下的 ${span(mo(ORD[5][1], ORD[7][1]))}只出了 2 作</b>。如果你只玩过 4 代之后的作品，那个「一年一作」的年代其实从来没经历过。</div>
+            <p class="p">断档的原因不是雪藏，是做它的公司没了——见上一节。这也是为什么 5 代与龙之天地的「本作特色」里会混进平台与语言这类条目：<b>隔了这么多年再回来，要交代的不只是玩法</b>。</p>
             <h2 class="h2">本作特色</h2>
             ${g.systems.map(([t, d]) => `<h3 class="h3">${t}</h3><p class="p">${d}</p>`).join('')}
             <div class="key">一句话定位：<b>${g.tagline}</b></div>
