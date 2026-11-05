@@ -1355,7 +1355,7 @@ function ftable(head, colw, rows, opts) {
         ${o.chips.map(c => `<button class="chip" data-ekk="${c}">${c}</button>`).join('')}
     </div>` : ''}`;
     const cls = head.length >= 7 ? ' eqx' : (head.length >= 5 ? ' eqw' : '');
-    const note = o.note || `<div class="note">名称取自《符文工房5》数据解包表的汉化字段，与官方中文版（2022 年 Switch／PC）的译名可能略有差异；数值为初版解包值，后续补丁若调过平衡，以游戏内为准。表内「—」表示该项为 0 或无。<b>列多放不下时，表格可以左右滑动</b>。</div>`;
+    const note = o.note === false ? '' : (o.note || `<div class="note">名称取自《符文工房5》数据解包表的汉化字段，与官方中文版（2022 年 Switch／PC）的译名可能略有差异；数值为初版解包值，后续补丁若调过平衡，以游戏内为准。表内「—」表示该项为 0 或无。<b>列多放不下时，表格可以左右滑动</b>。</div>`);
     return bar + `<div class="table mon-table${cls}" data-eq><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>
     ${note}`;
 }
@@ -7098,6 +7098,230 @@ function mineTail(id) {
 }
 
 /* 页尾统一挂在最后：各分支只管自己那一作，收尾的对照表由这里补 */
+/* 药品：各分支只管自己那一作，页尾的跨作对照由 potionTail 统一挂在最后。
+   拆成 Core／Html 两层的原因与 mine 页相同——页尾要在八作都出现，
+   而 body 里有五个 return 点（龙之天地、RF4、RF5、旧四作、无数据兜底）。 */
+function potionDeepHtml(g) {
+    const h = potionDeepCore(g);
+    return h ? h + potionTail(g && g.id) : '';
+}
+
+function potionDeepCore(g) {
+            const id = (g && g.id) || 'rf5';
+            /* 金额一律折成「万 G」，五位以上的原始数字在窄屏上读不动 */
+            const mG = v => (v >= 10000 ? (v / 10000) + ' 万 G' : v + ' G');
+            const is4 = /^rf4/.test(id);
+                        if (id === 'azuma' && typeof AZUMA_ARMOR !== 'undefined') { const h = azumaPotionHtml(); if (h) return h; }
+            const TX = txPack(id, 'potion');
+            const P = id === 'rf5' ? (typeof POT_RF5 !== 'undefined' ? POT_RF5 : [])
+                : is4 ? (typeof POT_RF4 !== 'undefined' ? POT_RF4 : []) : [];
+
+            /* RF2／RF3／边境／海洋 有完整的药品数值表，优先于文本清单；
+               这里的件数要与下方表格一致，所以先算 OD 再写 intro */
+            const OD = (typeof POT_OLD !== 'undefined')
+                ? (POT_OLD[id] || (/^rf3/.test(id) ? POT_OLD.rf3 : null)) : null;
+            const cnt = P.length || (OD ? OD.rows.length : (TX ? TX.n : 0));
+
+            const intro = `
+            <p class="p">本页是<b>${g ? g.name : ''}</b>的药品${cnt ? '：<b>' + cnt + ' 件</b>。' : '：带什么、怎么配。这一作还没有物品数据，所以只有思路、没有表。'}</p>
+            <h2 class="h2">常用药</h2>
+            ${tbl(['类型', '作用', '入手'], [
+                ['回复药', '回复 HP', '购买／药学调配'],
+                ['RP 回复', '回复符文点数', '药学调配为主'],
+                ['状态治疗', '解毒、解麻痹等', '购买／调配'],
+                ['强化药', '临时提升属性', '药学高级配方'],
+            ], { leftFirst: true })}
+            <h2 class="h2">迷宫必备清单</h2>
+            <p class="p">进深层迷宫前至少带：回复药 ×3、RP 回复 ×2、解毒／解异常 ×1。这不是保险，是效率——回城一趟损失的是整天的时间。</p>
+            <div class="note">医院／诊所能买到基础药品，但高级药只能靠药学台调配。把药学等级刷起来，等于给自己开了一家随身药店。</div>`;
+
+            if (P.length) {
+                const cats = [];
+                P.forEach(r => { if (cats.indexOf(r[1]) < 0) cats.push(r[1]); });
+                const rows = P.map(r => [r[1], `${r[0]} ${r[1]}`,
+                    [r[0], r[1], nz(r[2]), nz(r[3]), r[4]]]);
+
+                /* 稀有度是这份表里唯一能把整张单排成阶梯的字段：按它分组，看每一档装了什么 */
+                const rar = [];
+                P.forEach(r => { if (rar.indexOf(r[4]) < 0) rar.push(r[4]); });
+                rar.sort((a, b) => a - b);
+                const rarRows = rar.map(k => {
+                    const L = P.filter(r => r[4] === k);
+                    return [String(k), String(L.length), L.map(r => r[0]).join('、')];
+                });
+                const missRar = [8, 10, 11].filter(k => rar.indexOf(k) < 0);
+                /* 卖价 ÷ 买价：百分比越低，买回来再卖出去亏得越狠 */
+                const keep = P.map(r => [r[0], r[2], r[3], r[3] / r[2] * 100])
+                    .sort((a, b) => b[3] - a[3]);
+                const keepTop = keep.slice(0, 3).map(x => `<b>${x[0]}</b> ${x[3].toFixed(1)}%`).join('、');
+                const keepLow = keep[keep.length - 1];
+                const hiEnd = P.filter(r => r[2] >= 1000000);
+                const loEnd = P.filter(r => r[2] <= 20000);
+                const maxP = Math.max.apply(null, P.map(r => r[2]));
+                const nutri = P.filter(r => r[1] === '营养剂');
+                const nutriRows = nutri.map(r => [r[0], String(r[2]), String(r[3]),
+                    (r[3] / r[2] * 100).toFixed(1) + '%', String(r[4])])
+                    .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
+                const nutriMaxRar = nutri.length ? Math.max.apply(null, nutri.map(r => r[4])) : 0;
+                const nutriLo = nutri.length ? Math.min.apply(null, nutri.map(r => r[3] / r[2] * 100)) : 0;
+                const nutriHi = nutri.length ? Math.max.apply(null, nutri.map(r => r[3] / r[2] * 100)) : 0;
+
+                /* ---- RF4：这张表只有五列，能排的只有稀有度与价格 ---- */
+                if (is4) {
+                    return intro + `
+            ${stat([['药品', P.length + ' 件'], ['稀有度', rar.length + ' 档（0–13）'], ['最贵一瓶', mG(maxP)]])}
+            <h2 class="h2">稀有度不是价格标签</h2>
+            <p class="p">这份表五列：名称、分类、买价、卖价、稀有度。分类只有一类，所以能把 ${P.length} 件排成阶梯的只剩稀有度。排完会发现一件事——<b>0 到 9 这十档和价格完全不挂钩</b>：稀有度 6 的超级营养药（${mG(20000)}）比稀有度 9 的魔宝壶（${mG(5000)}）贵四倍，稀有度 5 的物体X（150 G）比稀有度 2 的解封丸（800 G）还便宜。稀有度在这里更像<b>商店上架的先后顺序</b>，不是「越稀有越贵」。</p>
+            ${tbl(['稀有度', '件数', '这一档有'], rarRows, { leftFirst: true, left: [2], colw: ['4.6rem', '3.6rem', 'auto'] })}
+            <p class="p">真正跳档的地方在两处。第一处是<b>${missRar.length ? '8、10、11 三档在这张表里是空的' : '档位连着'}</b>——药品占不到这三档，说明稀有度是给全部道具分的号段，药品只落在其中几段。第二处是<b>12、13 两档</b>：这两档一共 ${hiEnd.length} 件，全是百万级的永久属性道具与顶级药，与前面十档之间空着两个数量级。<b>要判断一件药是「补给」还是「投资」，看它落在 12／13 就够了</b>，不必看价格。</p>
+
+            <h2 class="h2">两个数量级，中间没有过渡</h2>
+            <p class="p">把买价排序，数组会自己裂成两段：<b>≤ ${mG(20000)} 的 ${loEnd.length} 件</b>（迷宫补给与状态治疗）与<b>≥ ${mG(1000000)} 的 ${hiEnd.length} 件</b>（永久属性与顶级药）。中间二十万到一百万这一段是空的——没有「稍微贵一点的药」这种东西。</p>
+            <p class="p">这个断层有实际后果：<b>迷宫补给的钱可以按瓶算，永久属性的钱只能按天攒</b>。前 ${loEnd.length} 件最贵的超级营养药是 ${mG(20000)}，一趟迷宫带三瓶也就六万；后 ${hiEnd.length} 件里最便宜的也要 ${mG(Math.min.apply(null, hiEnd.map(r => r[2])))}，那是几十趟迷宫的量。所以「先买药还是先攒属性」不是取舍问题，是<b>两个不同阶段的事</b>——补给买到够用就停，剩下的钱全归属性。</p>
+
+            <h2 class="h2">买回来再卖，能拿回多少</h2>
+            <p class="p">卖价 ÷ 买价这一栏源表没给，是拿两列除出来的。前三名：${keepTop}。最惨的是 <b>${keepLow[0]}</b>——${mG(keepLow[1])} 买进、${mG(keepLow[2])} 卖出，只剩 ${keepLow[3].toFixed(2)}%。</p>
+            <p class="p">规律很清楚：<b>越贵的药越不保值</b>。便宜的补给品回收率在一成到四成之间，百万级的永久属性道具全部掉到 0.1% 以下。<b>魔宝壶是唯一的例外</b>——${mG(5000)} 买、${mG(2000)} 卖，四成回收，全表最高。它是这张单子里唯一「买了不用也能退掉大半」的东西；反过来，<b>永久属性道具一旦买错就等于全损</b>，因为它们没有别的用途。</p>
+
+            <h2 class="h2">全药品清单</h2>
+            <p class="p">RF4 的药不分「营养剂」这一类——催熟、防烂那些农用物资在这一作归在素材与特殊道具里，不在本表。所以这 ${P.length} 件全是给人吃的。</p>
+            ${ftable(['名称', '分类', '买价', '卖价', '稀有度'],
+                    ['9rem', '4.4rem', '4.2rem', '4.2rem', '3.8rem'],
+                    rows, { chips: cats.length > 1 ? cats : null, ph: '输入药品名筛选', note: false })}
+            <div class="note">这张表<b>没有恢复量列</b>——源表只给了价格与稀有度，所以「一瓶能回多少 HP」在本作查不到，别拿 3 代或龙之天地的数值套过来（差十几倍，见页尾对照）。另外「物体X」在 5 代叫「不明物体」，数值完全一样，是同一件东西改了名。</div>
+            <div class="jump">
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
+                </a>
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">药学等级怎么刷、配方什么时候开</div>
+                </a>
+            </div>`;
+                }
+
+                /* ---- RF5：与 RF4 同一张价目表，但多出十种营养剂 ---- */
+                return intro + `
+            ${stat([['药品', P.length + ' 件'], ['分类', cats.length + ' 类'], ['营养剂', nutri.length + ' 条']])}
+            <h2 class="h2">和 4 代是同一张价目表</h2>
+            <p class="p">逐条对过：<b>4 代那 17 件在 5 代里一条不少，买价、卖价、稀有度三项完全一致</b>——恢复壶 80、疗愈壶 500、神秘壶 1500、魔宝壶 5000，连「心灵饮料 150 万」这种数字都分毫不差。差别只有两处：分类名从「药品」改成「药」，以及「物体X」改名「不明物体」（金额 150／2／稀有度 5 不变）。<b>两代沿用同一张价目表，说明这条线上没有通胀</b>——至少药品没有。</p>
+            <p class="p">真正新增的是另一本账：<b>${nutri.length} 条营养剂</b>。4 代把这类东西归进素材，5 代把它单列成一类，于是这一作的药品表第一次同时装着「给人吃的」和「给田用的」。</p>
+
+            <h2 class="h2">营养剂：价格按十档铺开，回收率却在一成以下</h2>
+            ${tbl(['名称', '买价', '卖价', '回收率', '稀有度'], nutriRows, { leftFirst: true, colw: ['auto', '4.4rem', '4.4rem', '4.6rem', '3.8rem'] })}
+            <p class="p">${nutri.length} 条按买价排开，价格只落在 7 个档上（2000、8000、12000 各有两条）：最低 1200 G，最高 12000 G。这跟药的「两个数量级断层」正好相反——<b>营养剂的价格铺得很密，同族的名字也成组出现</b>（很会长／快速长／极速长、不会烂 α／β、速速绿／速速绿疾风），买价一档一档往上走。</p>
+            <p class="p">回收率从 ${nutriLo.toFixed(1)}% 到 ${nutriHi.toFixed(1)}%，全部在一成以下，比最便宜的恢复壶（18.8%）还低一大截。原因不难想：药买错了还能喝，营养剂买错了就是一堆用不上的材料。<b>所以这一栏的钱要按用途花，不能按「反正能退」花</b>。</p>
+            <p class="p">还有一条能看出来：<b>营养剂的稀有度最高只到 ${nutriMaxRar}</b>，而药品能到 13。前面 12／13 那批百万级永久属性道具里，没有一件是营养剂——<b>这两类东西在稀有度体系里根本不在一层</b>。</p>
+
+            <h2 class="h2">全药品清单</h2>
+            ${ftable(['名称', '分类', '买价', '卖价', '稀有度'],
+                    ['9rem', '4.4rem', '4.2rem', '4.2rem', '3.8rem'],
+                    rows, { chips: cats.length > 1 ? cats : null, ph: '输入药品名筛选', note: false })}
+            <div class="note">这张表<b>没有恢复量列，也没有效果列</b>——营养剂那一栏具体是催熟、防烂还是改大小，源表一个字没写，名字能看出来但本站不据此补写。要确认效果得回游戏里试，或查「锻造与药学」页的配方表。同样，本表也不给恢复量，别拿别作的数字套。</div>
+            <div class="jump">
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
+                </a>
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">药学等级怎么刷、配方什么时候开</div>
+                </a>
+            </div>`;
+            }
+            /* ---- RF2／RF3／边境／海洋：完整药品数值表 ---- */
+            if (OD && OD.rows.length) {
+                const rows = OD.rows.map(r => [r.join(' '), r]);
+                const OWN = {
+                    rf2: '这一作的药分成两类：<b>回复 / 治疗类</b>（恢复壶、解毒药等）和<b>农用物资类</b>（营养剂、速速绿、中和剂）。后者不给人吃，是往田里用的——买之前先看清「其它效果」那一栏写的是回血还是催熟。',
+                    rf3: '<b>同一个药名会出现两行，这不是重复</b>：一行是基础材料配方，另一行是用高级材料替代的配方，制造等级更高。等级越高，同样做一瓶药消耗的 RP 越少——所以配方表要连着「制造等级」一起看。',
+                    rff: '边境的药品和素材在解包表里是同一段，所以这里的名字和「素材与矿石」页有重叠——同一件东西的两种用法。配方书分<b>调合白书</b>（入门）和<b>调合全书</b>（高级），买错书等于白花钱。',
+                    rfo: '注意<b>元素类（火／水／风／地／光／暗）无法制作</b>，只能靠鉴定不明物品或特定敌人掉落；属性提升类（蛋白质、生命果冻、智力补品）同理。真正能自己调的是恢复系和状态治疗系。',
+                };
+                const keys = { rf2: 'rf2', rf3: 'rf3', rff: 'rff', rfo: 'rfo' };
+                const own = OWN[keys[id] || (/^rf3/.test(id) ? 'rf3' : '')] || '';
+                return intro + `
+            ${stat([['药品', OD.rows.length + ' 条'], ['字段', OD.head.length + ' 项'], ['来源', 'biligame ' + id.toUpperCase() + ' 药品数据']])}
+            <h2 class="h2">全药品清单</h2>
+            <p class="p">${own}</p>
+            ${ftableOwn(OD.head, null, rows, { ph: '输入药品名、材料或效果筛选' })}
+            <div class="note">数值直接取自源表，未做推算：恢复量、配方材料、买卖价都是游戏内数值。表中「—」表示该字段在这一作不适用或源表未给，<b>不是 0</b>。</div>
+            <div class="jump">
+                <a href="#/page/craft">
+                    <div class="jp-t">锻造与药学</div>
+                    <div class="jp-s">药学等级怎么刷、配方书什么时候买</div>
+                </a>
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
+                </a>
+            </div>`;
+            }
+
+            if (TX) {
+                return intro + `
+            ${stat([['药品', TX.n + ' 件'], ['类别', TX.cats.length + ' 类']])}
+            <h2 class="h2">全药品清单</h2>
+            <p class="p">${TX.n} 件。${id === 'rff' ? '<b>这一作的药品与素材是同一段</b>，所以这里列出的条目和「素材与矿石」页有重叠——它们本来就是同一批东西的两种用法。' : ''}</p>
+            ${ftable(['名称', '说明'], ['7.6rem'], TX.rows, { ph: '输入药品名或说明里的词筛选' })}
+            <div class="jump">
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
+                </a>
+            </div>`;
+            }
+
+            return intro + `<div class="note">${g ? g.name : '这一作'}的物品数据还没有整理进来，所以下面没有全表。</div>
+            <div class="jump">
+                <a href="#/page/rp">
+                    <div class="jp-t">体力与 RP</div>
+                    <div class="jp-s">RP 上限与回复的全部来源</div>
+                </a>
+            </div>`;
+}
+
+/* 药品页尾：八作摆在一起，同一个「恢复壶」在八作里是八件事 */
+function potionTail(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const NM = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rf4: 'RF4', rf5: 'RF5', rfo: '海洋', azuma: '龙之天地' };
+    const me = NM[id] || '';
+    const cell = (t, first) => (first && t === me ? `<b>${E(t)}</b>` : E(t));
+    const T1 = [
+        ['RF1', '三档：壶 → 疗愈壶 → 神秘壶', '源表只给一句说明，没有价', '表里没有这一列'],
+        ['RF2', '三档，同上', '三瓶全部「无法交易」，只能自己配', '100／300／600'],
+        ['RF3', '三档，同上', '500／1500／3000', '+500／+1000／+2000'],
+        ['边境', '壶 + S／X，共三档', '260／—／—（S・X 只能卖）', '+35／+105／+300'],
+        ['海洋', '壶 + S／X，共三档', '200／500／—（X 只有卖价）', '120／360／800'],
+        ['RF4', '四档，多一个魔宝壶', '80／500／1500／5000', '表里没有这一列'],
+        ['RF5', '四档，与 RF4 同价', '80／500／1500／5000', '表里没有这一列'],
+        ['龙之天地', '四档，价目另一套', '500／1000／2000／4000', '120／700／1600／50%']
+    ].map(r => [cell(r[0], true)].concat(r.slice(1).map(x => E(x))));
+    const T2 = [
+        ['RF1', '25 条，一类「药」', '没有', '没有', '没有'],
+        ['RF2', '27 条 × 12 列', 'HP／RP 分列', '配方等级 ＋ 总材料', '买价・卖价'],
+        ['RF3', '43 条，同名常两行', 'HP／RP／上限，两种口径', '制造等级 ＋ 配方', '买价・Lv1 卖价'],
+        ['边境', '21 条 × 8 列', '写在「全效果」一栏里', '材料 ＋ 配方书', '买价・卖价'],
+        ['海洋', '16 条 × 11 列', 'HP／RP 分列', '药学技能 ＋ 配方书', '买价・卖价'],
+        ['RF4', '17 条 × 5 列', '没有', '没有', '买价・卖价・稀有度'],
+        ['RF5', '27 条 × 5 列', '没有', '没有', '买价・卖价・稀有度'],
+        ['龙之天地', '15 条', '固定值 ＋ 百分比', '四列材料合成一列', '只记商店买价']
+    ].map(r => [cell(r[0], true)].concat(r.slice(1).map(x => E(x))));
+    return `
+        <h2 class="h2">八作摆在一起：同一个「恢复壶」，八种价钱</h2>
+        <p class="p">上面每段是照各作自家的表查的。这一页真正值得横向看的其实只有一样东西——<b>第一瓶药</b>。它在八作里都叫「恢复壶」，但档数、买价、恢复量三件事各写各的，差得比想象中远。</p>
+        ${tbl(['作品', '壶系怎么排', '买价阶梯', '各回多少 HP'], T1, { leftFirst: true, left: [1, 2], colw: ['4.4rem', 'auto', '7.4rem', '6.2rem'] })}
+        <p class="p">壶系在八作里分三种排法：<b>三档壶</b>（RF1／RF2／RF3，到神秘壶为止）、<b>壶加 S／X 后缀</b>（边境、海洋，不往上加新名字，而是把同一瓶翻倍）、<b>四档壶</b>（RF4／RF5／龙之天地，多出一个魔宝壶）。「魔宝壶」这个第四档只在这三作存在——所以拿着前作的记忆去后面找，或者反过来，都会落空。</p>
+        <p class="p">三组数字最值得记：<b>买价差 6.25 倍</b>（RF4／RF5 的 80 G 对龙之天地的 500 G，而 RF2 干脆三瓶都不能买）、<b>恢复量差 14 倍</b>（边境 +35 对 RF3 的 +500）、<b>档数差一档</b>。同名的第一瓶药，在边境只是「回一口」，在 3 代是「回半管」，作用完全不是一个量级。</p>
+        ${tbl(['作品', '有多少条', '恢复量列', '配方与材料', '价格列'], T2, { leftFirst: true, left: [2, 3], colw: ['4.2rem', '5.6rem', 'auto', 'auto', '5.2rem'] })}
+        <p class="p">第二张表回答的是「查不到什么」。<b>「这一瓶能回多少 HP」在八作里有三作查不到</b>：RF1 的表只有一句说明，RF4／RF5 的表只有价格与稀有度。反过来，<b>能给出配方与材料的却有五作</b>（RF2／RF3／边境／海洋／龙之天地），RF4／RF5 与 RF1 三作完全没有配方列——这两件事恰好互补：<b>价格齐的地方配方缺，配方齐的地方价格粗</b>。</p>
+        <p class="p">最后一条是这一页最反直觉的：<b>同一件顶级药，八作的价格差两个数量级</b>。无敌秘药在 RF2 是 4,500 G，在龙之天地 10,000 G，到 RF3 变成 136,860 G，到 RF4／RF5 是 1,120,000 G——<b>相差 249 倍</b>。符文药水更夸张：RF2 的 13,250 G 对 RF4／RF5 的 5,000,000 G，<b>377 倍</b>。所以拿「上一作攒多少钱够买无敌秘药」来估下一作，一定会估错。</p>
+        <div class="key">唯一在八作里统一的是<b>「壶」这条主线</b>：不管价格怎么变，恢复壶→疗愈壶→神秘壶 的升级次序从 1 代到龙之天地没有变过，后面加的是 S／X 或魔宝壶。<b>认名字比认价格可靠</b>——名字告诉你它排第几档，价格只告诉你这一作有多贵。</div>
+        <div class="note">两张表的数字取各作数据文件的当前快照（<code>pot_old.js</code>、<code>items4.js</code>、<code>items.js</code>、<code>azuma_*</code>），与上面各页的表格同源；<b>哪一页的数据重生成，这两张表要一起改</b>。跨作的金额只做纵向比较，<b>不作购买力折算</b>——各作赚 G 的速度不同，这里不替源表补这一层。表中「—」表示该档在源表里没有买价（只能自制或只能卖），<b>不是 0</b>。</div>`;
+}
+
+
 function mineDeepHtml(id) {
     const h = mineDeepCore(id);
     return h ? h + mineTail(id) : '';
@@ -12624,108 +12848,7 @@ const PAGES = [
     },
     {
         key: 'potion', group: 'item', title: '药品', icon: 'bottle',
-        body: (g) => {
-            const id = (g && g.id) || 'rf5';
-            const is4 = /^rf4/.test(id);
-                        if (id === 'azuma' && typeof AZUMA_ARMOR !== 'undefined') { const h = azumaPotionHtml(); if (h) return h; }
-            const TX = txPack(id, 'potion');
-            const P = id === 'rf5' ? (typeof POT_RF5 !== 'undefined' ? POT_RF5 : [])
-                : is4 ? (typeof POT_RF4 !== 'undefined' ? POT_RF4 : []) : [];
-
-            /* RF2／RF3／边境／海洋 有完整的药品数值表，优先于文本清单；
-               这里的件数要与下方表格一致，所以先算 OD 再写 intro */
-            const OD = (typeof POT_OLD !== 'undefined')
-                ? (POT_OLD[id] || (/^rf3/.test(id) ? POT_OLD.rf3 : null)) : null;
-            const cnt = P.length || (OD ? OD.rows.length : (TX ? TX.n : 0));
-
-            const intro = `
-            <p class="p">本页是<b>${g ? g.name : ''}</b>的药品${cnt ? '：<b>' + cnt + ' 件</b>。' : '：带什么、怎么配。这一作还没有物品数据，所以只有思路、没有表。'}</p>
-            <h2 class="h2">常用药</h2>
-            ${tbl(['类型', '作用', '入手'], [
-                ['回复药', '回复 HP', '购买／药学调配'],
-                ['RP 回复', '回复符文点数', '药学调配为主'],
-                ['状态治疗', '解毒、解麻痹等', '购买／调配'],
-                ['强化药', '临时提升属性', '药学高级配方'],
-            ], { leftFirst: true })}
-            <h2 class="h2">迷宫必备清单</h2>
-            <p class="p">进深层迷宫前至少带：回复药 ×3、RP 回复 ×2、解毒／解异常 ×1。这不是保险，是效率——回城一趟损失的是整天的时间。</p>
-            <div class="note">医院／诊所能买到基础药品，但高级药只能靠药学台调配。把药学等级刷起来，等于给自己开了一家随身药店。</div>`;
-
-            if (P.length) {
-                const cats = [];
-                P.forEach(r => { if (cats.indexOf(r[1]) < 0) cats.push(r[1]); });
-                const rows = P.map(r => [r[1], `${r[0]} ${r[1]}`,
-                    [r[0], r[1], nz(r[2]), nz(r[3]), r[4]]]);
-                return intro + `
-            ${stat([['药品', P.length + ' 件'], ['分类', cats.length + ' 类']])}
-            <h2 class="h2">全药品清单</h2>
-            <p class="p">${is4 ? 'RF4 的药不分「营养剂」这一类，永久属性道具归在素材与特殊道具里。' : '<b>营养剂是永久提升属性的道具</b>，不占用一天的时间、喝了就生效，是后期堆面板的主要手段；药则是迷宫里的即时补给。两者的价格差一个数量级，别买错。'}</p>
-            ${ftable(['名称', '分类', '买价', '卖价', '稀有度'],
-                    ['9rem', '4.4rem', '4.2rem', '4.2rem', '3.8rem'],
-                    rows, { chips: cats.length > 1 ? cats : null, ph: '输入药品名筛选' })}
-            <div class="jump">
-                <a href="#/page/rp">
-                    <div class="jp-t">体力与 RP</div>
-                    <div class="jp-s">RP 上限与回复的全部来源</div>
-                </a>
-                <a href="#/page/craft">
-                    <div class="jp-t">锻造与药学</div>
-                    <div class="jp-s">药学等级怎么刷、配方什么时候开</div>
-                </a>
-            </div>`;
-            }
-
-            /* ---- RF2／RF3／边境／海洋：完整药品数值表 ---- */
-            if (OD && OD.rows.length) {
-                const rows = OD.rows.map(r => [r.join(' '), r]);
-                const OWN = {
-                    rf2: '这一作的药分成两类：<b>回复 / 治疗类</b>（恢复壶、解毒药等）和<b>农用物资类</b>（营养剂、速速绿、中和剂）。后者不给人吃，是往田里用的——买之前先看清「其它效果」那一栏写的是回血还是催熟。',
-                    rf3: '<b>同一个药名会出现两行，这不是重复</b>：一行是基础材料配方，另一行是用高级材料替代的配方，制造等级更高。等级越高，同样做一瓶药消耗的 RP 越少——所以配方表要连着「制造等级」一起看。',
-                    rff: '边境的药品和素材在解包表里是同一段，所以这里的名字和「素材与矿石」页有重叠——同一件东西的两种用法。配方书分<b>调合白书</b>（入门）和<b>调合全书</b>（高级），买错书等于白花钱。',
-                    rfo: '注意<b>元素类（火／水／风／地／光／暗）无法制作</b>，只能靠鉴定不明物品或特定敌人掉落；属性提升类（蛋白质、生命果冻、智力补品）同理。真正能自己调的是恢复系和状态治疗系。',
-                };
-                const keys = { rf2: 'rf2', rf3: 'rf3', rff: 'rff', rfo: 'rfo' };
-                const own = OWN[keys[id] || (/^rf3/.test(id) ? 'rf3' : '')] || '';
-                return intro + `
-            ${stat([['药品', OD.rows.length + ' 条'], ['字段', OD.head.length + ' 项'], ['来源', 'biligame ' + id.toUpperCase() + ' 药品数据']])}
-            <h2 class="h2">全药品清单</h2>
-            <p class="p">${own}</p>
-            ${ftableOwn(OD.head, null, rows, { ph: '输入药品名、材料或效果筛选' })}
-            <div class="note">数值直接取自源表，未做推算：恢复量、配方材料、买卖价都是游戏内数值。表中「—」表示该字段在这一作不适用或源表未给，<b>不是 0</b>。</div>
-            <div class="jump">
-                <a href="#/page/craft">
-                    <div class="jp-t">锻造与药学</div>
-                    <div class="jp-s">药学等级怎么刷、配方书什么时候买</div>
-                </a>
-                <a href="#/page/rp">
-                    <div class="jp-t">体力与 RP</div>
-                    <div class="jp-s">RP 上限与回复的全部来源</div>
-                </a>
-            </div>`;
-            }
-
-            if (TX) {
-                return intro + `
-            ${stat([['药品', TX.n + ' 件'], ['类别', TX.cats.length + ' 类']])}
-            <h2 class="h2">全药品清单</h2>
-            <p class="p">${TX.n} 件。${id === 'rff' ? '<b>这一作的药品与素材是同一段</b>，所以这里列出的条目和「素材与矿石」页有重叠——它们本来就是同一批东西的两种用法。' : ''}</p>
-            ${ftable(['名称', '说明'], ['7.6rem'], TX.rows, { ph: '输入药品名或说明里的词筛选' })}
-            <div class="jump">
-                <a href="#/page/rp">
-                    <div class="jp-t">体力与 RP</div>
-                    <div class="jp-s">RP 上限与回复的全部来源</div>
-                </a>
-            </div>`;
-            }
-
-            return intro + `<div class="note">${g ? g.name : '这一作'}的物品数据还没有整理进来，所以下面没有全表。</div>
-            <div class="jump">
-                <a href="#/page/rp">
-                    <div class="jp-t">体力与 RP</div>
-                    <div class="jp-s">RP 上限与回复的全部来源</div>
-                </a>
-            </div>`;
-        }
+        body: (g) => potionDeepHtml(g),
     },
     {
         key: 'rf2list', group: 'item', title: '物品一览', icon: 'bottle',
