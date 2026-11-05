@@ -5164,7 +5164,7 @@ function newlywedRf4(g) {
        源站这两作之外没有产出表：RF2／RFO 的 pet 页只有抚摸次数与喜好；
        RF5「同伴怪物生产道具一览」是一张残页（七行散句＋「待补充」），不编。
        ------------------------------------------------------------ */
-function produceHtml(g) {
+function produceCore(g) {
     const id = (g && g.id) || 'rf1';
     const W = (typeof PETWORK_RF1 !== 'undefined') ? PETWORK_RF1 : [];
     const PD = (typeof PETPROD_RFF !== 'undefined') ? PETPROD_RFF : [];
@@ -5204,6 +5204,11 @@ function produceHtml(g) {
         const multi = prod3.filter(r => r[2].indexOf('、') >= 0);
         const ride3 = W3.filter(r => r[8] === '可骑乘');
         const dash = W3.filter(r => [4, 5, 6, 7].every(i => r[i] === '-'));
+        const cross = W3.filter(r => [4, 5, 6, 7].every(i => r[i] === '×'));
+        const noWork = W3.filter(r => [4, 5, 6, 7].every(i => r[i] === '-' || r[i] === '×'));
+        /* 源表两种记号：- 是没填，× 是明确标了不可。合并成「—」会把这两件事混掉 */
+        const mk = v => v === '-' ? '<span class="mon-no">—</span>'
+            : v === '×' ? '<span class="mon-no">×</span>' : v;
         const probs = W3.map(r => r[3]).filter(v => /^\d+$/.test(v)).map(Number);
         const pMin = Math.min.apply(null, probs), pMax = Math.max.apply(null, probs);
         const lv = k => W3.filter(r => r[k] === '优').length;
@@ -5213,15 +5218,16 @@ function produceHtml(g) {
         <p class="p">RF3 的宠物一张表全包了：<b>生产物</b>（它在小屋里给你什么）、<b>捕捉率</b>，以及<b>浇水／劈柴／砸石／收获</b>四项农活的等级。等级的写法是「中／良／优」，源表本来就是这三个字，<b>没有数字</b>，本页也不替它折算成百分比。</p>
         ${stat([['收录', W3.length + ' 只'], ['有生产物', prod3.length + ' 只'], ['可骑乘', ride3.length + ' 只'], ['捕捉率', pMin + '～' + pMax]])}
         <div class="key">能产东西的只有 <b>${prod3.length} 只</b>（${Math.round(prod3.length / W3.length * 100)}%），其余 ${W3.length - prod3.length} 只生产物栏写「-」——它们是<b>纯劳力</b>：下地浇水、劈柴、砸石、收获，或者当坐骑。想凑齐奶蛋毛蜜那一套，得先认准这 ${prod3.length} 只里的那几种。</div>
-        <p class="p">四项农活里，<b>砸石最难练到「优」</b>（只有 ${lv(6)} 只），<b>浇水与收获</b>各有 ${lv(4)} 只和 ${lv(7)} 只；劈柴在中间，${lv(5)} 只。四项全是「-」的只有 ${dash.length} 只，那是连农活都不干的。</p>
+        <p class="p">四项农活里，<b>砸石最难练到「优」</b>（只有 ${lv(6)} 只），<b>浇水与收获</b>各有 ${lv(4)} 只和 ${lv(7)} 只；劈柴在中间，${lv(5)} 只。四项农活一格都填不上的有 <b>${noWork.length} 只</b>：${dash.map(r => r[0]).join('、')} 四格全是「-」（源表没填），${cross.map(r => r[0]).join('、')} 四格全是「×」（源表明确标了不可）。这 ${noWork.length} 只连捕捉率也是「-」，是表里的占位行——抓不到，也干不了。</p>
         ${ftableOwn(['名字', '地点', '生产物', '捕捉率', '浇水', '劈柴', '砸石', '收获', '骑乘'],
             ['6.4rem', '10rem', '10rem', '4.2rem', '3.4rem', '3.4rem', '3.4rem', '3.4rem', '4.4rem'],
             W3.map(r => [r[0], [
-                r[0], r[1], r[2] === '-' ? '<span class="mon-no">—</span>' : r[2], r[3],
-                r[4], r[5], r[6], r[7],
-                r[8] === '可骑乘' ? '<span class="mon-yes">可骑</span>' : '<span class="mon-no">—</span>',
+                r[0], r[1], r[2] === '-' ? '<span class="mon-no">—</span>' : r[2], mk(r[3]),
+                mk(r[4]), mk(r[5]), mk(r[6]), mk(r[7]),
+                r[8] === '可骑乘' ? '<span class="mon-yes">可骑</span>' : mk(r[8]),
             ]]),
             { ph: '输入名字、地点或生产物', cls: 'rf3work' })}
+        <div class="note"><b>「-」与「×」是两种记号，本页分开显示</b>：「-」是源表那一格没填，「×」是源表明确标了做不到（骑乘一栏 ${W3.filter(r => r[8] === '×').length} 只写「×」、只有 ${ride3.length} 只标「可骑乘」、${W3.filter(r => r[8] === '-').length} 只留「-」）。本页不把「×」改写成「-」，因为一个是有依据的否定、一个是缺数据。</div>
         <div class="note">三处照录不修：<b>生产物</b>一列有 ${multi.length} 只写了 2～3 件（如「${multi[0] ? multi[0][2] : ''}」），源表就是一格多件，本页不拆行；<b>捕捉率</b>是 ${pMin}～${pMax} 的整数，源表没写单位，也不说明是百分比还是档位；<b>地点</b>栏有多处用「、」并了三四个地名，原样保留。</div>
         <div class="note">特别版（RF3SP）沿用本表——源页只有一份 <code>RF3farm</code>，<b>没有单列特别版的差异</b>，所以这里不假装两作数值不同。</div>`;
     }
@@ -5310,6 +5316,93 @@ function produceHtml(g) {
         ${tbl(['符文石', '能力提升'], EG.map(r => [r[0], r[1]]), { leftFirst: true, cls: 'prod' })}
         <div class="note">四种石头都只加 15%，没有「全能力」的选项——想让孩子全面，只能分别配。抓它之前要准备的东西（毛刷、魔物小屋、等级差 &lt; 10）与场地属性喜好，分别在<a class="link" href="#/page/beast">魔物与伙伴</a>和<a class="link" href="#/page/gift">魔物喜好</a>两页。</div>
         <div class="note">RF5 也有「同伴怪物生产道具一览」，但源页只有七行散句（「位于森林地带的白色黄毛牛才生产牛奶」「森林的粉色青蛙出液体类」……）加一句「待补充」，没有表也没有概率，本站不据此编表。</div>`;
+}
+/* 页尾：五作摆在一起（本页只覆盖 rf1／rf2／rf3／rff／rfo）
+   五作的宠物数据都在 shared 包（pet_old.js／crop_more.js／produce.js），
+   所以这里的数字是现算的——数据重生成，页尾跟着变。 */
+function produceTail(id) {
+    const N = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rfo: '海洋' };
+    if (!N[id]) return '';
+    const X = '<span class="mon-no">—</span>';
+    const nm = k => (k === id ? `<b>${N[k]}</b>` : N[k]);
+    const uq = a => a.filter((x, i) => a.indexOf(x) === i);
+
+    const W1 = (typeof PETWORK_RF1 !== 'undefined') ? PETWORK_RF1 : [];
+    const W3 = (typeof PWORK_RF3 !== 'undefined') ? PWORK_RF3 : [];
+    const PR2 = (typeof PETPROD_RF2 !== 'undefined') ? PETPROD_RF2 : [];
+    const PD = (typeof PETPROD_RFF !== 'undefined') ? PETPROD_RFF : [];
+    const PO = (typeof PETPROD_RFO !== 'undefined') ? PETPROD_RFO : [];
+
+    /* 四样基础产出的承包人：按各作数据逐条数，不手写 */
+    const prov = {
+        rf1: p => W1.filter(r => r[1] === p).map(r => r[0]),
+        rf2: p => PR2.filter(r => String(r[2]).indexOf(p) === 0).map(r => r[0]),
+        rf3: p => W3.filter(r => r[2] && r[2] !== '-' && String(r[2]).split('、')
+            .some(x => x.indexOf(p) >= 0 || (p === '鸡蛋' && /蛋$/.test(x)))).map(r => r[0]),
+        rff: p => PD.filter(r => r[0] === p || (p === '鸡蛋' && r[0] === '蛋'))
+            .reduce((a, r) => a.concat(String(r[2]).split('、')), []),
+        rfo: p => PO.filter(r => r[1] === p).map(r => r[0]),
+    };
+    const KS = ['rf1', 'rf2', 'rf3', 'rff', 'rfo'];
+    const PRODS = ['牛奶', '鸡蛋', '软软毛', '蜂蜜'];
+    const cell = (k, p) => {
+        const v = uq(prov[k](p));
+        return v.length ? v.join('<br>') : X;
+    };
+
+    /* 有产出的只数 / 总行数 */
+    const n1 = W1.filter(r => PRODS.indexOf(r[1]) >= 0).length;
+    const n3 = W3.filter(r => r[2] && r[2] !== '-').length;
+    const n2 = uq(PR2.map(r => r[0])).length;
+    const eggOwn = uq(prov.rff('鸡蛋'));
+
+    return `
+        <h2 class="h2">五作摆在一起：同一件事，五套列</h2>
+        <p class="p">这一页翻到第五次才意识到一件事：<b>五作都有这张表，但没有两作的列是同一套</b>。初代把它算成一种「工作」——和浇水、收获并列，一只一天给一样；二代把好感区间搬进来当档位；三代把它塞进一张八列大表，生产物只是其中一列；边境把产出（按概率）和劳力（按好感）彻底分成两套；海洋干脆给了一列「产出天数」。所以「派几只魔物、每天收什么」这句话，五作的答案写法完全不同。</p>
+        ${tbl(['作品', '有产出的几只', '多久给一次 · 频率写在表里哪里'], KS.map(k => [
+            nm(k),
+            ({ rf1: `${n1} / ${W1.length} 只`, rf2: `${n2} 种 / ${PR2.length} 行`, rf3: `${n3} / ${W3.length} 只`, rff: `9 组 / ${PD.length} 行`, rfo: `${PO.length} 只` })[k],
+            ({ rf1: '每天一样；表里不写', rf2: '每天一样；写好感区间 0~3／4~7／8~10', rf3: '源表没写', rff: '每天一样；写百分比（50%／30%…）', rfo: '每隔 1～10 天；单列「产出天数」' })[k],
+        ]), { leftFirst: true, colw: ['4.4rem', '6.4rem'] })}
+        <div class="key">共同点只有一个：<b>五作都没有写「一次给几个」</b>。初代一天一样、二代一天一样、边境按概率摇一次、海洋按天数给一回——没有一作留下产量数字。所以「养几只够用」这件事，五作都只能自己试。</div>
+
+        <h2 class="h2">奶、蛋、毛三样，五作是同一批人干的</h2>
+        <p class="p">把四样基础产出逐作对一遍，出现了一个很整齐的结果：<b>牛奶、鸡蛋、软软毛的承包人，前三作一字不差</b>——水牛哞哞、咕咕鸡、摩可摩可，从初代一路干到三代。到边境才开始扩编：奶加水牛姆姆，蛋加嘎咕鸭与贝克鸭，毛加莫夫莫夫；海洋再多水牛毛毛、摩可摩可王、跳舞鸭。</p>
+        <p class="p"><b>只有蜂蜜是每作都在换人的</b>：初代 黄蜂＋女王蜂、二代只剩黄蜂、三代又回到两只、边境同样两只、海洋三只（多了火焰蜂）。它是四样里唯一没有固定承包商的——蜂类在每作都是「谁在附近谁干」。</p>
+        ${tbl(['作品'].concat(PRODS), KS.map(k => [nm(k)].concat(PRODS.map(p => cell(k, p)))),
+            { leftFirst: true, colw: ['4.2rem'] })}
+        <div class="key">还有一处小换人：边境的第三只鸭是<b>贝克鸭</b>，海洋的第三只是<b>跳舞鸭</b>——同一个位置，换了一只。${eggOwn.length > 3 ? `边境这一列一共 ${eggOwn.length} 只，是全表最宽的蛋类阵容。` : ''}</div>
+
+        <h2 class="h2">二代的 S／M／L，就是三代那三个名字</h2>
+        <p class="p"><b>三代那三个「一格多件」的魔物，恰好就是二代分 S／M／L 的那三只</b>——摩可摩可、水牛哞哞、咕咕鸡，一只不多一只不少；而两作的黄蜂都是单档。这不是巧合：同一套「奶毛蛋分三档、蜂蜜不分」的设计，二代按好感 0~3／4~7／8~10 分三档、用字母挂在同一个名字后面，三代直接把这三档写成三个独立商品名。</p>
+        ${tbl(['魔物', 'RF2 的写法', 'RF3 的写法'], [
+            ['摩可摩可', '软软毛<br>S／M／L', '软软毛、软绒毛、毛茸茸的软软毛'],
+            ['水牛哞哞', '牛奶<br>S／M／L', '牛奶、优质牛奶、钙质满分牛奶'],
+            ['咕咕鸡', '鸡蛋<br>S／M／L', '鸡蛋、优质鸡蛋、每日健康蛋'],
+            ['黄蜂', '蜂蜜<br>（不分档）', '蜂蜜（只有一件）'],
+        ], { leftFirst: true, colw: ['5.4rem', '6.2rem'] })}
+        <div class="note">这一条只说到「对象完全重合」为止：<b>源表没有说三代那三件是按好感换的</b>，只说那一格里有这三件。所以本页不写「三代也是好感 8 以上给第三件」——那是推的，不是抄的。</div>
+
+        <h2 class="h2">同一只魔物，三作三个身份</h2>
+        <p class="p">跨作对照最容易踩的坑，是<b>以为名字相同就是同一只</b>。水牛毛毛在初代是坐骑（骑乘栏），在三代产「斗牛的角」，到海洋又变成产奶的。同名的银狼与猎狼也一样：初代骑乘，三代掉狼牙。</p>
+        ${tbl(['魔物', 'RF1', 'RF3', '海洋'], [
+            ['水牛毛毛', '骑乘', '斗牛的角', '牛奶'],
+            ['银狼／猎狼', '骑乘', '狼牙', X],
+            ['叶球／植物之核', '浇水', '植物的茎', X],
+        ], { leftFirst: true, colw: ['7.6rem', 'auto', 'auto', 'auto'] })}
+        <div class="key">所以这一页的表只能<b>按作品查</b>，不能按名字跨作推。名字在八作里是「沿用」不是「承诺」——同一只魔物换个作品换一份工作，甚至从劳力变成产出。</div>
+
+        <h2 class="h2">海洋那一列天数，其实是一张价目表</h2>
+        <p class="p">${PO.length} 只里，产出天数只有五档：<b>1 天 2 只</b>（咕咕鸡的蛋、水牛哞哞的奶）、<b>2 天 10 只</b>（奶蛋毛蜜的主力档，占了一半）、<b>3 天 2 只</b>（风鸟与黑鸟的鸟羽毛）、<b>5 天 3 只</b>（小小龙的银、小飞龙与金龙的金）、<b>10 天 2 只</b>（魔物箱的红宝石、贪食箱的蓝宝石）。</p>
+        <p class="p">这条梯度是反着走的：<b>越常见的东西给得越勤，越贵的东西等得越久</b>。2 天档全是奶蛋毛蜜，10 天档全是宝石——中间那 5 天刚好是金银。所以「产出天数」这一列在海洋里不只是频率，它同时是<b>价值排序</b>：等得越久，那一件越值钱。毛刷次数也差不多：摩可摩可王要刷 12 次、黄蜂 4 次就够，越难养的给得越好。</p>
+        <div class="note">五作里只有海洋把「隔几天」写成了数字；边境写的是概率、二代写的是好感档、初代与三代什么都没写。<b>这四作不是没有频率，是没有记下来</b>——所以「哪一作产出最快」这个问题，本站答不了。</div>
+
+        <div class="note">本页只覆盖五作：初代、二代、三代、边境、海洋。RF4／RF5／龙之天地在源站没有可引用的产出表（RF5 那张是七行散句加「待补充」），所以那三作的这一页留空。<br>页尾五作的数字由各作数据现算（这五份数据都在共享包里），<b>不是写死的快照</b>；某一作的数据重生成之后，这一块会跟着变。</div>`;
+}
+
+/* 包装：正文之后统一挂页尾 */
+function produceHtml(g) {
+    return produceCore(g) + produceTail(g && g.id);
 }
 
     /* ------------------------------------------------------------
