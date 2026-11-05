@@ -6,6 +6,7 @@ var K_PLAN = {
     "cross": "js/k-cross.js",
     "crossPages": [
         "battle",
+        "beast",
         "decorate",
         "festival",
         "home",

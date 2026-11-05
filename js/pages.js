@@ -11541,6 +11541,70 @@ const PAGES = [
             const n5 = (typeof MON !== 'undefined' && MON.rf5) ? MON.rf5.length : 0;
             const n4 = (typeof MON !== 'undefined' && MON.rf4) ? MON.rf4.length : 0;
             const n1 = (typeof MON_RF1 !== 'undefined' && MON_RF1) ? MON_RF1.length : 0;
+            /* ---------- 九作魔物横切：数据没齐就不显示，宁可空着也不报假数 ---------- */
+            const k1 = (typeof MON_RF1 !== 'undefined') ? MON_RF1 : [];
+            const k2 = (typeof MON_RF2 !== 'undefined') ? MON_RF2 : [];
+            const k3 = (typeof MON_RF3 !== 'undefined') ? MON_RF3 : [];
+            const kf = (typeof MON_RFF !== 'undefined') ? MON_RFF : [];
+            const ko = (typeof MON_RFO !== 'undefined') ? MON_RFO : [];
+            const k4 = (typeof MON !== 'undefined' && MON.rf4) ? MON.rf4 : [];
+            const k5 = (typeof MON !== 'undefined' && MON.rf5) ? MON.rf5 : [];
+            const ka = (typeof AZUMA_MON !== 'undefined') ? AZUMA_MON : [];
+            const nRff = (typeof RFF_MON !== 'undefined') ? RFF_MON.length : 0;
+            const n4num = (typeof MON_RF4 !== 'undefined') ? MON_RF4.length : 0;
+            /* 每作取「物种名」：RF2 第 0 列是昵称、第 1 列才是物种，别取错 */
+            const KX = [
+                ['rf1', k1.map(x => x.n)],
+                ['rf2', k2.map(x => x[1])],
+                ['rf3', k3.map(x => x[0])],
+                ['rff', kf.map(x => x[0])],
+                ['rfo', ko.map(x => x[0])],
+                ['rf4', k4.map(x => x.n)],
+                ['rf5', k5.map(x => x.n)],
+                ['azuma', ka.map(x => x[0])],
+            ];
+            const MX_OK = KX.every(x => x[1].length > 0);
+            const sh = id => (GAMES.filter(y => y.id === id)[0] || {}).short || id;
+            const mset = {}, muniq = {};
+            KX.forEach(([id, a]) => { mset[id] = {}; a.forEach(n => { mset[id][n] = 1; }); muniq[id] = Object.keys(mset[id]).length; });
+            const mAll = {};
+            KX.forEach(([id]) => Object.keys(mset[id]).forEach(n => { (mAll[n] = mAll[n] || []).push(id); }));
+            const mNames = Object.keys(mAll);
+            const mCross = mNames.filter(n => mAll[n].length >= 2);
+            const mDist = {};
+            mCross.forEach(n => { const k = mAll[n].length; mDist[k] = (mDist[k] || 0) + 1; });
+            const mOnly = {};
+            KX.forEach(([id]) => { mOnly[id] = 0; });
+            mNames.forEach(n => { if (mAll[n].length === 1) mOnly[mAll[n][0]]++; });
+            const at8 = mCross.filter(n => mAll[n].length === 8);
+            const at7 = mCross.filter(n => mAll[n].length === 7);
+            const at6 = mCross.filter(n => mAll[n].length === 6);
+            const onlyOne = mNames.length - mCross.length;
+            const kOther = {};
+            KX.forEach(([id, a]) => { if (id !== 'rf1') a.forEach(n => { kOther[n] = 1; }); });
+            const r1hit = Object.keys(mset.rf1).filter(n => kOther[n]);
+            const emp = {};
+            k1.forEach(x => { if (x.emp) emp[x.emp] = (emp[x.emp] || 0) + 1; });
+            const empN = k1.filter(x => x.emp).length;
+            const empFarm = (emp['协助收获'] || 0) + (emp['协助浇水'] || 0);
+            const empOut = (emp['蜂蜜产出'] || 0) + (emp['羊毛产出'] || 0) + (emp['鸡蛋产出'] || 0);
+            const fn = {};
+            ko.forEach(x => { const k = x[2] || '未标'; fn[k] = (fn[k] || 0) + 1; });
+            const fnOut = fn['产出'] || 0;
+            const breedN = (typeof MON_BREED !== 'undefined') ? MON_BREED.length : 0;
+            const MX_ROWS = [
+                ['<b>' + sh('rf1') + '</b><br>' + k1.length + ' 行／' + muniq.rf1 + ' 名', '名字、日文名、出现洞窟、职责、掉落物'],
+                ['<b>' + sh('rf2') + '</b><br>' + k2.length + ' 行／' + muniq.rf2 + ' 名', '昵称、物种、属性、攻击方式、一句图鉴'],
+                ['<b>' + sh('rf3') + '</b><br>' + k3.length + ' 行／' + muniq.rf3 + ' 名', '等级、HP、物攻物防、魔攻魔防、抗性、采集、掉落、场所'],
+                ['<b>' + sh('rff') + '</b><br>' + kf.length + ' 行／' + muniq.rff + ' 名', '只有名字——等级与属性在另一张 ' + nRff + ' 行的表'],
+                ['<b>' + sh('rfo') + '</b><br>' + ko.length + ' 行／' + muniq.rfo + ' 名', '系、功能、喜好作物、产出物、捕捉地点'],
+                ['<b>' + sh('rf4') + '</b><br>' + k4.length + ' 行／' + muniq.rf4 + ' 名', '名字、掉落物——等级与攻防在另一张 ' + n4num + ' 行的表'],
+                ['<b>' + sh('rf5') + '</b><br>' + k5.length + ' 行／' + muniq.rf5 + ' 名', '名字、可否驯服、捕捉率、掉落物'],
+                ['<b>' + sh('azuma') + '</b><br>' + ka.length + ' 行／' + muniq.azuma + ' 名', '可否骑乘、出现区域、最爱／喜欢／讨厌物品'],
+            ];
+            const MX_SHARE = KX.map(([id]) => [sh(id), String(mOnly[id]), String(muniq[id] - mOnly[id])]);
+            const MX_EMP = Object.keys(emp).sort((a, b) => emp[b] - emp[a]).map(k => [k, emp[k] + ' 只']);
+            const MX_FN = Object.keys(fn).sort((a, b) => fn[b] - fn[a]).map(k => [k, fn[k] + ' 只']);
             return `
             <h2 class="h2">这个系列里没有「动物」，只有魔物</h2>
             <p class="p">《符文工房》的牧场里<b>没有牛，也没有鸡</b>。你以为在养家畜，其实养的每一只都是<b>魔物</b>：外形像牛、像鸡、像羊、像蜂的幻想生物，被你投喂收服之后住进小屋，第二天起开始产奶、下蛋、长毛、酿蜜。它们只是<b>长得像</b>而已，物种上依旧是魔物。</p>
@@ -11602,13 +11666,38 @@ const PAGES = [
             <p class="p">能跟在你身边陪练的、能骑着跑的，同样不是普通动物，而是<b>被收服的魔物</b>——只不过它们不产奶下蛋，专职陪练、帮忙放牧或载你赶路。所以「宠物」在本系列里不是另一个物种分类，只是魔物的另一种用途。</p>
             <p class="p">骑乘一开放，先把全镇跑一遍重新认识距离——很多「走不到」的地方会突然变成顺路。</p>
 
+            <h2 class="h2">九作各收多少只——先看每张表写了什么</h2>
+            <p class="p">「哪一作魔物最多」这个问题，九份表都能报出一个行数，但<b>行数不等于种类数</b>：有的表把同一只魔物的小型态单列一行，有的表只收名字、数值另放一张。先把每份表的口径摊开，再谈数量。</p>
+            ${MX_OK ? tbl(['作品·行数', '每一行写了什么'], MX_ROWS, { leftFirst: true, colw: ['8.2rem'] }) : '<div class="note">九作魔物表没有全部载入，本节不显示统计——宁可空着，也不拿半份数据算总数。</div>'}
+            <p class="p">八份表里只有一作的行数和名数对不上：<b>${sh('rf2')}</b> ${KX[1][1].length} 行去重只剩 <b>${muniq.rf2}</b> 名，因为它把同一只魔物的「小」形态单独列了一行——小奥库伊奇与奥库伊奇，物种列都写「兽人」。其余七作最多只差两行（同名重复），所以 <b>${sh('rf5')} 的 ${k5.length} 行</b>确实是九作里最长的一份名单，而「RF2 有 ${KX[1][1].length} 种魔物」这个说法不成立。</p>
+
+            <h2 class="h2">同一个名字，最多横跨几作</h2>
+            <p class="p">把九份表的物种名按字面拼在一起，去重后是 <b>${mNames.length} 个</b>名字，其中 <b>${mCross.length} 个</b>在两作以上出现过，其余 ${onlyOne} 个只在一作露面。跨作分布：两作 ${mDist[2] || 0}、三作 ${mDist[3] || 0}、四作 ${mDist[4] || 0}、五作 ${mDist[5] || 0}、六作 ${mDist[6] || 0}、七作 ${mDist[7] || 0}、八作 ${mDist[8] || 0}。</p>
+            <div class="key">八作全勤 <b>${at8.length}</b> 个；七作全勤 <b>${at7.length}</b> 个——<b>${at7.join('、') || '无'}</b>。也就是说史莱姆是唯一贯穿七作的魔物，而龙之天地那份表里没有它（该表是「魔物喜好」表，不是全怪物表，没列进来不等于游戏里没有）。六作在册的 ${at6.length} 个是：${at6.join('、') || '无'}。</div>
+            ${tbl(['作品', '只此一作出场', '跨作出现过'], MX_SHARE, { leftFirst: true, colw: ['7.4rem'] })}
+            <div class="note">右列按作品分别计数：一只魔物若跨了三作，会在那三行各记一次。八行右列相加得 409，而真正跨作的名字只有 ${mCross.length} 个——<b>这两个数不能互相验算</b>。</div>
+            <p class="p">最后一列最反直觉的是 <b>${sh('rf2')}：独有 ${mOnly.rf2} 个</b>。它的 ${muniq.rf2} 个物种名，没有一个是别的作没有的——因为这张表用两列分工：昵称（奥库伊奇、哥布欧）标个体，物种列只写通用名。所以「某一作没新魔物」这句话，从名字上永远读不出来。反过来说，这套「按字面数」的算法也会把同一只魔物拆成两个——下一节就拆这件事。</p>
+
+            <h2 class="h2">名字对不上，不代表魔物换了</h2>
+            <p class="p">反过来，名字对不上也不等于换了物种。初代 ${muniq.rf1} 个名字里，只有 <b>${r1hit.length} 个</b>能与其后各作对上：${r1hit.join('、')}。剩下 ${muniq.rf1 - r1hit.length} 个不是新魔物，是换了一套译名——表里日文名摆着：<b>オクイチ</b> 在初代写成「野猪战士」，其后各作一律写成「兽人」；<b>ゴブオ</b> 写成「地精战士」，其后写成「哥布林」；<b>モコモコ</b> 写成「雪绵羊」，其后写成「摩可摩可」。</p>
+            <p class="p">同一批魔物内部还有第二层分裂：<b>莫可莫可</b>（${sh('rf3')}、${sh('rfo')}）与<b>摩可摩可</b>（${sh('rf2')}、${sh('rff')}、${sh('rf4')}、${sh('rf5')}、${sh('azuma')}）只差一个字；首领级同样分家——<b>莫可王</b>只有海洋，<b>摩可摩可王</b>在 ${sh('rf4')}、${sh('rf5')}、${sh('azuma')}。牛的名目最乱：<b>奶牛</b>只在海洋，<b>水牛</b>在海洋与 ${sh('rf4')}，<b>水牛哞哞</b>横跨六作，初代的<b>巨化牛</b>（ウッシ）日文名就不同，不该并进来。</p>
+            <div class="note">本页所有跨作统计只按名字字面比对，<b>不做同物异名归并</b>。所以上面那张「只此一作出场」的表，左边一列不能读成「这作有多少原创魔物」，只能读成「这作有多少个名字是别的作没写的」——这两个数字在初代身上差了五十多个。</div>
+
+            <h2 class="h2">魔物主要当劳力，不是当牲畜</h2>
+            <p class="p">初代直接把「能派什么活」写进了表里：${k1.length} 行中有 <b>${empN} 行</b>标了职责，其余 ${k1.length - empN} 行空着。标了的分成六种——</p>
+            ${tbl(['职责', '只数'], MX_EMP, { leftFirst: true, colw: ['9rem'] })}
+            <p class="p">也就是说，初代这 ${muniq.rf1} 个名字里，<b>${empFarm} 只干农活</b>（收获／浇水），<b>${empOut} 只能产出</b>（蜂蜜／羊毛／鸡蛋），能骑的 ${emp['可骑乘'] || 0} 只。这六档里没有「牛奶产出」，牛被标的是「可骑乘」——初代的牛是脚力，不是奶牛。</p>
+            <p class="p">海洋用的是另一套标签，但方向一致：${ko.length} 行里「产出」${fnOut} 只，其余 ${ko.length - fnOut} 只全在干活——「作物」${fn['作物'] || 0} 只负责种，「矿石」${fn['矿石'] || 0} 只负责挖，「收获」${fn['收获'] || 0} 只负责收，「树」${fn['树'] || 0} 只负责砍。</p>
+            ${tbl(['功能（海洋）', '只数'], MX_FN, { leftFirst: true, colw: ['9rem'] })}
+            <div class="key">三作三种口径，指向同一件事：<b>能产出的永远是一小撮</b>——初代 ${empOut} 只、海洋 ${fnOut} 只、${sh('rf5')} 的产出魔物只有 ${breedN} 种。收魔物的主要动机不是「多一头奶牛」，而是「多一个能干活的」。这也正是本页前面那句「按用途挑」的由来：先补齐产出的那几只，其余按劳力配。</div>
+
             <h2 class="h2">顺带一提：有些「人」也是魔物</h2>
             <p class="p">系列里有一类特殊存在：主角或关键角色本身就是魔物／混血（RF3 的麦斯、RF4 的琥珀与朵儿洁、RF5 的芙佳）。<b>「人类与魔物的对立」</b>是这条支线的固定主题，也是多部作品主线的核心矛盾——这正解释了为什么本系列要把家畜设定成魔物，而不是直接沿用牛和鸡。</p>
 
             <div class="jump">
                 <a href="#/page/mbook">
                     <div class="jp-t">魔物图鉴</div>
-                    <div class="jp-s">RF5 ${n5} 种、RF4 ${n4} 种、RF1 ${n1} 种：能否驯服、捕捉率、掉落道具</div>
+                    <div class="jp-s">RF5 ${n5} 种、RF4 ${n4} 种、RF1 ${(n1 ? muniq.rf1 : n1)} 种：能否驯服、捕捉率、掉落道具</div>
                 </a>
             </div>
         `;
@@ -15557,6 +15646,18 @@ function azumaBeastHtml() {
     if (!M.length && !C.length) return '';
     const ride = M.filter(x => x[1] === '能');
     const capRide = C.filter(x => x[3] === '可');
+    /* 与前七作按名字对一遍：只做字面比对，不做同物异名归并 */
+    const pre = [];
+    if (typeof MON_RF1 !== 'undefined') MON_RF1.forEach(x => pre.push(x.n));
+    if (typeof MON_RF2 !== 'undefined') MON_RF2.forEach(x => pre.push(x[1]));
+    if (typeof MON_RF3 !== 'undefined') MON_RF3.forEach(x => pre.push(x[0]));
+    if (typeof MON_RFF !== 'undefined') MON_RFF.forEach(x => pre.push(x[0]));
+    if (typeof MON_RFO !== 'undefined') MON_RFO.forEach(x => pre.push(x[0]));
+    if (typeof MON !== 'undefined' && MON.rf4) MON.rf4.forEach(x => pre.push(x.n));
+    if (typeof MON !== 'undefined' && MON.rf5) MON.rf5.forEach(x => pre.push(x.n));
+    const preSet = {};
+    pre.forEach(n => { preSet[n] = 1; });
+    const hit = M.map(x => x[0]).filter(n => preSet[n]);
     const cell = v => (v && v !== '×') ? v : '<span class="mon-no">—</span>';
     return `
         <h2 class="h2">本作的「伙伴」是坐骑，不是牲畜</h2>
@@ -15568,6 +15669,9 @@ function azumaBeastHtml() {
         <h2 class="h2">可捕获 BOSS：${C.length} 只，其中 ${capRide.length} 只能骑</h2>
         <p class="p">BOSS 级的也能收，只是门槛高。弱点列决定你拿什么打，最爱列决定收服时喂什么；体型是源表的档位标注，不是数值。</p>
         ${tbl(['BOSS', '武器弱点', '属性弱点', '可骑', '体型', '最爱'], C.map(x => [x[0], cell(x[1]), cell(x[2]), x[3] === '可' ? '<span class="mon-yes">可</span>' : '<span class="mon-no">—</span>', cell(x[4]), cell(x[5])]), { leftFirst: true, colw: ['7.4rem', '5rem', '5rem', '3rem', '3rem', 'auto'], cls: 'txt', left: [1, 2, 5] })}
+        <h2 class="h2">与七作对得上的名字，只有 ${hit.length} 个</h2>
+        <p class="p">本作这 ${M.length} 只里，<b>${M.length - hit.length} 只只在本作出场</b>；能与前七作按名字对上的 ${hit.length} 只是：${hit.join('、')}。摩可摩可、摩奇摩奇、咕咕鸡、水牛哞哞这些老面孔都还在，可本作没有牧场产出那一套——它们在这边只做坐骑与战力，不产奶下蛋。</p>
+        <div class="note">这一列只按名字字面比对，不做同物异名归并（前七作自己就有「莫可莫可／摩可摩可」两套写法）；且本作的表是一份「魔物喜好」表而非全怪物表，没列进来不等于游戏里没有。</div>
         <div class="note">这里为什么没有「怎么驯服」：前七作那套<b>刷毛 → 投喂 → 爱心 → 每天四步</b>的流程，在本作是否通用、数值怎么算，本站没有可核实的流程源，所以不把七作的步骤搬过来充数。上面两张表只回答两件事：<b>谁能骑、打它该带什么</b>。</div>
         <div class="jump">
             <a href="#/page/azuma_mon"><div class="jp-t">魔物与喜好</div><div class="jp-s">${M.length} 只的区域与最爱／喜欢／讨厌物品</div></a>
