@@ -9452,9 +9452,83 @@ function worldDeepHtml(id) {
         ['azuma', '配方里的一行材料', '4 件', '本站未收录']
     ];
     const NAME = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rf4: 'RF4', rf5: 'RF5', rff: '边境', rfo: '海洋', azuma: '龙之天地' };
-    const morphTable = () => tbl(['作品', '符文落在哪', '带「符文」名的物品', '水晶花'],
-        MORPH.map(r => [r[0] === id ? '<b>' + NAME[r[0]] + '</b>' : E(NAME[r[0]]), E(r[1]), E(r[2]), E(r[3])]),
-        { leftFirst: true, colw: ['5.4rem', 'auto', '8.6rem', '6.6rem'] });
+    /* 逐件现算：名字里带「符文」二字的物品、名字是「颜色＋水晶」的花。
+       这两列原来写在 MORPH 里是手写的，回表核时三处偏高、一处写反，故改为现算。
+       「小结晶」不在其中——它说明里写「符文…结晶化而成」，但名字不带「符文」。 */
+    const U = v => (Array.isArray(v) ? v : []);
+    const AZROWS = [];
+    (typeof AZUMA_FORGE !== 'undefined' && AZUMA_FORGE && AZUMA_FORGE.families || [])
+        .forEach(f => U(f.rows).forEach(r => AZROWS.push(r)));
+    (typeof AZUMA_ARMOR !== 'undefined' && AZUMA_ARMOR && AZUMA_ARMOR.fams || [])
+        .forEach(f => U(f.rows).forEach(r => AZROWS.push(r)));
+    const SR = {
+        rf1: [typeof ITEM_RF1 !== 'undefined' ? ITEM_RF1 : []],
+        rf2: [typeof ITEM_RF2 !== 'undefined' ? ITEM_RF2 : []],
+        rf3: [typeof ITEM_RF3 !== 'undefined' ? ITEM_RF3 : []],
+        rff: [typeof ITEM_RFF !== 'undefined' ? ITEM_RFF : []],
+        rf4: [
+            typeof EQW_RF4 !== 'undefined' ? EQW_RF4 : [],
+            typeof EQA_RF4 !== 'undefined' ? EQA_RF4 : [],
+            typeof MAT_RF4 !== 'undefined' ? MAT_RF4 : [],
+            typeof POT_RF4 !== 'undefined' ? POT_RF4 : [],
+            typeof EQT_RF4 !== 'undefined' ? EQT_RF4 : [],
+            typeof EQC_RF4 !== 'undefined' ? EQC_RF4 : []
+        ],
+        rf5: [
+            typeof EQW_RF5 !== 'undefined' ? EQW_RF5 : [],
+            typeof EQA_RF5 !== 'undefined' ? EQA_RF5 : [],
+            typeof MAT_RF5 !== 'undefined' ? MAT_RF5 : [],
+            typeof POT_RF5 !== 'undefined' ? POT_RF5 : [],
+            typeof EQT_RF5 !== 'undefined' ? EQT_RF5 : []
+        ],
+        rfo: [
+            (typeof RFO_ITEMS !== 'undefined' && RFO_ITEMS && RFO_ITEMS.mat && RFO_ITEMS.mat.rows) || [],
+            (typeof RFO_ITEMS !== 'undefined' && RFO_ITEMS && RFO_ITEMS.armor && RFO_ITEMS.armor.rows) || [],
+            (typeof RFO_ITEMS !== 'undefined' && RFO_ITEMS && RFO_ITEMS.cook && RFO_ITEMS.cook.rows) || [],
+            (typeof RFO_ITEMS !== 'undefined' && RFO_ITEMS && RFO_ITEMS.tool && RFO_ITEMS.tool.rows) || []
+        ]
+    };
+    const ROWSOF = k => k === 'azuma' ? AZROWS : SR[k].reduce((a, v) => a.concat(U(v)), []);
+    /* 海洋与龙之天地的行是 [拼接键, [名字, …]] 两层，名字在 r[1][0]；
+       其余各作是平的一层，名字就在 r[0]。这两种都有的老结构，按 r[1] 是不是数组分流。 */
+    const NAME_OF = r => {
+        if (!Array.isArray(r)) return '';
+        const v = Array.isArray(r[1]) ? r[1][0] : r[0];
+        return String(v == null ? '' : v);
+    };
+    const pickNames = (k, re) => {
+        const seen = {};
+        ROWSOF(k).forEach(r => {
+            const n = NAME_OF(r);
+            if (n && re.test(n)) seen[n] = 1;
+        });
+        return Object.keys(seen);
+    };
+    /* 发售顺序，与「游戏简介」页那张表同一序 */
+    const WORDER = ['rf1', 'rf2', 'rff', 'rf3', 'rfo', 'rf4', 'rf5', 'azuma'];
+    const RUNE_ROWS = {};
+    const FLOWER = {};
+    WORDER.forEach(k => {
+        RUNE_ROWS[k] = pickNames(k, /符文/);
+        FLOWER[k] = pickNames(k, /^(青|蓝|绿|红|白)水晶$/);
+    });
+
+    const runeNameTable = () => tbl(['作', '名字里带「符文」的物品'], WORDER.map(k => [
+        (k === id ? '<b>' + NAME[k] + ' · ' + RUNE_ROWS[k].length + ' 件</b>' : E(NAME[k]) + ' · ' + RUNE_ROWS[k].length + ' 件'),
+        RUNE_ROWS[k].length ? E(RUNE_ROWS[k].join('、')) : '<span class="mon-no">—</span>'
+    ]), { leftFirst: true, left: [1], colw: ['6.6rem', 'auto'], note: '按原版发售先后排。件数＝该作物品表里名字带「符文」二字的条目数，重名只算一次。' });
+
+    const flowerTable = () => tbl(['作', '水晶花'], WORDER.map(k => [
+        k === id ? '<b>' + NAME[k] + '</b>' : E(NAME[k]),
+        FLOWER[k].length ? E(FLOWER[k].join('、')) : '<span class="mon-no">—</span>'
+    ]), { leftFirst: true, left: [1], colw: ['6.6rem', 'auto'], note: '只数名字是「颜色＋水晶」的花。带「水晶」二字但不是花的（紫水晶、骷髅水晶、属性水晶）不算。' });
+    /* 四列在 375px 下会把「符文落在哪」压成一字一行，改成两列：件数与花色并进第一列下方。 */
+    const morphTable = () => tbl(['作品', '符文落在哪'], MORPH.map(r => [
+        (r[0] === id ? '<b>' + NAME[r[0]] + '</b>' : E(NAME[r[0]]))
+            + '<br><span class="mon-no">' + RUNE_ROWS[r[0]].length + ' 件 / '
+            + (FLOWER[r[0]].length ? FLOWER[r[0]].length + ' 色花' : '无花') + '</span>',
+        E(r[1])
+    ]), { leftFirst: true, left: [1], colw: ['8.4rem', 'auto'] });
 
     const TAIL = `
             ${H2('同一件东西，三代三种说法')}
@@ -9464,7 +9538,18 @@ function worldDeepHtml(id) {
             ${H2('八作把符文做成了什么')}
             <p class="p">把上面那张表的横竖两头合起来看，就是这一页的结论：<b>同一套符文，八作各有自己的一种存在形式</b>——1 代是货架上的一本书，2 代拆成三套系统，3 代挂在武器种上，4／5 代变成能拆装的零件，海洋摆上集市卖，边境养成会走会吃的活物，龙之天地干脆压成配方里的一格材料。另外，<b>「水晶花」这一种形态只活到边境</b>：1～3 代与边境有，4 代之后连花都不出现了。</p>
             ${morphTable()}
-            <div class="note">「水晶花」一列写「本站未收录」的四作，是站内物品表里确实没有这一系条目（不是没查到花名）。符文在 4 代之后改走「结晶—碎片—药水」这条线，花这条线就断在边境了。</div>
+            <div class="note">写「无花」的四作，是站内物品表里确实没有这一系条目（不是没查到花名）。符文在 4 代之后改走「结晶—碎片—药水」这条线，花这条线就断在边境了。</div>
+            ${H2('「符文」这两个字，八作各留在多少个物品名里')}
+            <p class="p">上一张表里的件数原来是手写的。这次回表按名字逐件筛，<b>三处偏高、一处写反</b>：1～3 代各多算一件（3／5／7 实为 <b>2／4／6</b>），海洋写「0 件」，其实有一件。多算的那一件是「小结晶」——说明里明写「符文经过多年岁月结晶化而成」，可名字里没有「符文」二字。<b>这一列的口径是「名字里带不带」，不是「跟符文有没有关系」</b>，两件事很容易混。</p>
+            ${runeNameTable()}
+            <p class="p">八行连起来看，数量<b>既不是一路增加，也不是先多后少</b>：2 → 4 → 9 → 6 → 1 → 9 → 9 → 3，一路来回跳。最高 9 件有三处（边境、4 代、5 代），最低 1 件在海洋。边境排在第三部就有 9 件，比它之后的 3 代与海洋都多——因为那 9 件里 8 件是符文精灵与符文石，本来就不是装备；海洋掉到 1，是装备线整条断掉，只剩一件原料。</p>
+            <p class="p">比数量更清楚的是另一条线：<b>1～3 代的 12 件全是装备与药品，一件材料都没有。</b>4 代第一次出现「符文结晶」与「符文球的碎片」两件材料，5 代照搬。符文从这个节点起，<b>从「做好的东西」变成了「拿去做东西的东西」</b>——这跟同一代开始有符文槽、符文要靠打怪捡，是同一件事的两面。</p>
+            <div class="note">同一件东西的名字在两代之间来回换，八作里一次都没定下来：盾在 1 代叫<b>符文盾</b>、2 代叫<b>符文盾牌</b>、3 代回到<b>符文盾</b>、4 代又是<b>符文盾牌</b>、5 代与龙之天地都叫<b>符文盾</b>；杖在 2／4 代叫<b>符文魔杖</b>、3／5 代叫<b>符文之杖</b>。本站照录各作原名不统一——按名字跨作检索时，两种写法都得搜。</div>
+            ${H2('水晶花：四色只在中间两代齐过')}
+            <p class="p">「水晶花」是符文凝固之后最直观的形态。按颜色数一遍，比「越做越简化」更具体的轨迹就出来了：有花的三作按发售排是 1 代（三色）→ 2 代（四色）→ 3 代（四色）→ 边境（三色），<b>四色只在中间两代齐过</b>，首尾都是三色，缺的是同一朵冬季的白水晶。</p>
+            ${flowerTable()}
+            <p class="p">1 代还有一个自己跟自己不一致的地方：<b>花叫「蓝水晶」，种子却叫「青水晶种子」</b>——同一代里两个颜色字。2 代起统一成「青」，此后没再改回来。1 代三朵花的说明也不齐：「花色会随季节改变，春天为蓝花」用的是「花色」，夏、秋两朵写的是「颜色会随季节改变」。</p>
+            <div class="note">4 代之后按名字搜「水晶」，捞出来的已经不是花了：4／5 代有<b>紫水晶</b>（宝石）与<b>骷髅水晶</b>（素材），5 代另有<b>土・火・冰・风・地之水晶</b>与它们的碎片一整套属性结晶。这些都不是水晶花，混进来数会把「断在哪一代」判错。反过来，边境还有一套名字里不带「水晶」的花——<b>十二星座的结晶花</b>（白羊座到双鱼座各一朵）与结晶花种子，按「水晶」筛会全部漏掉。</div>
             ${H2('大地之民')}
             <p class="p">能直接看见并操纵符文的血统被称为「大地之民」（アースメイト）。他们可以把符文灌注进农具与武器，让一把普通锄头翻出带符文的地，也能让一把剑带上属性。系列的主角几乎都是大地之民或具备同等资质的人——这是「主角一个人能同时种地和打怪」的设定依据。</p>
             ${H2('符文的三条循环')}
@@ -9536,7 +9621,7 @@ function worldDeepHtml(id) {
             ${stat([['符文能力', '19 条'], ['带「符文」名的物品', '0 件'], ['水晶花', '本站未收录']])}
             ${H2('唯一保留三名并列的一页')}
             <p class="p">这张表是全站唯一同时写<b>日文名、英文名、民间译名</b>的：日文、英文、中文三列并排，因为这一作的符文能力没有官方中文，几个译名在玩家间并行使用。别作的表都只有中文一列。</p>
-            <div class="note">物品表里<b>一条带「符文」名的东西都没有</b>——符文剑、符文盾、符文药水这一系在这一作断掉了。符文只剩「花点钱买下来的能力」这一种存在形式。</div>
+            <div class="note">物品表里带「符文」名的<b>只剩一条</b>：材料「符文结晶」，入手栏写「种树」。符文剑、符文盾、符文药水这一系装备整条断掉——这一作里还在继承符文之名的只有原料，成品一个都没有。</div>
             ${TAIL}`;
 
     if (id === 'rff') return HEAD + `
@@ -9558,8 +9643,8 @@ function worldDeepHtml(id) {
 
     if (id === 'azuma') return HEAD + `
             ${H2('这一作：符文退成了一行材料')}
-            <p class="p">龙之天地没有符文精灵、没有符文石，站内也没有这一作的符文能力表。<b>「符文」两个字只剩在物品名里</b>：符文传说、符文之刃、符文盾，加一样材料符文结晶——四件，没有第五件。</p>
-            ${stat([['带「符文」名的物品', '4 件'], ['要符文结晶的武器配方', '4 / 111'], ['水晶花', '本站未收录']])}
+            <p class="p">龙之天地没有符文精灵、没有符文石，站内也没有这一作的符文能力表。<b>「符文」两个字只剩在三件成品名里</b>：符文传说、符文之刃、符文盾。第四样「符文结晶」不一样——它<b>只作为材料出现在配方里，站内没有它自己的条目</b>，所以按名字数物品只有三件。</p>
+            ${stat([['名字带「符文」的成品', '3 件'], ['要符文结晶的武器配方', '4 / 111'], ['水晶花', '—']])}
             ${H2('符文结晶是封顶材料')}
             <p class="p">111 个武器配方里，只有 <b>4 个</b>要符文结晶，而且每个都是各系的最高那一把：<b>符文传说</b>（龙幻石×3／日绯色金×7／神铁碎片×1／符文结晶×1）、<b>克拉丽丝的佩剑</b>、<b>符文之刃</b>、<b>高阶阴阳符咒</b>。四个配方里它都只要 1 颗——同一行的神铁碎片也要 1 颗，它是跟最贵的那几样并列的材料。</p>
             <p class="p">跟它成对出现的另一条材料线是<b>灵力块</b>——高阶阴阳符咒要「神秘触媒×10／灵力块×1／符文结晶×1」。灵力块与符文结晶是不是同一体系的两级，站内没有资料，不推断。</p>

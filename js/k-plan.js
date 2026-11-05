@@ -10,7 +10,8 @@ var K_PLAN = {
         "festival",
         "home",
         "seriescmp",
-        "time"
+        "time",
+        "world"
     ],
     "games": {
         "rf1": "js/k-rf1.js",
