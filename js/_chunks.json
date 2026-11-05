@@ -152,10 +152,10 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "822026dc12e54e66",
-    "shared": "1ecb120a9475e310",
+    "core": "008e911fb126e5a6",
+    "shared": "75b664b4dbca3b84",
     "cross": "17dd635ea10c0f65",
-    "body": "8b1852e19db079db",
+    "body": "a3e7fc357fc98c21",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "bb35f7215f7d0513",
@@ -164,6 +164,6 @@
     "game:rf4": "c5bae67b1053da2a",
     "game:rf5": "08dbc0fb453445b8",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "e50021d8d5266f36"
+    "page:changelog": "25a8b2a6e86e38e6"
   }
 }
