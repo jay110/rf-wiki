@@ -8533,6 +8533,71 @@ ${TAIL}`;
     return '';
 }
 
+/* 八作的候补构成横切：只读 GAMES 的 candF／candM 与 NPC_FULL 的花嫁名单，
+   不给任何一作补条件、不推断门槛。 */
+function loveCrossHtml(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const GS = (typeof GAMES !== 'undefined' && GAMES.length) ? GAMES : [];
+    if (!GS.length) return '';
+    const cur = id || 'rf5';
+    const num = g => (g.candF || 0) + (g.candM || 0);
+    const all = GS.reduce((a, g) => a + num(g), 0);
+    const allF = GS.reduce((a, g) => a + (g.candF || 0), 0);
+    const allM = GS.reduce((a, g) => a + (g.candM || 0), 0);
+    const B = (v, on) => on ? '<b>' + v + '</b>' : String(v);
+    const one = GS.filter(g => (g.candM || 0) === 0);
+    const most = GS.slice().sort((x, y) => (y.candF || 0) - (x.candF || 0))[0];
+    const big = GS.slice().sort((x, y) => num(y) - num(x))[0];
+    const few = GS.slice().sort((x, y) => num(x) - num(y))[0];
+    const rf4 = GS.filter(g => g.id === 'rf4')[0] || {};
+    const rf5 = GS.filter(g => g.id === 'rf5')[0] || {};
+    const rf2 = GS.filter(g => g.id === 'rf2')[0] || {};
+    const rfo = GS.filter(g => g.id === 'rfo')[0] || {};
+    const rows = GS.map(g => [
+        B(E(g.no ? g.no + '·' + g.short : g.short), g.id === cur),
+        B((g.candF || 0) + ' ／ ' + (g.candM || 0), g.id === cur),
+        B(String(num(g)), g.id === cur)
+    ]);
+    const male = GS.map(g => g.candM || 0).join(' → ');
+    const m2 = (typeof NPC_FULL !== 'undefined' && NPC_FULL.rf2) ? NPC_FULL.rf2.filter(x => /花婿/.test(x.r || '')).map(x => x.n) : [];
+
+    /* 边境是初代的 Wii 重制：按日文名对齐两作的花嫁名单 */
+    const nf = (typeof NPC_FULL !== 'undefined') ? NPC_FULL : {};
+    const f1 = (nf.rf1 || []).filter(x => /花嫁/.test(x.r || ''));
+    const fr = (nf.rff || []).filter(x => /花嫁/.test(x.r || ''));
+    const pairs = f1.map(a => { const b = fr.filter(y => y.j === a.j)[0]; return b ? [a, b] : null; }).filter(Boolean);
+    const diff = pairs.filter(x => x[0].n !== x[1].n);
+    const added = fr.filter(b => !f1.some(a => a.j === b.j));
+    /* 七作档案里的候补，按日文名看有没有跨作重复 */
+    const seen = {};
+    Object.keys(nf).forEach(k => (nf[k] || []).forEach(x => {
+        if (!/花嫁|花婿/.test(x.r || '') || !x.j) return;
+        (seen[x.j] = seen[x.j] || []).push(k);
+    }));
+    const slots = Object.keys(seen).reduce((a, j) => a + seen[j].length, 0);
+    const uniq = Object.keys(seen).length;
+    const dup = Object.keys(seen).filter(j => seen[j].length > 1);
+    const dupOnly = dup.length > 0 && dup.every(j => seen[j].every(k => k === 'rf1' || k === 'rff'));
+    const pairRows = pairs.map(x => [E(x[0].n), x[0].n === x[1].n ? E(x[1].n) : '<b>' + E(x[1].n) + '</b>', x[0].n === x[1].n ? '同' : '改']);
+
+    return `
+            <h2 class="h2">八作加起来 ${all} 位候补，花嫁 ${allF} 位、花婿 ${allM} 位</h2>
+            <p class="p">上面每一作的门槛都是分开写的，凑在一起才发现一件跟直觉相反的事：<b>可攻略的人数并没有随代际一路变多</b>。八作合计 ${all} 位，花嫁 ${allF} 位、花婿 ${allM} 位；单作最少的是${few.short === '新牧场物语' ? '初代' : E(few.short)}的 ${num(few)} 位，最多的是${E(big.short)}的 ${num(big)} 位${GS.filter(g => g.id !== big.id && num(g) === num(big)).length ? '（与' + GS.filter(g => g.id !== big.id && num(g) === num(big)).map(g => E(g.short)).join('、') + '并列）' : ''}，中间并不是单调上升。</p>
+            ${tbl(['作', '花嫁 ／ 花婿', '合计'], rows, { leftFirst: true, nw: [1, 2], colw: ['auto', '6.6rem', '3.6rem'], note: '数字取自站内作品数据（每作的候补计数），不是本页新数的；行序按发售先后。' })}
+            <p class="p"><b>花嫁最多的一作是边境的 ${most.candF} 位</b>——Wii 上的那部重制，比五代（${rf5.candF || 6} 位）多出一倍。四代与五代把总数稳在 ${num(rf4)}，但那是<b>两性各 ${rf4.candM || 6} 位对半劈</b>的结果；单看女性候补，初代 10、三代 11、边境 12，反而是四代之后最少。</p>
+
+            <h2 class="h2">花婿线是两起两落</h2>
+            <p class="p">把每作的花婿数单独排一行，形状很难看：<b>${male}</b>。二代先给了 ${rf2.candM || 4} 位${m2.length ? '（' + m2.map(E).join('、') + '）' : ''}，三代与边境又收回到 0——<b>同一时期的两作里，一个能嫁、一个不能</b>；要到四代才固定成 6 位，此后再没回到 0。中间那一档是海洋：${rfo.candF || 10} 位花嫁配 ${rfo.candM || 4} 位花婿，女性仍占 ${Math.round((rfo.candF || 10) / ((rfo.candF || 10) + (rfo.candM || 4)) * 100)}%，<b>真正对半要到四代</b>（${rf4.candF || 6} 比 ${rf4.candM || 6}）。</p>
+            <div class="key">所以「这一作能不能选男主角」不能用代际推：<b>${one.map(g => E(g.short)).join('、')}这 ${one.length} 作是纯花嫁</b>，数值上是全系列花嫁最集中的一段（${one.reduce((a, g) => a + (g.candF || 0), 0)} 位，占 ${allF} 位的 ${Math.round(one.reduce((a, g) => a + (g.candF || 0), 0) / allF * 100)}%）。</div>
+
+            ${pairs.length ? `<h2 class="h2">边境把初代的六位花嫁全搬过来了，三个名字换了写法</h2>
+            <p class="p">边境是初代的重制，站内两作的花嫁名单按日文名能一一对上：<b>初代收录的 ${pairs.length} 位，边境一位不少</b>，另外新增 ${added.length} 位（${added.map(x => E(x.n)).join('、')}）。对得上的这 ${pairs.length} 位里，<b>${diff.length} 位的汉语写法不一样</b>——同一句日文名，两作译名各差一个字。</p>
+            ${tbl(['初代', '边境', ''], pairRows, { leftFirst: true, nw: [1, 2], colw: ['auto', 'auto', '2.6rem'], note: '按日文名对齐，不是按中文写法对——否则这三位会被当成不同的人。' })}
+            <p class="p">这不是错字，是<b>两套译名各自成体系</b>：初代把 ロゼッタ 译成「萝洁塔」，边境译成「萝赛塔」。同一页里出现两种写法时，以各自作品内的写法为准，本站两边都保留，不统一。</p>
+            <p class="p">顺带把另一件事钉死：七作人物档案里，候补一共 ${slots} 份、按日文名去重是 ${uniq} 位，<b>跨两作出现的只有 ${dup.length} 位</b>${dupOnly ? '，而且全在初代与边境之间' : ''}。换句话说<b>系列没有「每代都回来的常客候补」</b>——除了这次重制，每一作的恋爱对象都是重新写的，指望在续作里见到上一代的老婆，这条路走不通。</p>` : ''}
+            <div class="note">这一节只做加法：<b>八作的候补计数与名单都是站内既有的</b>，本页没有新增任何一位，也没有替哪一作补上「本站没写」的条件。初代那 ${(nf.rf1 || []).filter(x => /花嫁/.test(x.r || '')).length} 位花嫁是站内收录数，与作品数据里的 ${(GS[0] || {}).candF || 10} 位不等——差的那几位本站没有人物档案，本页不猜是谁。</div>`;
+}
+
 function timeDeepHtml(id) {
     const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const uniqStr = a => { const o = {}; a.forEach(x => { o[x] = 1; }); return Object.keys(o); };
@@ -12582,7 +12647,7 @@ const PAGES = [
     },
     {
         key: 'love', group: 'event', title: '恋爱与结婚', icon: 'ring',
-        body: (g) => loveDeepHtml(g && g.id) || (`
+        body: (g) => (loveDeepHtml(g && g.id) || (`
             <h2 class="h2">流程</h2>
             <p class="p">系列的标准流程是：<b>提升好感 → 触发爱情事件 → 告白成为恋人 → 求婚 → 结婚 → 婚后生活（部分作品有孩子）</b>。</p>
             ${tbl(['阶段', '条件', '常见坑'], [
@@ -12598,7 +12663,7 @@ const PAGES = [
             <div class="key">送礼的正确做法：<b>先找出「最喜欢」的那一件，而不是每天换着花样送</b>。同一件最爱的礼物每天送，好感增长远高于随机送五件普通礼物。</div>
             <h2 class="h2">生日</h2>
             <p class="p">每位居民都有固定生日。生日当天送礼，好感加成显著。把「本周谁过生日」写进日程，比每天盲送效率高得多——本站「提醒」页就是为此做的。</p>
-        `)
+        `)) + loveCrossHtml(g && g.id),
     },
     {
         key: 'newly', group: 'event', title: '新婚模式', icon: 'star',
