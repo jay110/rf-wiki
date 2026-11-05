@@ -8953,6 +8953,117 @@ function timeDeepHtml(id) {
     return '';
 }
 
+/* 「每家店一天开多久」：把每家营业时间相减，量的是时长而不是时刻。
+   六作的店铺数据分属各自的分片，这里逐个取，取不到的作整段跳过。
+   时刻解析与 timeDeepHtml 里那套一致（PM0:00 与 AM12:00 都按正午算）。 */
+function timeTail(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const NAME = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rf4: 'RF4', rf5: 'RF5', rff: '边境', rfo: '海洋', azuma: '龙之天地' };
+    if (!NAME[id]) return '';
+    const clocks = txt => {
+        const out = [];
+        const re = /(AM|PM)?\s*(\d{1,2}):(\d{2})/g;
+        let m;
+        while ((m = re.exec(String(txt || ''))) !== null) {
+            const hh = Number(m[2]);
+            let v = hh * 60 + Number(m[3]);
+            if (m[1] === 'PM' && hh < 12) v += 720;
+            if (m[1] === 'AM' && hh === 12) v = 720;
+            out.push(v);
+        }
+        return out;
+    };
+    const span = h => {
+        const a = clocks(h);
+        if (!a.length) return null;
+        const o = a[0];
+        let c = a.length > 1 ? a[1] : null;
+        if (c != null && c < o) c += 1440;
+        return { o: o, c: c };
+    };
+    const hhmm = v => v == null ? '—' : String(Math.floor((v % 1440) / 60)) + ':' + String(v % 60).padStart(2, '0');
+
+    const SET = [
+        ['rf1', typeof RF1_SHOP !== 'undefined' ? RF1_SHOP : null],
+        ['rf3', typeof RF3_SHOP !== 'undefined' ? RF3_SHOP : null],
+        ['rf4', typeof RF4_SHOP !== 'undefined' ? RF4_SHOP : null],
+        ['rff', typeof RFF_SHOP !== 'undefined' ? RFF_SHOP : null],
+        ['rfo', typeof RFO_SHOP !== 'undefined' ? RFO_SHOP : null],
+        ['rf5', typeof RF5_SHOP !== 'undefined' ? RF5_SHOP : null]
+    ];
+    const R = [];
+    SET.forEach(x => {
+        if (!(x[1] && x[1].shops)) return;
+        x[1].shops.forEach(s => {
+            [s].concat(s.subs || []).forEach(u => {
+                const sp = u && u.h ? span(u.h) : null;
+                if (!sp || sp.c == null) return;
+                R.push({ g: x[0], n: u.n, h: u.h, o: sp.o, c: sp.c, d: (sp.c - sp.o) / 60 });
+            });
+        });
+    });
+    if (!R.length) return '';
+
+    const AR = SET.map(x => {
+        const a = R.filter(r => r.g === x[0]);
+        if (!a.length) return null;
+        const ds = a.map(r => r.d);
+        return {
+            g: x[0], n: a.length, a: a,
+            avg: ds.reduce((p, q) => p + q, 0) / ds.length,
+            min: Math.min.apply(null, ds), max: Math.max.apply(null, ds)
+        };
+    }).filter(Boolean);
+
+    const fmt = (a, v) => {
+        const g = a.filter(r => r.d === v);
+        const nm = g.length === 1 ? '<b>' + E(g[0].n) + '</b>'
+            : (g.length <= 3 ? g.map(r => E(r.n)).join('、') : '<span class="mon-no">' + g.length + ' 家并列</span>');
+        return v + ' 小时 ' + nm;
+    };
+    const cell = o => o.min === o.max
+        ? '<span class="mon-no">' + o.min + ' 小时</span>（' + o.n + ' 家全同）'
+        : '<span class="mon-no">最短</span> ' + fmt(o.a, o.min) + '<br><span class="mon-no">最长</span> ' + fmt(o.a, o.max);
+
+    const lo = AR.slice().sort((x, y) => x.avg - y.avg)[0];
+    const hi = AR.slice().sort((x, y) => y.avg - x.avg)[0];
+    const dsAll = R.map(r => r.d);
+    const maxH = Math.max.apply(null, dsAll);
+    const minH = Math.min.apply(null, dsAll);
+    const maxRows = R.filter(r => r.d === maxH);
+    const minRows = R.filter(r => r.d === minH);
+    const minC = Math.min.apply(null, R.map(r => r.c));
+    const maxC = Math.max.apply(null, R.map(r => r.c));
+    const desc = rows => rows.map(r => '<b>' + E(r.n) + '</b>（' + NAME[r.g] + '）').join('、');
+    /* 一格可能写着两家店（三代把浴场与技能店并进一条），报「几处」时按名字拆开数 */
+    const heads = rows => rows.reduce((a, r) => a + String(r.n).split('／').length, 0);
+
+    /* 营业时间以「周几」开头的：只有这两家，折成「小时／周」才有意义 */
+    const WK = R.filter(r => /^\s*周/.test(String(r.h))).map(r => {
+        const days = (String(r.h).match(/周[一二三四五六日]/g) || []).length;
+        return { n: r.n, g: r.g, d: r.d, days: days, w: r.d * days };
+    }).sort((x, y) => x.w - y.w);
+
+    const self = AR.filter(o => o.g === id)[0] || null;
+    const same = AR.filter(o => o.min === o.max)[0] || null;
+    const rfo = AR.filter(o => o.g === 'rfo')[0] || null;
+    const comp = rfo ? [9, 6].map(v => [v, rfo.a.filter(r => r.d === v).length]).filter(x => x[1]) : [];
+
+    return `
+            <h2 class="h2">每家店一天开多久：六作平均从 ${lo.avg.toFixed(1)} 到 ${hi.avg.toFixed(1)} 小时</h2>
+            <p class="p">${self ? '前面两张表量的是<b>时刻</b>——几点开、几点关。这里换一个量：把每家的起止时间相减，看它<b>一天到底开多久</b>。单看一家，六作的差别很大；一取平均，反而挤在一起。' : '这一作自己排不出钟点，但其余六作排得出。把它们的营业时间相减，能量出一个比「几点开门」更稳定的数——<b>每家店一天到底开多久</b>。'}</p>
+            ${tbl(['作', '最短 · 最长'], AR.map(o => [
+        (o.g === id ? '<b>' + NAME[o.g] + '</b>' : NAME[o.g])
+            + '<br><span class="mon-no">' + o.n + ' 条 / 平均 ' + o.avg.toFixed(1) + ' 小时</span>',
+        cell(o)
+    ]), { leftFirst: true, left: [1], colw: ['auto', 'auto'] })}
+            <p class="p">平均最高的是<b>${NAME[hi.g]}</b>，${hi.avg.toFixed(1)} 小时；最低的是<b>${NAME[lo.g]}</b>，${lo.avg.toFixed(1)} 小时。全距只有 <b>${(hi.avg - lo.avg).toFixed(1)} 小时</b>。六作的关门时刻则从 <b>${hhmm(minC)}</b> 一直铺到<b>次日 ${hhmm(maxC)}</b>，跨度 ${(maxC - minC) / 60} 小时——最早关门的正是艾莉莎，一周只开三天。两件事放在一起就清楚了：<b>六作的差别不在「开多久」，而在「这几个小时摆在一天的哪一段」</b>。日常也印证这一点：买种子、改农具这类事，在哪一作都得赶在白天同一段里办。</p>
+            <p class="p">最长的一头是 <b>${maxH} 小时</b>，六作加起来只有 ${heads(maxRows)} 处：${desc(maxRows)}。但伊万那一处要打个折——<b>只在祝日兑现</b>；一个月有几个祝日源里没写，所以不能拿 12 小时乘天数。三代那一条把浴场与技能店写在了一格，10:00 开、22:00 收，在六作里算开得晚的。</p>
+            ${WK.length ? `<p class="p">另有两家得按「周」折算才看得清。六作里营业时间<b>以「周几」开头的只有 ${WK.length} 家</b>：` + WK.map(w => NAME[w.g] + '的<b>' + E(w.n) + '</b>一天 ' + w.d + ' 小时、一周只开 ' + w.days + ' 天，折下来 <b>' + w.w + ' 小时／周</b>').join('；') + `。其余各作全按天写，所以「每天开几小时」这个问法对这两家不成立——它们一周里分别有 ` + WK.map(w => (7 - w.days) + ' 天').join('与 ') + `根本不营业。</p>` : ''}
+            ${same ? `<p class="p">还有一处反例：${NAME[same.g]} 的 ${same.n} 家一字不差都是 ${same.min} 小时——平均、最短、最长是同一个数。不是它排得更整齐，是这几家本来就共用一份时间表。</p>` : ''}
+            ${rfo ? `<div class="note">${NAME[rfo.g]}只有 ${rfo.n} 处设施写了钟点，${rfo.avg.toFixed(1)} 小时是${comp.map(c => ' ' + c[1] + ' 处 ' + c[0] + ' 小时').join('与')}的平均——样本最小，别拿这个数当「海洋的店开得短」的证据。</div>` : ''}`;
+}
+
 /* 体力与 RP：八作各写各的。
    能逐条核对的数据只有三块——
    ① 魔法／技能的 RP 消耗：RF1／RF2／RF3 的符文能力表有这一列，其余五作没有；
@@ -10302,7 +10413,7 @@ const PAGES = [
     },
     {
         key: 'time', group: 'basic', title: '时间与季节', icon: 'clock',
-        body: (g) => timeDeepHtml(g && g.id) || (`
+        body: (g) => { const id = g && g.id; const hd = timeDeepHtml(id) || (`
             <h2 class="h2">一天怎么过</h2>
             <p class="p">清晨起床（多数作品为 6:00），当天可以自由安排耕作、采集、下迷宫、送礼、接委托。时间在户外与迷宫内都会流逝，进入室内、菜单、对话时会暂停。</p>
             <p class="p">深夜之后仍不睡觉会开始扣体力，最终强制就寝。熬夜的代价通常是第二天起床变晚——而起床晚了，商店开门、NPC 出门的时间都会错过。</p>
@@ -10318,7 +10429,7 @@ const PAGES = [
             <p class="p">冬季不能种地，是系列一贯设计。这段时间正好拿来刷迷宫素材、把锻造与药学的等级补上。</p>
             <h2 class="h2">天气</h2>
             <p class="p">晴、阴、雨、雪。雨天不必浇水，是推进迷宫与刷素材的好日子；暴风雨可能造成作物损失。天气预报可以在电视或公告处查看，前一天确认再决定第二天的安排。</p>
-        `)
+        `); const tl = timeTail(id); return tl && hd.indexOf('<div class="jump">') >= 0 ? hd.replace('<div class="jump">', tl + '<div class="jump">') : hd + tl; },
     },
     {
         key: 'rp', group: 'basic', title: '体力与 RP', icon: 'bolt',
