@@ -6781,11 +6781,12 @@ function decorateDeepHtml(id) {
 }
 
 /* 采矿与钓鱼：八作各写各的。
-   采矿——逐矿点的资料只有 RF4 可核对（biligame《鉱石类》条目 RF4 表 → js/ore.js）；
-   其余作品源站没有矿点表，本页不替它们编，只保留机制说明。
+   采矿——逐矿点的只有 RF4（biligame《鉱石类》条目 RF4 表 → js/ore.js）；
+   到得了迷宫级的只有 RF3（ORE_RF3，5 座迷宫 × 可采集矿石）；其余六作源站没有矿点表，不编。
+   页尾的 mineTail() 把八作的钓鱼记法并排一次：出现率只有 RF4／RF5 有，门槛四作四种。
    钓鱼——本页走「钓点 → 能钓什么」的视角，与 fish 页「鱼 → 钓点」互为反面。
    数据全部来自站内既有文件：SPOT_RF1／RF2／RF3／RFF／SPOT4／SPOT_RF5／SPOT_AZUMA／RFO_FISH_SPOT。 */
-function mineDeepHtml(id) {
+function mineDeepCore(id) {
     const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const uniq = a => { const o = {}; a.forEach(x => { o[x] = 1; }); return Object.keys(o); };
     const maxBy = (a, f) => a.reduce((x, y) => (f(y) > f(x) ? y : x), a[0]);
@@ -6796,7 +6797,7 @@ function mineDeepHtml(id) {
             </div>`;
 
     const NOORE = `
-            <div class="note">逐矿点的资料只有 RF4 可核对——源站的《矿石类》条目只写了 RF4 一节。本作的矿点分布没有可引用的表，<b>本站不编</b>，下面只写钓鱼。</div>`;
+            <div class="note">逐矿点的资料只有 RF4 可核对——源站的《矿石类》条目只写了 RF4 一节；到得了迷宫级的也只有 RF3，那一份写在 RF3 那页上。本作的矿点分布没有可引用的表，<b>本站不编</b>，下面只写钓鱼。</div>`;
 
     const HEAD_MINE = `
             <h2 class="h2">采矿</h2>
@@ -6813,7 +6814,7 @@ function mineDeepHtml(id) {
         const rowsO = O.map(r => [E(r[0]), j(r[1]), j(r[3]), j(r[2]), j(r[4])]);
         return HEAD_MINE + `
             <p class="p">本作的矿石共 ${O.length} 种，源站把每一种的来路拆成四类：<b>采集</b>（矿点直接敲）、<b>宝箱</b>、<b>木箱</b>、<b>魔物掉落</b>。四类里只有「采集」跟锤子有关，其余三类是跑图与刷怪的副产物——所以「缺矿」和「缺锤子」经常是两回事。</p>
-            <div class="note">下表来自 biligame《鉱石类》条目的 RF4 一节，八种矿石的来路照录。除 RF4 外，源站在其余作品的矿石条目里没有列矿点与掉落，<b>本站不为那七作编矿点表</b>——这一页的采矿部分因此只有 RF4 是逐条的。</div>
+            <div class="note">下表来自 biligame《鉱石类》条目的 RF4 一节，八种矿石的来路照录。除 RF4 外源站没有逐矿点的表；RF3 只到「迷宫级」（写在 RF3 那页），本站不为其余六作编矿点表——这一页的采矿部分因此只有 RF4 是逐矿点的。</div>
             ${tbl(['矿石', '采集（矿点）', '魔物掉落', '宝箱', '木箱'], rowsO, { leftFirst: true, cls: 'txt', colw: ['4.4rem', 'auto', '7rem', '8rem', '6rem'] })}
             <p class="p">能直接从表里读出来的几件事：<b>${E(widest[0])} 是分布最广的矿石</b>，${widest[1].length} 处矿点都能敲到，且一路铺到「${E(widest[1][widest[1].length - 1])}」——前期缺铁基本不用专门去挖。<b>${lastOnly.length ? E(lastOnly.join('、')) : '—'}只在「符文之息」一处能采集</b>，除这一处之外只有宝箱产出——采集流拿不到，只能翻箱子。<b>${monSame.length ? E(monSame.join('、')) : '—'} 的魔物掉落名单完全相同</b>（${j(pick('银')[3])}），打这三种石头人是一次补两种矿的买卖。</p>
             <p class="p">还有一条不是矿点、但常被问起的：<b>${forge.length ? E(forge[0][0]) : '—'}</b>。源站把它归在矿石类里，来源写的是「故意锻造失败」——它不是敲出来的，是锻造时炸炉的产物。想要它就别怕失败。</p>
@@ -6904,8 +6905,37 @@ function mineDeepHtml(id) {
             return [E(s[0]), String(list.length), dear ? `${E(dear[0])}（${E(String(dear[2]))}G）` : '<span class="mon-no">—</span>'];
         });
         const res = S.resort || { fish: [] };
-        return HEAD_MINE + `
-            ${NOORE}
+
+        /* 采矿：RF3 是唯一到得了「迷宫级」的一作（ORE_RF3＝5 座迷宫 × 可采集矿石）。
+           这里给反面——矿石在哪些迷宫；正面（迷宫 → 矿石）在魔物图鉴页。 */
+        const O3 = (typeof ORE_RF3 !== 'undefined') ? ORE_RF3 : [];
+        const M3 = (typeof MON_RF3 !== 'undefined') ? MON_RF3 : [];
+        const mazes = O3.map(r => ({ n: r[0], o: String(r[1]).split('、').map(s => s.trim()).filter(Boolean) }));
+        const flatOre = [];
+        mazes.forEach(x => x.o.forEach(o => flatOre.push(o)));
+        const oreCnt = {};
+        flatOre.forEach(o => { oreCnt[o] = (oreCnt[o] || 0) + 1; });
+        const oreNames = Object.keys(oreCnt).sort((a, b) => oreCnt[b] - oreCnt[a]);
+        const dropOf = {};
+        M3.forEach(m => String(m[9] || '').split(/[，,、]/).forEach(t => {
+            const n = t.trim();
+            if (oreCnt[n]) (dropOf[n] = dropOf[n] || []).push(m[0]);
+        }));
+        const cOre = n => oreCnt[n] || 0;
+        const mzOf = n => mazes.filter(x => x.o.indexOf(n) >= 0).map(x => E(x.n)).join('、') || '—';
+        const drOf = n => (dropOf[n] || []).map(E).join('、') || '—';
+        const allMaze = oreNames.filter(n => oreCnt[n] === mazes.length);
+        const noDrop = oreNames.filter(n => !(dropOf[n] || []).length);
+        const gemOre = ['紫水晶', '绿宝石', '红宝石', '海蓝宝石', '蓝宝石', '钻石'].filter(n => oreCnt[n]);
+        const cryOre = ['地之结晶', '火之结晶', '风之结晶', '水之结晶'].filter(n => oreCnt[n]);
+        const oreBlock = O3.length ? `
+            <p class="p">本作的采矿资料是<b>迷宫级</b>的：${mazes.length} 座迷宫、${oreNames.length} 种矿石、${flatOre.length} 条「某座迷宫能采到某种矿」的记录。具体到「矿点在哪块墙根」源站没有给，<b>本站也不猜</b>；但「进了这座迷宫、锤子该敲出什么」这一层是齐的。</p>
+            ${tbl(['矿石', '迷宫数', '能采集的迷宫', '魔物掉落'], oreNames.map(n => [E(n), String(cOre(n)), mzOf(n), drOf(n)]), { leftFirst: true, cls: 'txt', colw: ['6rem', '4.4rem', 'auto', '9rem'] })}
+            <p class="p">金属是一条越走越窄的线：<b>${allMaze.map(E).join('、')} ${mazes.length} 座迷宫全有</b>；铜 ${cOre('铜')} 座、银 ${cOre('银')} 座、金 ${cOre('金')} 座、白金 ${cOre('白金')} 座（${mzOf('白金')}）、钻石 ${cOre('钻石')} 座（${mzOf('钻石')}）。铁是唯一的例外——只有 ${cOre('铁')} 座（${mzOf('铁')}），出了这两座就得靠掉落：${drOf('铁')}。</p>
+            <p class="p">宝石是另一条阶梯：${gemOre.map(E).join(' → ')}，${gemOre.length} 种走完一条线，基本是一座迷宫给一档（沙漠一座给了两档）。属性结晶则贴着迷宫配：${cryOre.map(E).join('、')} 各 ${cOre('地之结晶')} 座——森林出地、沙漠出火、山谷出风、河川出水，<b>龙玄洞反而没有属性结晶，给的是钻石</b>。</p>
+            <p class="p">掉落那一列补的恰好是卡人的几样：<b>钻石有两条路</b>——${mzOf('钻石')} 里采集，或者打 ${drOf('钻石')}；<b>银与金</b>都是 ${drOf('银')} 掉，一只怪一次给两种；<b>铁</b>除了 ${mzOf('铁')} 采集，还能从 ${drOf('铁')} 拿。其余 ${noDrop.length} 种源表没记掉落，本站不给它编第二条路。</p>
+            <div class="note">站内<a href="#/page/mbook">魔物图鉴</a>页有一张正向的「迷宫 → 可采集矿石」，本页是同一份数据的反面，<b>数字必须对得上</b>。另外三处迷宫名两页写法不同——本页「普利贝拉之森」对钓鱼表的「普利贝拉森林」、「茵瓦埃尔河」对「茵瓦艾尔河」（埃／艾）、「索鲁·提拉诺沙漠」对「索鲁•提拉诺沙漠」（·／•）。源站各写各的，<b>照录不统一</b>。</div>` : '';
+        return HEAD_MINE + oreBlock + `
             <h2 class="h2">钓鱼：${S.spots.length} 个常驻钓点 ＋ 一处度假村</h2>
             <p class="p">本作的钓鱼表很干净：<b>${S.spots.length} 个常驻钓点</b>各有一张「鱼 × 鱼影大小 × 买价」的目录，另有几组特殊规则（见下）。没有出现率，也没有 RF4／RF5 那种「金杯线」——同样一条鱼，鱼影只有最小／小／中／大四档。</p>
             ${tbl(['钓点', '鱼种', '买价最高的一种'], spotRows, { leftFirst: true, colw: ['9rem', '4.4rem', 'auto'] })}
@@ -7024,6 +7054,53 @@ function mineDeepHtml(id) {
     }
 
     return '';
+}
+
+/* 采矿与钓鱼的页尾：把八作的钓鱼记法并排一次。
+   要回答的不是「哪作鱼多」，而是「为什么这一作的图鉴里没有百分比」——
+   出现率只有 RF4／RF5 两作有；「门槛」在八作里是四样完全不同的东西。
+   数字取各作数据文件的当前快照（fishspot_*.js／fish_old.js／rfo_fish.js），不现算：
+   分包之后别的作品的模块不一定在内存里，现算会算出一片「—」。重生成数据时要同步这里。 */
+function mineTail(id) {
+    const E = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const NM = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rf4: 'RF4', rf5: 'RF5', rfo: '海洋', azuma: '龙之天地' };
+    const me = NM[id] || '';
+    const cell = (t, first) => (first && t === me ? `<b>${E(t)}</b>` : E(t));
+    const T1 = [
+        ['RF1', '地图 → 分区 → 鱼，每条带蓄力等级', '32', '无'],
+        ['RF2', '地点 → 区域色 → 季节 → 鱼，带钓竿 Lv', '34', '无（数值表另有「概率」列，四条杂物写「-」）'],
+        ['RF3', '钓点 → 鱼 × 鱼影大小 × 买价', '35', '无'],
+        ['边境', '钓点 → 分区 → 季节 → 鱼，带鱼等级与价', '30', '无'],
+        ['RF4', '鱼 × 21 个环境列（季节 8 ＋ 钓点 13）', '38', '有，逐列百分比'],
+        ['RF5', '池 → 鱼，逐条记四季出现率', '44', '有，四季区间'],
+        ['海洋', '岛 → 地点 → 时段（昼／夜）→ 鱼', '29', '无，只标「稀有」'],
+        ['龙之天地', '鱼 → 钓点（倒着写），带买价、卖价、店铺', '42', '无']
+    ].map(r => [cell(r[0], true)].concat(r.slice(1).map(x => E(x))));
+    const T2 = [
+        ['RF1', '蓄力 1–5 级', '无', '算：空罐、长靴都在 32 种里'],
+        ['RF2', '钓竿 Lv，写成 1~5 这样的区间', '无（数值表有买／卖价）', '算：石头、树枝、空罐、高筒靴'],
+        ['RF3', '鱼影四档：最小／小／中／大', '买价', '算：空罐、高筒靴、罕见空罐在「全图通用」那 5 种里'],
+        ['边境', '鱼等级 1~10（标的是钓点等级区间，不是鱼的实力）', '卖价＋最低／最高', '不算：30 种全是鱼'],
+        ['RF4', '表里没有（建议钓竿在鱼类图鉴）', '无（另有金杯线与尺寸）', '算：空罐、高筒靴、罕见空罐；「钓物」另列 6 件'],
+        ['RF5', '表里没有，正文三条硬规则', '无', '算：空罐、高筒靴'],
+        ['海洋', '没有，只有昼／夜', '无', '不算：29 种全是鱼'],
+        ['龙之天地', '没有，只有店铺与解锁条件', '买价＋卖价', '不算：42 种全是鱼']
+    ].map(r => [cell(r[0], true)].concat(r.slice(1).map(x => E(x))));
+    return `
+        <h2 class="h2">八作摆在一起：同一件事，八种记法</h2>
+        <p class="p">上面是把每一作按它自家的表查。并排之后能看出真正该记的一件事：<b>「钓鱼资料」在这八作里不是同一种东西</b>——有的按地图分区列，有的按鱼的尺寸列，有的根本没有出现率这一栏。所以「别的作品能查到百分比、这一作查不到」不是本站漏了，是源表本来就没有。</p>
+        ${tbl(['作品', '表怎么分', '可钓物', '出现率'], T1, { leftFirst: true, colw: ['5rem', 'auto', '4.4rem', '8.4rem'] })}
+        <p class="p">真正能给出百分比出现率的只有 RF4 与 RF5，而且两家的口径也不一样：RF4 是<b>按环境列各自归一</b>的百分比（同一条鱼夏天的 18.88，不等于它在别的季节也这么高），RF5 是<b>四季区间</b>。RF2 是个半例外——它的鱼类数值表另有一列「概率」，但那四条杂物写的是「-」，而且那一列不在钓点表里，按钓点查仍然查不到。剩下五作只能回答「这里有没有」，回答不了「有多少」——海洋那 90 条记录里，连季节都只有芬尼斯岛一座岛分了。</p>
+        <p class="p">第二张表是另一个容易踩空的地方：<b>「钓不上来」在每作的判据都不一样</b>。门槛在这八作里是四样东西——蓄力等级、钓竿 Lv、鱼影大小、鱼等级区间；剩下四作的表里干脆没有这一栏，得看正文规则（RF5）或时段（海洋）。</p>
+        ${tbl(['作品', '表里的门槛', '价格列', '杂物算不算鱼'], T2, { leftFirst: true, colw: ['5rem', 'auto', '6rem', '9rem'] })}
+        <div class="key">同样是「空罐」，在 RF1、RF2、RF3、RF4、RF5 五作里都算钓得到的东西、在鱼表里各占一行；边境、海洋、龙之天地 三作的表里没有杂物，鱼种数就是纯鱼数。<b>所以「这一作有几种鱼」这句比较本身要打折</b>——带杂物的那五作数字偏大。</div>
+        <div class="note">两张表的数字取各作数据文件的当前快照（<code>fishspot_*.js</code>、<code>fish_old.js</code>、<code>rfo_fish.js</code>），与上面各页的表格同源；<b>哪一页的数据重生成，这两张表要一起改</b>——所以这里写确定数、不写「约」，改的时候好对。</div>`;
+}
+
+/* 页尾统一挂在最后：各分支只管自己那一作，收尾的对照表由这里补 */
+function mineDeepHtml(id) {
+    const h = mineDeepCore(id);
+    return h ? h + mineTail(id) : '';
 }
 
 /* 自宅与扩建：RF1／RF3／RF5／边境 有可核对的增筑（改建）表，这四作单独写；
