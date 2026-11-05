@@ -7,6 +7,7 @@ var K_PLAN = {
     "crossPages": [
         "battle",
         "festival",
+        "home",
         "seriescmp",
         "time"
     ],

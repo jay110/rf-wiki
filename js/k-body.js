@@ -7636,6 +7636,58 @@ function homeDeepHtml(id) {
     const G = v => E(v) + 'G';
     const D = v => (v === '—' || v === '' || v == null ? '<span class="mon-no">—</span>' : E(v));
 
+    /* 跨作「双人床」：八作里唯一既是家具、又是存档点、又是结婚硬条件的东西 */
+    const bedNum = v => Number(String(v == null ? '' : v).replace(/[^\d]/g, '')) || 0;
+    const bedPick = (arr, nameOf, priceOf) => {
+        const bed = arr.filter(r => nameOf(r) === '双人床')[0] || null;
+        const p = bed ? bedNum(priceOf(bed)) : 0;
+        const above = p ? arr.filter(r => bedNum(priceOf(r)) > p) : [];
+        return { bed: bed, p: p, n: arr.length, rank: above.length + 1, above: above };
+    };
+    const BH = (() => {
+        const S1 = (typeof RF1_SHOP !== 'undefined' && RF1_SHOP.shops) || [];
+        const ivan = S1.filter(s => s.n.indexOf('伊万') >= 0)[0];
+        const f1 = [];
+        (ivan ? ivan.secs : []).forEach(sec => { if (sec.t !== '每月19日' && sec.t !== '每月7日') (sec.r || []).forEach(r => f1.push(r)); });
+        const f3 = [];
+        ((typeof RF3_SHOP !== 'undefined' && RF3_SHOP.shops) || []).forEach(s => (s.secs || []).forEach(sec => {
+            if (sec.t === '家具') (sec.r || []).forEach(r => f3.push(r));
+        }));
+        const fr = (typeof FURN !== 'undefined' && FURN.rff && FURN.rff.items && FURN.rff.items.rows)
+            ? FURN.rff.items.rows.filter(r => r[0] === '家具') : [];
+        const f4 = (typeof FURN !== 'undefined' && FURN.rf4 && FURN.rf4.rows) ? FURN.rf4.rows : [];
+        const f5 = (typeof FURN !== 'undefined' && FURN.rf5 && FURN.rf5.rows) ? FURN.rf5.rows : [];
+        return {
+            r1: bedPick(f1, r => r[0], r => r[1]),
+            r3: bedPick(f3, r => r[0], r => r[1]),
+            rb: bedPick(fr, r => (r[1] === 'ダブルベッド' ? '双人床' : r[1]), r => r[2]),
+            r4: bedPick(f4, r => r[1], r => r[3]),
+            r5: bedPick(f5, r => r[0], r => r[1])
+        };
+    })();
+    const BEDNO = '<span class="mon-no">—</span>';
+    const BEDH = `
+        <h2 class="h2">同一张双人床，五作五个价，卡人的从来不是钱</h2>
+        <p class="p">上一张表讲的是「房子能不能盖」，这一件讲<b>同一件家具在各作卖多少钱、在哪一步被卡住</b>。挑双人床有两个理由：它是八作里<b>唯一同时是家具、存档点和结婚硬条件</b>的东西；而且五作都给了确切价目，是这一页少数能真正横着比的数字。</p>
+        ${tbl(['作品', '价格 · 家具表里的名次与门槛'], [
+            ['RF1', BH.r1.bed ? `<b>${G(BH.r1.p)}</b>　${BH.r1.n} 件里第 ${BH.r1.rank}；只在每月 25 日卖一天，且要求房屋增筑` : BEDNO],
+            ['RF2', '站内没有可引用的家具表，这一行留空'],
+            ['RF3', BH.r3.bed ? `<b>${G(BH.r3.p)}＋木材 ${E(String(BH.r3.bed[2]).replace(/本$/, ''))} 本</b>　${BH.r3.n} 件里第 ${BH.r3.rank}；打完奥德瓦溪谷 BOSS 后家具商才开卖` : BEDNO],
+            ['边境', BH.rb.bed ? `<b>${G(BH.rb.p)}</b>　${BH.rb.n} 件家具里第 ${BH.rb.rank}；13／19／25 日卖，要求扩建 2 楼卧室` : BEDNO],
+            ['海洋', '站内没有价目　自宅菜单里买，没有前置'],
+            ['RF4', BH.r4.bed ? `<b>${G(BH.r4.p)}＋木 ${E(BH.r4.bed[4])}＋石 ${E(BH.r4.bed[5])}</b>　${BH.r4.n} 件里第 ${BH.r4.rank}；随时可订，没有前置` : BEDNO],
+            ['RF5', BH.r5.bed ? `<b>${G(BH.r5.p)}</b>　${BH.r5.n} 件里第 ${BH.r5.rank}；随时可买，没有前置` : BEDNO],
+            ['龙之天地', '没有这张家具　民居直接给最大 HP']
+        ], { left: [0, 1], cls: 'txt', colw: ['4.6rem'] })}
+        <p class="p">五作有确切数字：<b>${G(BH.r1.p)} → ${G(BH.r3.p)} → ${G(BH.rb.p)} → ${G(BH.r4.p)}</b>；RF4 与 RF5 同为 ${G(BH.r5.p)}，并列最高，是最便宜的 RF1 的 <b>${BH.r1.p ? (BH.r5.p / BH.r1.p).toFixed(1) : '3'} 倍</b>。中间没有任何一作回落——这条线上床只会越来越贵。</p>
+        <p class="p">把每一作自己的家具表也算进来，名次却是倒着走的：RF1 的 ${BH.r1.n} 件里床就是<b>最贵的一件</b>（第 ${BH.r1.rank}），到 RF4 全表 ${BH.r4.n} 件、RF5 ${BH.r5.n} 件，床退到第 ${BH.r4.rank} 与第 ${BH.r5.rank}。<b>家具越收越多的作，床越不显眼，可绝对价格反而最高</b>——只看「这一作的床贵不贵」，会被家具表的大小带偏，得把钱数横过来比才看得到三倍差。</p>
+        <p class="p">各作比床更贵的件，数出来是 RF3 ${BH.r3.above.length} 件、边境 ${BH.rb.above.length} 件、RF4 ${BH.r4.above.length} 件、RF5 ${BH.r5.above.length} 件。<b>除边境那台「名工の鍛冶場」（${BH.rb.above.length ? G(BH.rb.above[0][2]) : '—'}，是工作台不是住的东西）之外，没有一件是过日子的必需品</b>：RF3 是绘画与两尊石像，RF4 是画作、塑像、通信机与两套士兵服，RF5 是四块地板。也就是说<b>在「住」这一档里，床就是最贵的那件</b>——贵过它的全在装修那一侧。</p>
+        <p class="p">真正卡人的是门槛，不是价，而且只有三种：<b>要房子</b>（RF1 要房屋增筑、边境要扩建 2 楼卧室）、<b>要剧情</b>（RF3 要打完溪谷 BOSS）、<b>没有门槛</b>（RF4 与 RF5 随时能买）。海洋在自宅菜单里买、站内没有价目；龙之天地干脆没有这张家具。</p>
+        <div class="key">边境那笔账值得单独算：2 楼卧室 <b>${G('75000')}＋木材 900</b>，床本身 ${G(BH.rb.p)}——<b>为了这张床要先掏 ${G(String(75000 + BH.rb.p))}、外加 900 本木材</b>，是 RF5 直接买床（${G(BH.r5.p)}）的 ${( (75000 + BH.rb.p) / (BH.r5.p || 30000) ).toFixed(1)} 倍（只算钱），木材还没算。两作都叫「双人床」，难度不是一个量级。</div>
+        <p class="p">货架节奏也分两代：<b>RF1 一个月只摆一天</b>（25 日）、边境三天（13／19／25 日），RF3 之后都是常备。「错过一天要等下个月」这句话只对前两作成立。给孩子的两件只有两作收：边境的「子供用ベッド」${G('20000')} 与「子供用オモチャ箱」${G('5000')}（前置分别是结婚后、怀孕后），海洋的儿童用床与儿童玩具箱（同在一个菜单里）——<b>RF4、RF5 的站内家具表里没有这两件，是本站没收录还是游戏里就没有，无从判断</b>，这一页不替它下结论。</p>
+        <div class="note">龙之天地是反例：家具表里没有床，民居直接给最大 HP（+5／+15／+30）。<b>「床＝存档点＋结婚条件」这条链在第八作断了</b>——那一作睡觉与成家都不靠这件家具。</div>
+    `;
+
     /* 八作共用的页尾：跨作对照 + 存档提醒。各分支末尾都挂它 */
     const CMN = `
         <h2 class="h2">八作摆在一起：房子能不能盖，家具怎么来</h2>
@@ -7656,6 +7708,7 @@ function homeDeepHtml(id) {
         <h2 class="h2">存档只能靠一张床</h2>
         <p class="p">系列传统是<b>床上存档</b>：一天的行动不可回退（个别作品另有中断存档）。所以「床」在这条线上不只是家具——它是存档点，也常是结婚的硬条件。重要节点前先睡一觉存上：告白、求婚、Boss 战、节日比赛。</p>
         <div class="note">各作的增筑／扩建价目，本站只收有出处的那几作（RF1／RF3／RF5／边境／海洋／RF4／龙之天地）；<b>RF2 站内没有来源，这一页与家具页都留空</b>，不拿别作的数字类推。</div>
+        ${BEDH}
     `;
 
     /* ================= RF1：增筑在农场做，家具在流动店买 ================= */
