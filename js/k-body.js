@@ -4029,6 +4029,84 @@ function gearXcheckHtml(id) {
     if (D.key) h.push(`<div class="key">${D.key}</div>`);
     return h.join('\n');
 }
+/* 「毕业装能不能买」：四作的武器表带买价列，正好能把「顶格那件在不在货架上」算出来。
+   口径：买价非空＝店里能买；物攻与买价列按各表表头定位，不写死列位。
+   RF3／RF4／RF5 的武器表没有买价列，这里不补。 */
+function gearBuyHtml(id) {
+    const W = (typeof WEQ_ALL !== 'undefined') ? WEQ_ALL : null;
+    if (!W) return '';
+    const KS = [['rf1', '初代'], ['rf2', 'RF2'], ['rff', '边境'], ['rfo', '海洋']];
+    const num = v => { const t = String(v).replace(/[,\s]/g, ''); return /^\d+$/.test(t) ? +t : null; };
+    const fmt = n => Number(n).toLocaleString('en-US');
+    const T = [], nameAtk = {};
+    KS.forEach(function (p) {
+        const k = p[0], nm = p[1], D = W[k];
+        if (!D || !D.rows || !D.cols) return;
+        const iA = D.cols.findIndex(function (t) { return String(t).indexOf('物攻') >= 0; });
+        const iP = D.cols.findIndex(function (t) { return String(t).indexOf('买价') >= 0; });
+        if (iA < 0 || iP < 0) return;
+        const R = D.rows.map(function (r) { return r[1]; });
+        const atk = R.map(function (r) { return [r[0], num(r[iA])]; })
+            .filter(function (x) { return x[1] != null; })
+            .sort(function (a, b) { return b[1] - a[1]; });
+        const buy = R.map(function (r) { return [r[0], num(r[iA]), num(r[iP])]; })
+            .filter(function (x) { return x[2] != null; });
+        if (!atk.length || !buy.length) return;
+        const tb = buy.filter(function (x) { return x[1] != null; })
+            .sort(function (a, b) { return b[1] - a[1]; })[0];
+        const tp = buy.slice().sort(function (a, b) { return b[2] - a[2]; })[0];
+        atk.forEach(function (x) { (nameAtk[x[0]] = nameAtk[x[0]] || {})[k] = x[1]; });
+        T.push({
+            k: k, nm: nm, n: R.length, nb: buy.length, pct: buy.length / R.length * 100,
+            top: atk[0], tb: tb, tp: tp, ratio: tb ? tb[1] / atk[0][1] * 100 : 0
+        });
+    });
+    if (T.length < 2) return '';
+    const rowOf = function (x) {
+        return [
+            x.k === id ? '<b>' + x.nm + '</b>' : x.nm,
+            x.nb + '／' + x.n + ' 行',
+            x.top[0] + ' ' + fmt(x.top[1]),
+            x.tb ? x.tb[0] + ' ' + fmt(x.tb[1]) : '—'
+        ];
+    };
+    const get = function (k) { return T.filter(function (x) { return x.k === k; })[0]; };
+    const rf1 = get('rf1'), rf2 = get('rf2'), rff = get('rff'), rfo = get('rfo');
+
+    /* 四作都有的同名武器，按物攻极差排前五 */
+    const com = Object.keys(nameAtk).filter(function (n) {
+        return T.every(function (x) { return nameAtk[n][x.k] != null; });
+    }).map(function (n) {
+        const v = T.map(function (x) { return nameAtk[n][x.k]; });
+        return { n: n, v: v, sp: Math.max.apply(null, v) / Math.min.apply(null, v) };
+    }).filter(function (x) { return x.sp > 1; })
+        .sort(function (a, b) { return b.sp - a.sp; }).slice(0, 5);
+
+    const h = [];
+    h.push('<h2 class="h2">毕业装能不能买：四作的武器表给了答案</h2>');
+    h.push('<p class="p">「毕业装备」这个词容易让人以为终点是「刷到某件东西」。四作的武器表正好能把这件事算清楚：<b>标了买价的行就是店里能买的</b>，没标价的那些只能靠锻造、联机或任务。</p>');
+    h.push(tbl(['作品', '有价/行数', '顶格物攻', '可买最强'], T.map(rowOf),
+        { leftFirst: true, colw: ['3.2rem'] }));
+    h.push('<p class="p">四作里只有 RF2 是整表可买：' + rf2.n + ' 行全部标了价，连 ' + fmt(rf2.tp[2]) + 'G 的' + rf2.tp[0] + '都挂在店里；全表最强那把' + rf2.top[0] + ' ' + fmt(rf2.top[1]) + '，' + fmt(rf2.tb[2]) + 'G，直接能买。</p>');
+    h.push('<p class="p">另三作是相反的极端：边境 ' + rff.nb + ' 行、海洋 ' + rfo.nb + ' 行、初代 ' + rf1.nb + ' 行有价，而这些行里物攻最高的一件，只到全表顶格的 ' + rff.ratio.toFixed(1) + '%（边境 ' + rff.tb[0] + ' ' + rff.tb[1] + '）、' + rfo.ratio.toFixed(1) + '%（海洋 ' + rfo.tb[0] + ' ' + rfo.tb[1] + '）、' + rf1.ratio.toFixed(1) + '%（初代 ' + rf1.tb[0] + ' ' + rf1.tb[1] + '）——货架上摆的全是开局武器，顶格那件得自己做。边境表里最贵的可买武器只有 ' + fmt(rff.tp[2]) + 'G（' + rff.tp[0] + '），海洋 ' + fmt(rfo.tp[2]) + 'G（' + rfo.tp[0] + '），都不到 RF2 那把的百分之一。</p>');
+    if (rf1.tp && rf1.tb) {
+        h.push('<p class="p">初代还有一条倒挂：可买里最贵的' + rf1.tp[0] + ' ' + fmt(rf1.tp[2]) + 'G，物攻只有 ' + fmt(rf1.tp[1]) + '，反而不如 ' + fmt(rf1.tb[2]) + 'G 的' + rf1.tb[0] + '（' + fmt(rf1.tb[1]) + '）。价钱和面板在这张表里不是一条线。</p>');
+    }
+    h.push('<div class="note">RF3、RF4、RF5 的武器表没有买价列，这三作不参与这张表——给它们补一列价格等于编。它们的装备怎么来，看各自那一页的锻造与配方。</div>');
+
+    if (com.length) {
+        const c0 = com[0], c0min = Math.min.apply(null, c0.v), c0max = Math.max.apply(null, c0.v);
+        h.push('<h2 class="h2">同名武器换一作，数值就换一套</h2>');
+        h.push('<p class="p">下表是四作都有的同一批名字，物攻照各自的表抄，一列一作。极差最大的是' + c0.n + '：' + c0min + ' 到 ' + c0max + '，' + c0.sp.toFixed(1) + ' 倍。</p>');
+        h.push(tbl(['武器', '初代', 'RF2', '边境', '海洋', '极差'],
+            com.map(function (x) {
+                return [x.n].concat(x.v.map(function (v) { return String(v); })).concat(['<b>' + x.sp.toFixed(1) + '×</b>']);
+            }), { leftFirst: true, colw: ['5.6rem'], nw: [1, 2, 3, 4, 5] }));
+        h.push('<div class="key">顶格落在谁头上也各作不同：初代是偃月斧 ' + fmt(rf1.top[1]) + '、RF2 是' + rf2.top[0] + ' ' + fmt(rf2.top[1]) + '、边境是' + rff.top[0] + ' ' + fmt(rff.top[1]) + '、海洋是' + rfo.top[0] + ' ' + fmt(rfo.top[1]) + '——四件里三件是斧。「XX 是最强武器」这句话只能限定在一作之内读：同一个名字换一作，物攻就能差 ' + c0.sp.toFixed(1) + ' 倍。</div>');
+    }
+    return h.join('\n');
+}
+
 function gearBestHtml(g) {
     const id = (g && g.id);
     const D = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST[id] : null;
@@ -4055,6 +4133,7 @@ function gearBestHtml(g) {
         ${D.sets ? tbl(D.sets.head, D.sets.rows, { colw: D.sets.widths || [], left: D.sets.head.map((_, i) => i), cls: 'gearbest' }) : ''}
         ${B.map(blockHtml).join('')}
         ${gearXcheckHtml(id)}
+        ${gearBuyHtml(id)}
 
         ${nEmpty ? `<h2 class="h2">源站缺的部分</h2>
         <p class="p">下面这些，要么在源条目里<b>只有表头、没有一行数据</b>，要么是源站用模板挂在别处的表、本站没有并进来。空着的地方没有替它补——补出来的每一条都是编的。</p>
@@ -13191,7 +13270,7 @@ const PAGES = [
             if (g.id !== 'rf5') return gearBestHtml(g);
             return `
             <h2 class="h2">「毕业套」不是一把更强的武器</h2>
-            <p class="p">终端装备的面板能到配方表上限的好几倍，靠的不是更好的配方，而是<b>把强化栏填满、并且让每一格的效果都乘到最大</b>。这套算法只在 RF5 的终盘成立，理解了这条链，你自己也能算出来。</p>
+            <p class="p">终端装备的面板是五位数（攻击 12,000），靠的不是更好的配方，而是<b>把强化栏填满、并且让每一格的效果都乘到最大</b>。这套算法只在 RF5 的终盘成立，理解了这条链，你自己也能算出来。</p>
             <div class="note">这一页<b>只写《符文工房5》</b>：倍率铁这套算法是五代特有的。其他作品的毕业配装在同一个条目下各有各的一页，素材与数值都不同，不做跨作套用。</div>
 
             <h2 class="h2">核心：倍率是三块铁</h2>
@@ -13226,6 +13305,16 @@ const PAGES = [
             <p class="p">目标面板是这套流程算出来的终点，不是随手能到的：</p>
             ${stat([['攻击', '12000+'], ['魔法攻击', '9000+'], ['力量', '600'], ['晕眩', '12'], ['暴击', '0.1'], ['防御', '−150']])}
             <p class="p">代价是防御 −150、智力 −10，以及放弃爱属性。三种异常攻击（毒／封印／麻痹／睡眠／疲劳／疾病）全部堆到 1，等于打谁都能挂上状态。</p>
+            ${(() => {
+                if (typeof EQW_RF5 === 'undefined' || !EQW_RF5.length) return '';
+                const A = EQW_RF5.map(r => [r[0], r[1], r[3], r[4]])
+                    .filter(x => typeof x[2] === 'number').sort((a, b) => b[2] - a[2]);
+                const top = A[0];
+                const me = A.filter(x => x[0] === '天之村云之剑')[0];
+                if (!me) return '';
+                const n = EQW_RF5.length, ge = A.filter(x => x[2] >= me[2]).length;
+                return `<p class="p">表里攻击最高的不是它：RF5 武器表 ${n} 行，顶格是${top[0]} ${top[2].toLocaleString()}（${top[1]}），攻击不低于丛云剑的共 ${ge} 件。毕业套写的两项指标是攻击 12,000+、魔法攻击 9,000+，正好等于丛云剑的 ${me[2].toLocaleString()}／${me[3].toLocaleString()}；飞溅之星攻击 ${top[2].toLocaleString()} 更高，魔攻却只有 ${top[3].toLocaleString()}。所以这套不是「挑表内最高物攻」，而是两项指标同时过线——源站没写这一条，是从表里读出来的。</p>`;
+            })()}
             ${tbl(['步骤', '通用武器', '风属性武器'], [
                 ['外观', '任意武器（杖与风属性除外）', '风属性武器（杖除外）'],
                 ['面板', '天之村丛云剑', '天之村丛云剑'],

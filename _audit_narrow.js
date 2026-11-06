@@ -50,7 +50,8 @@ function buildAuditHtml() {
       try{
         /* 分包之后必须先确认页面真的画出来了：占位行没有宽度，量出来必然 0 溢出 */
         var mn=document.querySelector('#main');
-        if(mn&&/正在载入资料/.test(mn.textContent)){
+        var txt=mn?mn.textContent.replace(/\s/g,''):'';
+        if(!mn||txt.length<200||/正在载入资料/.test(txt)){
           var b0=document.createElement('div');b0.id='__audit';b0.setAttribute('data-overflow','notready');
           b0.textContent='NOTREADY';document.body.appendChild(b0);return;
         }
@@ -62,13 +63,16 @@ function buildAuditHtml() {
   </script>\n`;
   h = h.replace('</head>', head + '</head>');
   /* 分包之后，若不在本地铺开所有包，量到的可能是「正在载入资料」那行占位，
-     溢出永远 0，审计就白做了。把包全部铺进来，并关掉按需加载。 */
+     溢出永远 0，审计就白做了。把包全部铺进来。
+     注意：不能再追加 `window.K_PLAN = null` 去「关掉按需加载」——loader 启动时读它，
+     置空会抛异常、整个页面根本不渲染，#main 空着，量出来是 0，审计变成假通过
+     （第一百七十七到二百三十六始终是这么跑的）。包铺齐之后 loader 照样能按需加载，
+     重复加载是幂等的，不影响测量。 */
   const plan = JSON.parse(fs.readFileSync(ROOT + 'js/_chunks.json', 'utf8'));
   const all = [plan.shared, plan.cross]
     .concat(Object.keys(plan.games).map(g => 'js/k-' + g + '.js'))
     .concat(Object.keys(plan.pages || {}).map(k => 'js/k-page-' + k + '.js'));
-  const burst = all.map(f => '<script src="' + f + '"></script>').join('\n')
-    + '\n<script>window.K_PLAN = null;</script>\n';
+  const burst = all.map(f => '<script src="' + f + '"></script>').join('\n') + '\n';
   h = h.replace('</body>', burst + foot + '</body>');
   return h;
 }
