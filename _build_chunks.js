@@ -109,9 +109,20 @@ console.log('剔除测试完成（' + other.length + ' 个文件）');
 
 /* ---------- 3. 找跨作页：一页读了别的作品的数据 ---------- */
 const OWNER = {};
+/* 有五个数据文件名里不含作品号（mon3 属三代、monrfo 属海洋），只靠文件名正则认不出归属。
+   认不出的后果是「某页读了别作数据」被漏判，那页当普通页发包，运行时读到的是空数组——
+   页面不报错，只是悄悄少一段。所以这里补一张别名表。 */
+const OWNER_ALIAS = {
+    'js/mon3.js': 'rf3',
+    'js/mon4.js': 'rf4',
+    'js/monrfo.js': 'rfo',
+    'js/rfomon.js': 'rfo',
+    'js/rffmon.js': 'rff',
+};
 for (const f of files) {
     const m = /js\/(rf1|rf2|rf3|rff|rfo|rf4|rf5|azuma)/.exec(f);
-    if (m) OWNER[f] = m[1];
+    if (OWNER_ALIAS[f]) OWNER[f] = OWNER_ALIAS[f];
+    else if (m) OWNER[f] = m[1];
 }
 const crossSet = new Set();
 for (const gid of Object.keys(BASE)) {

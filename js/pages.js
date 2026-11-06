@@ -11418,6 +11418,34 @@ const PAGES = [
             <div class="note">抗性一列原样保留 wiki 写法：「火10水30风10地15」是四属性点数，「全属性15」是四属性均等，「风20」只标注了风一项（其余按基准），「—」是原文未给。弱点列由本页从上述点数自动挑出最小值，双最小会并列标出（如冰蛇火、风同为 10）。</div>`;
             };
 
+            /* ---------- 跨作横切：字段缺口 / HP 跨度 / 三代的窟窿 ---------- */
+            const hpOf = (arr, i) => arr.map(x => x[i]).filter(v => v !== null && v !== undefined);
+            const h1 = hpOf(B.rf1, 2), h2 = hpOf(B.rf2, 4), ho = hpOf(B.rfo, 2);
+            const h4 = hpOf(B.rf4, 2), h5 = hpOf(B.rf5, 2), hf = hpOf(B.rff, 2);
+            const rng = a => a.length ? [Math.min.apply(null, a), Math.max.apply(null, a)] : [0, 0];
+            const r1 = rng(h1), r2 = rng(h2), ro = rng(ho), r4 = rng(h4), r5 = rng(h5), rf = rng(hf);
+            const times = a => { const r = rng(a); return r[0] ? (r[1] / r[0]).toFixed(1) + ' 倍' : '—'; };
+            const lv4n = hpOf(B.rf4, 1).length;
+            const shName = gid => (GAMES.filter(y => y.id === gid)[0] || {}).short || gid;
+            const allHp = [];
+            B.rf1.forEach(x => allHp.push([x[0], x[2], 'rf1', '洞窟']));
+            B.rf2.forEach(x => allHp.push([x[0], x[4], 'rf2', '剧情']));
+            B.rfo.forEach(x => allHp.push([x[0], x[2], 'rfo',
+                x[9] === 'arena' ? (/2回目/.test(x[8]) ? '竞技场·第二轮' : '竞技场·第一轮')
+                    : x[9] === 'maze' ? '编号区域' : '剧情']));
+            B.rf4.forEach(x => { if (x[2] !== null) allHp.push([x[0], x[2], 'rf4', '主线']); });
+            B.rf5.forEach(x => allHp.push([x[0], x[2], 'rf5', '主线']));
+            B.rff.forEach(x => allHp.push([x[0], x[2], 'rff', '主线']));
+            const topHp = allHp.slice().sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const topRfo = topHp.filter(x => x[2] === 'rfo').length;
+            const top2nd = topHp.filter(x => /第二轮/.test(x[3])).length;
+            const roStory = Math.max.apply(null, allHp.filter(x => x[2] === 'rfo' && x[3] === '剧情').map(x => x[1]));
+            /* 三代那张表没有 HP 字段；站内另一份 101 行怪物表里能对上的，数值同样是空的 */
+            const R3 = (typeof MON_RF3 !== 'undefined') ? MON_RF3 : [];
+            const r3by = {};
+            R3.forEach(x => { if (!r3by[x[0]]) r3by[x[0]] = x; });
+            const r3hit = R3.length ? B.rf3.filter(x => r3by[x[0]]) : [];
+            const r3empty = r3hit.filter(x => { const v = r3by[x[0]][1]; return v === null || v === undefined || v === ''; });
             /* ---------- 收尾：三套量纲 ---------- */
             const tail = `
             <h2 class="h2">四套量纲，别混着比</h2>
@@ -11441,9 +11469,43 @@ const PAGES = [
                 </a>
             </div>`;
 
+            const cross = `
+            <h2 class="h2">七份表的字段缺口，先看这一列</h2>
+            <p class="p">七份表收的位数差四倍，但真正麻烦的不是数量，是<b>每份表缺的字段不一样</b>：有的没有等级，有的没有 HP，海洋那份干脆没有属性列。下面这张表除了列缺什么，还回答最要紧的一件事——<b>能不能只看这张表就知道该拿什么属性打</b>。各作属性怎么记、怎么读，页末那张量纲表里另说，这里只管能不能当场用。</p>
+            ${tbl(['作品', '有 HP ／ Lv', '只看本表能判弱点吗'], [
+                ['<b>新牧场物语</b><br>' + n1 + ' 位', 'HP 有、Lv 无', '<b>能</b>——四属性挑最低'],
+                ['<b>RF2</b><br>' + n2 + ' 位', 'HP 有、Lv 无', '不能——要按克制换算'],
+                ['<b>RF3</b><br>' + n3 + ' 位', '<b>都没有</b>', '不能——只有定性描述'],
+                ['<b>海洋</b><br>' + no + ' 条', 'HP 有、Lv 有', '不能——<b>没有属性列</b>'],
+                ['<b>RF4</b><br>' + n4 + ' 位', h4.length + ' 位 HP<br>' + lv4n + ' 位 Lv', '<b>能</b>——七项找负数'],
+                ['<b>RF5</b><br>' + B.rf5.length + ' 位', 'HP 有、Lv 有', '<b>能</b>——七项找负数'],
+                ['<b>边境</b><br>' + nrff + ' 位', 'HP 有、Lv 有', '<b>能</b>——四属性挑最低'],
+                ], { leftFirst: true, colw: ['6.2rem', '7rem'] })}
+            <div class="key">七作里真正能「看一眼表就决定武器属性」的只有<b>四作</b>：初代、四代、五代、边境。海洋那 ${no} 条数值最全，却<b>一个字都没说属性</b>——它的属性倍率记在武器上，查弱点得从背包反推。三代连 HP 都没有，下面单开一节。</div>
+
+            <h2 class="h2">HP 最大值是最小值的 ${(ro[1] / ro[0]).toFixed(0)} 倍，前六名全在同一作</h2>
+            <p class="p">六份有 HP 的表放在一起，跨度的差别比位数的差别大得多：</p>
+            ${tbl(['作品', '最低 HP', '最高 HP', '跨度'], [
+                ['新牧场物语', r1[0].toLocaleString(), r1[1].toLocaleString(), times(h1)],
+                ['RF2', r2[0].toLocaleString(), r2[1].toLocaleString(), times(h2)],
+                ['海洋', ro[0].toLocaleString(), ro[1].toLocaleString(), times(ho)],
+                ['RF4', r4[0].toLocaleString(), r4[1].toLocaleString(), times(h4)],
+                ['RF5', r5[0].toLocaleString(), r5[1].toLocaleString(), times(h5)],
+                ['边境', rf[0].toLocaleString(), rf[1].toLocaleString(), times(hf)],
+                ], { leftFirst: true, colw: ['7rem'] })}
+            <p class="p">全七作 HP 最高的六只如下——<b>${topRfo} 只出自海洋的圆形竞技场（其中 ${top2nd} 只是第二轮），剩下一只是${topHp.filter(x => x[2] !== 'rfo').map(x => x[0]).join('、')}</b>，与竞技场的要塞铁钳同为 66,000 并列末位。同一只决赛冰拳在榜上出现两次，因为第一轮与第二轮各算一条：</p>
+            ${tbl(['BOSS · HP', '作品 · 出自'], topHp.map(x => ['<b>' + x[0] + '</b><br>' + x[1].toLocaleString(), shName(x[2]) + ' · ' + x[3]]), { leftFirst: true, colw: ['8.6rem'] })}
+            <div class="key">所以「HP 最高的 BOSS」必须带限定：把竞技场算进来，海洋把整个系列的血条推到十三万；可它的<b>剧情</b>最终战原生巨人是 ${roStory.toLocaleString()}，<b>连上面这六只都进不去</b>。按各作表内最厚的一只、以发售顺序读则是 ${r1[1].toLocaleString()} → ${r2[1].toLocaleString()} → ${rf[1].toLocaleString()} → ${roStory.toLocaleString()} → ${r4[1].toLocaleString()} → ${r5[1].toLocaleString()}——<b>四代是唯一的回落点</b>。</div>
+
+            <h2 class="h2">三代那 ${n3} 位，两份表都没有 HP</h2>
+            <p class="p">三代那一节只有名字、抗性、掉落三列，不是本站漏收——<b>源表就没有 HP 这一栏</b>。${R3.length ? '站内另有一份 ' + R3.length + ' 行的三代全怪物表（「魔物图鉴」的底表），带等级与 HP；可 ' + n3 + ' 位里只有 ' + r3hit.length + ' 位能按名字对上，而这 ' + r3empty.length + ' 位的等级与 HP <b>同样全是空的</b>。' : ''}</p>
+            ${R3.length ? '<div class="note">缺口在源头，不在搬运：对得上的 ' + r3hit.length + ' 位（' + r3hit.map(x => x[0]).join('、') + '）在怪物表里只填了抗性、掉落与场所，等级／HP 留白；另 ' + (n3 - r3hit.length) + ' 位连名字都查不到——BOSS 多以「守卫××」「××之主」这类剧情代号出现，怪物表里没有对应条目。所以三代打 BOSS 只能按抗性判断，估不出要打多久。</div>' : ''}
+
+            `;
+
             const per = { rf1: blk1, rf2: blk2, rf3: () => blk3() + blk3sp(), rfo: blkR, rf4: () => blk4() + blk4sp(), rf5: blk5, rff: blkRff };
             const mid = (per[id] || blk1)();
-            return intro + mid + tail;
+            return intro + mid + cross + tail;
         }
     },
     {

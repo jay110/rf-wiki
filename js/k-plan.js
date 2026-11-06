@@ -7,6 +7,7 @@ var K_PLAN = {
     "crossPages": [
         "battle",
         "beast",
+        "boss",
         "decorate",
         "festival",
         "home",
