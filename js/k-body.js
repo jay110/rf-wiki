@@ -8757,12 +8757,23 @@ ${TAIL}`;
         const cand = nf.filter(x => /花嫁|花婿/.test(x.r || ''));
         const noPr = cand.filter(x => !x.pr);
         const rows = P.map(x => [E(x.n), x.r ? E(x.r) : dash, '<b>' + E(x.pr) + '</b>']);
+        const MQ = (typeof RF2_QUEST !== 'undefined' && RF2_QUEST.marriage) ? RF2_QUEST.marriage : [];
+        const RF2_MRG = P.map(x => {
+            const m = MQ.filter(y => y.n === x.n)[0] || {};
+            const said = String(m.said || '');
+            return {
+                npc: x.n,
+                item: x.pr,
+                where: String(m.where || '—').replace(/^[^·]*·/, ''),
+                ten: /爱情度 ?10/.test(said)
+            };
+        });
         return `
             <h2 class="h2">七位候选，七件东西——就这么多</h2>
             <p class="p">RF2 的求婚条件在源页上短得反常：每人只写了一样东西。爱情度要到多少、要不要双人床，这一栏<b>一个字没提</b>。七件<b>互不重复</b>，一人一件。</p>
             ${tbl(['村民', '身份', '求婚道具'], rows, { leftFirst: true, left: [1, 2], colw: ['6.4rem', '6rem', 'auto'] })}
             <p class="p">七件东西的分量差得很远：有「订婚戒指」「回忆戒指」这种一看就是聘礼的，也有「圆石」「100朵玫瑰的花束」——<b>源页写的就是这些名字，本页照录，不替它们换近名道具</b>。真要凑这七件，卡人的通常不是钱，是知不知道它在哪。</p>
-            <div class="note">这一栏只有道具名，<b>没有写爱情度要多少、要不要双人床</b>——所以本站不补。别拿别的作品的「好感 10 心＋双人床」套过来：那是 RF1／RF3／RF4 的条件，不是这一作的。${noPr.length ? `另外，站内收录的 ${cand.length} 位候补里有 <b>${noPr.length} 位</b>（${noPr.map(x => E(x.n)).join('、')}）在源页没有这一栏，本页不替这几位编。` : ''}</div>
+            <div class="note">这一栏只有道具名，<b>没有写爱情度要多少、要不要双人床</b>——本页不替它补。别拿别的作品的「好感 10 心＋双人床」套过来：那是 RF1／RF3／RF4 的条件，不是这一作的。${noPr.length ? `另外，站内收录的 ${cand.length} 位候补里有 <b>${noPr.length} 位</b>（${noPr.map(x => E(x.n)).join('、')}）在源页没有这一栏，本页不替这几位编。` : ''}</div>
                         <h2 class="h2">七件东西从哪来：委托任务</h2>
             <p class="p">上一段说「卡人的不是钱」，源页把这句话坐实了：<b>七件求婚道具全部来自完成村民的委托任务</b>——不是买的，也不是做的。所以真正卡人是<b>委托刷没刷出来</b>：礼物可以天天送，委托只能等。</p>
             <h3 class="h3">婚礼之后：10 天与 6 天</h3>
@@ -8777,6 +8788,15 @@ ${TAIL}`;
             ], { leftFirst: true, colw: ['8.2rem', 'auto', 'auto'] })}
             <p class="p">源文补了一句：这几场<b>可以选择不同意、也可以把婚礼打断，但没有特殊剧情</b>——拦下来除了少一个人，什么也不会发生。</p>
             <div class="key">第二章是另一套算法：<b>所有村民的好感度归零</b>（宠物不变），剧情上你换成了下一代人；委托板任务做到一定程度，还能来一次「过家家式结婚」。</div>
+            <h2 class="h2">同一份资料的另一处，写着「爱情度 10」</h2>
+            <p class="p">上面那张表取自人物档案的「求婚条件」栏，那里确实只有道具名。但站内还有一份二代的委托资料，把这七件道具各挂到一条委托下，<b>其中 5 条的正文里明写「爱情度 10」</b>——没写的是玛娜与罗萨琳德那两条。</p>
+            ${tbl(['村民', '道具 ／ 出自哪条委托', '爱情度'], RF2_MRG.map(m => [
+                E(m.npc), E(m.item) + '<br><span class="mon-no">' + E(m.where) + '</span>', m.ten ? '<b>写了</b>' : '没写'
+            ]), { leftFirst: true, left: [1], colw: ['5.2rem', 'auto', '3.6rem'] })}
+            <p class="p">两份资料不是互相矛盾，是详略不同：一栏只记「要给什么」，委托正文才记「什么时候给」。所以「二代不问爱情度」这个说法站不住——<b>七位里至少五位是爱情度 10 才收得下</b>。至于要不要双人床，两份资料都没有写，这一条本站仍然不补。</p>
+            <h3 class="h3">只有两件写了怎么弄到手</h3>
+            <p class="p">七件里五件只有「交给谁」一句，另两件把流程写全了：<b>罗萨琳德</b>的 100 朵玫瑰的花束不是买的——「晚上 5 点后与麦克斯对话」，交给他 <b>9 个番茄</b> 换来；<b>茱莉雅</b>的回忆戒指要「交给由绘再加上 10000G，3 天后得到」，也就是先掏一万块，再等三天。</p>
+            <div class="note">这张表只做拼接：道具名用人物档案的写法，委托名与「爱情度 10」用委托资料的原话。两边对不上的地方照录不裁——例如茱莉雅在委托资料里写作「朱丽雅」，档案里写作「茱莉雅」，本站按档案的中文名排，委托原文里的字不改。玛娜那条出自补表，委托名是日文原文，一并照录。还有一处两边写法不同：由绘那件道具，人物档案写作日文「ユエ特製引換券」，委托资料写作中文「由绘特制交换券」——本页两处各按各自的来源照录，不统一。</div>
 ${TAIL}`;
     }
 
@@ -9024,6 +9044,61 @@ function loveCrossHtml(id) {
     const dupOnly = dup.length > 0 && dup.every(j => seen[j].every(k => k === 'rf1' || k === 'rff'));
     const pairRows = pairs.map(x => [E(x[0].n), x[0].n === x[1].n ? E(x[1].n) : '<b>' + E(x[1].n) + '</b>', x[0].n === x[1].n ? '同' : '改']);
 
+    /* 聘礼与生日两节只读站内既有字段：NPC_FULL 的 pr／bd，加上各作页里已写死的门槛。
+       初代与边境是同一部作品的两版，同日文名的候补按「同一个人」去重，
+       否则重制自带的 6 对会把撞车数抬高。 */
+    const SEA4 = '春夏秋冬';
+    const GNAM = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rfo: '海洋', rf4: 'RF4', rf5: 'RF5' };
+    const BID = ['rf1', 'rf2', 'rf3', 'rff', 'rfo', 'rf4', 'rf5'];
+    const bdInfo = t => {
+        const m = /^([春夏秋冬])月?(\d+)/.exec(t || '');
+        return m ? { s: SEA4.indexOf(m[1]), k: SEA4.indexOf(m[1]) * 30 + Number(m[2]) - 1 } : null;
+    };
+    const bdAll = [];
+    BID.forEach(k => (nf[k] || []).forEach(x => {
+        if (!/花嫁|花婿/.test(x.r || '')) return;
+        const p = bdInfo(x.bd);
+        if (p) bdAll.push({ g: k, n: x.n, j: x.j, k: p.k, s: p.s });
+    }));
+    const bdMark = {};
+    const bdUniq = bdAll.filter(x => {
+        const key = (x.g === 'rf1' || x.g === 'rff') ? 'RE:' + x.j : x.g + ':' + x.j;
+        if (bdMark[key]) return false;
+        bdMark[key] = 1;
+        return true;
+    });
+    const seaRows = BID.map(k => {
+        const c = [0, 0, 0, 0];
+        bdAll.filter(x => x.g === k).forEach(x => { c[x.s]++; });
+        return [GNAM[k], c[0], c[1], c[2], c[3], c[0] + c[1] + c[2] + c[3]];
+    });
+    const seaTot = [0, 0, 0, 0];
+    bdAll.forEach(x => { seaTot[x.s]++; });
+    seaRows.push(['合计', seaTot[0], seaTot[1], seaTot[2], seaTot[3], bdAll.length]);
+    const seaMax = seaTot.indexOf(Math.max.apply(null, seaTot));
+    const seaMin = seaTot.indexOf(Math.min.apply(null, seaTot));
+    const byDay = {};
+    bdUniq.forEach(x => { (byDay[x.k] = byDay[x.k] || []).push(x); });
+    const dks = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+    const dayDup = dks.filter(k => byDay[k].length > 1)
+        .sort((a, b) => byDay[b].length - byDay[a].length || a - b);
+    const dupPpl = dayDup.reduce((a, k) => a + byDay[k].length, 0);
+    const dup3 = dayDup.filter(k => byDay[k].length > 2);
+    const dupSame = dayDup.filter(k => {
+        const gs = byDay[k].map(x => x.g);
+        return gs.filter((v, i) => gs.indexOf(v) !== i).length > 0;
+    });
+    const bdTxt = k => SEA4[Math.floor(k / 30)] + ' ' + (k % 30 + 1) + ' 日';
+    let gapMax = { g: -1, a: 0 };
+    dks.forEach((a, i) => {
+        const b = (i === dks.length - 1 ? dks[0] + 120 : dks[i + 1]);
+        if (b - a - 1 > gapMax.g) gapMax = { g: b - a - 1, a: a };
+    });
+    const pr1 = (nf.rf1 || []).filter(x => x.pr);
+    const giftN = pr1.filter(x => /赠送/.test(x.pr)).length;
+    const talkN = pr1.filter(x => /对话/.test(x.pr)).length;
+    const bedN = pr1.filter(x => /双人床/.test(x.pr)).length;
+
     return `
             <h2 class="h2">八作加起来 ${all} 位候补，花嫁 ${allF} 位、花婿 ${allM} 位</h2>
             <p class="p">上面每一作的门槛都是分开写的，凑在一起才发现一件跟直觉相反的事：<b>可攻略的人数并没有随代际一路变多</b>。八作合计 ${all} 位，花嫁 ${allF} 位、花婿 ${allM} 位；单作最少的是${few.short === '新牧场物语' ? '初代' : E(few.short)}的 ${num(few)} 位，最多的是${E(big.short)}的 ${num(big)} 位${GS.filter(g => g.id !== big.id && num(g) === num(big)).length ? '（与' + GS.filter(g => g.id !== big.id && num(g) === num(big)).map(g => E(g.short)).join('、') + '并列）' : ''}，中间并不是单调上升。</p>
@@ -9039,6 +9114,35 @@ function loveCrossHtml(id) {
             ${tbl(['初代', '边境', ''], pairRows, { leftFirst: true, nw: [1, 2], colw: ['auto', 'auto', '2.6rem'], note: '按日文名对齐，不是按中文写法对——否则这三位会被当成不同的人。' })}
             <p class="p">这不是错字，是<b>两套译名各自成体系</b>：初代把 ロゼッタ 译成「萝洁塔」，边境译成「萝赛塔」。同一页里出现两种写法时，以各自作品内的写法为准，本站两边都保留，不统一。</p>
             <p class="p">顺带把另一件事钉死：七作人物档案里，候补一共 ${slots} 份、按日文名去重是 ${uniq} 位，<b>跨两作出现的只有 ${dup.length} 位</b>${dupOnly ? '，而且全在初代与边境之间' : ''}。换句话说<b>系列没有「每代都回来的常客候补」</b>——除了这次重制，每一作的恋爱对象都是重新写的，指望在续作里见到上一代的老婆，这条路走不通。</p>` : ''}
+            <h2 class="h2">聘礼：八作分四种给法</h2>
+            <p class="p">把各作的求婚条件摊平，要交的东西只有四种来路：<b>交现成的</b>（初代 ${giftN} 位、二代七件）、<b>自己打的</b>（边境、海洋、四代、五代）、<b>只留了一个名字的</b>（三代）、<b>没有资料的</b>（龙之天地）。</p>
+            ${tbl(['作品', '求婚要交的东西 ／ 从哪来'], [
+                ['RF1', `${giftN} 位要交实物：纯白石、青金石、克里莫亚的饰品剑、牛奶 L 型、70 cm 以上的心动鲷鱼；另 ${talkN} 位只靠对话<br><span class="mon-no">源页只写「赠送」，没写这东西从哪来</span>`],
+                ['RF2', '七件各不相同：订婚戒指、回忆戒指、水晶球、圆石、100 朵玫瑰的花束、祝福坠饰、由绘特制交换券<br><span class="mon-no">七件都是村民委托的报酬，买不到也做不出</span>'],
+                ['RF3', '订婚戒指<br><span class="mon-no">源文只有这四个字</span>'],
+                ['边境', '求婚花束<br><span class="mon-no">自己做，六样材料</span>'],
+                ['海洋', '结婚戒指<br><span class="mon-no">先接「找神父要」的委托，再按配方 59 打</span>'],
+                ['RF4', '婚约指轮<br><span class="mon-no">配方 20，矿石类 ＋ 宝石类各一样</span>'],
+                ['RF5', '订婚戒指<br><span class="mon-no">同上，配方由结婚委托给</span>'],
+                ['龙之天地', '本站没有这一作的资料<br><span class="mon-no">—</span>'],
+            ], { leftFirst: true, left: [1], colw: ['4.8rem', 'auto'] })}
+            <p class="p">自己打的四作里，配方门槛差得很远：<b>四代与五代都是等级 20，海洋是 59</b>，接近三倍；材料则从「矿石类 ＋ 宝石类各一样」到「白金 ×2 ＋ 钻石 ×1」再到边境的六样。<b>代际越往后，聘礼越不是「买一个」的事</b>——初代只要一块矿石或一条够大的鱼，五代得先把锻造练上去。</p>
+            <p class="p">四代与五代的戒指配方一字不差：等级 20、矿石类 ＋ 宝石类各一样。这不是巧合，两作共用同一套装备基础表。<b>差别只在配方怎么到手</b>：五代由结婚委托直接给，四代的配方来源栏在源表里是空的。</p>
+            <div class="note">要床的有五作：初代 ${bedN} 条条件全都写「拥有双人床」，三代、四代、五代的四件条件里也有床，边境写在第 3 条（爱情度最大 ＋ 家中已买双人床 ＋ 拿到求婚花束）。<b>二代与海洋的源文一个字没提床</b>——不是不需要，是没写，本站不替它们补。</div>
+
+            <h2 class="h2">七作 ${bdAll.length} 位候补的生日：${SEA4[seaMax]}最多，${SEA4[seaMin]}最少</h2>
+            <p class="p">七作的候补档案里<b>每一位都有生日</b>，没有缺项，所以下面这张表是完整的 ${bdAll.length} 位（龙之天地不在内：这一作的候补不在人物档案里，站内只有 10 位村民的生日，前文已列）。按季节数，<b>${SEA4[seaMax]} ${seaTot[seaMax]} 位最多、${SEA4[seaMin]} ${seaTot[seaMin]} 位最少</b>，相差 ${Math.max.apply(null, seaTot) - Math.min.apply(null, seaTot)} 位。</p>
+            ${tbl(['作品', '春', '夏', '秋', '冬', '合计'], seaRows, { leftFirst: true, colw: ['auto', '3.2rem', '3.2rem', '3.2rem', '3.2rem', '3.8rem'] })}
+            <p class="p">但单看每一作，偏得比总数更多：<b>初代 6 位里 3 位在秋</b>（正好一半），边境 12 位里 5 位在秋；海洋反过来，14 位里 6 位在春，<b>整个夏天只剩奥黛特一位</b>（夏 8 日）。<b>五代是唯一四季各 3 位的</b>——12 位候补按季节均分，没有偏科。</p>
+            <h3 class="h3">同一天生日的，去掉重制重名还有 ${dayDup.length} 组</h3>
+            <p class="p">${bdAll.length} 份档案里有 6 对是初代与边境的同一个人（同一日文名、同一生日），按人去重后是 ${bdUniq.length} 位。${bdUniq.length} 位铺在 120 天里，平均 ${(120 / bdUniq.length).toFixed(1)} 天就撞上一个生日；实际同日的有 <b>${dayDup.length} 组、覆盖 ${dupPpl} 人</b>。</p>
+            ${tbl(['日期', '几位', '同一天都有谁'], dayDup.map(k => [
+                bdTxt(k), byDay[k].length, byDay[k].map(x => E(x.n) + '（' + GNAM[x.g] + '）').join('、')
+            ]), { leftFirst: true, left: [2], nw: [0, 1], colw: ['4.6rem', '2.6rem', 'auto'] })}
+            <p class="p">三个人撞在同一天的只有 ${dup3.length} 组，且${dup3.length === 3 ? '三组都跨作' : '全部跨作'}：${dup3.map(k => bdTxt(k) + '（' + byDay[k].map(x => E(x.n)).join('／') + '）').join('、')}。<b>同一作内部撞车的只有 ${dupSame.length} 组</b>——${dupSame.map(k => '海洋的' + byDay[k].map(x => E(x.n)).join('与') + '都在' + bdTxt(k)).join('、')}，一位花嫁一位花婿，那天要备两份礼。</p>
+            <p class="p">反过来看空档：<b>最长的一段是${bdTxt(gapMax.a)}到${bdTxt((gapMax.a + gapMax.g + 1) % 120)}之间的 ${gapMax.g} 天</b>，一天生日也没有。把这 ${dayDup.length} 组撞车日与这段空档摆在一起，就是一年的送礼节奏——要么一天两份，要么整整一周没人过生日。</p>
+            <div class="key">生日当天的礼比平日值钱，而站内只有三代的源文给了倍数口径：<b>上升与下降都翻倍</b>。所以撞车日不能「随便送一份」——两份都得对上各人的喜好，否则一份翻倍、另一份也翻倍地掉。</div>
+            <p class="p">重制把人物设定原样搬了：初代与边境 6 对同名候补的生日<b>6 对全同</b>——密丝特 秋 1 日、萝洁塔／萝赛塔 秋 21 日、拉碧丝 冬 1 日、美乐蒂 春 11 日、碧安卡／比安卡 夏 8 日、塔巴莎／塔芭莎 秋 12 日。改的只有译名，那三对在上文「边境把初代的花嫁全搬过来」一节已列。</p>
             <div class="note">这一节只做加法：<b>八作的候补计数与名单都是站内既有的</b>，本页没有新增任何一位，也没有替哪一作补上「本站没写」的条件。初代那 ${(nf.rf1 || []).filter(x => /花嫁/.test(x.r || '')).length} 位花嫁是站内收录数，与作品数据里的 ${(GS[0] || {}).candF || 10} 位不等——差的那几位本站没有人物档案，本页不猜是谁。</div>`;
 }
 
