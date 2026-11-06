@@ -51,7 +51,11 @@ function buildAuditHtml() {
         /* 分包之后必须先确认页面真的画出来了：占位行没有宽度，量出来必然 0 溢出 */
         var mn=document.querySelector('#main');
         var txt=mn?mn.textContent.replace(/\s/g,''):'';
-        if(!mn||txt.length<200||/正在载入资料/.test(txt)){
+        /* 只认「整页就是那句占位」：#main 的正文以占位语开头。不能用子串判断——
+           更新日志那一条里就引了「正在载入资料」四个字，子串一判整页恒为未就绪，
+           8 个作品的 changelog 全被记成「测量失败」。 */
+        var bare=/^正在载入资料/.test(txt);
+        if(!mn||txt.length<200||bare){
           var b0=document.createElement('div');b0.id='__audit';b0.setAttribute('data-overflow','notready');
           b0.textContent='NOTREADY';document.body.appendChild(b0);return;
         }
