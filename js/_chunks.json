@@ -23,6 +23,7 @@
     "js/runeall.js",
     "js/weapon_old.js",
     "js/pot_old.js",
+    "js/rune.js",
     "js/bd_ext.js",
     "js/faces.js"
   ],
@@ -112,7 +113,6 @@
       "js/fx4s.js",
       "js/cropdata.js",
       "js/fxdata.js",
-      "js/rune.js",
       "js/ore.js"
     ],
     "rf5": [
@@ -152,18 +152,18 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "425414c382cb9d56",
-    "shared": "b01065d3acb7a6f0",
+    "core": "507ccbd078935128",
+    "shared": "a54c4a130be9dc0d",
     "cross": "ad9110f36405fa4c",
-    "body": "c1348f04d802c992",
+    "body": "7db9b723b95ed6e1",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "7710378fdb93de5f",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "9e3654e80e5964e0",
-    "game:rf4": "c5bae67b1053da2a",
+    "game:rf4": "6cf29ea58906e7c2",
     "game:rf5": "2d7dfa77a74848b4",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "8ac2ad186d507b1f"
+    "page:changelog": "62a9ea4ad98c4032"
   }
 }

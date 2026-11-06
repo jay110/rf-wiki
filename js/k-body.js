@@ -3416,6 +3416,201 @@ function recipeRf3Html() {
    各作源页的完成度差得很远——RF1 两张表填满、RF3 整篇文字没有表、
    RF2／边境／海洋的配方表在源站就是空壳——所以页面按「简介 → 搭配表 → 正文分块 →
    源站空壳 → 照录不改」的固定顺序铺，缺哪段跳过哪段，空壳单独点名。 */
+/* ------------------------------------------------------------
+   六作符文横切：六份表的行数口径 / 名字横切 / RP 三种写法 / 价格只在中间三作
+   数据源：RUNE_ALL（初代／RF2／RF3／RF5／海洋，js/runeall.js，shared）
+           RUNE_RF4（四代，js/rune.js）
+   ------------------------------------------------------------ */
+function runeCrossHtml(id) {
+    const A = (typeof RUNE_ALL !== 'undefined') ? RUNE_ALL : null;
+    const R4 = (typeof RUNE_RF4 !== 'undefined') ? RUNE_RF4 : null;
+    if (!A || !R4 || !R4.length) return '';
+    if (!A.rf1 || !A.rf2 || !A.rf3 || !A.rf5 || !A.rfo) return '';
+    const dash = '<span class="mon-no">—</span>';
+    const T1 = A.rf1.tbl.rows, T2 = A.rf2.tbl.rows, T3 = A.rf3.tbl.rows, T5 = A.rf5.tbl.rows, TO = A.rfo.tbl.rows;
+    const NAM = {
+        rf1: T1.map(r => r[0]), rf2: T2.map(r => r[0]), rf3: T3.map(r => r[0]),
+        rf4: R4.map(r => r[3]), rf5: T5.map(r => r[0]), rfo: TO.map(r => r[2])
+    };
+    const ORD = ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rfo'];
+    const LAB = { rf1: '初代', rf2: 'RF2', rf3: 'RF3', rf4: 'RF4', rf5: 'RF5', rfo: '海洋' };
+    const S = {};
+    ORD.forEach(k => { S[k] = new Set(NAM[k]); });
+    const inter = (a, b) => Array.from(S[a]).filter(n => S[b].has(n));
+    const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 : 0;
+    const uniqN = k => S[k].size;
+
+    /* ---------- 名字并集与跨作 ---------- */
+    const all = new Map();
+    ORD.forEach(k => S[k].forEach(n => { if (!all.has(n)) all.set(n, []); all.get(n).push(k); }));
+    const cross = [];
+    all.forEach((v, n) => { if (v.length >= 2) cross.push([n, v]); });
+    const dist = {};
+    cross.forEach(x => { dist[x[1].length] = (dist[x[1].length] || 0) + 1; });
+    const five = cross.filter(x => x[1].length === 5).sort((a, b) => a[0].localeCompare(b[0]));
+    const six = cross.filter(x => x[1].length === 6).length;
+
+    const PR = [];
+    for (let i = 0; i < ORD.length; i++) {
+        for (let j = i + 1; j < ORD.length; j++) {
+            const x = inter(ORD[i], ORD[j]);
+            PR.push([ORD[i], ORD[j], x.length, x]);
+        }
+    }
+    PR.sort((a, b) => b[2] - a[2] || (a[0] + a[1]).localeCompare(b[0] + b[1]));
+    const top5 = PR.slice(0, 5);
+    const lowPair = PR.filter(p => p[2] <= 1).sort((a, b) => a[2] - b[2]);
+
+    /* ---------- 节一：六份表各自的构成 ---------- */
+    const magic2 = T2.filter(r => r[1] && r[1] !== '—').length;
+    const book2 = magic2 / 3;
+    const pet2 = T2.filter(r => r[3] === '宠物技能Lv1').length;
+    const zero2 = T2.filter(r => r[4] === '0').length;
+    const sword2 = T2.length - magic2 - pet2 - zero2;
+    const heal1 = T1.filter(r => r[4] !== '—' && r[4] !== '').length;
+    const cat3 = {};
+    T3.forEach(r => { cat3[r[1]] = (cat3[r[1]] || 0) + 1; });
+    const wp3 = ['单手剑', '双手剑', '枪', '锤', '双剑'].reduce((s, c) => s + (cat3[c] || 0), 0);
+    const c4 = {}, c5 = {};
+    R4.forEach(r => { c4[r[2]] = (c4[r[2]] || 0) + 1; });
+    T5.forEach(r => { c5[r[2]] = (c5[r[2]] || 0) + 1; });
+    const dup4 = {};
+    R4.forEach(r => { dup4[r[3]] = (dup4[r[3]] || 0) + 1; });
+    const dup4l = Object.keys(dup4).filter(k => dup4[k] > 1);
+
+    const sizeOf = k => {
+        if (k === 'rf4') return c4;
+        if (k === 'rf5') return c5;
+        return null;
+    };
+
+    const sec1 = `
+    <h2 class="h2">六份表被放在同一个页名下，装的却不是同一样东西</h2>
+    <p class="p">这一页每一作都在讲「符文能力与魔法书」，但把六份表的构成摊开看，<b>行数的差不是内容的差</b>：初代只收魔法书，RF2 起才把武器技收进来，RF4 与 RF5 干脆只剩下「去哪拿」。所以「共 6 作、最多的一作有 66 条」这种句子没有意义——它们数的不是同一件事。</p>
+    ${tbl(['作 · 行数 / 去重名', '表里装的是什么'], [
+        ['初代 <span class="txc">' + T1.length + ' 行 · ' + uniqN('rf1') + ' 名</span>',
+            '只有<b>魔法书</b>；买价、RP、攻击、回复、效果、属性六列齐全（回复值只有 <b>' + heal1 + '</b> 条有数）'],
+        ['RF2 <span class="txc">' + T2.length + ' 行 · ' + uniqN('rf2') + ' 名</span>',
+            '魔法书 <b>' + book2 + '</b> 本 × Lv1–3 共 ' + magic2 + ' 行 ＋ 剑技 <b>' + sword2 + '</b> ＋ 宠物技 <b>' + pet2 + '</b> ＋ 特殊 <b>' + zero2 + '</b>'],
+        ['RF3 <span class="txc">' + T3.length + ' 行 · ' + uniqN('rf3') + ' 名</span>',
+            '武器技 <b>' + wp3 + '</b> ＋ 魔法书 <b>' + (cat3['魔法书'] || 0) + '</b> ＋ 乐谱 <b>' + (cat3['宠物'] || 0) + '</b> ＋ 变身腰带 <b>' + (cat3['变身'] || 0) + '</b>'],
+        ['RF4 <span class="txc">' + R4.length + ' 行 · ' + uniqN('rf4') + ' 名</span>',
+            '符文能力 <b>' + (c4['符文能力'] || 0) + '</b> ＋ 魔法 <b>' + (c4['魔法'] || 0) + '</b>；只有地点、出处、类别、Lv 四样，<b>一个数值都没有</b>'],
+        ['RF5 <span class="txc">' + T5.length + ' 行 · ' + uniqN('rf5') + ' 名</span>',
+            '只有名字与出处；<b>第三列写的不是类别，是获取方式</b>（宝箱 ' + (c5['宝箱'] || 0) + '、透明宝箱 ' + (c5['透明宝箱'] || 0) + '、任务 ' + (c5['任务'] || 0) + '、通缉 ' + (c5['通缉'] || 0) + '、商店 ' + (c5['商店'] || 0) + '）'],
+        ['海洋 <span class="txc">' + TO.length + ' 行 · ' + uniqN('rfo') + ' 名</span>',
+            '只有日／英／中三个名字与买卖价；没有效果、没有 RP、没有属性'],
+    ], { leftFirst: true, cls: 'txt', colw: ['7.5rem', 'auto'] })}
+    <div class="note">行数与名字数对不上的只有两处：<b>RF2 的 ${T2.length} 行只剩 ${uniqN('rf2')} 个名字</b>（同名按 Lv1／Lv2／Lv3 拆成三行，使用等级也从 15 一路升到 55），<b>RF4 的 ${R4.length} 行只剩 ${uniqN('rf4')} 个名字</b>（${dup4l.join('、')} 各出现两次，一处在低等级区、一处要 Lv10）。</div>`;
+
+    /* ---------- 节二：名字横切 ---------- */
+    const catHit = {};
+    T3.forEach(r => {
+        const c = r[1];
+        catHit[c] = catHit[c] || { t: 0, h: 0 };
+        catHit[c].t++;
+        if (S.rf5.has(r[0])) catHit[c].h++;
+    });
+    const catKeys = Object.keys(catHit);
+    const s35 = inter('rf3', 'rf5').length;
+    const fiveTxt = five.map(x => x[0] + '（缺' + LAB[ORD.filter(k => x[1].indexOf(k) < 0)[0]] + '）').join('、');
+
+    const sec2 = `
+    <h2 class="h2">${all.size} 个名字，${cross.length} 个跨两作，没有一招六作全在</h2>
+    <p class="p">把六份表的名字去重合并，一共 <b>${all.size}</b> 个；其中在两作以上出现的只有 <b>${cross.length}</b> 个——两作 ${dist[2] || 0}、三作 ${dist[3] || 0}、四作 ${dist[4] || 0}、五作 ${dist[5] || 0}、<b>六作 ${six}</b>。到顶的两招各缺一个作品：<b>${fiveTxt}</b>。初代那份表只有 15 本魔法书、海洋那份只有 19 条武器技，两边都不全，所以「全系列通用的一招」在这个数据集里并不存在。</p>
+    ${tbl(['哪两作之间重合最多', '同名几只'], top5.map(p => [
+        LAB[p[0]] + ' ∩ ' + LAB[p[1]],
+        '<b>' + p[2] + '</b> 个'
+    ]), { leftFirst: true, cls: 'txt', colw: ['auto', '6rem'] })}
+    <p class="p">最扎眼的一行是 <b>RF3 ∩ RF5 = ${s35}</b>：RF3 一共 ${T3.length} 条，只有 ${T3.length - s35} 条没进 RF5。拆到类别上看更清楚——<b>武器技 23 条一条不漏全在</b>，魔法书只剩两条没过去，宠物乐谱 3 首里过去 2 首，唯一整类消失的是那条变身腰带。</p>
+    ${tbl(['RF3 的类别 · 几条', 'RF5 里还在几只'], catKeys.map(c => [
+        c + ' <span class="txc">' + catHit[c].t + ' 条</span>',
+        catHit[c].h === catHit[c].t
+            ? '<b>' + catHit[c].h + '</b> ／ 全在'
+            : '<b>' + catHit[c].h + '</b> ／ ' + (catHit[c].t - catHit[c].h) + ' 条没过去'
+    ]), { leftFirst: true, cls: 'txt', colw: ['auto', '9rem'] })}
+    <div class="key">反方向的对照几乎是空的：<b>初代与 RF4 只共有一个「火球」</b>，<b>初代与海洋一个都不共</b>。海洋更极端——它与 RF2、RF3、RF4、RF5 各只共有一个名字，而那一个<b>全都是「无心剑」</b>：${['rf2', 'rf3', 'rf4', 'rf5'].map(b => LAB[b] + ' ∩ 海洋 = ' + inter(b, 'rfo').join('／')).join('、')}。也就是说这份 19 条的海洋表，只有「无心剑」一项能与其余五作对上。<br>RF2 与 RF3 之间倒接得上：14 个同名，含 5 条剑技、3 条宠物技、6 本魔法书——那 3 首乐谱从 RF2 一直唱到 RF3。<b>同名不等于同效</b>：这里只比名字，效果与数值在各作自己的表里，很多根本不存在。</div>`;
+
+    /* ---------- 节三：RP 三种写法 ---------- */
+    const rp1v = T1.map(r => r[2]);
+    const rp1n = rp1v.filter(v => /^\d+(\.\d+)?$/.test(v)).map(Number);
+    const rp1d = rp1v.filter(v => /\.\d/.test(v));
+    const rp2c = {};
+    T2.forEach(r => { rp2c[r[4]] = (rp2c[r[4]] || 0) + 1; });
+    const rp3n = T3.map(r => r[3]).filter(v => /^\d+$/.test(v)).map(Number);
+    const rp3p = T3.map(r => r[3]).filter(v => v.indexOf('%') >= 0);
+    const rp3u = rp3p.filter((v, i, a) => a.indexOf(v) === i);
+    const rp3e = T3.map(r => r[3]).filter(v => v === '—').length;
+    const one = (rows, ni, nmv) => rows.filter(r => r[ni] === nmv)[0];
+    const cell3 = (a, b, c) => ['初代', 'RF2', 'RF3'].map((t, i) => {
+        const v = [a, b, c][i];
+        return '<span class="txc">' + t + '</span> ' + (v && v !== '—' ? v : dash);
+    }).join('<br>');
+    const RPL = [
+        ['火球', one(T1, 0, '火球'), one(T2, 0, '火球'), one(T3, 0, '火球')],
+        ['治愈', one(T1, 0, '治愈'), one(T2, 0, '治愈'), one(T3, 0, '治愈')],
+        ['激光水波', one(T1, 0, '激光水波'), one(T2, 0, '激光水波'), one(T3, 0, '激光水波')],
+        ['闪光', one(T1, 0, '闪光'), one(T2, 0, '闪光'), one(T3, 0, '闪光')],
+        ['无心剑', one(T1, 0, '无心剑'), one(T2, 0, '无心剑'), one(T3, 0, '无心剑')],
+        ['瞬移', one(T1, 0, '瞬移'), one(T2, 0, '瞬移'), one(T3, 0, '瞬移')],
+    ];
+
+    const sec3 = `
+    <h2 class="h2">同一招，三作三种 RP 写法</h2>
+    <p class="p">给消耗的只有初代、RF2、RF3 三作，可三作写的<b>不是同一种量</b>：初代是带小数点的实数（${rp1d.length} 条带 .5，最小 ${Math.min.apply(null, rp1n)}、最大 ${Math.max.apply(null, rp1n)}），RF2 全表只有「小／中／大」三档加「0」，RF3 是 0 到 ${Math.max.apply(null, rp3n)} 的整数，另有 <b>${rp3p.length} 条写成百分比</b>、${rp3e} 条留空。<b>三个数并排放只是对照，换不成同一个单位。</b></p>
+    ${tbl(['招 · 在三作里的 RP 消耗', '初代 ／ RF2 ／ RF3'], RPL.map(r => [
+        r[0],
+        cell3(r[1] ? r[1][2] : '', r[2] ? r[2][4] : '', r[3] ? r[3][3] : '')
+    ]), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto'] })}
+    <div class="key">同一招的写法差得最远的是<b>治愈</b>：初代 ${one(T1, 0, '治愈')[2]} 点、RF2 一个「大」字、RF3 写的是 ${one(T3, 0, '治愈')[3]}。反过来，三作里唯一保持一致的数值是<b>瞬移</b>——RF2 与 RF3 都写 0，初代干脆留破折号，三作都没让它花掉资源。RF3 里那 ${rp3p.length} 条百分比也值得单独记一笔：<b>${rp3u.join('、')}</b>（${rp3p.length} 条、${rp3u.length} 种，其中 15% 出现两次），集中在治愈系与双手剑／双剑的几个架势上，跟其余 ${rp3n.length} 条整数不是一套记法。</div>`;
+
+    /* ---------- 节四：价格 ---------- */
+    const pr1 = T1.map(r => +r[1]).filter(v => !isNaN(v));
+    const pr1nz = pr1.filter(v => v > 0);
+    const priced3 = T3.filter(r => r[4] !== '—' && r[4] !== '');
+    const pr3 = priced3.map(r => +r[4]).filter(v => !isNaN(v));
+    const no3 = T3.filter(r => r[4] === '—' || r[4] === '').map(r => r[0]);
+    const half3 = T3.filter(r => r[4] !== '—' && r[5] !== '—' && +r[5] === +r[4] / 2).length;
+    const selled3 = T3.filter(r => r[4] !== '—' && r[5] !== '—').length;
+    const prO = TO.filter(r => r[3] !== '—' && r[3] !== '').map(r => +r[3]);
+    const tierO = Array.from(new Set(prO)).sort((a, b) => a - b);
+    const sr = {};
+    TO.forEach(r => {
+        if (r[3] !== '—' && r[4] !== '—' && +r[3] > 0) {
+            const k = Math.round(+r[4] / +r[3] * 100) + '%';
+            sr[k] = (sr[k] || 0) + 1;
+        }
+    });
+    const srKeys = Object.keys(sr).sort((a, b) => sr[b] - sr[a]);
+    const big1 = T1.slice().sort((a, b) => +b[1] - +a[1])[0];
+    const big3 = priced3.slice().sort((a, b) => +b[4] - +a[4])[0];
+    const small3 = priced3.slice().sort((a, b) => +a[4] - +b[4])[0];
+    const free1 = T1.filter(r => +r[1] === 0).map(r => r[0]);
+    const f1 = one(T1, 0, '火球'), f3 = one(T3, 0, '火球'), f4 = one(R4, 3, '火球'), f5 = one(T5, 0, '火球');
+    const fmt = n => n.toLocaleString();
+
+    const sec4 = `
+    <h2 class="h2">价格只活在中间三作，火球从「买得到」变成「走过去捡」</h2>
+    <p class="p">六作里标价的只有三作，而且没有一作是全都标：初代 ${pr1.length}／${T1.length}、RF3 ${pr3.length}／${T3.length}、海洋 ${prO.length}／${TO.length}，<b>RF2、RF4、RF5 一条价格都没有</b>——它们只告诉你去哪拿。所以「哪一作的符文更贵」这个问题问不出来——这三作压根不卖。</p>
+    ${tbl(['作 · 几条标价', '区间与极值'], [
+        ['初代 <span class="txc">' + pr1.length + ' / ' + T1.length + ' 条</span>',
+            '<b>' + fmt(Math.min.apply(null, pr1nz)) + '～' + fmt(Math.max.apply(null, pr1)) + 'G</b>；最贵是' + big1[0] + ' ' + fmt(+big1[1]) + 'G' + (free1.length ? '，' + free1.join('、') + ' 标 0G' : '')],
+        ['RF3 <span class="txc">' + pr3.length + ' / ' + T3.length + ' 条</span>',
+            '<b>' + fmt(Math.min.apply(null, pr3)) + '～' + fmt(Math.max.apply(null, pr3)) + 'G</b>；最便宜' + small3[0] + '、最贵' + big3[0] + '；' + no3.length + ' 条无价（' + no3.join('、') + '）'],
+        ['海洋 <span class="txc">' + prO.length + ' / ' + TO.length + ' 条</span>',
+            '四档：<b>' + tierO.map(t => fmt(t)).join(' / ') + 'G</b>；1 条没有价（好感度赠送）'],
+        ['RF2 · RF4 · RF5 <span class="txc">0 条</span>',
+            '只写出处，不写价格'],
+    ], { leftFirst: true, cls: 'txt', colw: ['8rem', 'auto'] })}
+    ${tbl(['卖价怎么折', '几条'], [
+        ['RF3 <span class="txc">买价 × 50%</span>', '<b>' + half3 + '</b> / ' + selled3 + ' 条，<b>一条不差</b>'],
+        ['海洋 <span class="txc">按档位折</span>', srKeys.map(k => '<b>' + k + '</b> 折的 ' + sr[k] + ' 条').join('、')],
+    ], { leftFirst: true, cls: 'txt', colw: ['auto', '11rem'] })}
+    <p class="p">把同一招顺着发售年读一遍：<b>火球</b>在初代是 ${f1 ? fmt(+f1[1]) + 'G、耗 ' + f1[2] + ' RP' : ''}，RF2 变成「牧場の家书架上的魔法书」不用买，RF3 降到 ${f3 ? fmt(+f3[4]) + 'G' : ''}，到了 RF4 只剩「${f4 ? f4[0] : ''}的宝箱${f4 && f4[4] ? '、还要 ' + f4[4] : ''}」，RF5 是「${f5 ? f5[1] : ''}的宝箱」。<b>同一招从标价商品变成地图上的一次拾取</b>，这条线也是整页六份表从「数值表」滑向「获取表」的缩影。</p>
+    <div class="key">海洋那三档折价不是笔误：<b>${sr['50%'] || 0} 条按半价、${sr['20%'] || 0} 条只给两成、1 条给四成</b>。同一张表里三种折法并存，所以「卖价大约是买价的一半」这句话在海洋只有三分之二成立——想靠倒卖符文回本，得先看清它在哪一档。</div>`;
+
+    return sec1 + sec2 + sec3 + sec4;
+}
 function runeAllHtml(g) {
     const id = (g && g.id) || '';
     const D = (typeof RUNE_ALL !== 'undefined') ? RUNE_ALL[id] : null;
@@ -13818,6 +14013,7 @@ const PAGES = [
         key: 'rune', group: 'item', title: '符文能力', icon: 'bolt',
         gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rfo'],
         body: (g) => {
+            const hd = (() => {
             /* 四代（本体／豪华版合并为一条作品页）是同一张「地点×出处」表，另有带筛选的专属版式；其余五作走通用版式 */
             if (!g || g.id !== 'rf4') return runeAllHtml(g);
             const D = (typeof RUNE_RF4 !== 'undefined') ? RUNE_RF4 : [];
@@ -13867,6 +14063,9 @@ const PAGES = [
                     <div class="jp-s">全武器攻击、魔攻与属性一览</div>
                 </a>
             </div>`;
+            })();
+            const cx = runeCrossHtml(g && g.id);
+            return cx && hd.indexOf('<div class="jump">') >= 0 ? hd.replace('<div class="jump">', cx + '<div class="jump">') : hd + cx;
         }
     },
     {
