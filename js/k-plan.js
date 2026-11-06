@@ -10,6 +10,7 @@ var K_PLAN = {
         "boss",
         "decorate",
         "festival",
+        "gift",
         "home",
         "race",
         "seriescmp",

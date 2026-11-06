@@ -5565,6 +5565,139 @@ function produceHtml(g) {
        数据：PET_RF2（RF2pet）、PET_RFF／RFF_SITE（RFFpet）
              RF1_MON 第 17 列「手套」、MON_RFO 第 4 列「喜好作物」（站内原有）
        ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   魔物喜好：七作横切
+   页面上半是七份各自为政的表。这一块只回答「把它们并排放，能看出什么」：
+   四作靠「摸几次」（RF1／RF2／边境，海洋也属这一类但源表没给次数），
+   三作靠「给什么」（RF3／RF4／RF5）。所有数字从各自数据表现算，不手写。
+   ------------------------------------------------------------ */
+function giftCrossHtml(id) {
+    const dash = '<span class="mon-no">—</span>';
+    const G3 = (typeof GIFT_RF3 !== 'undefined') ? GIFT_RF3 : [];
+    const G4 = (typeof GIFT_RF4 !== 'undefined') ? GIFT_RF4 : [];
+    const G5 = (typeof GIFT_RF5 !== 'undefined') ? GIFT_RF5 : [];
+    const M1 = (typeof RF1_MON !== 'undefined') ? RF1_MON : [];
+    const P2 = (typeof PET_RF2 !== 'undefined') ? PET_RF2 : [];
+    const PF = (typeof PET_RFF !== 'undefined') ? PET_RFF : [];
+    if (!G3.length || !M1.length || !P2.length || !PF.length) return '';
+
+    const rng = a => {
+        const v = a.filter(x => typeof x === 'number' && !isNaN(x));
+        if (!v.length) return null;
+        return { min: Math.min.apply(null, v), max: Math.max.apply(null, v), n: v.length };
+    };
+    const mode = a => {
+        const m = {};
+        a.filter(x => typeof x === 'number' && !isNaN(x)).forEach(k => { m[k] = (m[k] || 0) + 1; });
+        const ks = Object.keys(m);
+        if (!ks.length) return null;
+        ks.sort((x, y) => m[y] - m[x] || Number(x) - Number(y));
+        return Number(ks[0]);
+    };
+
+    /* ---- 三个「数次数」的作 ---- */
+    const r1 = rng(M1.map(x => x[16]));
+    const r2 = rng(P2.map(x => x[2]));
+    const rf = rng(PF.map(x => x[4]));
+    const n2 = new Set(P2.map(x => x[0])).size;
+
+    const m1 = new Map(M1.map(x => [String(x[0]), x[16]]));
+    const m2 = new Map(P2.map(x => [String(x[0]), x[2]]));
+    const mf = new Map(PF.map(x => [String(x[0]), x[4]]));
+    const crossN = [];
+    const allN = new Set([].concat(Array.from(m1.keys()), Array.from(m2.keys()), Array.from(mf.keys())));
+    allN.forEach(nm => {
+        const v = [m1.has(nm) ? m1.get(nm) : null, m2.has(nm) ? m2.get(nm) : null, mf.has(nm) ? mf.get(nm) : null];
+        if (v.filter(x => typeof x === 'number').length >= 2) crossN.push([nm, v]);
+    });
+    const tri = crossN.filter(x => x[1].every(v => typeof v === 'number'));
+    const span = tri.map(x => {
+        const v = x[1];
+        return [x[0], v, Math.max.apply(null, v) - Math.min.apply(null, v)];
+    }).sort((a, b) => b[2] - a[2] || a[0].localeCompare(b[0]));
+    const sameAll = span.filter(x => x[2] === 0);
+    const wide = span.slice(0, 4);
+
+    /* ---- 三个「数东西」的作 ---- */
+    const A3 = new Map(G3.map(x => [String(x[0]), x.slice(2).filter(Boolean)]));
+    const A4 = new Map(G4.map(x => [String(x[0]), x.slice(1).filter(Boolean)]));
+    const A5 = new Map(G5.map(x => [String(x[0]), x.slice(3).filter(Boolean)]));
+    const triG = Array.from(A3.keys()).filter(nm => A4.has(nm) && A5.has(nm));
+    const ov = (a, b) => a.filter(x => b.indexOf(x) >= 0).length;
+    const linked = triG.filter(nm => {
+        const a = A3.get(nm), b = A4.get(nm), c = A5.get(nm);
+        if (!a.length || !b.length || !c.length) return false;
+        return ov(a, b) > 0 && ov(a, c) > 0 && ov(b, c) > 0;
+    });
+    const maxFav = arr => arr.reduce((m, r) => Math.max(m, r.slice(0).filter(Boolean).length), 0);
+    const g3max = Math.max.apply(null, G3.map(r => r.slice(2).filter(Boolean).length));
+    const g4max = Math.max.apply(null, G4.map(r => r.slice(1).filter(Boolean).length));
+    const g5max = Math.max.apply(null, G5.map(r => r.slice(3).filter(Boolean).length));
+
+    /* ---- 毛皮：三作各自的叫法与占比 ---- */
+    const cnt = (rows, from, k) => rows.filter(r => r.slice(from).indexOf(k) >= 0).length;
+    const furRows = [
+        ['RF3', G3, 2, '优质毛皮'],
+        ['RF4', G4, 1, '上等皮毛'],
+        ['RF5', G5, 3, '上等皮毛'],
+    ].map(function (t) {
+        const base = cnt(t[1], t[2], '毛皮');
+        const high = cnt(t[1], t[2], t[3]);
+        return [t[0], base, high, t[3], t[1].length];
+    });
+    const pct = (a, b) => b ? (Math.round(a / b * 1000) / 10).toFixed(1) : '0';
+
+    const sampleG = ['兽人', '咕咕鸡', '摩可摩可', '史莱姆'].filter(nm => A3.has(nm) && A4.has(nm) && A5.has(nm));
+
+    const sec1 = `
+    <h2 class="h2">收服一只，是数次数还是数东西</h2>
+    <p class="p">七作都在讲「怎么让魔物跟你回家」，但数的是两样完全不同的东西。前四作（含海洋）数的是<b>你摸它几下</b>——摸够次数它就跟你走，喂什么不参与判定；后三作数的是<b>你给它什么</b>——递对一样东西才算过。这不是版本迭代，是<b>两套机制</b>，所以两边的数字不能直接比大小。</p>
+    ${tbl(['作 · 收服靠什么', '表里给的数'], [
+        ['初代 · 友好手套抚摸', '<b>' + r1.min + '～' + r1.max + '</b> 次（' + r1.n + ' 只）'],
+        ['RF2 · 友好手套抚摸', '<b>' + r2.min + '～' + r2.max + '</b> 次（' + n2 + ' 只）'],
+        ['RF3 · 刷子＋投喂喜好', '<b>' + rng(G3.map(r => r[1])).min + '～' + rng(G3.map(r => r[1])).max + '</b> 档（' + G3.length + ' 只）'],
+        ['边境 · 毛刷', '<b>' + rf.min + '～' + rf.max + '</b> 次（' + rf.n + ' 只）'],
+        ['海洋 · 喜好作物', '只涨好感，' + dash + ' 次数'],
+        ['RF4 · 投喂喜好', '最多 ' + g4max + ' 格，' + dash + ' 概率'],
+        ['RF5 · 投喂喜好', '<b>' + rng(G5.filter(r => r[1] === '可抓').map(r => parseInt(r[2], 10))).min + '～' + rng(G5.filter(r => r[1] === '可抓').map(r => parseInt(r[2], 10))).max + '%</b> 初始'],
+    ], { leftFirst: true, cls: 'txt', colw: ['auto', '9rem'] })}
+    <div class="note">海洋是唯一的<b>中间态</b>：它是旧作里唯一给了「喜好作物」的一作，但那一列用来涨好感，收服仍是抚摸次数那一套，而源表没给次数。RF3 那一格的 1～5 是<b>档位</b>（5 最好抓），不是百分数；RF5 才是真百分比（最高 ${rng(G5.filter(r => r[1] === '可抓').map(r => parseInt(r[2], 10))).max}%）。<b>两种量纲并排只作对照，不可换算。</b></div>`;
+
+    const sec2 = `
+    <h2 class="h2">三个数次数的作，区间几乎没动</h2>
+    <p class="p">初代、RF2 在 NDS 上，边境在 Wii 上，三作的抚摸/刷毛次数却是同一个量级：<b>${r1.min}～${r1.max} 次、${r2.min}～${r2.max} 次、${rf.min}～${rf.max} 次</b>，最常见的一档分别是 <b>${mode(M1.map(x => x[16]))}／${mode(P2.map(x => x[2]))}／${mode(PF.map(x => x[4]))}</b> 次。把三份名单按名字对起来，有 <b>${crossN.length} 只</b>同时在两作以上可收，其中 <b>${tri.length} 只三作全在</b>——这是全套数据里最干净的一组纵向对照。</p>
+    ${tbl(['魔物 · 三作次数极差', '初代 ／ RF2 ／ 边境'], wide.map(function (x) {
+        return [x[0] + ' <span class="txc">差 ' + x[2] + ' 次</span>',
+            '<b>' + x[1].join('</b> ／ <b>') + '</b>'];
+    }), { leftFirst: true, cls: 'txt', colw: ['auto', '9rem'] })}
+    <div class="key">差得最多的不是最强的，是<b>最常见的那几只</b>：${wide[0] ? wide[0][0] + ' ' + wide[0][1].join('／') : ''}——同一只小怪，在初代摸 ${wide[0] ? wide[0][1][0] : ''} 下就走，到 RF2 要摸 ${wide[0] ? wide[0][1][1] : ''} 下。而 ${tri.length} 只里只有 <b>${sameAll.length} 只</b>三作次数完全相同（${sameAll.length ? sameAll.map(x => x[0] + ' ' + x[1].join('／')).join('、') : '无'}）。<b>名字一样，不代表代价一样。</b></div>
+    <p class="p">这一组还能反证一句页面上半的话。前面按作讲机制时写「次数越多的通常越强」，可初代摸 <b>${r1.min} 次</b>就走的 ${M1.filter(x => x[16] === r1.min).length} 只里有 ${M1.filter(x => x[16] === r1.min).map(x => x[0]).join('、')}——<b>大锤巨人在里面</b>。初代这只不需要多摸，所以那句话在本作里就有反例，本站照录两边，不替它圆。</p>`;
+
+    const sec3 = `
+    <h2 class="h2">三份喜好表不是三份，是同一份在增删</h2>
+    <p class="p">RF3 收 ${G3.length} 只、RF4 收 ${G4.length} 行、RF5 收 ${G5.length} 行。数量看着一路涨，可把名字对上：三作同名的有 <b>${triG.length} 只</b>，其中 <b>${linked.length} 只</b>在任意两作之间都能找到共同喜好——也就是<b>几乎没有一只怪是换了口味重做的</b>，改的只是列数和译名。</p>
+    ${tbl(['同名魔物', 'RF3 ／ RF4 ／ RF5 各给什么'], sampleG.map(function (nm) {
+        return [nm, [
+            A3.get(nm).join('、') || dash,
+            A4.get(nm).join('、') || dash,
+            A5.get(nm).join('、') || dash,
+        ].join('<br>')];
+    }), { leftFirst: true, cls: 'txt', colw: ['7rem', 'auto'] })}
+    <div class="key">喜好格数的上限也不是一路放宽的：RF3 最多 <b>${g3max}</b> 格、RF4 最多 <b>${g4max}</b> 格、RF5 最多 <b>${g5max}</b> 格。<b>RF4 是三者里最窄的</b>（每人最多三样），它那一代的表却是按「2」「改」这类变体逐行拆开的——所以行数多不等于物种多，把「喜好」做窄是它自己的方向。</div>`;
+
+    const sec4 = `
+    <h2 class="h2">毛皮三作都排第一，三个名字</h2>
+    <p class="p">三作各自把喜好道具按出现次数排一遍，单件排第一的都是毛皮（RF3、RF5 与上等那一档并列）——但<b>上等那一档的叫法三作不统一</b>：RF3 叫「优质毛皮」，RF4 与 RF5 叫「上等皮毛」。所以直接搜「上等皮毛」在 RF3 会一无所获。</p>
+    ${tbl(['作 · 毛皮与上等毛皮', '几只吃 · 占该作'], furRows.map(function (t) {
+        return [t[0] + ' <span class="txc">' + t[3] + '</span>',
+            '<b>' + t[1] + ' + ' + t[2] + ' 只</b> · ' + pct(t[1] + t[2], t[4]) + '%（共 ' + t[4] + '）'];
+    }), { leftFirst: true, cls: 'txt', colw: ['auto', '11rem'] })}
+    <div class="key">占比<b>不单调</b>：RF3 ${pct(furRows[0][1] + furRows[0][2], furRows[0][4])}%、RF4 掉到 ${pct(furRows[1][1] + furRows[1][2], furRows[1][4])}%、RF5 回到 ${pct(furRows[2][1] + furRows[2][2], furRows[2][4])}%。RF4 那一下不是因为毛皮变少，是它把喜好拆给了更多<b>各怪专属的掉落物</b>，分母被摊薄了——所以「背包常备一叠皮毛」这句话在 RF4 最不成立，在 RF3／RF5 才接近真理。</div>
+    <p class="p">同一个东西三种叫法的还有摩可摩可那身毛：<b>摩可绵毛</b>（RF3）／<b>高质量的摩可软软毛</b>（RF4）／<b>高品质的摩可软毛</b>（RF5）。按名字搜表的时候，这三个词互不通用。</p>`;
+
+    return sec1 + sec2 + sec3 + sec4;
+}
+
 function giftOldHtml(g) {
     const id = g.id;
     const nm = { rf1: 'RF1', rf2: 'RF2', rff: '边境', rfo: '海洋' }[id] || '';
@@ -5743,7 +5876,7 @@ function giftOldHtml(g) {
 
         return `
             <h2 class="h2">喂对东西，它才肯跟你回家</h2>
-            <p class="p">RF3 收服魔物靠的是<b>刷子刷好感 + 投喂偏爱道具</b>。biligame 的怪物页给每只都列了「总喜好物品」——这些就是投喂时爱心涨得最快的那几样。表里也给的是<b>初始捕捉率</b>，是不刷毛、不喂任何东西时的基准；实际投喂与等级差会显著抬高，本页只给基准，不推算最终概率。</p>
+            <p class="p">RF3 收服魔物靠的是<b>刷子刷好感 + 投喂偏爱道具</b>。biligame 的怪物页给每只都列了「总喜好物品」——这些就是投喂时爱心涨得最快的那几样。表里也给了一列<b>捕捉率</b>——但它是<b>1～5 的档位</b>，不是百分比：5 最好抓、1 最难，源表本身没写单位。实际投喂与等级差会抬高它，本页只照录档位，不折算成概率。</p>
             ${stat([['收录', G3.length + ' 只'], ['有喜好记录', have.length + ' 只'], ['无记录', none.length + ' 只']])}
             <p class="p">${none.length} 只没有喜好记录（多为 Boss 与不可收服个体，biligame 原表「总喜好物品」栏为「-」），它们<b>本来就不给驯服</b>，表里那两列是空的，不是漏填。</p>
 
@@ -5752,8 +5885,8 @@ function giftOldHtml(g) {
             ${tbl(['高频喜好道具', '多少只吃'], f3.slice(0, 10).map(([k, n]) => [k, n + ' 只']), { leftFirst: true, cls: 'txt', colw: ['11rem', '6rem'] })}
             <div class="key">出现最多的是<b>${f3[0][0]}</b>，有 ${cf3(f3[0][0])} 只吃；前几名多为「自身掉落物」——刷对应魔物时顺手拾取，抓同种时直接用掉落物投喂，一两份就能收服。biligame 没有单列「杂草」这种全游戏通用物，但它仍是前期最省事的万能钥匙。</div>
 
-            <h2 class="h2">捕捉率：基准区间 ${lo}% ～ ${hi}%</h2>
-            <p class="p">到顶的 ${hi}% 只有 ${top.length} 只，最末一档 ${lo}% 是 ${G3.filter(r => (typeof r[1] === 'number') && r[1] === lo).length} 只。捕捉率只是起始难度，<b>玩家等级高于魔物时门槛会降，低于则要多投好几份</b>——高等级强怪先去迷宫刷几级再回头抓更稳。</p>
+            <h2 class="h2">捕捉率：${lo} 档到 ${hi} 档</h2>
+            <p class="p">最高档 ${hi} 只有 ${top.length} 只，最低档 ${lo} 是 ${G3.filter(r => (typeof r[1] === 'number') && r[1] === lo).length} 只。捕捉率只是起始难度，<b>玩家等级高于魔物时门槛会降，低于则要多投好几份</b>——高等级强怪先去迷宫刷几级再回头抓更稳。</p>
 
             <h2 class="h2">全部 ${G3.length} 只魔物</h2>
             <p class="p">按名字或喜好道具搜索。没有记录的也留在表里，方便你确认「这只确实不给驯服」，别在它身上浪费素材。</p>
@@ -5761,11 +5894,11 @@ function giftOldHtml(g) {
                 r[0] + (r.length > 2 ? '' : ' 无记录') + ' ' + r.slice(2).filter(Boolean).join(' '),
                 [
                     r[0] + (r.length > 2 ? '' : ' <span class="txc">无记录</span>'),
-                    (typeof r[1] === 'number' ? '<b>' + r[1] + '%</b>' : '<span class="mon-no">—</span>'),
+                    (typeof r[1] === 'number' ? '<b>' + r[1] + '</b>' : '<span class="mon-no">—</span>'),
                     r.slice(2).filter(Boolean).join('、') || '<span class="mon-no">—</span>',
                 ],
             ]), { ph: '输入魔物名或喜好道具' })}
-            <div class="note">取自 biligame 符文工厂 wiki「RF3monster」页的「总喜好物品」列（${G3.length} 行），由 <code>_build_gift_rf3.py</code> 生成。原表「捕捉率」为整数百分比基准；「总喜好物品」按「、」拆分为可变长列表，原表为「-」或无记录者显示「—」。<b>命名沿用 biligame 中文名</b>；站内魔物图鉴（MON_RF3）取自《符文工房3全攻略》另一套译名，个别魔物名会有出入（如 biligame「摩可摩可」对应图鉴「莫可莫可」），本页以 biligame 译名为准。</div>`;
+            <div class="note">取自 biligame 符文工厂 wiki「RF3monster」页的「总喜好物品」列（${G3.length} 行），由 <code>_build_gift_rf3.py</code> 生成。原表「捕捉率」是 1～5 的整数档位（5 最好抓），源表未标单位，本页按档位照录、不折算百分比，与「宠物产出」页对同一列的口径一致；「总喜好物品」按「、」拆分为可变长列表，原表为「-」或无记录者显示「—」。<b>命名沿用 biligame 中文名</b>；站内魔物图鉴（MON_RF3）取自《符文工房3全攻略》另一套译名，个别魔物名会有出入（如 biligame「摩可摩可」对应图鉴「莫可莫可」），本页以 biligame 译名为准。</div>`;
     }
 
     /* ------------------------------------------------------------
@@ -14074,6 +14207,7 @@ const PAGES = [
         key: 'gift', group: 'life', title: '魔物喜好', icon: 'gift',
         gms: ['rf1', 'rf2', 'rf3', 'rf4', 'rf5', 'rff', 'rfo'],
         body: g => {
+            const hd = (() => {
             if (g.id === 'rf3') return giftRf3Html();
             /* 旧四作没有「投喂喜好物」这套：收服靠抚摸／刷毛固定次数（RFO 另有喜好作物） */
             if (g.id === 'rf1' || g.id === 'rf2' || g.id === 'rff' || g.id === 'rfo') return giftOldHtml(g);
@@ -14151,6 +14285,8 @@ const PAGES = [
                 ],
             ]), { ph: '输入魔物名或喜好道具' })}
             <div class="note">取自《RF4 全怪物喜好表》998 行（含各级变体与重复行），按名字去重后 ${G4.length} 只，原表的 <code>???</code> 占位行已剔除。原表只给「喜好 1～3」三格，没有捕捉率——<b>RF4 不给初始概率数值</b>，所以本页不编造。</div>`;
+            })();
+            return hd + giftCrossHtml(g && g.id);
         }
     },
 
