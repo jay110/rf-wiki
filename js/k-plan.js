@@ -14,6 +14,7 @@ var K_PLAN = {
         "home",
         "race",
         "seriescmp",
+        "stage",
         "time",
         "world"
     ],
