@@ -9698,6 +9698,160 @@ function raceDeepHtml(id) {
         SPOKEN.map(r => [r[0] === id ? '<b>' + NAME[r[0]] + '</b>' : E(NAME[r[0]]), E(r[1]), E(r[2])]),
         { leftFirst: true, colw: ['5.4rem', 'auto', '8.6rem'] });
 
+    /* ---------- 跨作三节：档案、汉化译名、两套分类 ---------- */
+
+    /* 八作顺序，后面所有统计都按这个顺序排 */
+    const ORD8 = ['rf1', 'rf2', 'rf3', 'rff', 'rfo', 'rf4', 'rf5', 'azuma'];
+
+    /* 档案里明写种族的逐条名单。这一列不能靠关键词扫：档案里写「神父」「神秘」
+       「化为鬼神」「式神」的，按「神」字扫会一并捞进来（实测多捞 7 位），所以逐条核过。
+       4 代三位魔物出身的候补只写「原是蝴蝶形魔物」，没有种族名，不计入。 */
+    const TAGGED = [
+        ['rf1', '拉格那', '大地之民'], ['rf2', '塞西莉娅', '半精灵'], ['rf2', '杰克', '精灵'],
+        ['rf3', '麦斯', '混血'], ['rff', '拉格那', '大地之民'],
+        ['rfo', '梅尔普琳', '人鱼族'], ['rfo', '优米尔', '巨人'],
+        ['rf4', '玛格丽特', '妖精'],
+        ['rf5', '丝卡蕾特', '半精灵'], ['rf5', '芙佳', '兽耳族'], ['rf5', '露德蜜拉', '梦魔'],
+        ['rf5', '丛云', '兽耳族'], ['rf5', '阳菜', '兽人'],
+        ['azuma', '丽日', '神'], ['azuma', '祭', '神'], ['azuma', '鞍马', '神'],
+        ['azuma', '吹雪', '狼半兽神'], ['azuma', '彼方', '神']
+    ];
+    const ARCH_N = (() => {
+        const F = (typeof NPC_FULL !== 'undefined' && NPC_FULL) ? NPC_FULL : {};
+        const A = (typeof NPC_AZUMA !== 'undefined' && NPC_AZUMA && NPC_AZUMA.chars) ? NPC_AZUMA.chars : [];
+        const o = {};
+        ORD8.forEach(k => { o[k] = (k === 'azuma') ? A.length : ((F[k] || []).length); });
+        return o;
+    })();
+    const ARCH_TOT = ORD8.reduce((s, k) => s + ARCH_N[k], 0);
+    const tagN = k => TAGGED.filter(r => r[0] === k).length;
+    const pctOf = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '—';
+    const bTag = k => (k === id ? '<b>' + NAME[k] + '</b>' : E(NAME[k]));
+
+    const archiveSec = () => {
+        const rows = ORD8.map(k => [bTag(k) + ' · ' + ARCH_N[k] + ' 份', tagN(k) + ' 位 · ' + pctOf(tagN(k), ARCH_N[k])]);
+        rows.push(['<b>八作合计</b>', '<b>' + TAGGED.length + ' 位 · ' + pctOf(TAGGED.length, ARCH_TOT) + '</b>']);
+        const byG = ORD8.map(k => {
+            const n = TAGGED.filter(r => r[0] === k).map(r => r[1] + '（' + r[2] + '）');
+            return n.length ? '<b>' + NAME[k] + '</b> ' + n.join('、') : '';
+        }).filter(Boolean).join('；');
+        return H2('八作 ' + ARCH_TOT + ' 份人物档案，只有 ' + TAGGED.length + ' 位写了种族')
+            + '<p class="p">前面每作写的都是台词与设定条目里的说法。换成只看<b>人物档案</b>，画面完全不同：八作 <b>'
+            + ARCH_TOT + ' 份</b>档案里，明写种族的只有 <b>' + TAGGED.length + ' 位</b>（' + pctOf(TAGGED.length, ARCH_TOT) + '）。'
+            + '不是漏记——档案登记的是生日、喜好、行程和一句简介，多数作品根本没有「种族」这一栏。</p>'
+            + tbl(['作品 · 档案', '写明种族'], rows, { leftFirst: true, colw: ['auto', 'auto'] })
+            + '<p class="p">名单按作列：' + byG + '。</p>'
+            + '<div class="note">口径三条。<b>一、</b>只算档案里出现具体种族名的（含「人鱼族」「半精灵」这种写法），'
+            + '不算「原是蝴蝶形魔物」——4 代的琥珀、朵儿洁、迪拉斯都是魔物出身，档案里没有种族名，因此不进表。'
+            + '<b>二、</b>按「神」「巨人」这类字扫会多捞 7 位：多萝茜与高顿是神父，卢卡斯是神秘绅士，'
+            + '艾琳娜档案里的「巨人」指优米尔，昴流是化为鬼神，克拉丽丝是神祕团体，斑鸠是式神。'
+            + '<b>三、</b>龙之天地那 5 位写的是「神」——是身份不是物种，但档案里占的正是种族那一格，所以照收；'
+            + '若把它们剔掉，总数就从 ' + TAGGED.length + ' 变成 ' + (TAGGED.length - tagN('azuma')) + '。</div>';
+    };
+
+    /* 三份汉化表：表结构不同，海洋那份第一列是分类，日文在第 2 列 */
+    const CN_TABLES = [
+        ['RF1', (typeof CN_RF1_ABI !== 'undefined' ? CN_RF1_ABI : []), 0, 1],
+        ['RF1', (typeof CN_RF1_ATTR !== 'undefined' ? CN_RF1_ATTR : []), 0, 1],
+        ['RF1', (typeof CN_RF1_EVENT !== 'undefined' ? CN_RF1_EVENT : []), 0, 1],
+        ['RF1', (typeof CN_RF1_ITEM !== 'undefined' ? CN_RF1_ITEM : []), 0, 1],
+        ['RF1', (typeof CN_RF1_KIND !== 'undefined' ? CN_RF1_KIND : []), 0, 1],
+        ['RF1', (typeof CN_RF1_NPC !== 'undefined' ? CN_RF1_NPC : []), 0, 1],
+        ['RF1', (typeof CN_RF1_PLACE !== 'undefined' ? CN_RF1_PLACE : []), 0, 1],
+        ['RF1', (typeof CN_RF1_TYPE !== 'undefined' ? CN_RF1_TYPE : []), 0, 1],
+        ['边境', (typeof CN_RFF_ITEM !== 'undefined' ? CN_RFF_ITEM : []), 0, 1],
+        ['边境', (typeof CN_RFF_MISC !== 'undefined' ? CN_RFF_MISC : []), 0, 1],
+        ['边境', (typeof CN_RFF_PERSON !== 'undefined' ? CN_RFF_PERSON : []), 0, 1],
+        ['边境', (typeof CN_RFF_PLACE !== 'undefined' ? CN_RFF_PLACE : []), 0, 1],
+        ['海洋', (typeof CN_RFO !== 'undefined' ? CN_RFO : []), 1, 2]
+    ];
+    const TERM_STAT = (() => {
+        const c = { '精霊': 0, '妖精': 0, 'ルーニー': 0, 'せいれい': 0, 'ようせい': 0 };
+        let total = 0, hit = 0, elf = 0, jing = 0;
+        CN_TABLES.forEach(t => {
+            const arr = t[1] || [], ji = t[2], zi = t[3];
+            arr.forEach(r => {
+                if (!Array.isArray(r)) return;
+                total++;
+                const jp = String(r[ji] == null ? '' : r[ji]);
+                const zh = String(r[zi] == null ? '' : r[zi]);
+                if (jp.indexOf('エルフ') >= 0) elf++;
+                if (!/精灵|妖精/.test(zh)) return;
+                hit++;
+                if (zh.indexOf('精灵') >= 0) jing++;
+                if (jp.indexOf('精霊') >= 0) c['精霊']++;
+                else if (jp.indexOf('妖精') >= 0) c['妖精']++;
+                else if (jp.indexOf('ルーニー') >= 0) c['ルーニー']++;
+                else if (jp.indexOf('せいれい') >= 0) c['せいれい']++;
+                else if (jp.indexOf('ようせい') >= 0) c['ようせい']++;
+            });
+        });
+        return { c: c, total: total, hit: hit, elf: elf, jing: jing };
+    })();
+
+    const termSec = () => {
+        const c = TERM_STAT.c;
+        const rows = [
+            ['精霊 · 精霊殿／精霊歌／春の精霊祭', c['精霊'] + ' 条'],
+            ['ルーニー · 符文精灵', c['ルーニー'] + ' 条'],
+            ['妖精 · 妖精の粉 → 「精灵的粉末」', c['妖精'] + ' 条'],
+            ['せいれい · 1 代图鉴标签', c['せいれい'] + ' 条'],
+            ['エルフ · 艾尔夫王国／艾尔夫森林', '0 条']
+        ];
+        return H2('「精灵」在汉化表里指的是 精霊，不是 エルフ')
+            + '<p class="p">站内三份汉化定稿（1 代 8 张、边境 4 张、海洋 1 张）合计 <b>' + TERM_STAT.total + ' 条</b>。'
+            + '中文写成「精灵」的有 <b>' + TERM_STAT.jing + ' 条</b>，日文原文分别是：精霊 ' + c['精霊'] + ' 条、'
+            + 'ルーニー ' + c['ルーニー'] + ' 条、妖精 ' + c['妖精'] + ' 条、せいれい ' + c['せいれい'] + ' 条。'
+            + '<b>没有一条是 エルフ。</b></p>'
+            + tbl(['日文原文 · 例子', '条数'], rows, { leftFirst: true, colw: ['auto', '5rem'] })
+            + '<p class="p">エルフ 在三份表里一共出现 <b>' + TERM_STAT.elf + ' 次</b>，全在边境与海洋的用词表里，而且一律作「艾尔夫」：'
+            + '艾尔夫王国、艾尔夫森林、混血艾尔夫、黑暗艾尔夫。所以本页开头那张术语表写的「エルフ ＝ 精灵」'
+            + '在任何一份汉化定稿里都不成立——那是源站术语页的写法，不是汉化组的用法。</p>'
+            + '<p class="p">站内自己也不统一：同样是 エルフ，本页正文按日文原文写成「妖精」，人物页写「精灵」「半精灵」，'
+            + '海洋与边境的译名表写「艾尔夫」「混血艾尔夫」「黑暗艾尔夫」。同一个日文词，站内四种写法，'
+            + '各自守着各自的来源，谁都没改过谁。</p>'
+            + '<p class="p">更绕的是同一个「妖精」：1 代图鉴把 ようせい 译作「妖精」，而同一份译名表里 妖精の粉 又写成「精灵的粉末」，'
+            + '一张表内部就换过一次位。所以看到中文「精灵」，得先分清背后是 精霊（构成世界的那股东西）、ルーニー（符文精灵）、'
+            + '妖精（长翅膀的小个子）还是 エルフ（尖耳朵的人）——四种东西，落到中文只剩两个词。</p>'
+            + '<div class="note">这张表只覆盖有汉化定稿的三作。其余五作没有定稿进站，'
+            + '所以「精灵」在那五作里怎么译，本页不给结论。</div>';
+    };
+
+    /* 两套魔物分类。词义对号是本站的判断，不是数据里带的 */
+    const KIND1 = ((typeof CN_RF1_KIND !== 'undefined' ? CN_RF1_KIND : []) || []).map(r => r[1]);
+    const PAIR = [['亚人', '魔人系'], ['昆虫', '虫系'], ['动物', '动物系'], ['植物', '植物系']];
+    const SYS_RO = (() => {
+        const M = (typeof MON_RFO !== 'undefined' && MON_RFO) ? MON_RFO : [];
+        const m = {};
+        M.forEach(x => { m[x[1]] = (m[x[1]] || 0) + 1; });
+        return m;
+    })();
+    const SYS_LIST = Object.keys(SYS_RO).sort((a, b) => SYS_RO[b] - SYS_RO[a]);
+    const SYS_TOT = SYS_LIST.reduce((s, k) => s + SYS_RO[k], 0);
+    const KIND_SAME = KIND1.filter(x => SYS_LIST.indexOf(x) >= 0).length;
+
+    const labelSec = () => {
+        /* 行按「词义对号」排：先 4 组对得上的，再 1 代独有、海洋独有。对号是本站的判断，数据里没有 */
+        const rows = [];
+        PAIR.forEach(p => rows.push([E(p[0]), E(p[1]), SYS_RO[p[1]] ? String(SYS_RO[p[1]]) : '—']));
+        KIND1.filter(x => PAIR.every(p => p[0] !== x)).forEach(x => rows.push([E(x), '—', '—']));
+        SYS_LIST.filter(x => PAIR.every(p => p[1] !== x)).forEach(x => rows.push(['—', E(x), String(SYS_RO[x])]));
+        return H2('两套魔物分类，没有一个标签写法相同')
+            + '<p class="p">八作里只有两作给魔物做了物种分类：1 代的图鉴标签 ' + KIND1.length + ' 个、海洋的「系」' + SYS_LIST.length + ' 个。'
+            + '把两套集合求交，<b>写法完全相同的 ' + KIND_SAME + ' 个</b>——一套写「昆虫」一套写「虫系」，'
+            + '一套写「亚人」一套写「魔人系」，对不上号。按词义能勉强对上的只有 ' + PAIR.length + ' 组：'
+            + '亚人／魔人系、昆虫／虫系、动物／动物系、植物／植物系。</p>'
+            + tbl(['1 代图鉴 ' + KIND1.length + ' 个', '海洋 ' + SYS_LIST.length + ' 个系', '只数'], rows, { leftFirst: true, colw: ['auto', 'auto', '4.4rem'] })
+            + '<p class="p">1 代独有 ' + (KIND1.length - PAIR.length) + ' 个：鱼、精灵、鬼魂、无机质、妖精、凋零；'
+            + '海洋独有 ' + (SYS_LIST.length - PAIR.length) + ' 个：力量系、魔术系、史莱姆系、特殊系、稀有。'
+            + '其中「<b>稀有</b>」不是物种，是稀有度——' + SYS_RO['稀有'] + ' 只挂在它下面，占海洋 ' + SYS_TOT + ' 只的 '
+            + (SYS_RO['稀有'] / SYS_TOT * 100).toFixed(1) + '%。分类表里混进了一个不是分类的格子。</p>'
+            + '<p class="p">还有一处不对称：1 代把「精灵」与「妖精」分成两格（前面说过），海洋这 ' + SYS_LIST.length + ' 个系里两者都没有。'
+            + '4 代以后的站内魔物表干脆不带分类字段——物种分类这件事，系列做到一半就停了。</p>'
+            + '<div class="note">前四行是按词义对上的，不是数据里带的对应关系——两套分类各写各的，没有一个标签写法相同。'
+            + '1 代那 ' + KIND1.length + ' 个标签是图鉴分页，站内没有逐只归属，所以只有海洋那列有只数；海洋的只数是现算的。</div>';
+    };
+
     const TAIL = `
             ${H2('同一个中文词，对好几个日文词')}
             <p class="p">这是这页最该先说清的一件事。源站的术语表里，<b>「精灵」同时是 エルフ 和 精霊 的简中译名</b>；而 妖精（Fairy）在简中又被译成「小仙子」。也就是说，你看到中文写「精灵」时，它可能是尖耳朵的人，也可能是构成世界的那股东西。</p>
@@ -9712,6 +9866,9 @@ function raceDeepHtml(id) {
             <p class="p"><b>一、塞西莉娅是半精灵、妖精，还是暗妖精？</b>人物页写「半精灵女仆」；妖精（エルフ）条目引用她的台词「セシリアさんは、森の民・エルフ族の女の子なんですよ」；而「暗妖精的眼镜」那条物品说明写的是「ヴィヴィアージュ家が没落してもただ１人残ったダークエルフのメイドさん」。三种说法都出自同一站。</p>
             <p class="p"><b>二、克璐璐法是独角兽一族还是有角人？</b>人物页写「独角兽一族的女性」；「有角人」条目把她的名字列在成员第一行。3 代的剧情里，有角人是被人类从镇上赶走的种族，这两条并存。</p>
             <p class="p"><b>三、「人鱼」到底是不是居民？</b>海洋的台词里点过一次名：「エルフ、ダークエルフ、有角人にドワーフ、人魚……」。但源站的「人鱼」条目是<b>魔物</b>——RF5 里格巴斯迷宫 19F 的敌人，掉落人鱼的鳞片。海洋里那位常被当成「人鱼族」的梅尔普琳，原文台词三处都写着她是<b>暗妖精</b>（见海洋一节）。</p>
+            ${archiveSec()}
+            ${termSec()}
+            ${labelSec()}
             ${H2('种族不是背景板')}
             <p class="p">把这八作连起来看，种族在系列里干过三种活：<b>分类</b>（1 代的图鉴标签）、<b>矛盾</b>（3 代人类驱逐有角人、5 代多民族混居的镇子）、<b>身份</b>（4 代的三位魔物出身候补、5 代的半精灵与梦魔）。主角往往站在裂缝中间——这也是这系列剧情比一般经营游戏更重的原因。</p>`;
 

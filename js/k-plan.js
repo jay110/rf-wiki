@@ -11,6 +11,7 @@ var K_PLAN = {
         "decorate",
         "festival",
         "home",
+        "race",
         "seriescmp",
         "time",
         "world"
