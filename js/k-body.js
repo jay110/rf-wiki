@@ -19159,11 +19159,9 @@ function seriesCmpHtml() {
     const marryN = g => (g.chars || []).filter(c => /候补/.test(c.role || '')).length;
     const nm = g => (g.short || g.name || g.id);
 
-    const infoRows = G.map(g => [
-        nm(g), g.date || '—', g.plat || '—',
-        (g.hero || '—') + (g.heroJp ? '（' + g.heroJp + '）' : ''),
-        g.stage || '—'
-    ]);
+    /* 窄屏：五列表在 375px 下会把「舞台」压成一字一行，拆成两张三列表 */
+    const infoRows = G.map(g => [nm(g), g.date || '—', g.plat || '—']);
+    const stageRows = G.map(g => [nm(g), (g.hero || '—') + (g.heroJp ? '<br><span class="mon-no">' + g.heroJp + '</span>' : ''), g.stage || '—']);
     const scaleRows = G.map(g => [nm(g), String(ckN(g.id)), String(fishN(g.id))]);
     const marryRows = G.map(g => [nm(g), String(marryN(g)), String((g.chars || []).length)]);
     const candRows = G.map(g => {
@@ -19172,7 +19170,7 @@ function seriesCmpHtml() {
         const M = cs.filter(c => /花婿/.test(c.role)).map(c => c.name);
         return [nm(g), F.length ? F.join('、') : '—', M.length ? M.join('、') : '—'];
     });
-    const prodRows = G.map(g => [nm(g), g.dev || '—', g.pub || '—', g.god || '—']);
+    const prodRows = G.map(g => [nm(g), (g.dev || '—') + (g.pub ? '<br><span class="mon-no">' + g.pub + '</span>' : ''), g.god || '—']);
     // 主角结构：由 hero 字段与主角人数派生，不臆造
     const heroStruct = g => {
         if (g.id === 'rfo') return '一体两魂（双魂共用一躯）';
@@ -19181,14 +19179,56 @@ function seriesCmpHtml() {
         if (mc > 1) return '跨代多主角（' + mc + ' 名）';
         return '固定单人主角';
     };
-    const nameRows = G.map(g => [nm(g), g.jp || '—', g.en || '—', g.tagline || '—', heroStruct(g)]);
+    const nameRows = G.map(g => [nm(g), g.jp || '—', g.en || '—']);
+    const tagRows = G.map(g => [nm(g), g.tagline || '—', heroStruct(g)]);
+
+    /* 跨作同名：只按日文名完全相同判定，不判是否同一人物。
+       日文名是八作人物档案里唯一能跨作对齐的字段，生日是第二硬的一条。 */
+    const NPCW = (typeof NPC_FULL !== 'undefined') ? NPC_FULL : {};
+    const AZC = (typeof NPC_AZUMA !== 'undefined' && NPC_AZUMA && NPC_AZUMA.chars) ? NPC_AZUMA.chars : [];
+    const WID = ['rf1', 'rf2', 'rf3', 'rff', 'rfo', 'rf4', 'rf5', 'azuma'];
+    const WNM = { rf1: 'RF1', rf2: 'RF2', rf3: 'RF3', rff: '边境', rfo: '海洋', rf4: 'RF4', rf5: 'RF5', azuma: '龙之天地' };
+    const wList = id => (id === 'azuma' ? AZC : (NPCW[id] || []));
+    const jpOf = x => String(x.j || x.jp || '').trim();
+    const byJp = {};
+    let wTot = 0, wNoJp = 0;
+    WID.forEach(id => wList(id).forEach(x => {
+        wTot++;
+        const j = jpOf(x);
+        if (!j) { wNoJp++; return; }
+        (byJp[j] = byJp[j] || []).push({ id: id, n: x.n, r: x.r || '', bd: x.bd || '' });
+    }));
+    const dupG = Object.keys(byJp).filter(j => {
+        const sp = {};
+        byJp[j].forEach(x => { sp[x.id] = 1; });
+        return Object.keys(sp).length >= 2;
+    }).map(j => {
+        const L = byJp[j].slice().sort((a, b) => WID.indexOf(a.id) - WID.indexOf(b.id));
+        const bds = L.map(x => x.bd).filter(Boolean);
+        const same = bds.length >= 2 && bds.every(b => b === bds[0]);
+        return { jp: j, L: L, bds: bds, same: same, blank: bds.length === 0,
+            works: Object.keys(L.reduce((o, x) => { o[x.id] = 1; return o; }, {})).length };
+    }).sort((a, b) => (b.works - a.works) || (WID.indexOf(a.L[0].id) - WID.indexOf(b.L[0].id)));
+    const dupN = dupG.reduce((s, d) => s + d.L.length, 0);
+    const dupSame = dupG.filter(d => d.same).length;
+    const dupDiff = dupG.filter(d => !d.same && !d.blank).length;
+    const dupRows = dupG.map(d => {
+        const cell = WID.filter(id => d.L.some(x => x.id === id)).map(id => WNM[id] + ' ' +
+            d.L.filter(x => x.id === id).map(x => x.n + (/候补/.test(x.r) ? '（候补）' : x.r === '主角' ? '（主角）' : '')).join('、')).join('／');
+        const bdCell = d.blank ? '<span class="mon-no">两作都没记生日</span>'
+            : d.same ? d.bds[0] + '<span class="mon-no">（' + (d.works > 2 ? '三作相同' : '相同') + '）</span>'
+                : d.bds.join(' ／ ') + '<span class="mon-no">（不同）</span>';
+        return [d.jp, cell, bdCell];
+    });
 
     return `
     <h2 class="h2">跨作机制对照</h2>
     <p class="p">把 ${G.length} 部作品放在一张表里并排看。基础信息、结婚候补、角色数直接取自本站数据文件（<code>GAMES</code>）；料理与钓鱼规模是各作数据表的<b>真实条数</b>；系统机制差异是建站过程中逐作核实过的发现，每条都标了出处作，<b>不跨作换算、不替没核实的填数字</b>。</p>
 
     <h2 class="h2">一、基础信息</h2>
-    ${tbl(['作品', '发售日', '平台', '主角', '舞台'], infoRows, { colw: ['6.4rem', '6.6rem', '7.2rem', '9rem', ''], left: [3, 4] })}
+    ${tbl(['作品', '发售日', '平台'], infoRows, { leftFirst: true, left: [1, 2], colw: ['5.4rem', 'auto', 'auto'] })}
+    <h3 class="h3">各作的主角与舞台</h3>
+    ${tbl(['作品', '主角', '舞台'], stageRows, { leftFirst: true, left: [1, 2], colw: ['5.4rem', 'auto', 'auto'] })}
 
     <h2 class="h2">二、结婚候补与角色规模</h2>
     <p class="p">「结婚候补」＝花嫁候补＋花婿候补的人数（取自数据文件 <code>chars[].role</code>）；「角色总数」含主角、候补与居民。</p>
@@ -19196,7 +19236,7 @@ function seriesCmpHtml() {
 
     <h2 class="h2">三、内容体量（真实条数）</h2>
     <p class="p">料理条数为各作料理／药学数据表条目数：RF3／RF4／RF5 此处是料理主表（药品单列、未计入）；RF1／RF2／RFF／RFO 的主表含药学，数字略高。<b>RF3 SP／RF4 SP 与对应本体共用同一份数据</b>，条数与本体一致。鱼与钓物种数为各作钓鱼表的去重鱼名数（海洋 rfo 取钓点表展开去重，共 29 种；<b>龙之天地 azuma 取钓鱼攻略 <code>SPOT_AZUMA.fishes</code>，共 42 种</b>）。这些数字只说明「这一作有多少可查的条目」，不代表品质高低。</p>
-    ${tbl(['作品', '料理条数', '鱼与钓物种数'], scaleRows, { colw: ['9rem', '6rem', '8rem'], leftFirst: true })}
+    ${tbl(['作品', '料理条数', '鱼与钓物种数'], scaleRows, { leftFirst: true, colw: ['5.4rem', 'auto', 'auto'] })}
 
     <h2 class="h2">四、系统机制差异（逐作核实）</h2>
 
@@ -19238,15 +19278,26 @@ function seriesCmpHtml() {
 
     <h2 class="h2">五、结婚候补名单（真实姓名）</h2>
     <p class="p">仅列本站数据文件 <code>chars[].role</code> 标为「花嫁候补／花婿候补」的角色真实姓名，与表二的「结婚候补」计数一一对应。RFO 的索妮娅同时是女主角兼候补，按数据原文列入花嫁列；azuma 的花婿候补多为东国诸神，属该作设定。</p>
-    ${tbl(['作品', '花嫁候补', '花婿候补'], candRows, { colw: ['7.5rem', '', ''], left: [1, 2] })}
+    ${tbl(['作品', '花嫁候补', '花婿候补'], candRows, { leftFirst: true, left: [1, 2], colw: ['4.6rem', 'auto', 'auto'] })}
 
-    <h2 class="h2">六、制作与世界观核心</h2>
+    <h2 class="h2">六、重复的脸：${dupG.length} 个日文名，${dupN} 条角色档案</h2>
+    <p class="p">这一节只做一件事：把八作的人物档案按<b>日文名完全相同</b>对一遍（共 ${wTot} 条，${wTot - wNoJp} 条有日文名），看有多少张脸在两作以上出现。判据只有「名字一样」，<b>不判断是不是同一个人</b>——同名在不同世界观里可能是两个人，所以第二列把各作的写法并排，第三列拿生日做旁证。</p>
+    ${stat([['角色档案', wTot + ' 条'], ['有日文名', (wTot - wNoJp) + ' 条'], ['跨作同名', dupG.length + ' 组'], ['生日一致', dupSame + ' 组']])}
+    ${tbl(['日文名', '各作的写法', '生日'], dupRows, { leftFirst: true, left: [1], nw: [0], colw: ['6rem', 'auto', '7.2rem'] })}
+    <p class="p">${dupG.length} 组里 <b>${dupSame} 组生日完全一致</b>。这是最硬的一条：生日是人物档案里除名字外唯一能跨作对齐的字段，一致说明至少是同一套设定搬过去的。其中 6 组落在初代与边境之间、且全是花嫁候补；横跨三作的只有塔巴莎（RF1／边境／海洋，三处都写秋 12 日）。余下 8 组是别的配对：塞希莉娅（RF1 无身份标注 → RF2 花嫁候补）、阿涅多与糖糖（边境 → 海洋）、巴瑞特（RF2 花婿候补 → RF4）、多娜（RF3 花嫁候补 → RF4）、玛格丽特与塔克（RF4 候补 → RF5）、妃那（RF5 → 龙之天地）。</p>
+    <p class="p">剩下 ${dupG.length - dupSame} 组对不上。<b>拉格那</b>在初代与边境都是主角，两作都没记生日——不是矛盾，是没数据。真正不一样的是<b>莎拉</b>：RF1 记冬 4 日、海洋记春 3 日，日文名都是「サラ」、中文都写「莎拉」。本页照录两边，不裁决哪个对；只说一句后果：海洋那位在<a class="link" href="#/page/love">恋爱与结婚</a>页的生日撞车表里是春 3 日、与俾斯麦同一天，若按 RF1 那本，这组撞车就不存在。</p>
+    <p class="p">译名这一栏也不统一：同一个日文名在三作里写成塔巴莎／塔芭莎／塔芭莎两种译法；「バレット」在 RF2 是巴瑞特、在 RF4 是巴雷特；「トゥーナ」在 RF3 是多娜、在 RF4 是托娜。名字写法不同、生日却对得上——本页两列都照录，不替它们合并成一个人。</p>
+    <div class="note">这一节只用人物档案的名字与生日两个字段；身份标「候补／主角」的取档案原文，没标的就不标。<b>龙之天地只收进 16 位角色</b>（角色页来源单一），所以它的同名命中只有妃那一条——这不代表这一作人物少，是站内收录范围的问题。</div>
+
+    <h2 class="h2">七、制作与世界观核心</h2>
     <p class="p">开发商／发行商取自数据文件 <code>GAMES</code> 的 <code>dev</code>／<code>pub</code>；「世界观核心」取各作的幻龙或神明设定（<code>god</code> 字段）。这部分是系列「并排看」的制作与设定背景，与前面几节的玩法机制互为参照。</p>
-    ${tbl(['作品', '开发商', '发行商', '世界观核心'], prodRows, { colw: ['7rem', '6rem', '8rem', ''], left: [3] })}
+    ${tbl(['作品', '开发／发行', '世界观核心'], prodRows, { leftFirst: true, left: [1, 2], colw: ['5.4rem', 'auto', 'auto'] })}
 
-    <h2 class="h2">七、原名与主角结构</h2>
+    <h2 class="h2">八、原名与主角结构</h2>
     <p class="p">「日文原名／英文原名」取数据文件 <code>GAMES</code> 的 <code>jp</code>／<code>en</code>；「一句话定位」取各作 <code>tagline</code>。「主角结构」由 <code>hero</code> 字段与主角人数派生：含「／」为开局可选男／女（RF4 起），海洋（RFO）为数据原文记载的「一体两魂」，RF2 因含父代＋子代共三名主角列为跨代多主角，其余为固定单人。均不臆造。</p>
-    ${tbl(['作品', '日文原名', '英文原名', '一句话定位', '主角结构'], nameRows, { colw: ['6rem', '10rem', '10rem', '', '9.5rem'], left: [3] })}
+    ${tbl(['作品', '日文原名', '英文原名'], nameRows, { leftFirst: true, left: [1, 2], colw: ['5.4rem', 'auto', 'auto'] })}
+    <h3 class="h3">一句话定位与主角结构</h3>
+    ${tbl(['作品', '一句话定位', '主角结构'], tagRows, { leftFirst: true, left: [1, 2], colw: ['5.4rem', 'auto', 'auto'] })}
 
     <div class="note">本页只做「并排看」与「逐作核实发现」的汇总，不构成跨作评测。某项在某作显示 0 或空白，多半是「该作此系统与前作机制不同、或本站尚未收录」，不是「没有」。具体数据请进对应作品的相关条目页查看。</div>
     `;
