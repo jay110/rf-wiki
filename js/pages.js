@@ -4103,6 +4103,76 @@ function gearBuyHtml(id) {
     return h.join('\n');
 }
 
+/* 「同一页标题，六作各给了多少」：表格张数与数据行从 GEAR_BEST 现算，点名件数取 GEAR_XCHK_ROW。
+   口径：只数本页收录的表（表头不算行）；per ＝ 每点名一件装备，背后有几行表格数据。 */
+function gearDensityHtml(id) {
+    const G = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST : null;
+    if (!G || typeof GEAR_XCHK_ROW === 'undefined') return '';
+    const T = [];
+    GEAR_XCHK_ROW.forEach(function (r) {
+        const D = G[r[1]] || {}, B = D.blocks || [];
+        const nt = B.filter(function (b) { return b.tbl; }).length + (D.sets ? 1 : 0);
+        const nr = B.reduce(function (a, b) { return a + (b.tbl ? b.tbl.rows.length : 0); }, 0) + (D.sets ? D.sets.rows.length : 0);
+        T.push({ nm: r[0], k: r[1], nt: nt, nr: nr, n: r[2], per: nr / r[2] });
+    });
+    if (T.length < 2) return '';
+    const sum = T.reduce(function (a, x) { return { nt: a.nt + x.nt, nr: a.nr + x.nr, n: a.n + x.n }; }, { nt: 0, nr: 0, n: 0 });
+    const hi = T.slice().sort(function (a, b) { return b.per - a.per; })[0];
+    const nz = T.filter(function (x) { return x.per > 0; }).sort(function (a, b) { return a.per - b.per; })[0];
+    const zero = T.filter(function (x) { return x.per === 0; });
+    if (!nz) return '';
+    const f2 = function (v) { return v.toFixed(2); };
+    const ratio = Math.round(hi.per / nz.per);
+    const rowOf = function (x) {
+        return [
+            x.k === id ? '<b>' + x.nm + '</b>' : x.nm,
+            x.nt + ' 张／' + x.nr + ' 行',
+            x.n + ' 件',
+            x.nr ? f2(x.per) : '<b>0</b>'
+        ];
+    };
+    const h = [];
+    h.push('<h2 class="h2">同一页标题，六作的表格密度差 ' + ratio + ' 倍</h2>');
+    h.push('<p class="p">六作的源站条目都叫「毕业装备」，但把它们各自给了几张表、多少行、点名几件摊开，看到的是六种不同的完成度。下表最后一栏是<b>每点名一件装备，背后有几行表格数据</b>——它量的不是字数，是有没有东西能照着做。</p>');
+    h.push(tbl(['作品', '表格／数据行', '点名件', '每件几行'],
+        T.map(rowOf).concat([['六作合计', sum.nt + ' 张／' + sum.nr + ' 行', sum.n + ' 件', f2(sum.nr / sum.n)]]),
+        { leftFirst: true, colw: ['4.8rem', 'auto', '4.4rem', '4.4rem'] }));
+    h.push('<p class="p">两端差 ' + ratio + ' 倍：<b>' + hi.nm + '</b> 每件 ' + f2(hi.per) + ' 行（点名 ' + hi.n + ' 件、' + hi.nr + ' 行表），<b>' + nz.nm + '</b> 每件只有 ' + f2(nz.per) + ' 行（点名 ' + nz.n + ' 件、' + nz.nt + ' 张表合计 ' + nz.nr + ' 行）。方向还跟点名数正好相反——<b>点名最多的那一作给得最粗，点名最少的那一作给得最细</b>。' + nz.nm + ' 那 ' + nz.n + ' 件不是靠清单撑起来的：它有 ' + ((G[nz.k].blocks || []).length) + ' 段正文（六作里最多），全靠两条前提往下推，表只有一张 ' + nz.nr + ' 行的武器种清单。</p>');
+    if (zero.length) {
+        h.push('<p class="p">' + zero.map(function (x) { return x.nm; }).join('、') + '是另一个极端：点名 ' + zero.map(function (x) { return x.n; }).join('、') + ' 件，表格 <b>0 张</b>、数据行 <b>0 行</b>，全部内容是三段话。所以「这一页写了多少」和「这一页点了多少名字」在六作里根本不相关：合计点名 ' + sum.n + ' 件，表格数据一共只有 ' + sum.nr + ' 行。</p>');
+    }
+    h.push('<div class="note">口径：表只数本页收录的那几张（源站用模板挂在别处、本站没并进来的不算），行只数有内容的数据行、表头不计；点名件数取前一节「回表核对」的统计，六作合计 ' + sum.n + ' 件。</div>');
+
+    h.push('<h2 class="h2">「按格子放」的只有两作，其余五作给的是件不是序</h2>');
+    h.push('<p class="p">再按「读者能不能照着做」分一次：七作里给出<b>格位</b>的只有两作——第几格放什么、倍率铁排在哪一格后面。其余五作给的是「要哪几件」。</p>');
+    h.push(tbl(['作品', '源站给的形态', '能否照做'], [
+        ['RF1', '合成树（7 行）', '只给合成顺序'],
+        ['RF2', '清单（六把剑）', '只给件'],
+        ['RF3', '推导（8 段正文）', '只给结论'],
+        ['边境', '清单（八组极限）', '只给件'],
+        ['海洋', '点名（三段话）', '只给件'],
+        ['RF4', '格位（十格 × 四部位）', '能照着放'],
+        ['RF5', '倍率链（十二格）', '能照着放'],
+    ], { leftFirst: true, colw: ['4rem', 'auto', '7.2rem'] }));
+
+    h.push('<p class="p">初代那张表看着最像顺序——七行、四个材料位、第一位放的是上一级的成品——但它其实是<b>合成树</b>，不是强化顺序。把树从「天之村云之剑」往下展开到底，得到七种原始材料，再和它自己的「材料准备」表逐项对：<b>六项精确吻合，只有「银」对不上</b>。</p>');
+    h.push(tbl(['材料', '展开需要', '材料准备表写'], [
+        ['阔剑', '2', '2'],
+        ['风之结晶', '4', '4'],
+        ['水之结晶', '4', '4'],
+        ['铁', '4', '4'],
+        ['鸟羽毛', '2', '2'],
+        ['魔人的角', '1', '1'],
+        ['<b>银</b>', '<b>3</b>', '<b>2</b>'],
+    ], { leftFirst: true, colw: ['6rem', '5.6rem', 'auto'] }));
+    h.push('<p class="p">三个银分别在：大气锋刃、海洋切割者、死亡之剑各一个——前两个在风线与水线的中段，死亡之剑是合体前的最后一步。材料准备表写 2。两表出自同一页、互相验算 6/7，对不上的那一项照录，不补成 3：可能源站漏了一个，也可能某一步的银另有来路，站内没有依据判断是哪种。</p>');
+
+    h.push('<p class="p">边境那八组也是清单，而且比看上去省：八组共 <b>31 个位置</b>，去重只有 <b>22 件</b>东西——魔法戒指出现三次（极限魔法力、全属性攻击力、全属性防御力），另有 7 件各出现两次（暴击之七、鲸鱼帽、头冠、胸花、黑色斗篷、幸福戒指、星形坠饰）。所以「八组极限」不是八套装备，是同一批 22 件在八种目标之间反复排：攻击与 HP 两组共用鲸鱼帽，魔法力与全异常抗性两组共用头冠和胸花。</p>');
+    h.push('<p class="p">八组里唯一只列三件的是「全异常状态抗性」，也正好是唯一没给成品值的一组——其余七组都写了 87 攻击、47%、470 防御、420 魔法力、95 HP、21、39。两件事落在同一行上，源站没解释，这里也只并排。</p>');
+    h.push('<div class="key">「毕业套」在七作里指的不是同一种东西：<b>四代是一份工序</b>（十格照放，最终五件连第 2 到第 8 格都写了），<b>五代是一套倍率链</b>（十二格，另设专页），<b>其余五作是一份采购单</b>（要哪几件）。工序能照抄，采购单只能照着买——先放哪个、倍率铁放第几格，源站没写。这也是为什么同一页标题下，有的成品值能复核、有的只能当结论读。</div>');
+    return h.join('\n');
+}
+
 function gearBestHtml(g) {
     const id = (g && g.id);
     const D = (typeof GEAR_BEST !== 'undefined') ? GEAR_BEST[id] : null;
@@ -4130,6 +4200,7 @@ function gearBestHtml(g) {
         ${B.map(blockHtml).join('')}
         ${gearXcheckHtml(id)}
         ${gearBuyHtml(id)}
+        ${gearDensityHtml(id)}
 
         ${nEmpty ? `<h2 class="h2">源站缺的部分</h2>
         <p class="p">下面这些，要么在源条目里<b>只有表头、没有一行数据</b>，要么是源站用模板挂在别处的表、本站没有并进来。空着的地方没有替它补——补出来的每一条都是编的。</p>
