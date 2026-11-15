@@ -14257,6 +14257,7 @@ const PAGES = [
         body: (g) => {
             const id = (g && g.id) || 'rf5';
             const is4 = /^rf4/.test(id);
+            const XC = weaponCrossHtml(id);
                         if (id === 'azuma' && typeof AZUMA_FORGE !== 'undefined') { const h = weaponAzumaHtml(); if (h) return h; }
             const TX = txPack(id, 'weapon');
             const W = /^rf3/.test(id) ? (typeof EQW_RF3 !== 'undefined' ? EQW_RF3 : [])
@@ -14318,6 +14319,7 @@ const PAGES = [
                     ['8.6rem', '4rem', '3rem'],
                     rows, { chips: RAW, ph: '输入武器名或属性筛选' })}
             <p class="p">表里的<b>暴击</b>是这件武器自带的暴击率修正，<b>眩晕</b>是它每次命中给对手累积的眩晕值——${is4 ? '锤、斧与双手剑' : '双手剑与锤'}的眩晕普遍更高，这也是它们「慢但打得动」的原因。</p>
+            ${XC}
             <div class="jump">
                 <a href="#/page/battle">
                     <div class="jp-t">战斗与弱点</div>
@@ -14349,6 +14351,7 @@ const PAGES = [
             ${ftableOwn(WX.cols, WX.colw, WX.rows, { ph: '输入武器名、种类、属性或特效筛选' })}
             <div class="note">${WX.note || ''}</div>
             ${id === 'rfo' ? rfoStyleHtml() : ''}
+            ${XC}
             <div class="jump">
                 <a href="#/page/battle">
                     <div class="jp-t">战斗与弱点</div>
@@ -14381,6 +14384,7 @@ const PAGES = [
             ${ftable(['名称', '说明'], ['7.6rem'], TX.rows,
                     { chips: TX.cats, ph: '输入武器名或说明里的词筛选' })}
             <div class="note">分类依据是物品在解包表里的排列顺序——游戏内并没有把类型写在武器上。段边界按名字逐条核对过（例如这一作的单手剑从「阔剑」到「符文剑」是连续的 21 件），<b>不是按名字猜的</b>。</div>
+            ${XC}
             <div class="jump">
                 <a href="#/page/battle">
                     <div class="jp-t">战斗与弱点</div>
@@ -16219,6 +16223,108 @@ function azumaPotionHtml() {
     return out;
 }
 
+function weaponCrossHtml(id) {
+    const WX = (typeof WEQ_ALL !== 'undefined') ? WEQ_ALL : null;
+    const W3 = (typeof EQW_RF3 !== 'undefined') ? EQW_RF3 : null;
+    const W4 = (typeof EQW_RF4 !== 'undefined') ? EQW_RF4 : null;
+    const W5 = (typeof EQW_RF5 !== 'undefined') ? EQW_RF5 : null;
+    const AZ = (typeof AZUMA_FORGE !== 'undefined') ? AZUMA_FORGE : null;
+    if (!WX || !W4 || !W5 || !AZ) return '';
+    const uq = a => a.filter((x, i) => a.indexOf(x) === i);
+    const ORD = [['rf1', 'RF1'], ['rf2', 'RF2'], ['rf3', 'RF3'], ['rff', '边境'],
+        ['rfo', '海洋'], ['rf4', 'RF4'], ['rf5', 'RF5'], ['azuma', '龙之天地']];
+    const NM = {}, KD = {}, RN = {};
+    ['rf1', 'rf2', 'rff', 'rfo'].forEach(k => {
+        if (!WX[k]) return;
+        NM[k] = WX[k].rows.map(r => r[1][0]);
+        KD[k] = WX[k].kinds.map(x => x[0]);
+        RN[k] = WX[k].rows.length;
+    });
+    if (!NM.rf1 || !NM.rf2 || !NM.rff || !NM.rfo) return '';
+    NM.rf3 = W3.map(r => r[0]); KD.rf3 = uq(W3.map(r => r[1])); RN.rf3 = W3.length;
+    NM.rf4 = W4.map(r => r[0]); KD.rf4 = uq(W4.map(r => r[1])); RN.rf4 = W4.length;
+    NM.rf5 = W5.map(r => r[0]); KD.rf5 = uq(W5.map(r => r[1])); RN.rf5 = W5.length;
+    NM.azuma = AZ.families.reduce((a, f) => a.concat(f.rows.map(r => r[0])), []);
+    KD.azuma = AZ.families.map(f => f.name);
+    RN.azuma = NM.azuma.length;
+    const LIVE = ORD;
+    const totRows = LIVE.reduce((s, o) => s + RN[o[0]], 0);
+    const sumKinds = LIVE.reduce((s, o) => s + KD[o[0]].length, 0);
+    const cntName = {};
+    LIVE.forEach(o => uq(NM[o[0]]).forEach(n => { cntName[n] = (cntName[n] || 0) + 1; }));
+    const keys = Object.keys(cntName);
+    const uniqAll = keys.length;
+    const bucket = {};
+    keys.forEach(n => { const c = cntName[n]; bucket[c] = (bucket[c] || 0) + 1; });
+    const pairRows = [];
+    for (let i = 0; i < LIVE.length - 1; i++) {
+        const a = LIVE[i], b = LIVE[i + 1];
+        const A = uq(NM[a[0]]), B = uq(NM[b[0]]);
+        const c = A.filter(n => B.indexOf(n) >= 0).length;
+        pairRows.push([a[1] + ' → ' + b[1], String(c),
+            Math.round(c / A.length * 100) + '%', Math.round(c / B.length * 100) + '%']);
+    }
+    const dupTxt = [];
+    LIVE.forEach(o => {
+        const m = {};
+        NM[o[0]].forEach(n => { m[n] = (m[n] || 0) + 1; });
+        const d = Object.keys(m).filter(n => m[n] > 1);
+        if (d.length) dupTxt.push(o[1] + '有 <b>' + d.length + '</b> 个（' + RN[o[0]] + ' 行 → ' + uq(NM[o[0]]).length + ' 件）');
+    });
+    const onlyOne = bucket[1] || 0;
+    const pctOne = Math.round(onlyOne / uniqAll * 100);
+    const perList = LIVE.map(o => ({ t: o[1], v: RN[o[0]] / KD[o[0]].length }))
+        .sort((a, b) => a.v - b.v);
+    const lowP = perList[0], hiP = perList[perList.length - 1];
+    let out = '';
+    out += '<h2 class="h2">八作件数：77 到 247，中间掉过两次</h2>';
+    out += '<p class="p">把八作的武器行摊在一起数，一共 <b>' + totRows.toLocaleString('en-US') + ' 行</b>。' +
+        '数量不是一路加上去的：77 → 126 → 188 → 109 → 135 → 231 → 247 → 111。' +
+        '两次倒退都很大——<b>3 代到边境少了 79 行（−42%）</b>、<b>5 代到龙之天地少了 136 行（−55%）</b>，' +
+        '而且都落在换平台的那一步：边境是 Wii 上的一作，龙之天地换了整套系统与命名。</p>';
+    out += tbl(['作', '行数', '类数', '件/类'],
+        LIVE.map(o => [o[1], String(RN[o[0]]), String(KD[o[0]].length),
+            (RN[o[0]] / KD[o[0]].length).toFixed(1)]),
+        { leftFirst: true, cls: 'txt', colw: ['6.4rem', '4.6rem', '4.6rem', '5.4rem'] });
+    out += '<p class="p">类数也是两头窄：5 → 6 → 7 → 6 → 8 → 8 → 8 → 5。' +
+        '<b>八类只出现在 4 代与 5 代</b>（比 3 代多的那一个是拳套）；龙之天地的五类里<b>长枪、锤、斧、拳套、魔杖全没了</b>，' +
+        '换成了弓与符咒——<b>弓这一整类在系列里只在这一作出场</b>（21 件）。</p>';
+    out += '<div class="note">类数是按<b>各作自己的叫法</b>数的，没有合并：锤写过锤子／战斗锤／锤／战锤，枪写过枪／长枪，' +
+        '杖写过杖／魔杖／符咒。八作相加是 ' + sumKinds + ' 个类名，实际远少于这个数。' +
+        '<b>「件/类」一栏最能说明问题</b>：最低是' + lowP.t + '的 ' + lowP.v.toFixed(1) +
+        '，最高是' + hiP.t + '的 ' + hiP.v.toFixed(1) + '。</div>';
+    out += '<div class="key">所以「武器越做越多」只能对一半：行数从 77 涨到 247，中途腰斩两次，最后一次还砍掉五类。' +
+        '<b>行数最多的两作（4／5 代）也正好是名字重合最多的两作</b>——多出来的那部分，有相当一块是同一批名字换了类目重排。</div>';
+
+    out += '<h2 class="h2">名字的存活：只有「双手剑」八作全有</h2>';
+    out += '<p class="p">八作合计 <b>' + uniqAll + '</b> 个不同的武器名（重复行去重后），' +
+        '其中 <b>' + onlyOne + ' 个（' + pctOne + '%）只在一作出场</b>。跨作分布：八作全有 ' +
+        (bucket[8] || 0) + ' 个、七作 ' + (bucket[7] || 0) + '、六作 ' + (bucket[6] || 0) +
+        '、五作 ' + (bucket[5] || 0) + '、四作 ' + (bucket[4] || 0) + '、三作 ' + (bucket[3] || 0) +
+        '、两作 ' + (bucket[2] || 0) + '。</p>';
+    out += '<p class="p">八作全有的那一个名字是<b>「双手剑」</b>——它同时也是类型名，等于这个名字从初代一路用到了龙之天地。' +
+        '七作的 ' + (bucket[7] || 0) + ' 个里有符文剑、防卫者、骑士枪、长枪；六作的 ' + (bucket[6] || 0) +
+        ' 个里有阔剑、大剑、幸运剑。<b>越靠前的名字越像制式装备，越靠后的越像一次性道具</b>——' +
+        '但这只是个大致的趋势，同一把名字在不同作的类目与数值并不对应。</p>';
+    out += tbl(['相邻两作', '同名数', '占前作', '占后作'], pairRows,
+        { leftFirst: true, cls: 'txt', colw: ['9.4rem', '4.6rem', '4.6rem', '4.6rem'] });
+    out += '<p class="p">这张表有两个极端。<b>RF2 → RF3 一个没丢</b>（' + pairRows[1][1] +
+        ' 个名字全在 3 代里），<b>RF5 → 龙之天地只剩 ' + pairRows[6][1] + ' 个（' + pairRows[6][2] +
+        '）</b>——那一作连类目都换掉了。中间四步差得很远：边境只接过 3 代的 ' + pairRows[2][2] +
+        '，可这 ' + pairRows[2][1] + ' 个已经把边境 ' + uq(NM.rff).length + ' 个名字里的 ' + pairRows[2][3] +
+        ' 占掉了——边境的表七成来自 3 代，总量却少了 79 行；海洋接过边境的 ' + pairRows[3][2] +
+        '，4 代只接过海洋的 ' + pairRows[4][2] + '（占 4 代自己 ' + pairRows[4][3] + '），5 代又接过 4 代的 ' +
+        pairRows[5][2] + '。</p>';
+    out += '<div class="note"><b>RF2 → RF3 的 100% 照录</b>，不判断是「继承」还是「两作用了同一份来源表」。' +
+        '另外 ' + (dupTxt.length ? dupTxt.join('、') : '<b>没有任何一作</b>有重名行') + '，' +
+        '这样的名字每一行都<b>一模一样</b>；页面上照录不删，所以「行数」会比「件数」多。</div>';
+    out += '<p class="p">买价那一栏的覆盖差得更远：<b>全表给价的只有 RF2 与龙之天地</b>——' +
+        'RF2 126 行（1,000–456,630，最贵是名刀达刃），龙之天地 111 行（0–382,820，最贵是天之村云之剑，另有一行买价写着 0）。' +
+        'RF1 只有 22 行带价（800–70,000，最贵欧鲁帝鲁）、边境 8 行（500–900）、海洋 8 行（250–1,000）；' +
+        '<b>3 代、4 代、5 代这一列根本没有</b>——本页那三作的价格都写「—」，不是漏填。</p>';
+    return out;
+}
+
 function weaponAzumaHtml() {
     const F = (typeof AZUMA_FORGE !== 'undefined') ? AZUMA_FORGE : null;
     if (!F || !F.families.length) return '';
@@ -16272,6 +16378,7 @@ function weaponAzumaHtml() {
     out += '<div class="note">数据同<a href="#/page/craft">锻造与药学</a>页：<code>js/azuma_forge.js</code> 的 <code>AZUMA_FORGE</code>' +
         '（' + n + ' 件，源：<b>' + E(F.src) + '</b>）。<b>只记买价、不记卖价</b>；「—」照录，意思是源表没写。' +
         '「升级+」是源表的一列强化值，不是可叠加次数上限，本页不据此推算。</div>';
+    out += weaponCrossHtml('azuma');
     out += '<div class="jump">' +
         '<a href="#/page/craft"><div class="jp-t">锻造与药学</div><div class="jp-s">五类武器全表与材料</div></a>' +
         '<a href="#/page/azuma_artifact"><div class="jp-t">神器与舞</div><div class="jp-s">本作真正的战力在舞上</div></a>' +

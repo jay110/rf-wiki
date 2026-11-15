@@ -16,6 +16,7 @@ var K_PLAN = {
         "seriescmp",
         "stage",
         "time",
+        "weapon",
         "world"
     ],
     "games": {
