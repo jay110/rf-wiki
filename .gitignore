@@ -105,3 +105,6 @@ _t_*.js
 _snap/
 
 _preview_shot.html
+
+# 无头测试用的浏览器配置目录（含缓存，别入库）
+_tmp_qqprof/

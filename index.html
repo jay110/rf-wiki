@@ -14,7 +14,9 @@
            实现只用一行 <base>：CSS、分包、作品图、头像全是相对路径，base 一改全部跟着走，
            业务代码一个字都不用动。 */
         (function () {
-            var REF = '';          /* 留空＝@main；想钉死版本就填 commit sha（镜像对分支最多滞后半天） */
+            /* 留空＝@latest：镜像会跟到最新提交（实测 @main 会滞后半天，@latest 立刻就是新版）。
+               想钉死版本就填 commit sha。 */
+            var REF = '';
             /* 两个节点分工，实测（167KB 内核包 / 70KB 图）：
                  fastly      JS、CSS 0.5 秒 —— 但对 png/jpg/webp 一律 301 到 raw.githubusercontent.com，
                              国内基本连不上，图会全空；
@@ -22,7 +24,7 @@
                gcore 与 testingcf 同家备用，哪天都不通就把 IMG_HOST 换过去试。 */
             var HOST = 'fastly';
             var IMG_HOST = 'testingcf';
-            var VER = '@' + (REF || 'main') + '/';
+            var VER = '@' + (REF || 'latest') + '/';
             var CDN = 'https://' + HOST + '.jsdelivr.net/gh/jay110/rf-wiki' + VER;
             var IMG = 'https://' + IMG_HOST + '.jsdelivr.net/gh/jay110/rf-wiki' + VER;
             var q = '';
@@ -193,9 +195,9 @@
     <script defer src="js/k-loader.js"></script>
     <script defer src="js/k-core.js"></script>
 
-    <!-- 镜像对分支有滞后（jsDelivr 对 @main 最多缓存半天）。万一 CDN 上的内核包还是旧版，
-         图片会整屏空白 —— resImg 是这一版新增的函数，用它当「新版已到」的标记；
-         没到就自动切回直连，别让人盯着一屏空卡片。 -->
+    <!-- 镜像偶尔会跟不上最新提交。万一 CDN 上的内核包还是旧版，图片会整屏空白 ——
+         resImg 是这一版新增的函数，用它当「新版已到」的标记；没到就自动切回直连，
+         别让人盯着一屏空卡片。 -->
     <script>
         /* 用 load 而不是定时器：defer 的内核包此时已经跑完，resImg 在不在是确定答案；
            定时器在后台标签页会被浏览器节流，真出问题时反而拖到最后才救。 */
