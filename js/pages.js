@@ -17106,18 +17106,24 @@ function azumaNpcHtml() {
     const J = a => (a && a.length) ? a.join('、') : dash;
     const has = (a, k) => a && a[k] && a[k].length;
 
+    /* 「配方」是牵绊事件（个人事件）解锁的专属装备，不算战斗技能。
+       本页把它从技能表里拎出来，单列在各自角色名下；下面所有「技能」计数都不含配方。 */
+    const isRecipe = x => /^配方/.test(x[0]);
+    const skillOf = c => c.skills.filter(x => !isRecipe(x));
+    const recOf = c => c.skills.filter(isRecipe);
     const nIntro = A.reduce((s, c) => s + c.intro.length, 0);
-    const nSkill = A.reduce((s, c) => s + c.skills.length, 0);
+    const nSkill = A.reduce((s, c) => s + skillOf(c).length, 0);
+    const nRec = A.reduce((s, c) => s + recOf(c).length, 0);
     const nCvJp = A.filter(c => c.cvJp).length;
     const nCvEn = A.filter(c => c.cvEn).length;
-    const nBond = A.filter(c => c.skills.some(x => isBond(x[1]))).length;
+    const nBond = A.filter(c => skillOf(c).some(x => isBond(x[1]))).length;
 
     /* 按季节数一遍生日，不手写数字 */
     const bySea = SEA.map(k => [k, list.filter(c => (c.bd || '').charAt(0) === k).length]);
     const noBd = list.filter(c => !c.bd).length;
-    const mostSkill = list.slice().sort((a, b) => b.skills.length - a.skills.length)[0];
+    const mostSkill = list.slice().sort((a, b) => skillOf(b).length - skillOf(a).length)[0];
     const mostLv = list.slice().sort((a, b) =>
-        b.skills.filter(x => !isBond(x[1])).length - a.skills.filter(x => !isBond(x[1])).length)[0];
+        skillOf(b).filter(x => !isBond(x[1])).length - skillOf(a).filter(x => !isBond(x[1])).length)[0];
 
     /* 与「村民技能」页（post/1828）逐人对一遍：同一批人、同一套技能，两页的条数与档位对不上 */
     const SR = (typeof SKILL_AZUMA !== 'undefined') ? SKILL_AZUMA.rows : [];
@@ -17159,8 +17165,9 @@ function azumaNpcHtml() {
     const exOne = tierDiff.filter(x => x.ex && x.ex.moved)[0];
 
     const card = c => {
-        const lvN = c.skills.filter(x => !isBond(x[1])).length;
-        const bdN = c.skills.filter(x => isBond(x[1])).length;
+        const SK = skillOf(c), REC = recOf(c);
+        const lvN = SK.filter(x => !isBond(x[1])).length;
+        const bdN = SK.filter(x => isBond(x[1])).length;
         const tasteRow = (o, k1, k2) => (has(o, k1) || has(o, k2))
             ? `${has(o, k1) ? '<b>最喜欢</b> ' + J(o[k1]) : ''}${has(o, k1) && has(o, k2) ? '　／　' : ''}${has(o, k2) ? '<b>喜欢</b> ' + J(o[k2]) : ''}`
             : '';
@@ -17179,14 +17186,15 @@ function azumaNpcHtml() {
             ['礼物喜好', [tasteRow(c.like, 'best', 'good'), badRow(c.like, 'bad', 'worst')].filter(Boolean).join('<br>') || dash],
             ['共度时光', [tasteRow(c.topic, 'best', 'good'), badRow(c.topic, 'bad', 'worst')].filter(Boolean).join('<br>') || dash],
             ['互动', giftBits.length ? giftBits.join('<br>') : dash],
+            ['牵绊道具', REC.length ? REC.map(x => x[0] + '<span class="mon-no">（' + x[1] + '）</span>').join('、') : dash],
             ['技能', `等级型 <b>${lvN}</b> 条${bdN ? '／牵绊型 <b>' + bdN + '</b> 条' : '／<b>无牵绊型</b>'}`],
         ];
         return `
         <h3 class="h3">${c.n}${c.jp ? '（' + c.jp + (c.en ? '、' + c.en : '') + '）' : ''}</h3>
         ${c.intro.length ? c.intro.map(x => `<p class="p">${x}</p>`).join('') : ''}
         ${tbl(['项目', '内容'], rows, { leftFirst: true, colw: ['6.2rem', 'auto'], left: [1], cls: 'azuq' })}
-        <details class="mon-fold"><summary>展开 ${c.n} 的技能表（${c.skills.length} 条）</summary>
-        ${tbl(['技能', '等级', '描述'], c.skills.map(x => [
+        <details class="mon-fold"><summary>展开 ${c.n} 的技能表（${SK.length} 条）</summary>
+        ${tbl(['技能', '等级', '描述'], SK.map(x => [
         x[0], x[1], (x[2] && x[2] !== '0' && x[2] !== '—') ? x[2] : dash,
     ]), { colw: ['auto', '5.6rem', 'auto'], left: [0, 2], cls: 'azuq' })}
         </details>`;
@@ -17199,10 +17207,10 @@ function azumaNpcHtml() {
         ['角色', A.length + ' 人'],
         ['简介', nIntro + ' 段'],
         ['技能', nSkill + ' 条'],
-        ['有日语配音', nCvJp + ' 人'],
+        ['牵绊道具', nRec + ' 件'],
     ])}
-        <p class="p">源文有两种版式：<b>1837–1846</b> 是「生日、喜好物品、喜欢的话题、互动赠礼以及技能表」，<b>1847–1852</b> 是「角色图鉴」。两边字段一致，差别只在后者没有「英语配音」那一行——所以全篇只有 <b>${nCvEn} 人</b>有英配记录，其余留空，不替它们补。</p>
-        <p class="p">生日按季节排开是 ${bySea.map(x => x[0] + ' ' + x[1] + ' 人').join('、')}${noBd ? '，另有 ' + noBd + ' 人源文没写生日' : '，16 人一个不缺'}；技能最多的是<b>${mostSkill.n}</b>（${mostSkill.skills.length} 条），其中等级型最多的是<b>${mostLv.n}</b>（${mostLv.skills.filter(x => !isBond(x[1])).length} 条）；有牵绊技能的 <b>${nBond} 人</b>，无牵绊的 <b>${A.length - nBond} 人</b>。</p>
+        <p class="p">源文有两种版式：<b>1837–1846</b> 是「生日、喜好物品、喜欢的话题、互动赠礼以及技能表」，<b>1847–1852</b> 是「角色图鉴」。两边字段一致，差别只在后者没有「英语配音」那一行——所以全篇只有 <b>${nCvEn} 人</b>有英配记录、<b>${nCvJp} 人</b>有日配记录，其余留空，不替它们补。</p>
+        <p class="p">生日按季节排开是 ${bySea.map(x => x[0] + ' ' + x[1] + ' 人').join('、')}${noBd ? '，另有 ' + noBd + ' 人源文没写生日' : '，16 人一个不缺'}；技能最多的是<b>${mostSkill.n}</b>（${skillOf(mostSkill).length} 条），其中等级型最多的是<b>${mostLv.n}</b>（${skillOf(mostLv).filter(x => !isBond(x[1])).length} 条）；有牵绊技能的 <b>${nBond} 人</b>，无牵绊的 <b>${A.length - nBond} 人</b>。</p>
         ${tbl(['生日', '名字', '原名', '日语配音', '技能'], list.map(c => [
         c.bd || dash, '<b>' + c.n + '</b>', c.jp + (c.en ? '、' + c.en : ''),
         c.cvJp || dash,
@@ -17211,11 +17219,11 @@ function azumaNpcHtml() {
         <div class="note">「原名」列照源文写法，日文在前、英文在后。「日语配音」一列<b>${A.filter(c => !c.cvJp).map(c => c.n).join('、') || '全数齐全'}</b>${A.filter(c => !c.cvJp).length ? ' 的源文是空的（写了「日语配音：」后面没填人），照录不补。' : ' 全部有记录。'}</div>
 
         <h2 class="h2">一位一位看</h2>
-        <p class="p">简介是源文原文，<b>繁体字照录、未转简体、未改写</b>——这类人物介绍一旦顺手改成简体，就跟原文对不上了，也对不上别的资料站。礼物四档、话题四档、互动五项都是原表内容；技能表收在折叠区里，点开才展开。</p>
+        <p class="p">简介是源文原文，<b>繁体字照录、未转简体、未改写</b>——这类人物介绍一旦顺手改成简体，就跟原文对不上了，也对不上别的资料站。礼物四档、话题四档、互动五项都是原表内容；技能表收在折叠区里，点开才展开。<b>技能表里原本夹着 ${nRec} 条「配方」——那是牵绊事件（个人事件）解锁的专属装备，本页已把它们从技能表里拎出来，单列成每人一行「牵绊道具」，技能条数因此一律不含配方。</b></p>
         ${list.map(card).join('')}
 
         <h2 class="h2">同一批人，「村民技能」页的数字对不上</h2>
-        <p class="p">站内另有一页「村民技能」（源 post/1828），收的是同一批人的技能表。<b>两页逐人对下来，${cmp.length} 人条数或档位不一致</b>——不是解析漏了，是两份源文本身写得不一样。这里把差异原样摆出来，两边都不改：</p>
+        <p class="p">站内另有一页「村民技能」（源 post/1828），收的是同一批人的技能表。<b>两页逐人对下来，${cmp.length} 人条数或档位不一致</b>——不是解析漏了，是两份源文本身写得不一样。这里把差异原样摆出来，两边都不改。注意<b>下面这张表按两份源文原样数（含配方）</b>，与本页卡片上的技能条数不同，差的就是各家那条配方：</p>
         ${tbl(['角色', '本页（等级型／牵绊型）', '技能页（等级型／牵绊型）', '同一档牵绊技名不同'], cmp.map(x => [
         '<b>' + x.n + '</b>',
         x.a[0] + ' ／ ' + x.a[1],
