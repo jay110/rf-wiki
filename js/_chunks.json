@@ -113,6 +113,7 @@
       "js/fx4s.js",
       "js/cropdata.js",
       "js/fxdata.js",
+      "js/npcevent.js",
       "js/ore.js"
     ],
     "rf5": [
@@ -152,18 +153,18 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "ee19f97c2e558acf",
+    "core": "c2c0e90937387a63",
     "shared": "a54c4a130be9dc0d",
     "cross": "ad9110f36405fa4c",
-    "body": "4630727379205be3",
+    "body": "757786826949f5f5",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "7710378fdb93de5f",
     "game:rff": "f7cc8d3932f40ea5",
     "game:rfo": "9e3654e80e5964e0",
-    "game:rf4": "6cf29ea58906e7c2",
+    "game:rf4": "f0c058ebf17f1f5d",
     "game:rf5": "2d7dfa77a74848b4",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "22af6ea68e06797b"
+    "page:changelog": "602b2799a3373814"
   }
 }

@@ -1094,3 +1094,10 @@
     word-break: break-word;
     min-width: 7.6rem;
 }
+
+/* 人物页（#/char）的「这个人名下的委托」：三代那 8 列表格列多、内容长，
+   窄屏一律靠容器内横滑，不压成每格两三个字的竖排 */
+.content .table.pev table { min-width: 60rem; }
+
+.content .table.pev tbody td[colspan],
+.content .table.pev td { white-space: nowrap; word-break: normal; }

@@ -107,6 +107,7 @@
     "js/fxdata.js",
     "js/rune.js",
     "js/npcfull.js",
+    "js/npcevent.js",
     "js/bd_ext.js",
     "js/faces.js",
     "js/sched.js",

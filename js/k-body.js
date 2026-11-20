@@ -9040,6 +9040,8 @@ ${TAIL}`;
 
     /* ================= RF4：三件东西 + 事件得看完 ================= */
     if (id === 'rf4') {
+        /* 12 条结婚支线在 NPC_EVENT.rf4，与人物页共用一份，免得两处各写一遍再漂移 */
+        const EV4 = (typeof NPC_EVENT !== 'undefined' && NPC_EVENT.rf4) ? NPC_EVENT.rf4 : [];
         const cand = nf.filter(x => /花嫁|花婿/.test(x.r || ''));
         const f = cand.filter(x => /花嫁/.test(x.r)).length;
         const m = cand.filter(x => /花婿/.test(x.r)).length;
@@ -9062,20 +9064,9 @@ ${TAIL}`;
             <p class="p">告白成功、成为恋人之后才能邀请约会。约定时间<b>前后一小时内</b>不到场就算爽约，一直到和好为止都处于「吵架」状态。约会地点按次数解锁，源文写得有点挤：1 食堂、1 杂货店、2 花店、3 飞行船、4 铁匠铺、5 瞭望台、6 湖边、7 主角的家——<b>开头两个都标「1」，源文如此</b>，即第一次可在食堂或杂货店里二选一。</p>
             <h2 class="h2">12 位候补，12 条结婚支线，只有 1 条不用前置</h2>
             <p class="p">「事件看完」这四个字在 RF4 里是有名单的：每位候补对应一条结婚支线，其中 <b>11 条还挂着前置支线</b>，只有朵儿洁一条直接可跑。所有结婚支线都要求<b>先约会三次、好感 10</b>。</p>
-            ${tbl(['候补', '结婚支线，以及它前面的支线'], [
-                ['比修奈尔', '《你的回答》<br>前置：《比修奈尔迷失自我！》好感 3'],
-                ['库洛丽嘉', '《殷切的心愿》<br>前置：《振作点！》库洛丽嘉 4、琥珀 1、塔克 1'],
-                ['芙缇', '《心之所向》<br>前置：《骑士的马》芙缇 3'],
-                ['基尔', '《红色骑士》<br>前置：《在旅馆打工》基尔 5<br>《骑士的马》芙缇 3'],
-                ['玛格丽特', '《身在此处的意义》<br>前置四条：<br>①《掉进湖里的思念》玛格丽特 5<br>②《没有观众的音乐会》玛格丽特 3、朵儿洁 3<br>③《伯克利奴和妖精的关系》玛格丽特 3、伯克利奴 2<br>④《向伯克利奴报恩》玛格丽特 3、伯克利奴 3、亚瑟 3、迪拉斯 3'],
-                ['迪拉斯', '《让你知道我的笨拙》<br>前置：《练习笑容》迪拉斯 5'],
-                ['亚瑟', '《暂时的视野》<br>前置：《健康检查》琼斯 3<br>《戴眼镜的眼睛》亚瑟 3'],
-                ['小白', '《不认输的心情》<br>前置：《蝴蝶效应》铃华 3、通关水之遗迹<br>《好像会传染的哦》小白 3'],
-                ['琥珀', '《为你送上感谢》<br>前置：《侦探助手琥珀》琥珀 3、花店侦探 3、通关黑曜馆'],
-                ['塔克', '《给重要的人的戒指》<br>前置：《塔克的秘密》塔克 6<br>其前置《闪亮的回忆》塔克 3、布罗萨姆 1'],
-                ['朵儿洁', '《花语》<br>前置：无'],
-                ['雷欧', '《来自过去的信》<br>前置：《雷欧的日常》无好感要求'],
-            ], { leftFirst: true, left: [1], colw: ['5.4rem', 'auto'] })}
+            ${tbl(['候补', '结婚支线，以及它前面的支线'], EV4.map(m => [
+                m.n, E(m.t) + (m.pre.length ? '<br>' + (m.preLabel ? E(m.preLabel) + '：<br>' : '前置：') + m.pre.map(E).join('<br>') : '<br>前置：无'),
+            ]), { leftFirst: true, left: [1], colw: ['5.4rem', 'auto'] })}
             <p class="p">三个不那么直观的地方：<b>门槛最高的不是候补本人</b>——塔克那条要他自己 6 心，亚瑟那条却要非候补的琼斯 3 心；<b>有两条挂在主线通关上</b>（小白要通关水之遗迹，琥珀要通关黑曜馆）；<b>玛格丽特一条挂四条前置</b>，最后那条同时要玛格丽特、伯克利奴、亚瑟、迪拉斯四人到位。</p>
             <p class="p">订婚戒指这次也有了配方：<b>配方等级 20，材料是「矿石类 + 宝石类」各一样</b>——源表只写类别、不写具体矿物。另外源页写「无法和同性角色告白」，与站内「豪华版可选同性婚」的说法并存，<b>两说照录，本站不裁决</b>。</p>
 ${TAIL}`;
@@ -18787,6 +18778,27 @@ function requestRf1Html() {
     const nMar = Q.items.filter(i => i.steps.some(s => /求婚/.test(s))).length;
     /* 不按「1、2、3」开头写的行（注意点、续行）有几行 */
     const nRaw = Q.items.reduce((a, i) => a + i.steps.filter(s => !/^\d+[、.]/.test(s)).length, 0);
+    /* 每条支线牵到谁：站内人物名 + 源文里的三种旧写法。单字名（安、冥）不参与匹配，
+       否则「安」会命中「安全」「安装」这种普通词，宁可漏一个人也不乱挂。 */
+    const NF1 = (typeof NPC_FULL !== 'undefined' && NPC_FULL.rf1) ? NPC_FULL.rf1 : [];
+    const SRC1 = { '塞希莉亚': '塞希莉娅', '萝赛塔': '萝洁塔', '夏萝思': '夏伦' };
+    const whoOf = txt => {
+        const t = String(txt || '');
+        const hit = [];
+        NF1.forEach(x => {
+            const forms = [x.n].concat(String(x.al || '').split(/[、,，／\/]/).map(v => v.trim()).filter(Boolean));
+            Object.keys(SRC1).forEach(k => { if (SRC1[k] === x.n) forms.push(k); });
+            if (x.n.length >= 2 && forms.some(f => f && f.length >= 2 && t.indexOf(f) >= 0)) hit.push(x.n);
+        });
+        return hit.filter((v, i) => hit.indexOf(v) === i);
+    };
+    const whoLine = it => {
+        const list = whoOf(it.t + ' ' + it.steps.join(' '));
+        return list.length
+            ? `<p class="p txc" style="margin:-.3rem 0 .7rem .2rem">牵到的人：` +
+              list.map(n => `<a class="link" href="#/char/rf1/${encodeURIComponent(n)}">${esc(n)}</a>`).join('、') + '</p>'
+            : '';
+    };
 
     return `
     <div class="note">源：<b>${esc(Q.src)}</b>。${esc(Q.note)}</div>
@@ -18803,8 +18815,8 @@ function requestRf1Html() {
     <p class="p">所以看这一页的方式和别的作不同：不是「我现在能接什么」，而是<b>「我知道这件事之后该按什么顺序跑」</b>。下面每条都按源站的分步顺序照录，编号是源站自己的。</p>
 
     <h2 class="h2">二、${nItem} 条支线，逐条分步</h2>
-    <p class="p">步骤前面的「1、2、3」是源站写的，<b>本站没有重新编号</b>——所以你会看到个别行不带号（那是源站的「注意点」或上一行的续写），这类共 ${nRaw} 行，原样留在它该在的位置上。</p>
-    ${Q.items.map(it => `<h3 class="h3">${esc(it.t)}　${it.steps.length} 步</h3>
+    <p class="p">步骤前面的「1、2、3」是源站写的，<b>本站没有重新编号</b>——所以你会看到个别行不带号（那是源站的「注意点」或上一行的续写），这类共 ${nRaw} 行，原样留在它该在的位置上。每条标题下面另标「牵到的人」，<b>点名字进他的页面</b>——那边按人重排了一遍；一条支线牵到两三个人的，在几个人页上都会出现，站内不因此判给谁。</p>
+    ${Q.items.map(it => `<h3 class="h3">${esc(it.t)}　${it.steps.length} 步</h3>${whoLine(it)}
     <div style="margin:.2rem 0 .9rem 0">
     ${it.steps.map(s => `<p class="p" style="margin:.18rem 0 .18rem 1rem;padding-left:.9rem;border-left:3px solid var(--line,#ddd)">${esc(s)}</p>`).join('\n    ')}
     </div>`).join('\n')}
@@ -18862,7 +18874,7 @@ function requestRf5Html() {
     <div class="note"><b>${nEmptyR} 条报酬是空的：</b>页面上显示「—」。源站那两格写的就是占位符，不是本站漏抄——<b>也正因为查不到报酬，本站不去别处搬一个数字填进来</b>。</div>
     <div class="note"><b>${nRnd} 条报酬写「随机」：</b>照录。遇到这种就别指望刷指定道具，它给的是随机池。</div>
     <div class="note"><b>解锁条件里带「后」「以上」的写法一律照录：</b>「在床上休息后去旅馆后」这种连着两个「后」的句子是源站原话，本站不改。条件是「完成某某」的，指的就是同表里那一条，按序号找过去即可。</div>
-    <div class="note"><b>本页只有委托表：</b>源站这一页没有按入口（布告栏／侦探事务所／警署）分类，也没有单列「通缉魔物」——本站不替它补一层分类，保持原表一层平铺。</div>
+    <div class="note"><b>本页只有委托表：</b>源站这一页没有按入口（布告栏／侦探事务所／警署）分类，也没有单列「通缉魔物」——本站不替它补一层分类，保持原表一层平铺。四列里<b>没有「委托人」这一栏</b>，所以这 173 条没法按人拆——想按人看，只能看恋爱线那 3 条普通支线 + 1 条结婚支线的口径（人物页里有说明），委托表这边<b>不替它猜归属</b>。</div>
 
     <div class="jump">
         <a href="#/page/shop"><div class="jp-t">商店与设施</div><div class="jp-s">「商店追加」到底追加了什么</div></a>
@@ -18930,9 +18942,9 @@ function requestRf3Html() {
     <div class="key">别把三类混着刷：<b>支线</b>是推进角色线的唯一办法（很多人结婚前必须走完）；<b>惩治委托</b>只认「打倒某只／某几只」，不认素材；<b>简单委托</b>给的东西大多是随机，指望它出指定道具会很难受。</div>
 
     <h2 class="h2">三、${ppl.length} 位村民的委托数量一览</h2>
-    <p class="p">按条数从多到少排。<b>条数差异很大</b>——有的村民三十条上下，有的只有几条，这跟他在剧情里的分量有关，<b>不是本站漏收</b>。</p>
+    <p class="p">按条数从多到少排，<b>点人名进他的页面</b>——每一条委托的全文（前置、好感、内容、变化、报酬）已经按人搬到人物页，这里只留数量。这 ${nAll} 条的全表仍在下面第四节，是给「拿着源表对行」用的。<b>条数差异很大</b>——有的村民三十条上下，有的只有几条，这跟他在剧情里的分量有关，<b>不是本站漏收</b>。</p>
     ${tbl(['村民', '合计', '布告栏', '邮箱', '猫头鹰', '最高好感'], ppl.map(p => [
-        '<b>' + esc(p.n) + '</b>',
+        '<b><a class="link" href="#/char/rf3/' + encodeURIComponent(p.n) + '">' + esc(p.n) + '</a></b>',
         String(p.c),
         p.k['布告栏'] ? String(p.k['布告栏']) : dash,
         p.k['邮箱'] ? String(p.k['邮箱']) : dash,
@@ -19018,7 +19030,7 @@ function requestRf4Html() {
     <div class="note"><b>${nQ} 处写的是 <code>???</code>：</b>那是源站没查到解锁条件（<i>Raise a skill level to 80!</i>、<i>Complete the Sharance Maze!</i>）或没写完成方式（<i>Prepare for Marriage!</i>）的地方。表里保留 <code>???</code>，<b>不拿别的攻略猜填</b>。</div>
     <div class="note"><b>${nEmpty} 个空单元格：</b>页面上显示为「—」。其中 <i>First Task!</i> 那一行源站只写了四格（首条委托没有「解锁条件」），不是本站漏抄。</div>
     <div class="note"><b>原文的错字与怪写法一律照录，不修：</b><i>Comeplete</i>（Complete 拼错）、<i>A Cheep Axe</i>（Cheap）、<i>Raise at least on skill</i>（one）、<i>Grow and orange tree</i>（a）、<i>available at the General.</i>（漏 Store）、<i>Complete Harvest a large gold Crop!</i>（别处都写 crop）、<i>Complete ship a level 5 veggie!</i>（句首小写）、<i>Dylas is such a horse.</i>（备注是句玩笑话）。同类的小写／单复数不一还有几处，都在表里原样躺着。</div>
-    <div class="note"><b>没收到的那两类：</b>①<b>个人委托（Personal）</b>——源站只有一段描述，明说「通常是给一件不常见的魔物掉落」，没有逐条表，本站不编；②源站另有一张按角色排的 <i>Special Requests</i> 表，但它把「要的物品／魔物／物品」三格挤成了一串、行内互相错位，<b>抽取结果不可靠，本站宁可不收</b>，也不拿错位数据凑数。</div>
+    <div class="note"><b>没收到的那两类：</b>①<b>个人委托（Personal）</b>——源站只有一段描述，明说「通常是给一件不常见的魔物掉落」，没有逐条表，本站不编；②源站另有一张按角色排的 <i>Special Requests</i> 表，但它把「要的物品／魔物／物品」三格挤成了一串、行内互相错位，<b>抽取结果不可靠，本站宁可不收</b>，也不拿错位数据凑数。<b>按人看的话不进这张表</b>：四代按人挂的是恋爱线的结婚支线，每位候补一条，已经挂到各人的人物页上（比如「比修奈尔」的页里那条《你的回答》），这里不重复。</div>
 
     <div class="jump">
         <a href="#/page/npcgift"><div class="jp-t">村民喜好</div><div class="jp-s">委托要送的东西谁喜欢</div></a>
@@ -19115,7 +19127,7 @@ function requestRf2Html() {
     <div class="note">「最高爱情度 9」不等于「9 就结婚」：结婚那一步要么是<b>第 10 条任务</b>（把求婚道具交出去），要么根本不在任务里（罗萨琳德是把花束直接送）。主表只到 9 为止，所以本页不给任何人补第 10 条。</div>
 
     <h2 class="h2">四、${nAll} 条主表任务，按委托人分节</h2>
-    <p class="p">每节的顺序是攻略本<b>从上到下</b>的顺序。<b>主表这 ${nAll} 条任务名全是中文译名</b>（终有依天这一套就是这么写的）；补来的 ${nEx} 条反过来，<b>全是日文原名</b>。两套写法并存，本页各在各的位置上照录：不把中文名翻回日文，也不把日文名译成中文。「好感度」「友好度」「爱情度」三种叫法都是原文的，同样没统一。</p>
+    <p class="p">每位委托人的名字都做成了链接，<b>点进去是他的人物页</b>——那边只列这个人的条目，一份不落；这一页仍是全表，给「照攻略本对行」用。每节的顺序是攻略本<b>从上到下</b>的顺序。<b>主表这 ${nAll} 条任务名全是中文译名</b>（终有依天这一套就是这么写的）；补来的 ${nEx} 条反过来，<b>全是日文原名</b>。两套写法并存，本页各在各的位置上照录：不把中文名翻回日文，也不把日文名译成中文。「好感度」「友好度」「爱情度」三种叫法都是原文的，同样没统一。</p>
     <div class="note"><b>原文的错字与怪写法一律照录，不修：</b>玛娜第一条写作「把金刚花交给<b>的</b>罗萨琳德」（多一个「的」）；阿莉希亚第一条的触发条件写作「与阿利希亚<b>雅</b>对话后」（多一个「雅」，跟她的名字都对不上）；多罗茜那条写作「奖励<b>，</b>：无」（冒号前多一个逗号）；罗萨琳德的触发条件里「维维安筑」也不是本站的「薇薇安邸」。这些都能在下面的表里原样找到——<b>本站不动手改攻略本的错</b>。</div>
     <p class="p">奖励这一列有 ${nNone} 条写的是「无」${nNoR ? '，' + nNoR + ' 条干脆空着——空的不是本站漏填，<b>原文那里就没有</b>' : '——那是原文自己写的「无」，不是本站漏填'}。</p>
     ${ppl.map(p => `<h3 class="h3">${p.cand ? '<span class="mon-no">候选</span> ' : ''}<a class="link" href="#/char/rf2/${encodeURIComponent(p.n)}">${esc(p.n)}</a>${p.j ? '（' + esc(p.j) + '）' : ''}　${p.cnt} 条</h3>

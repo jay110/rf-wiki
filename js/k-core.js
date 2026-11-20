@@ -71,7 +71,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-20",
-    latest: ["第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…", "第两百五十四：八作武器摊平 1,224 行——只有「双手剑」八作全有，206 个…", "第两百五十三：操作方式页补两节——八作 13 行版本里只有 4 行带下屏、体感只…", "第两百五十二：世界设定页里五处旧件数与现算表打架（3／5／7／0 实为 2／4／…", "第两百五十一：八行数据里只有六个公司名——Neverland 占六行、世嘉只出现…"],
+    latest: ["第两百五十七：符文 1～5 的委托按人搬进人物页——3 代 280 条全挂在 2…", "第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…", "第两百五十四：八作武器摊平 1,224 行——只有「双手剑」八作全有，206 个…", "第两百五十三：操作方式页补两节——八作 13 行版本里只有 4 行带下屏、体感只…", "第两百五十二：世界设定页里五处旧件数与现算表打架（3／5／7／0 实为 2／4／…"],
 };
 
 ;
@@ -1775,6 +1775,137 @@ function viewResident(gameId, role, sort) {
     </div>`;
 }
 
+/* ---------- 这个人名下的委托／支线 ----------
+   各作的委托数据里，有的按人挂了、有的没有。这里只做「照表归位」，不猜、不补：
+     RF1  支线标题里有人名 → 整条列（8 条支线里只有 4 条的标题带人名）；标题没有、分步里提到的，
+          只列该步并标明「由别人起头」
+     RF2  委托条的 w 字段就是委托人
+     RF3  总序号的前缀（希雅-布告栏-01）与中文名的「人名：」，都是委托人
+     RF4  委托表只有物品／种子奖励三组，没有按人分的行；这一作按人挂的是恋爱页那 12 条结婚支线，
+          数据在 NPC_EVENT.rf4，与恋爱页共用一份
+     RF5  委托表没有委托人一列（序号／中文名／解锁／报酬），只说明与恋爱线的关系，不编归属
+   匹配只用「这人叫什么」加别名；源表写法与站内名不同的两处（阿利希雅／多罗茜）单独对一下，
+   显示仍是源表原文。 */
+function personalEventHtml(gid, c) {
+    const dash = '<span class="mon-no">—</span>';
+    const cell = v => (v === null || v === undefined || v === '') ? dash : escHtml(v);
+    const nm = String(c.n || '');
+    if (!nm) return '';
+
+    const alias = String(c.al || '').split(/[、,，／\/]/).map(x => x.trim()).filter(Boolean);
+    /* 源表与站内名的写法差：只用于匹配 */
+    const SRC = {
+        '阿利希雅': '阿莉希亚', '多罗茜': '多萝茜',
+        '塞希莉亚': '塞希莉娅', '萝赛塔': '萝洁塔', '夏萝思': '夏伦', '基尔': '奇尔'
+    };
+    const keys = [nm].concat(alias);
+    Object.keys(SRC).forEach(k => { if (SRC[k] === nm) keys.push(k); });
+    const isMe = s => keys.some(k => k && String(s || '') === k);
+    const hasMe = s => keys.some(k => k && String(s || '').indexOf(k) >= 0);
+
+    const table = (cols, rows, lefts, cls) => `
+<div class="table ${cls || ''}"><table>
+<thead><tr>${cols.map(h => `<th class="th">${escHtml(h)}</th>`).join('')}</tr></thead>
+<tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td class="td${lefts && lefts.indexOf(i) >= 0 ? ' left' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody>
+</table></div>`;
+
+    /* ===== 三代：总序号前缀即委托人，280 条全表按人切 ===== */
+    if (gid === 'rf3') {
+        const Q = (typeof RF3_REQUEST !== 'undefined') ? RF3_REQUEST : null;
+        if (!Q || !Q.groups) return '';
+        const mine = [];
+        Q.groups.forEach(g => g.rows.forEach(r => {
+            const who = String(r[0] || '').split('-')[0];
+            if (isMe(who) || hasMe(r[1])) mine.push({ kind: g.name, r: r });
+        }));
+        if (!mine.length) return '';
+        const ch = {};
+        mine.forEach(x => { const p = String(x.r[0] || '').split('-'); const k = p[1] || x.kind; ch[k] = (ch[k] || 0) + 1; });
+        const chain = mine.filter(x => String(x.r[2] || '').trim()).length;
+        return `
+        <h2 class="h2">这个人名下的委托：${mine.length} 条</h2>
+        <p class="p">三代的委托不长在板上，长在人身上：<b>总序号</b>的前缀就是委托人，<b>前置支线</b>写着上一条的编号，照着串下去就是一条完整的人线。这位的 ${mine.length} 条里，<b>${chain} 条挂了前置</b>，入口分布是 ${Object.keys(ch).map(k => k + ' ' + ch[k] + ' 条').join('、')}。列与<a href="#/page/request">委托任务</a>页那张全表同一份，一字未改。</p>
+        ${table(['总序号', '中文名', '前置支线', '好感度', '前置条件', '内容', '变化', '报酬'],
+            mine.map(x => [cell(x.r[0]), '<b>' + escHtml(x.r[1]) + '</b>', cell(x.r[2]), cell(x.r[3]), cell(x.r[4]), cell(x.r[5]), cell(x.r[6]), cell(x.r[7])]),
+            [1, 2, 3, 4, 5, 6, 7], 'pev')}
+        <div class="note">「好感度」写成 <code>${escHtml(nm)}❤3</code> 这样，人名与心数在源表同一格里，照录不拆。空着的格子＝源表写「-」，本站显示为灰破折号；<b>前置支线空＝链条起点</b>，好感度空＝这一条不设门槛。</div>`;
+    }
+
+    /* ===== 二代：w 字段是委托人 ===== */
+    if (gid === 'rf2') {
+        const Q = (typeof RF2_QUEST !== 'undefined') ? RF2_QUEST : null;
+        if (!Q || !Q.quests) return '';
+        const mine = Q.quests.filter(q => isMe(q.w) || isMe(q.n));
+        const extra = (Q.extra || []).filter(q => hasMe(q.w) || isMe(q.n));
+        const marry = (Q.marriage || []).filter(m => hasMe(m.n));
+        if (!mine.length && !extra.length && !marry.length) return '';
+        return `
+        <h2 class="h2">这个人名下的委托：${mine.length + extra.length} 条</h2>
+        <p class="p">二代和三代一样，委托挂在人身上：源表的委托人一栏写谁，这条就是谁的。流程里的「→」是源表自己用来串步骤的，<b>本站没有重排顺序</b>。</p>
+        ${mine.length ? table(['委托', '触发条件', '流程', '报酬'],
+            mine.map(q => ['<b>' + escHtml(q.t) + '</b>', cell(q.c), cell(q.f), cell(q.r)]), [0, 1, 2, 3], 'pev') : ''}
+        ${extra.length ? table(['补表条目', '内容', '为什么另收'],
+            extra.map(q => ['<b>' + escHtml(q.t) + '</b>', cell(q.x), cell(q.why)]), [0, 1, 2], 'pev') : ''}
+        ${marry.length ? `<div class="key">${marry.map(m => `与这个人的婚事挂在一条委托上：<b>${escHtml(m.item)}</b>——${escHtml(m.said)}（${escHtml(m.where)}）。`).join('')}</div>` : ''}
+        <div class="note">第二代有两套来源（主表 118 条、补表 6 条），同一条在两套里译名不一定相同，<b>照录不合并</b>：例如站内档案写「阿莉希亚」，主表的委托人写「阿利希雅」。匹配按人名对上了，显示仍是源表原文。</div>`;
+    }
+
+    /* ===== 一代：8 条支线，标题带人名的只有 4 条 ===== */
+    if (gid === 'rf1') {
+        const Q = (typeof RF1_REQUEST !== 'undefined') ? RF1_REQUEST : null;
+        if (!Q || !Q.items) return '';
+        const main = Q.items.filter(it => hasMe(it.t));
+        const side = Q.items.filter(it => !hasMe(it.t) && it.steps.some(s => hasMe(s)));
+        if (!main.length && !side.length) return '';
+        const block = it => `
+        <h3 class="h3">${escHtml(it.t)}　${it.steps.length} 步</h3>
+        <div style="margin:.2rem 0 .9rem 0">
+        ${it.steps.map(s => `<p class="p" style="margin:.18rem 0 .18rem 1rem;padding-left:.9rem;border-left:3px solid var(--line,#ddd)">${escHtml(s)}</p>`).join('\n        ')}
+        </div>`;
+        const sideBlock = it => {
+            const hitSteps = it.steps.filter(s => hasMe(s));
+            return `
+        <h3 class="h3">${escHtml(it.t)}（此人出现在其中几步）</h3>
+        <div style="margin:.2rem 0 .9rem 0">
+        ${hitSteps.map(s => `<p class="p" style="margin:.18rem 0 .18rem 1rem;padding-left:.9rem;border-left:3px solid var(--line,#ddd)">${escHtml(s)}</p>`).join('\n        ')}
+        </div>`;
+        };
+        return `
+        <h2 class="h2">这个人牵到的支线：${main.length + side.length} 条</h2>
+        <p class="p">一代没有委托板，能给玩家的额外目标全在<b>支线剧情</b>里，而支线的起头往往就是某个村民的一句话。${main.length ? `<b>${main.length} 条</b>的标题直接写着这人的名字，整条列在下面；` : ''}${side.length ? `另有 <b>${side.length} 条</b>标题没写这个人的名字、只在其中几步里牵到此人，这里只摘那几步——<b>整条流程在<a href="#/page/request">委托任务</a>页</b>，不在这里重复。` : ''}</p>
+        ${main.map(block).join('')}
+        ${side.map(sideBlock).join('')}
+        <div class="note">步骤前的「1、2、3」是源站自己的编号，本站没有重排；个别行不带号，那是源站的注意点或上一行的续写，原样留在原位。原文的标点、日文地名照录。</div>`;
+    }
+
+    /* ===== 四代：委托表没有按人分的行，按人挂的是 12 条结婚支线 ===== */
+    if (gid === 'rf4') {
+        const E = (typeof NPC_EVENT !== 'undefined' && NPC_EVENT.rf4) ? NPC_EVENT.rf4 : [];
+        const m = E.filter(x => isMe(x.n))[0];
+        if (!m) return '';
+        return `
+        <h2 class="h2">与这个人有关的事件：结婚支线 ${escHtml(m.t)}</h2>
+        <p class="p">四代的委托表按<b>奖励类型</b>分组（物品／配方 54 条、杂货店种子 24 条、花店种子 15 条），<b>没有按人分的行</b>。按人挂的是另一套东西——<b>结婚支线</b>：每位候补一条，是「镇内事件全部看完」这句话的实际内容，<b>事件没跑完，求婚选项不会出现</b>，游戏也不提示差哪一段。</p>
+        <div class="kv">
+            <div class="kv-row"><div class="kv-k">结婚支线</div><div class="kv-v"><b>${escHtml(m.t)}</b></div></div>
+            <div class="kv-row"><div class="kv-k">前置支线</div><div class="kv-v">${m.pre.length ? m.pre.map(escHtml).join('<br>') : '无（12 条里只有这一条不用前置）'}</div></div>
+            <div class="kv-row"><div class="kv-k">共同门槛</div><div class="kv-v">先约会三次、好感 10</div></div>
+        </div>
+        <div class="note">支线名与前置照录<a href="#/page/love">恋爱与结婚</a>页那份源文，一字未改；好感数字是源文写的「3」「5」「6」档，本站不替它换算成心数。</div>`;
+    }
+
+    /* ===== 五代：委托表没有委托人一列 ===== */
+    if (gid === 'rf5') {
+        if (!/花嫁|花婿|结婚/.test(c.r || '')) return '';
+        return `
+        <h2 class="h2">这一作没有按人登记的委托</h2>
+        <p class="p">五代的委托表四列（序号／中文名／解锁／报酬），<b>没有委托人一栏</b>，所以没有办法把某一条委托算到某个人头上——本站不按「解锁条件里提到谁」去猜归属，那是猜，不是记录。与这个人直接相关的是恋爱线：<b>3 条普通支线 + 1 条结婚支线</b>，支线的<b>名字</b>源页没有逐条列出，只给了这个口径。</p>
+        <div class="key">能查的确数是这些：好感 <b>7 心可以告白、10 心可以结婚</b>；告白前要先完成该角色的 3 个普通支线；结婚要凑齐好感 10 以上、3 次特殊约会、订婚戒指、双人床。细节在<a href="#/page/love">恋爱与结婚</a>页。</div>`;
+    }
+
+    return '';
+}
+
 function viewChar(gameId, key) {
     const g = GAMES.find(x => x.id === gameId) || cur();
     const all = npcOf(g);
@@ -1843,6 +1974,7 @@ function viewChar(gameId, key) {
         ${cdRows ? `<h2 class="h2">特殊情况</h2><div class="kv">${cdRows}</div>` : ''}
         ${bonus.length ? `<h2 class="h2">送礼之外</h2>
         <div class="kv">${bonus.map(([k, v]) => `<div class="kv-row"><div class="kv-k">${k}</div><div class="kv-v">${escHtml(v)}</div></div>`).join('')}</div>` : ''}
+        ${personalEventHtml(g.id, c)}
         ${!tastes.length && !bonus.length ? `<div class="note">这一位的礼物数据暂未收录。<b>不是查漏了就是源里没有</b>——本站不填推测值，等有可靠来源再补。</div>` : ''}
         ${c.bd ? `<div class="key">生日：<b>${c.bd}</b>　·　生日当天送礼，好感加成显著高于平日。</div>`
             : `<div class="note">生日未收录。本站不填写未经核实的日期。</div>`}
