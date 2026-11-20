@@ -15,6 +15,7 @@
 （就是刚推的那个 commit，内容完全一致，只差 REF 这一行）。
 """
 import io
+import os
 import re
 import subprocess
 import sys
@@ -22,8 +23,14 @@ import sys
 ROOT = 'G:/wit_tools/work/RF_WIKI'
 DRY = '--dry' in sys.argv
 
+# 本机的 http_proxy 走不通 github.com 的 CONNECT（一律 502），直连反而 1.8 秒就通。
+# 所以 git 一律清掉代理变量再跑；真不通时 push() 里会退回带代理的环境再试一轮。
+NO_PROXY_ENV = {k: v for k, v in os.environ.items()
+                if k.lower() not in ('http_proxy', 'https_proxy', 'all_proxy')}
+
 
 def run(*args, **kw):
+    kw.setdefault('env', NO_PROXY_ENV)
     return subprocess.run(args, cwd=ROOT, capture_output=True, text=True, **kw)
 
 
@@ -35,14 +42,18 @@ def git(*args):
     return r.stdout.strip()
 
 
+PROXY_ENV = dict(os.environ)
+
+
 def push():
-    """网络抖得厉害，HTTP/2 常被中途掐断，退到 1.1 再试几次。"""
-    for i in range(4):
-        for extra in ([], ['-c', 'http.version=HTTP/1.1']):
-            r = run('git', *extra, 'push', 'origin', 'main')
-            if r.returncode == 0:
-                return True
-            print('  推送失败（第 %d 次）：%s' % (i + 1, (r.stderr or '').strip().splitlines()[-1:]))
+    """网络抖得厉害，HTTP/2 常被中途掐断，退到 1.1 再试几次；直连不行再挂代理试一轮。"""
+    for env in (NO_PROXY_ENV, PROXY_ENV):
+        for i in range(4):
+            for extra in ([], ['-c', 'http.version=HTTP/1.1']):
+                r = run('git', *extra, 'push', 'origin', 'main', env=env)
+                if r.returncode == 0:
+                    return True
+                print('  推送失败（第 %d 次）：%s' % (i + 1, (r.stderr or '').strip().splitlines()[-1:]))
     return False
 
 
