@@ -16,7 +16,7 @@
         (function () {
             /* 留空＝@latest：镜像会跟到最新提交（实测 @main 会滞后半天，@latest 立刻就是新版）。
                想钉死版本就填 commit sha。 */
-            var REF = '8c0eb24';
+            var REF = 'b9ce492';
             /* 两个节点分工，实测（167KB 内核包 / 70KB 图）：
                  fastly      JS、CSS 0.5 秒 —— 但对 png/jpg/webp 一律 301 到 raw.githubusercontent.com，
                              国内基本连不上，图会全空；
