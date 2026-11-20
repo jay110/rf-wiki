@@ -37,6 +37,10 @@ def face_block():
     return "<script>var FACE_DATA=" + json.dumps(faces, separators=(",", ":")) + ";</script>"
 
 
+# 单文件版把所有资源都内联了，线路切换没有意义；留着 base 反而会让图标／作品图
+# 回头去外网取（内联版的图是 data URI，但 favicon 之类仍是相对路径）。
+html = re.sub(r'[ \t]*<script>\s*\n\s*/\* ── 线路选择[\s\S]*?</script>\s*\n', '', html, count=1)
+
 html = re.sub(r'<link rel="stylesheet" href="([^"]+)"\s*/?>', css_repl, html)
 
 # 分包之后 index.html 只引三个包。单文件版没有同目录可读，也不该按需加载：

@@ -5,6 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff">
+    <script>
+        /* ── 线路选择 ─────────────────────────────────────────────
+           站点在 GitHub Pages，国内访问常常只有十几 KB/s，几百 KB 的分包要等半分钟。
+           jsDelivr 是 GitHub 仓库的公共镜像，不需要账号、不需要配置，国内通常快一个数量级。
+
+           切换方式：地址后面加 ?src=cdn 走镜像，?src=gh 回到直连；选过就记在 localStorage。
+           实现只用一行 <base>：CSS、分包、作品图、头像全是相对路径，base 一改全部跟着走，
+           业务代码一个字都不用动。 */
+        (function () {
+            var REF = '';          /* 留空＝@main；想钉死版本就填 commit sha（镜像对分支最多滞后半天） */
+            /* 两个节点分工，实测（167KB 内核包 / 70KB 图）：
+                 fastly      JS、CSS 0.5 秒 —— 但对 png/jpg/webp 一律 301 到 raw.githubusercontent.com，
+                             国内基本连不上，图会全空；
+                 testingcf   位图直接 200，70KB 约 2 秒；JS 慢些（2 秒），所以只让它发图。
+               gcore 与 testingcf 同家备用，哪天都不通就把 IMG_HOST 换过去试。 */
+            var HOST = 'fastly';
+            var IMG_HOST = 'testingcf';
+            var VER = '@' + (REF || 'main') + '/';
+            var CDN = 'https://' + HOST + '.jsdelivr.net/gh/jay110/rf-wiki' + VER;
+            var IMG = 'https://' + IMG_HOST + '.jsdelivr.net/gh/jay110/rf-wiki' + VER;
+            var q = '';
+            try { q = location.search; } catch (e) { }
+            var pick = '';
+            try {
+                var m = /[?&]src=(cdn|gh)/.exec(q);
+                if (m) pick = m[1];
+                else pick = localStorage.getItem('rfwiki.src') || '';
+            } catch (e) { }
+            if (pick !== 'cdn' && pick !== 'gh') pick = 'gh';
+            try {
+                if (/[?&]src=(cdn|gh)/.test(q)) localStorage.setItem('rfwiki.src', pick);
+            } catch (e) { }
+            window.__SRC = pick;
+            window.__IMG_BASE = pick === 'cdn' ? IMG : '';
+            /* 站点图标是 HTML 里的静态 link，走的是 base（fastly），png 会被 301 掉；
+               解析完再指到图片节点上，标签页与「添加到主屏」的图标才不会缺。 */
+            if (pick === 'cdn') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    var ls = document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]');
+                    for (var i = 0; i < ls.length; i++) {
+                        var h = ls[i].getAttribute('href') || '';
+                        if (h.indexOf('assets/') === 0) ls[i].href = IMG + h;
+                    }
+                });
+            }
+            window.__switchSrc = function (to) {
+                var u;
+                try { u = new URL(location.href); } catch (e) { u = null; }
+                if (u) { u.searchParams.set('src', to); location.href = u.href; }
+                else location.href = location.pathname + '?src=' + to + (location.hash || '');
+            };
+            if (pick === 'cdn') document.write('<base href="' + CDN + '">');
+        })();
+    </script>
     <meta name="description" content="符文工房（Rune Factory）系列中文资料站：世界观设定、牧场生活、战斗与生产系统、各作角色与系列作品一览。">
     <meta name="keywords" content="符文工房,符文工厂,Rune Factory,ルーンファクトリー,攻略,世界观,设定">
     <title>符文工房攻略百科</title>
@@ -120,9 +174,13 @@
     <!-- Service Worker：stale-while-revalidate，首访缓存、回访秒开、离线可用。
          文件在仓库根目录 sw.js，scope 取 './'；改了本文件或 index.html 记得把 sw.js 里 CACHE 版本号 +1 -->
     <script>
-        if ('serviceWorker' in navigator) {
+        /* 镜像线路不注册 SW：脚本来自 cdn.jsdelivr.net，跨域资源进不了本站的预缓存名单，
+           留着只会白下一次。切回直连时照旧注册。注册地址用绝对路径——base 指向镜像时，
+           相对路径会被解析成 CDN 上的 sw.js，跨域注册直接失败。 */
+        if (window.__SRC && window.__SRC !== 'cdn' && 'serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () { });
+                navigator.serviceWorker.register(new URL('sw.js', location.href).href, { scope: './' })
+                    .catch(function () { });
             });
         }
     </script>
@@ -135,6 +193,19 @@
     <script defer src="js/k-loader.js"></script>
     <script defer src="js/k-core.js"></script>
 
+    <!-- 镜像对分支有滞后（jsDelivr 对 @main 最多缓存半天）。万一 CDN 上的内核包还是旧版，
+         图片会整屏空白 —— resImg 是这一版新增的函数，用它当「新版已到」的标记；
+         没到就自动切回直连，别让人盯着一屏空卡片。 -->
+    <script>
+        /* 用 load 而不是定时器：defer 的内核包此时已经跑完，resImg 在不在是确定答案；
+           定时器在后台标签页会被浏览器节流，真出问题时反而拖到最后才救。 */
+        window.addEventListener('load', function () {
+            if (window.__SRC === 'cdn' && typeof window.resImg === 'undefined') {
+                try { localStorage.setItem('rfwiki.src', 'gh'); } catch (e) { }
+                window.__switchSrc('gh');
+            }
+        });
+    </script>
     <!-- 兜底：脚本没跑起来（网络卡住／Service Worker 换版时旧缓存被删）也要能自救。
          8 秒后 #main 里还是骨架或「正在载入资料」，就补一条重试提示。
          正常渲染的页面上这两样都不存在，所以这段平时不会做任何事。 -->
@@ -146,8 +217,13 @@
             if (m.querySelector('.boot-fail')) return;
             var d = document.createElement('div');
             d.className = 'boot-fail';
+            var toCdn = window.__SRC !== 'cdn';
             d.innerHTML = '资料没载完，可能是网络卡住了　' +
-                '<a href="javascript:location.reload()">点这里刷新</a>';
+                '<a href="javascript:location.reload()">点这里刷新</a>' +
+                '<br><a href="javascript:void 0" onclick="__switchSrc(\'' + (toCdn ? 'cdn' : 'gh') + '\');return false">' +
+                (toCdn ? '换加速线路（镜像 CDN）' : '换回直连（GitHub）') + '</a>' +
+                '<div style="margin-top:.5rem;font-size:12px;color:#9aa6ac">当前线路：' +
+                (toCdn ? '直连 GitHub' : '镜像 CDN') + '</div>';
             m.appendChild(d);
         }, 8000);
     </script>

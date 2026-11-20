@@ -69,7 +69,7 @@ function icon(name, cls) {
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
     updated: "2026-11-20",
-    latest: ["第两百五十八：首页轻了——首屏 gzip 82KB 压到 52KB，作品卡 86…", "第两百五十七：符文 1～5 的委托按人搬进人物页——3 代 280 条全挂在 2…", "第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…", "第两百五十四：八作武器摊平 1,224 行——只有「双手剑」八作全有，206 个…", "第两百五十三：操作方式页补两节——八作 13 行版本里只有 4 行带下屏、体感只…"],
+    latest: ["第两百五十九：给国内网络加了条镜像线路——首页 167KB 的内核包从 3.6 …", "第两百五十八：首页轻了——首屏 gzip 82KB 压到 52KB，作品卡 86…", "第两百五十七：符文 1～5 的委托按人搬进人物页——3 代 280 条全挂在 2…", "第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…", "第两百五十四：八作武器摊平 1,224 行——只有「双手剑」八作全有，206 个…"],
 };
 
 ;
@@ -1184,11 +1184,26 @@ function siteUpdated() {
 /* 站点主页（#/）：站点层面的介绍与入口，不是某一部作品的攻略目录。
    攻略目录在 #/wiki，两者分开，跟版式参考站的结构一致。 */
 /* 作品卡配图地址。单文件版没有外部文件可加载，_inline.py 会转成 TITLE_DATA */
+/* ── 图片走另一条镜像 ──────────────────────────────────────────
+   jsDelivr 的 fastly 节点最快（167KB 的内核包 0.5 秒），但它对 png/jpg/webp
+   一律 301 到 raw.githubusercontent.com —— 国内基本连不上，图全变空。
+   testingcf 节点对图片直接 200（实测 70KB 约 2 秒），所以位图单独用它。
+   前缀由 index.html 的线路脚本给出（window.__IMG_BASE），这里只兜一个默认值，
+   免得以后改版本号要改两处。 */
+const IMG_CDN = 'https://testingcf.jsdelivr.net/gh/jay110/rf-wiki@main/';
+function resImg(p) {
+    if (!p || /^(data:|https?:)/.test(p)) return p;
+    const B = (typeof window !== 'undefined')
+        ? (window.__IMG_BASE || (window.__SRC === 'cdn' ? IMG_CDN : ''))
+        : '';
+    return B ? B + p : p;
+}
+
 function titleSrc(art) {
     if (!art) return '';
     /* 单文件版把图内联成 data URI，键是原图路径 */
     if (typeof TITLE_DATA !== 'undefined' && TITLE_DATA[art.src]) return TITLE_DATA[art.src];
-    return art.webp || art.src;
+    return resImg(art.webp || art.src);
 }
 
 function viewWelcome() {
@@ -1199,7 +1214,7 @@ function viewWelcome() {
 
     return `
     <div class="wcover">
-        <div class="wcover-logo"><img src="assets/icon/icon-192.png" alt="" width="42" height="42"></div>
+        <div class="wcover-logo"><img src="${resImg('assets/icon/icon-192.png')}" alt="" width="42" height="42"></div>
         <div class="wcover-jp">ルーンファクトリー</div>
         <div class="wcover-name">符文工房攻略百科</div>
         <div class="wcover-en">RUNE FACTORY WIKI</div>
@@ -2478,7 +2493,7 @@ function faceSrc(gid, jp) {
     if (!(m && jp && m[jp])) return '';
     const path = `assets/face/${gid}/${m[jp]}.png`;
     if (typeof FACE_DATA !== 'undefined' && FACE_DATA[path]) return FACE_DATA[path];
-    return path;
+    return resImg(path);
 }
 
 function markKw(text, head) {
