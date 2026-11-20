@@ -1189,6 +1189,12 @@ function viewTodo() {
     ${footer(g)}`;
 }
 
+/* 当前走哪条线：index.html 的线路脚本写在 window.__SRC 上；
+   单文件版与测试环境没有它，按直连算。 */
+function lineSrc() {
+    return (typeof window !== 'undefined' && window.__SRC === 'cdn') ? 'cdn' : 'gh';
+}
+
 function viewSetting() {
     const g = cur();
     return `
@@ -1264,6 +1270,16 @@ function viewSetting() {
 
         <div class="setting-group">
             <div class="setting-group-title">其他</div>
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">加载线路</div>
+                    <div class="setting-hint">国内直连 GitHub 慢时切到镜像（切完会重新载入）</div>
+                </div>
+                <div class="chip-row">
+                    <button class="chip ${lineSrc() === 'gh' ? 'on' : ''}" data-src="gh">直连</button>
+                    <button class="chip ${lineSrc() === 'cdn' ? 'on' : ''}" data-src="cdn">加速</button>
+                </div>
+            </div>
             <div class="setting-row">
                 <div>
                     <div class="setting-label">清除本地数据</div>
@@ -2123,6 +2139,14 @@ function bindSetting() {
 
     document.querySelectorAll('[data-al]').forEach(b =>
         b.addEventListener('click', () => { S.alert = Number(b.dataset.al); rerender(); }));
+
+    /* 线路切换要整页重载：base 是页面解析时定的，改它只能从头来一遍 */
+    document.querySelectorAll('[data-src]').forEach(b =>
+        b.addEventListener('click', () => {
+            const to = b.dataset.src;
+            if (to === lineSrc()) return;
+            if (typeof window !== 'undefined' && window.__switchSrc) window.__switchSrc(to);
+        }));
 
     const reset = document.getElementById('reset');
     if (reset) reset.addEventListener('click', () => {
