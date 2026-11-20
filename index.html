@@ -61,6 +61,30 @@
             if (pick === 'cdn') document.write('<base href="' + CDN + '">');
         })();
     </script>
+
+    <script>
+        /* ── 站内 hash 链接的接管 ──────────────────────────────────────
+           镜像线路下 <base> 指向 fastly.jsdelivr.net，文档本身却还在 jay110.github.io。
+           href="#/setting" 这种只换 hash 的链接，浏览器会按 base 去解析，得到的是
+           fastly…/@sha/#/setting —— 域都换了，就不再算「同文档锚点」，浏览器会真的发一次
+           导航请求；jsDelivr 对目录返回的是文件列表页，整站就这么跳走了。
+           设置、攻略、居民、提醒四个 tab，连同条目卡片、切换作品、返回链接全在这条路上。
+
+           这里统一接管：只含 fragment 的站内链接不再交给浏览器解析，直接改 location.hash。
+           直连线路下与原生行为完全一致；Ctrl／⌘／中键照旧另开窗口。 */
+        (function () {
+            document.addEventListener('click', function (e) {
+                if (e.defaultPrevented || e.button !== 0 ||
+                    e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+                if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+                var h = a.getAttribute('href');
+                if (!h || h.charAt(0) !== '#') return;
+                e.preventDefault();
+                if (location.hash !== h) location.hash = h;
+            }, false);
+        })();
+    </script>
     <meta name="description" content="符文工房（Rune Factory）系列中文资料站：世界观设定、牧场生活、战斗与生产系统、各作角色与系列作品一览。">
     <meta name="keywords" content="符文工房,符文工厂,Rune Factory,ルーンファクトリー,攻略,世界观,设定">
     <title>符文工房攻略百科</title>

@@ -5,6 +5,15 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，条目数由 _test_changelog.js 统计，不在此写死） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-21　第两百六十一：镜像线路上点一下就跳去 jsDelivr 的文件列表——base 换了域，hash 锚点就不再算同一份文档</h2>
+<div class="txt-list">
+<p><b>一个看着莫名其妙的现象。</b>切到加速线路，点右下角的「设置」，整页忽然变成一列文件夹和文件——<code>jay110/rf-wiki@9465092</code> 的目录，标题写着「jay110/rf-wiki CDN files」，可地址栏里还挂着 <code>#/setting</code>。页面没坏，是被<b>导航走了</b>：那串地址是 <code>fastly.jsdelivr.net/gh/jay110/rf-wiki@9465092/#/setting</code>，也就是 jsDelivr 的一个目录，而 jsDelivr 对目录返回的就是文件列表页。</p>
+<p><b>原因全在上一版那行 <code>&lt;base&gt;</code>。</b>镜像线路靠 <code>&lt;base href="https://fastly.jsdelivr.net/…/@sha/"&gt;</code> 一行把 CSS、分包、图片全指过去，业务代码一个字没改。但 <code>&lt;base&gt;</code> 管的是<b>所有相对 URL 的基准</b>，而 <code>href="#/setting"</code> 里这个 <code>#/setting</code> 也是相对 URL——于是它被解析成了 <code>fastly…/@sha/#/setting</code>。文档本身还停在 <code>jay110.github.io/rf-wiki/</code>，两者去掉 <code>#</code> 之后<b>根本不是同一个地址</b>，浏览器便不再把它当成「在当前页里滚到某个锚点」，而是老老实实发了一次跨文档导航。jsDelivr 那边回了 200 + 文件列表，整站就这么没了。直连线路没有 <code>&lt;base&gt;</code>，所以一切正常——这也是它一直没被发现的原因。</p>
+<p><b>中招的不只是设置。</b>全站导航都靠 hash：四个 tab、条目卡片、切换作品、返回、搜索建议、更新日志里的互相引用，源码里 <b>35 处模板</b>加 tabbar 那 4 条，渲染出来是成百上千条链接。也就是说镜像线路上<b>第一次点击就会离开站点</b>，只是最先被点到的恰好是设置。</p>
+<p><b>修法：把这类点击从浏览器手里接管过来。</b>在 <code>index.html</code> 里挂一个 <b>document 级 click 委托</b>：拿到 <code>e.target.closest('a[href]')</code>，若 <code>href</code> 以 <code>#</code> 开头就 <code>preventDefault()</code>，改用 <code>location.hash = h</code> 跳转——给 <code>location.hash</code> 赋值只改当前 URL 的片段，永远不经过 base。修饰键（Ctrl／⌘／Shift／Alt）、<code>target</code> 非 <code>_self</code>、带 <code>download</code> 的一律不拦，另开窗口照旧；已经 <code>defaultPrevented</code> 的也不重复处理。直连线路下本来就没有 base，这段拦截对它的行为<b>与原生一模一样</b>。</p>
+<p><b>为什么不换个思路。</b>①把 <code>&lt;base&gt;</code> 去掉、全站改绝对路径——CSS、13 个分包、几百张图、所有内链都要动，还失去「一行切线路」的好处；②改成 iframe 套 CDN 页面——多一层跨域，hash 路由和返回键全乱；③只把 tabbar 换成 JS 绑定——卡片、切换作品、返回这些还在原地中招。拦截在最外层，<b>一处覆盖全部</b>，且不依赖任何业务代码回调。</p>
+<div class="key">验证（本地起服务、<code>?src=cdn</code> 让 base 真指向线上 CDN）：四个 tab 挨个点，地址栏始终保持在本站，设置页、居民 27 人、攻略目录、提醒页全部正常渲染；再点第一张居民卡 <code>#/char/rf4/%E9%9B%B7%E6%96%AF%E7%89%B9</code>——中文名的 percent 编码<b>没有被二次编码</b>，角色页正常；头像 <code>naturalWidth=160</code>，图片照走 <code>testingcf</code>。直连线路（无 base）同样点了一遍，行为与改动前一致。四个 tab 在镜像下的往返跳转全部留站内。</div>
+</div>
 <h2 class="h2">2026-11-21　第两百六十：进站先过一张标题屏——符文环一笔画出、芜菁弹出、站名逐行落下，首页封面接着落位</h2>
 <div class="txt-list">
 <p><b>动机很直白。</b>上一版把首屏内核压到 53KB gzip，但国内直连仍要一两秒。这一两秒里页面只有一块骨架：一本书的图标、一行「正在载入资料」。技术上没错，观感上像「没打开」。这一版给那块空白换了个身份——<b>不是等，是进站</b>。</p>
