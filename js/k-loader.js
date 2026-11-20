@@ -55,17 +55,27 @@ var K = (function () {
             if (!P) return true;
             return !!loaded[P.cross];
         },
+        /* 人物档案包（NPC_FULL / NPC_AZUMA）：居民名册、角色详情、按人拆的页要它。
+           首页与目录只要「N 位角色」这个数，已在 pages-meta.js 的 NPC_STAT 里备好。 */
+        hasNpc: function () {
+            var P = plan();
+            if (!P) return true;
+            return !P.npc || !!loaded[P.npc];
+        },
         /* 正文包（PAGES + PAGE_MAP）：只有真正要画条目正文和跑搜索时才需要 */
         hasBody: function () {
             var P = plan();
             if (!P) return true;
             return !P.pagesAll || !!loaded[P.pagesAll];
         },
-        /* need = { game, page, cross, pages } */
+        /* need = { game, page, cross, pages, npc } */
         ready: function (need) {
             var P = plan();
             if (!P) return Promise.resolve();
-            var list = [P.shared];
+            /* 人物包排在最前：正文包里不少页会读 NPC_FULL，顺序反了会读到空 */
+            var list = [];
+            if (need.npc && P.npc) list.push(P.npc);
+            list.push(P.shared);
             if (need.game && P.games[need.game]) list.push(P.games[need.game]);
             if (need.page && P.pages[need.page]) list.push(P.pages[need.page]);
             if (need.pages && P.pagesAll) list.push(P.pagesAll);
@@ -79,6 +89,13 @@ var K = (function () {
             list.forEach(function (s) { if (s && !seen[s]) { seen[s] = 1; out.push(s); } });
             return seq(out);
         },
+        /* 立刻取正文包：鼠标悬停到条目上时用。用户已经表现出「要点」的意图，
+           这时候不该再等 idle——等到点击才发起，608KB 就是干等。 */
+        now: function () {
+            var P = plan();
+            if (!P || !P.pagesAll || loaded[P.pagesAll] || pending[P.pagesAll]) return;
+            one(P.pagesAll).catch(function () { });
+        },
         /* 空闲预热：首屏画完后趁浏览器闲着把正文包取下来，点条目就不用等。
            只做一次；省流模式与 2G/3G 不碰——那是用户的流量，不是我们的带宽。 */
         warm: function () {
@@ -87,7 +104,7 @@ var K = (function () {
             if (typeof requestIdleCallback !== 'function') return;
             var c = navigator.connection || navigator.mozConnection || null;
             if (c && (c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))) return;
-            requestIdleCallback(function () { one(P.pagesAll).catch(function () { }); }, { timeout: 4000 });
+            requestIdleCallback(function () { K.now(); }, { timeout: 4000 });
         },
         /* 调试/审计用：报告当前载入了哪些包 */
         report: function () { return Object.keys(loaded); },

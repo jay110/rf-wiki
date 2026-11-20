@@ -8,17 +8,19 @@ const LSKEY = 'rf_wiki_v1';
    符文1/符文2 用 ROM 原生 256x192 无损 PNG（零修图：无拼接、无补边、无缩放、无插值），
    其余作是 960x540 的 JPG，两张双作卡预拼成 960x540（上下各一条）。
    单文件版没有外部文件可加载，_inline.py 会把 assets/title/*.jpg 与 *.png 转成 TITLE_DATA */
+/* 每张都备一份 WebP（同尺寸、q84）：首页 8 张卡合计 860KB → 260KB，肉眼看不出差别。
+   原图仍留在仓库里 —— 单文件版 _inline.py 按 src 打包成 TITLE_DATA，那条路不走 webp。 */
 const TITLE_ART = {
-    rf1:   { src: 'assets/title/rf1.png', pos: '69%', tall: true },
-    rf2:   { src: 'assets/title/rf2.png', pos: '0%', tall: true },
+    rf1:   { src: 'assets/title/rf1.png', webp: 'assets/title/rf1.webp', pos: '69%', tall: true },
+    rf2:   { src: 'assets/title/rf2.png', webp: 'assets/title/rf2.webp', pos: '0%', tall: true },
     /* pair-rf3／pair-rf4 原是「本体＋移植版」双作合并卡的底图，两部 SP 并入本体后
        直接当作 3／4 的单卡图用；文件名沿用历史命名，内容仍是官方主视觉整图 */
-    rf3:   { src: 'assets/title/pair-rf3.jpg', tall: true },
-    rf4:   { src: 'assets/title/pair-rf4.jpg', tall: true },
-    rf5:   { src: 'assets/title/rf5.jpg', tall: true },
-    rff:   { src: 'assets/title/rff.jpg', tall: true },
-    rfo:   { src: 'assets/title/rfo.jpg', tall: true },
-    azuma: { src: 'assets/title/azuma.jpg', tall: true },
+    rf3:   { src: 'assets/title/pair-rf3.jpg', webp: 'assets/title/pair-rf3.webp', tall: true },
+    rf4:   { src: 'assets/title/pair-rf4.jpg', webp: 'assets/title/pair-rf4.webp', tall: true },
+    rf5:   { src: 'assets/title/rf5.jpg', webp: 'assets/title/rf5.webp', tall: true },
+    rff:   { src: 'assets/title/rff.jpg', webp: 'assets/title/rff.webp', tall: true },
+    rfo:   { src: 'assets/title/rfo.jpg', webp: 'assets/title/rfo.webp', tall: true },
+    azuma: { src: 'assets/title/azuma.jpg', webp: 'assets/title/azuma.webp', tall: true },
 };
 
 /* 双作合并卡已取消：RF3／RF4 的移植版并入本体作品页，作品卡回归一作一张 */
@@ -152,14 +154,15 @@ function siteUpdated() {
 /* 作品卡配图地址。单文件版没有外部文件可加载，_inline.py 会转成 TITLE_DATA */
 function titleSrc(art) {
     if (!art) return '';
+    /* 单文件版把图内联成 data URI，键是原图路径 */
     if (typeof TITLE_DATA !== 'undefined' && TITLE_DATA[art.src]) return TITLE_DATA[art.src];
-    return art.src;
+    return art.webp || art.src;
 }
 
 function viewWelcome() {
     const g = cur();
-    /* 用人物档案的总数（199 人），不是 data.js 里那份只收候补的旧名单 */
-    const chars = GAMES.reduce((s, x) => s + npcOf(x).length, 0);
+    /* 用人物档案的总数，不是 data.js 里那份只收候补的旧名单 */
+    const chars = npcTotal();
     const ups = latestUpdates(3);
 
     return `
@@ -184,7 +187,7 @@ function viewWelcome() {
             return `
             <a class="wcard${x.id === g.id ? ' cur' : ''}${art ? ' has-fig' : ''}" href="#/switch/${x.id}"
                style="background:linear-gradient(140deg, ${x.grad[0]}, ${x.grad[1]})">
-                ${art ? `<div class="wcard-fig${art.tall ? ' is-tall' : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
+                ${art ? `<div class="wcard-fig${art.tall ? ' is-tall' : ''}"><img src="${titleSrc(art)}" alt="" loading="lazy" decoding="async"${art.pos ? ` style="object-position:center ${art.pos}"` : ''}></div>` : ''}
                 <div class="wcard-no">${x.no}</div>
                 <div class="wcard-name"><span class="wpre">符文工房</span>${x.name.replace(/^符文工房\s*/, '')}</div>
                 <div class="wcard-stage">${x.stage}</div>
@@ -294,7 +297,7 @@ function footer(g) {
     return `
     <div class="copyright">
         <div>符文工房攻略百科　·　非官方中文资料站</div>
-        <div>当前收录：${g.name}　|　共 ${PAGES_META.filter(p => pageVis(p, g)).length} 个条目 / ${npcOf(g).length} 位角色</div>
+        <div>当前收录：${g.name}　|　共 ${PAGES_META.filter(p => pageVis(p, g)).length} 个条目 / ${npcCount(g)} 位角色</div>
         <div style="margin-top:0.4rem">本站为玩家整理性质，与 Marvelous Inc. 无隶属关系。所有游戏名称、角色名称版权归原权利人所有。</div>
     </div>`;
 }
@@ -393,6 +396,18 @@ function focusRow(name) {
 
 /* 移植版已并入本体作品页，两版共用一份人物档案，不再需要别名映射 */
 const NPC_KEY = {};
+
+/* 只取「条数」的两处（首页统计、页脚）不加载人物档案包也能答：
+   pages-meta.js 里的 NPC_STAT 是构建时用 npcOf 现算后写下的，口径同源。
+   k-npc.js 没下来时若还去调 npcOf，会退回 data.js 那份只收候补的旧名单。 */
+function npcCount(g) {
+    if (typeof NPC_STAT !== 'undefined' && NPC_STAT.byGame && NPC_STAT.byGame[g.id] != null) return NPC_STAT.byGame[g.id];
+    return npcOf(g).length;
+}
+function npcTotal() {
+    if (typeof NPC_STAT !== 'undefined' && NPC_STAT.total != null) return NPC_STAT.total;
+    return GAMES.reduce((s, x) => s + npcOf(x).length, 0);
+}
 
 function npcOf(g) {
     const k = NPC_KEY[g.id] || g.id;
@@ -1648,21 +1663,25 @@ let lastHash = null;
    跨作页（系列对照／节日／战斗）与更新日志各自单独一包，用到才下。 */
 function chunkNeed(r) {
     if (typeof K === 'undefined' || typeof K_PLAN === 'undefined' || !K_PLAN) return null;
-    const none = { game: null, page: null, cross: false, pages: false };
+    const none = { game: null, page: null, cross: false, pages: false, npc: false };
     if (r.name === 'home' || r.name === 'games' || r.name === 'switch') return none;
     const g = cur();
-    const need = { game: g.id, page: null, cross: false, pages: false };
+    const need = { game: g.id, page: null, cross: false, pages: false, npc: false };
     /* 搜索要逐页调 body() 建条目索引与正文索引，正文包同样躲不掉 */
-    if (r.name === 'search') { need.cross = true; need.pages = true; return need; }
+    if (r.name === 'search') { need.cross = true; need.pages = true; need.npc = true; return need; }
     if (r.name === 'resident' || r.name === 'char' || r.name === 'sched') {
         const gg = GAMES.find(x => x.id === r.args[0]);
         need.game = gg ? gg.id : g.id;
+        need.npc = true;
         return need;
     }
     if (r.name === 'page') {
         const key = r.args[0];
         /* 正文包：PAGES 与 PAGE_MAP 都在里面，任何条目（含 beast/animal 这类旧别名）都要 */
         need.pages = true;
+        /* 条目正文里读 NPC_FULL／NPC_AZUMA 的地方很多（人物、生日、恋爱、种族……），
+           正文包已经在下了，这 33KB 就别再按页去猜哪些要哪些不要 */
+        need.npc = true;
         if (K_PLAN.pages && K_PLAN.pages[key]) need.page = key;
         if (K_PLAN.crossPages && K_PLAN.crossPages.indexOf(key) >= 0) need.cross = true;
     }
@@ -1672,6 +1691,8 @@ function chunkNeed(r) {
 function showLoading() {
     const m = document.getElementById('main');
     if (!m) return;
+    /* 首屏骨架（index.html 里 #boot）本身就在说这件事，替换掉只会让人多读一行字 */
+    if (document.getElementById('boot')) return;
     m.innerHTML = '<div class="content"><p class="p gray">正在载入资料……</p></div>';
 }
 
@@ -1683,6 +1704,7 @@ function render() {
         const lack = (need.game && !K.has(need.game))
             || (need.page && !K.hasPage(need.page))
             || (need.pages && !K.hasBody())
+            || (need.npc && !K.hasNpc())
             || (need.cross && !K.hasCross());
         if (lack) {
             const sig = location.hash;
@@ -1699,6 +1721,19 @@ function render() {
         }
     }
     renderNow();
+    maybeWarm(r);
+}
+
+/* 正文包（608KB）什么时候取？
+   只在目录页（#/wiki、#/cat）才预热：首页点任何一张作品卡都只是换目录，正文包用不上，
+   白下 608KB 拿不到任何速度。到了目录页，下一步多半就是点条目，这时候预热才划算。 */
+let _warmed = false;
+function maybeWarm(r) {
+    if (_warmed) return;
+    if (typeof K === 'undefined' || !K.warm) return;
+    if (r.name !== 'wiki' && r.name !== 'cat') return;
+    _warmed = true;
+    setTimeout(() => K.warm(), 600);
 }
 
 function renderNow() {
@@ -2070,6 +2105,14 @@ function bindSetting() {
 
 loadState();
 window.addEventListener('hashchange', render);
+
+/* 指针落到条目链接上就把正文包发起下载——比 idle 预热更快，也不用等点击。
+   移动端没有悬停，那条路仍靠 maybeWarm 的 idle 预热。 */
+document.addEventListener('pointerover', e => {
+    const t = e.target;
+    const a = t && t.closest && t.closest('a[href^="#/page/"]');
+    if (a && typeof K !== 'undefined' && K.now) K.now();
+}, { passive: true });
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('backBtn').addEventListener('click', () => {
         if (history.length > 1) history.back(); else go('/');
@@ -2077,7 +2120,4 @@ window.addEventListener('DOMContentLoaded', () => {
     const sb = document.getElementById('searchBtn');
     if (sb) sb.addEventListener('click', () => go('/search'));
     render();
-    /* 首屏画完之后再预热正文包（PAGES／PAGE_MAP，近 500KB gzip）。
-       首页与目录页本身不需要它，没理由让它们在首访时一起等。 */
-    if (typeof K !== 'undefined' && K.warm) setTimeout(() => K.warm(), 900);
 });

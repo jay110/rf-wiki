@@ -17,15 +17,20 @@ const files = require('./_files.js')();
    这样改了 pages.js（增删条目）后，元数据自动跟着走，不会和 PAGES 漂移。 */
 require('./gen_pages_meta.js');
 
-/* 内核：壳子 + 全部页面正文（不含任何数据） */
-/* npcfull / npc_azuma 进内核：首页那句「共 N 位角色」是按人物档案现算的，
-   少了它们会退回 data.js 里那份只收候补的旧名单，数字当场就错。 */
 /* 内核：壳子 + 菜单/计数用的 PAGES 元数据（不含任何渲染正文）
- * pages.js（渲染正文，几 MB）整体挪到 shared 包，进作品才下——首屏不再为它买单。
+ * pages.js（渲染正文，几 MB）整体挪到 body 包，点条目才下——首屏不再为它买单。
  * 核心只留 pages-meta.js（10KB 的 key/标题/图标），菜单与「N 个条目」计数够用。 */
 const CORE = ['js/changelog-head.js', 'js/data.js', 'js/icons.js',
-    'js/npcfull.js', 'js/npc_azuma.js', 'js/pages-meta.js', 'js/app.js']
+    'js/pages-meta.js', 'js/app.js']
     .sort((a, b) => files.indexOf(a) - files.indexOf(b));
+
+/* 人物档案包：npcfull（7 作 196 人）+ npc_azuma（龙之天地 16 人），gzip 33KB。
+   只有居民名册、角色详情、按人拆的页读它。首页那句「共 N 位角色」曾经把它拽进内核，
+   现在由 gen_pages_meta.js 现算出 NPC_STAT 写进 pages-meta.js，内核不必再背。
+   判定同样不靠「谁引用它」——它被 pages.js 到处 `typeof` 守着读，
+   剔除测试会把它算成「几乎每页都要」。 */
+const NPC_CHUNK = ['js/npcfull.js', 'js/npc_azuma.js'];
+const NPC_FILES = new Set(NPC_CHUNK);
 
 /* 页面专属包：只在打开那一页时才下（内容大、别处用不到） */
 const PAGE_CHUNKS = { changelog: ['js/changelog.js'] };
@@ -90,7 +95,8 @@ if (build(files.filter(f => !BODY_FILES.has(f))).PAGES) {
 }
 
 /* ---------- 2. 逐文件剔除，记录「去掉它谁变了」 ---------- */
-const other = files.filter(f => !CORE.includes(f) && !PAGE_FILES.has(f) && !BODY_FILES.has(f));
+const other = files.filter(f => !CORE.includes(f) && !PAGE_FILES.has(f)
+    && !BODY_FILES.has(f) && !NPC_FILES.has(f));
 /* aff[f][game] = 受影响的页面 key 集合 */
 const aff = {};
 for (const f of other) {
@@ -148,10 +154,17 @@ for (const f of other) {
         }
     }
 }
-const plan = { core: CORE.slice(), shared: [], cross: [], games: {}, pages: PAGE_CHUNKS, body: BODY_CHUNK };
+/* 壳路由（#/sched 这类由 app.js 直接画、不属于任何 PAGE）要读的数据，必须跟共用包走。
+   sched.js 只有跨作页的「时间」与 #/sched 读它，剔除法会把它判成 cross ——
+   于是直接打开 #/sched 时 cross 还没下，页面显示「这部作品还没有行程数据」。
+   看起来像数据没收，其实是包没到。7.5KB，放共用包里不值一提。 */
+const SHELL_REQUIRED = ['js/sched.js'];
+
+const plan = { core: CORE.slice(), npc: NPC_CHUNK, shared: SHELL_REQUIRED.slice(), cross: [], games: {}, pages: PAGE_CHUNKS, body: BODY_CHUNK };
 for (const g of GAMES) plan.games[g.id] = [];
 const unassigned = [];
 for (const f of other) {
+    if (SHELL_REQUIRED.includes(f)) continue;   /* 已强制归到共用包 */
     const n = [...normalUse[f]];
     if (n.length >= 2) plan.shared.push(f);
     else if (n.length === 1) plan.games[n[0]].push(f);
@@ -174,7 +187,7 @@ for (const key of Object.keys(PAGE_CHUNKS)) {
 
 /* 断言：每个文件恰好归一处 */
 const seen = {};
-for (const f of [...plan.core, ...plan.shared, ...plan.cross, ...PAGE_FILES, ...BODY_FILES, ...Object.values(plan.games).flat()]) {
+for (const f of [...plan.core, ...plan.shared, ...plan.cross, ...PAGE_FILES, ...BODY_FILES, ...NPC_FILES, ...Object.values(plan.games).flat()]) {
     seen[f] = (seen[f] || 0) + 1;
 }
 const dup = Object.keys(seen).filter(f => seen[f] > 1);
@@ -193,6 +206,7 @@ for (const gid of Object.keys(plan.games)) plan.games[gid] = order(plan.games[gi
 let bad = 0;
 function where(f) {
     if (plan.core.includes(f)) return 'core';
+    if (NPC_FILES.has(f)) return 'npc';
     if (plan.shared.includes(f)) return 'shared';
     if (plan.cross.includes(f)) return 'cross';
     for (const k of Object.keys(plan.games)) if (plan.games[k].includes(f)) return k;
@@ -219,19 +233,22 @@ function verify(list, gid, skipCrossPage) {
 /* 跨作页要读所有作品的数据，所以打开它时把全部作品包一起装上——这里按那个组合自检 */
 const ALLGAME = Object.values(plan.games).flat();
 for (const gid of Object.keys(plan.games)) {
-    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...plan.games[gid]], gid, true);
-    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...ALLGAME, ...plan.cross, ...PAGE_FILES], gid, false);
+    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...NPC_CHUNK, ...plan.games[gid]], gid, true);
+    verify([...plan.core, ...plan.shared, ...BODY_CHUNK, ...NPC_CHUNK, ...ALLGAME, ...plan.cross, ...PAGE_FILES], gid, false);
 }
 
 /* ---------- 6. 体积 ---------- */
 const gz = l => l.reduce((n, f) => n + zlib.gzipSync(SRC[f]).length, 0);
 const fmt = n => (n / 1024).toFixed(0) + ' KB';
 const coreGz = gz(plan.core), sharedGz = gz(plan.shared), crossGz = gz(plan.cross), bodyGz = gz(BODY_CHUNK);
+const npcGz = gz(NPC_CHUNK);
 console.log('\n内核    ' + String(plan.core.length).padStart(3) + ' 个  gzip ' + fmt(coreGz).padStart(8));
+console.log('人物    ' + String(NPC_CHUNK.length).padStart(3) + ' 个  gzip ' + fmt(npcGz).padStart(8) + '  （居民／角色页才下）');
 console.log('共用    ' + String(plan.shared.length).padStart(3) + ' 个  gzip ' + fmt(sharedGz).padStart(8));
 console.log('正文    ' + String(BODY_CHUNK.length).padStart(3) + ' 个  gzip ' + fmt(bodyGz).padStart(8) + '  （点条目才下）');
 console.log('跨作    ' + String(plan.cross.length).padStart(3) + ' 个  gzip ' + fmt(crossGz).padStart(8));
-console.log('首屏    ' + fmt(coreGz + sharedGz) + '（首页／目录／名册）');
+console.log('首屏    ' + fmt(coreGz) + '（首页，只有内核；目录再加共用+本作）');
+console.log('看一页  ' + fmt(coreGz + sharedGz + npcGz + bodyGz) + '（内核+共用+人物+正文）');
 for (const gid of Object.keys(plan.games)) {
     const l = plan.games[gid];
     console.log('  ' + gid.padEnd(6) + String(l.length).padStart(3) + ' 个  gzip ' + fmt(gz(l)).padStart(8)
@@ -251,6 +268,7 @@ function emit(name, list) {
 }
 let bytes = 0;
 bytes += emit('k-core.js', plan.core);
+bytes += emit('k-npc.js', NPC_CHUNK);
 bytes += emit('k-shared.js', plan.shared);
 bytes += emit('k-body.js', BODY_CHUNK);
 bytes += emit('k-cross.js', plan.cross);
@@ -262,6 +280,7 @@ fs.writeFileSync(ROOT + 'js/k-plan.js',
         shared: 'js/k-shared.js',
         body: 'js/k-body.js',
         pagesAll: 'js/k-body.js',
+        npc: 'js/k-npc.js',
         cross: 'js/k-cross.js',
         crossPages: CROSS,
         games: Object.fromEntries(Object.keys(plan.games).map(g => [g, 'js/k-' + g + '.js'])),
@@ -271,8 +290,8 @@ fs.writeFileSync(ROOT + 'js/k-plan.js',
 const crypto = require('crypto');
 const shaOf = l => crypto.createHash('sha1')
     .update(l.map(f => SRC[f]).join('\n;\n') + '\n').digest('hex').slice(0, 16);
-plan.sha = { core: shaOf(plan.core), shared: shaOf(plan.shared), cross: shaOf(plan.cross), body: shaOf(BODY_CHUNK) };
+plan.sha = { core: shaOf(plan.core), shared: shaOf(plan.shared), cross: shaOf(plan.cross), body: shaOf(BODY_CHUNK), npc: shaOf(NPC_CHUNK) };
 for (const gid of Object.keys(plan.games)) plan.sha['game:' + gid] = shaOf(plan.games[gid]);
 for (const key of Object.keys(PAGE_CHUNKS)) plan.sha['page:' + key] = shaOf(PAGE_CHUNKS[key]);
 fs.writeFileSync(ROOT + 'js/_chunks.json', JSON.stringify(plan, null, 2) + '\n');
-console.log('已写 ' + (Object.keys(plan.games).length + 4) + ' 个包，合计 ' + (bytes / 1048576).toFixed(2) + ' MB');
+console.log('已写 ' + (Object.keys(plan.games).length + 5) + ' 个包，合计 ' + (bytes / 1048576).toFixed(2) + ' MB');

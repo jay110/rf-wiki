@@ -3,6 +3,7 @@ var K_PLAN = {
     "shared": "js/k-shared.js",
     "body": "js/k-body.js",
     "pagesAll": "js/k-body.js",
+    "npc": "js/k-npc.js",
     "cross": "js/k-cross.js",
     "crossPages": [
         "battle",

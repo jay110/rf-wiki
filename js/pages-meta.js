@@ -588,3 +588,20 @@ var PAGE_COUNT = PAGES_META.length;
 function pageVis(p, g) {
     return !p.gms || (g && p.gms.indexOf(g.id) >= 0);
 }
+
+/* 每作角色档案条数与总数：构建时用 npcOf 现算后写死在这里，只为了
+   首页／目录／页脚在人物档案包（k-npc.js）还没下来时也能显示正确的数。
+   真正要读某个人物字段的地方仍然走 npcOf。 */
+var NPC_STAT = {
+    "total": 217,
+    "byGame": {
+        "rf1": 29,
+        "rf2": 27,
+        "rf3": 25,
+        "rff": 31,
+        "rfo": 24,
+        "rf4": 27,
+        "rf5": 33,
+        "azuma": 21
+    }
+};

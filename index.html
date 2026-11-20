@@ -13,6 +13,30 @@
     <link rel="apple-touch-icon" href="assets/icon/apple-touch-icon.png">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/content.css">
+    <!-- 内核包（gzip 52KB）是首屏唯一的必需品。它本来在 body 末尾才被发现，
+         预载让下载与 CSS 同时开始，省一个来回。 -->
+    <link rel="preload" href="js/k-core.js" as="script">
+    <style>
+        /* 首屏骨架：内核包执行完之前先给个东西看。样式内联，不依赖还在下的 CSS 文件。
+           渲染函数整块替换 #main，骨架不需要手动摘。 */
+        #boot {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: .8rem; min-height: 62vh;
+            font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        #boot svg { width: 44px; height: 44px; stroke: #198d44; fill: none; stroke-width: 1.4;
+            stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+        #boot b { font-weight: 500; font-size: 15px; letter-spacing: .06em; color: #5c6b73; }
+        #boot .boot-tip { font-size: 12px; color: #9aa6ac; }
+        #boot .boot-bar { display: block; width: 92px; height: 2px; border-radius: 2px;
+            overflow: hidden; background: rgba(25, 141, 68, .14); }
+        #boot .boot-bar::after { content: ''; display: block; width: 32px; height: 100%;
+            border-radius: 2px; background: #198d44; animation: bootmove 1.15s ease-in-out infinite; }
+        @keyframes bootmove { 0% { transform: translateX(-34px) } 100% { transform: translateX(96px) } }
+        @media (prefers-reduced-motion: reduce) {
+            #boot .boot-bar::after { animation: none; width: 100%; opacity: .3 }
+        }
+    </style>
 </head>
 
 <body>
@@ -35,7 +59,17 @@
             <a class="mark" id="mark" href="#/" title="返回站点主页">WIKI</a>
         </header>
 
-        <main class="main" id="main"></main>
+        <main class="main" id="main">
+            <div id="boot" role="status" aria-live="polite">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5.4c2.6-1.1 5.3-1.1 8 .6 2.7-1.7 5.4-1.7 8-.6v13c-2.6-1.1-5.3-1.1-8 .6-2.7-1.7-5.4-1.7-8-.6z" />
+                    <path d="M12 6v13" />
+                </svg>
+                <b>符文工房攻略百科</b>
+                <span class="boot-bar"></span>
+                <span class="boot-tip">正在载入资料</span>
+            </div>
+        </main>
 
         <nav class="tabbar">
             <a href="#/wiki" data-tab="wiki">
@@ -89,9 +123,9 @@
          进哪一作、开哪一页才下哪一个。源文件顺序见 js/_manifest.json。
          k-body.js（全部条目正文，近 500KB gzip）不在首屏之列：首页、作品目录、居民名册
          都用 pages-meta.js 里的元数据画，不需要正文；点开条目才拉它。 -->
-    <script src="js/k-plan.js"></script>
-    <script src="js/k-loader.js"></script>
-    <script src="js/k-core.js"></script>
+    <script defer src="js/k-plan.js"></script>
+    <script defer src="js/k-loader.js"></script>
+    <script defer src="js/k-core.js"></script>
 </body>
 
 </html>

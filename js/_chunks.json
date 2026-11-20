@@ -3,10 +3,12 @@
     "js/icons.js",
     "js/changelog-head.js",
     "js/data.js",
-    "js/npc_azuma.js",
-    "js/npcfull.js",
     "js/pages-meta.js",
     "js/app.js"
+  ],
+  "npc": [
+    "js/npcfull.js",
+    "js/npc_azuma.js"
   ],
   "shared": [
     "js/monsters.js",
@@ -25,7 +27,8 @@
     "js/pot_old.js",
     "js/rune.js",
     "js/bd_ext.js",
-    "js/faces.js"
+    "js/faces.js",
+    "js/sched.js"
   ],
   "cross": [
     "js/boss.js",
@@ -36,7 +39,6 @@
     "js/pet_old.js",
     "js/festmore.js",
     "js/gift_rf3.js",
-    "js/sched.js",
     "js/expand.js"
   ],
   "games": {
@@ -153,10 +155,11 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "c2c0e90937387a63",
-    "shared": "a54c4a130be9dc0d",
-    "cross": "ad9110f36405fa4c",
+    "core": "fb5b6121ba5ac929",
+    "shared": "7935ee21aa5429a4",
+    "cross": "428fe42e76b17f63",
     "body": "757786826949f5f5",
+    "npc": "a19539db7e09baab",
     "game:rf1": "57c60e3cd2da42b3",
     "game:rf2": "a04cf7bc3dceb418",
     "game:rf3": "7710378fdb93de5f",
@@ -165,6 +168,6 @@
     "game:rf4": "f0c058ebf17f1f5d",
     "game:rf5": "2d7dfa77a74848b4",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "602b2799a3373814"
+    "page:changelog": "53e3b44e71f29f46"
   }
 }

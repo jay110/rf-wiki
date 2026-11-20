@@ -45,14 +45,16 @@ manifest = json.loads((ROOT / "js" / "_manifest.json").read_text(encoding="utf-8
 bundle = "\n;\n".join(
     (ROOT / f).read_text(encoding="utf-8").replace("</script", "<\\/script")
     for f in manifest)
+# 单文件版没有同目录可读，预载提示没有意义（打开 file:// 只会白报一次 404）
+html = re.sub(r'[ \t]*<link rel="preload" href="js/[^"]+" as="script">\s*\n', '', html)
 html = re.sub(
-    r'[ \t]*<script src="js/k-plan\.js"></script>\s*\n'
-    r'[ \t]*<script src="js/k-loader\.js"></script>\s*\n'
-    r'[ \t]*<script src="js/k-core\.js"></script>',
+    r'[ \t]*<script (?:defer )?src="js/k-plan\.js"></script>\s*\n'
+    r'[ \t]*<script (?:defer )?src="js/k-loader\.js"></script>\s*\n'
+    r'[ \t]*<script (?:defer )?src="js/k-core\.js"></script>',
     lambda m: "<script>var K_PLAN=null;\n" + bundle + "\n</script>",
     html)
 print(f"内联源文件 {len(manifest)} 个")
-html = re.sub(r'<script src="([^"]+)"\s*>\s*</script>', js_repl, html)
+html = re.sub(r'<script (?:defer )?src="([^"]+)"\s*>\s*</script>', js_repl, html)
 
 # 站点图标（assets/icon/*）在单文件版里没有同目录可读，一并转成 data URI
 MIME = {".png": "image/png", ".ico": "image/x-icon", ".svg": "image/svg+xml",
