@@ -30,19 +30,25 @@ self.addEventListener('install', function (e) {
     e.waitUntil(
         caches.open(CACHE).then(function (c) {
             return Promise.all(PRECACHE.map(function (u) {
-                return c.add(u).catch(function () { /* 单条失败不影响其余 */ });
+                /* 用 cache:'reload' 走网络，别让浏览器 HTTP 缓存把上一版的 index 塞进来。
+                   预缓存里存的是旧 HTML —— 后面所有「新资源配旧壳」的怪问题都从这儿起。 */
+                return c.add(new Request(u, { cache: 'reload' }))
+                    .catch(function () { /* 单条失败不影响其余 */ });
             }));
         }).then(function () { return self.skipWaiting(); })
     );
 });
 
 self.addEventListener('activate', function (e) {
-    e.waitUntil(
-        caches.keys().then(function (ks) {
-            return Promise.all(ks.filter(function (k) { return k !== CACHE; })
-                .map(function (k) { return caches.delete(k); }));
-        }).then(function () { return self.clients.claim(); })
-    );
+    e.waitUntil((async function () {
+        /* 顺序要紧：先接管页面，再清旧缓存。
+           反过来（先删后 claim）会让页面正挂着的旧缓存请求中途失效 ——
+           表现就是页面停在「正在载入资料」，刷新一次又好了。 */
+        try { await self.clients.claim(); } catch (err) { }
+        const ks = await caches.keys();
+        await Promise.all(ks.filter(function (k) { return k !== CACHE; })
+            .map(function (k) { return caches.delete(k); }));
+    })());
 });
 
 self.addEventListener('fetch', function (e) {

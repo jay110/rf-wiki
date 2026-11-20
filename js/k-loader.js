@@ -16,15 +16,40 @@ var K = (function () {
         return (typeof K_PLAN !== 'undefined' && K_PLAN) ? K_PLAN : null;
     }
 
+    /* 单个包的加载超时。SCRIPT 标签偶尔会既不 load 也不 error：
+       切 Service Worker 版本时旧缓存被删、请求正卡在中间，就会这样。
+       没有这道闸，K.ready 的 Promise 永远不落定，页面就一直停在「正在载入资料」。
+       超时后 reject，render() 的 catch 会把页面画出来（缺数据的页自己有提示）。 */
+    /* 20 秒：正文包 608KB 在很慢的网络上要这么久，闸门太紧会把正常加载误判成卡死。 */
+    var TIMEOUT = 20000;
+
     function one(src) {
         if (!src || loaded[src]) return Promise.resolve();
         if (pending[src]) return pending[src];
         pending[src] = new Promise(function (ok, fail) {
             var el = document.createElement('script');
+            var done = false;
+            var timer = setTimeout(function () {
+                if (done) return;
+                done = true;
+                delete pending[src];        /* 删掉才能重试；留着只是一句写死的 reject */
+                fail(new Error('载入超时：' + src));
+            }, TIMEOUT);
             el.src = src;
             el.async = false;          /* 动态插入默认 async，会打乱「共用包在前」的顺序 */
-            el.onload = function () { loaded[src] = 1; ok(); };
-            el.onerror = function () { fail(new Error('载入失败：' + src)); };
+            el.onload = function () {
+                clearTimeout(timer);
+                loaded[src] = 1;            /* 超时后姗姗来迟也算载入成功，下次不必重下 */
+                if (done) return;
+                done = true; ok();
+            };
+            el.onerror = function () {
+                clearTimeout(timer);
+                if (done) return;
+                done = true;
+                delete pending[src];
+                fail(new Error('载入失败：' + src));
+            };
             (document.head || document.documentElement).appendChild(el);
         });
         return pending[src];

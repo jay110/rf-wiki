@@ -2725,7 +2725,8 @@ function showLoading() {
     if (!m) return;
     /* 首屏骨架（index.html 里 #boot）本身就在说这件事，替换掉只会让人多读一行字 */
     if (document.getElementById('boot')) return;
-    m.innerHTML = '<div class="content"><p class="p gray">正在载入资料……</p></div>';
+    m.innerHTML = '<div class="content"><p class="p gray">正在载入资料……</p>'
+        + '<p class="p"><a class="link" href="javascript:location.reload()">一直停在这里？点这里刷新</a></p></div>';
 }
 
 let _waitingFor = '';
@@ -2745,9 +2746,15 @@ function render() {
                 _waitingFor = '';
                 if (location.hash === sig) render();
             }).catch(() => {
-                /* 包没下来就照常画：缺数据的页自带「数据未加载」提示，总比一直转圈强 */
+                /* 包没下来就照常画：缺数据的页自带「数据未加载」提示，总比一直转圈强。
+                   但连「画」这一步都抛错（比如正文包整个没到、PAGES 不存在）就会静默
+                   停在骨架上——所以这里再兜一层，至少给一句能点的话。 */
                 _waitingFor = '';
-                renderNow();
+                try {
+                    renderNow();
+                } catch (err) {
+                    showFail(err);
+                }
             });
             return;
         }
@@ -2766,6 +2773,16 @@ function maybeWarm(r) {
     if (r.name !== 'wiki' && r.name !== 'cat') return;
     _warmed = true;
     setTimeout(() => K.warm(), 600);
+}
+
+function showFail(err) {
+    const m = document.getElementById('main');
+    if (!m) return;
+    m.innerHTML = '<div class="content"><p class="p gray">资料没能载入</p>'
+        + '<p class="p">这一页需要的资料包没有下载成功，通常是网络问题。</p>'
+        + '<p class="p"><a class="link" href="javascript:location.reload()">点这里刷新重试</a>　'
+        + '<a class="link" href="#/">回站点主页</a></p></div>';
+    if (window.console && console.error) console.error('[rf-wiki] 渲染失败', err);
 }
 
 function renderNow() {

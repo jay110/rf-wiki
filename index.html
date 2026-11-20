@@ -36,6 +36,14 @@
         @media (prefers-reduced-motion: reduce) {
             #boot .boot-bar::after { animation: none; width: 100%; opacity: .3 }
         }
+        /* 兜底提示：8 秒还没画出来才出现，正常情况下用户永远看不到 */
+        .boot-fail {
+            margin: 1.4rem auto 0; max-width: 22rem; padding: .7rem .9rem;
+            border: 1px solid #e3e8ea; border-radius: 10px; background: #fafbfb;
+            font: 400 13px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #5c6b73; text-align: center;
+        }
+        .boot-fail a { color: #198d44; text-decoration: none; border-bottom: 1px solid rgba(25, 141, 68, .35); }
     </style>
 </head>
 
@@ -126,6 +134,23 @@
     <script defer src="js/k-plan.js"></script>
     <script defer src="js/k-loader.js"></script>
     <script defer src="js/k-core.js"></script>
+
+    <!-- 兜底：脚本没跑起来（网络卡住／Service Worker 换版时旧缓存被删）也要能自救。
+         8 秒后 #main 里还是骨架或「正在载入资料」，就补一条重试提示。
+         正常渲染的页面上这两样都不存在，所以这段平时不会做任何事。 -->
+    <script>
+        setTimeout(function () {
+            var m = document.getElementById('main');
+            if (!m) return;
+            if (!document.getElementById('boot') && !/正在载入资料/.test(m.textContent || '')) return;
+            if (m.querySelector('.boot-fail')) return;
+            var d = document.createElement('div');
+            d.className = 'boot-fail';
+            d.innerHTML = '资料没载完，可能是网络卡住了　' +
+                '<a href="javascript:location.reload()">点这里刷新</a>';
+            m.appendChild(d);
+        }, 8000);
+    </script>
 </body>
 
 </html>
