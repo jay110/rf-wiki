@@ -68,8 +68,8 @@ function icon(name, cls) {
    siteUpdated() 与 latestUpdates() 在正文未加载时用这份；
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
-    updated: "2026-11-20",
-    latest: ["第两百五十九：给国内网络加了条镜像线路——首页 167KB 的内核包从 3.6 …", "第两百五十八：首页轻了——首屏 gzip 82KB 压到 52KB，作品卡 86…", "第两百五十七：符文 1～5 的委托按人搬进人物页——3 代 280 条全挂在 2…", "第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…", "第两百五十四：八作武器摊平 1,224 行——只有「双手剑」八作全有，206 个…"],
+    updated: "2026-11-21",
+    latest: ["第两百六十：进站先过一张标题屏——符文环一笔画出、芜菁弹出、站名逐行落下，首页封…", "第两百五十九：给国内网络加了条镜像线路——首页 167KB 的内核包从 3.6 …", "第两百五十八：首页轻了——首屏 gzip 82KB 压到 52KB，作品卡 86…", "第两百五十七：符文 1～5 的委托按人搬进人物页——3 代 280 条全挂在 2…", "第两百五十六：14 条「配方」从技能表里搬出来，单列成每人一行「牵绊道具」——1…", "第两百五十五：八作里只有六作能比周期——3 代没有作物表、海洋那 92 行是「魔…"],
 };
 
 ;
@@ -2227,6 +2227,12 @@ function lineSrc() {
     return (typeof window !== 'undefined' && window.__SRC === 'cdn') ? 'cdn' : 'gh';
 }
 
+/* 入场标题屏开关。index.html 末尾那段脚本要早于本文件执行，读不到 S 这份快照，
+   所以单独存一个键；默认开，只有明确存过 '0' 才算关。 */
+function introOn() {
+    try { return localStorage.getItem('rfwiki.intro') !== '0'; } catch (e) { return true; }
+}
+
 function viewSetting() {
     const g = cur();
     return `
@@ -2310,6 +2316,16 @@ function viewSetting() {
                 <div class="chip-row">
                     <button class="chip ${lineSrc() === 'gh' ? 'on' : ''}" data-src="gh">直连</button>
                     <button class="chip ${lineSrc() === 'cdn' ? 'on' : ''}" data-src="cdn">加速</button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">入场动画</div>
+                    <div class="setting-hint">打开时先过一张标题屏，轻触可跳过（下次载入生效）</div>
+                </div>
+                <div class="chip-row">
+                    <button class="chip ${introOn() ? 'on' : ''}" data-intro="1">开</button>
+                    <button class="chip ${introOn() ? '' : 'on'}" data-intro="0">关</button>
                 </div>
             </div>
             <div class="setting-row">
@@ -3178,6 +3194,16 @@ function bindSetting() {
             const to = b.dataset.src;
             if (to === lineSrc()) return;
             if (typeof window !== 'undefined' && window.__switchSrc) window.__switchSrc(to);
+        }));
+
+    /* 入场动画开关同样要重载才有效果——这层是 index.html 里最先画出来的，
+       路由切来切去它根本不在。存完就地重画一次，把选中态标上。 */
+    document.querySelectorAll('[data-intro]').forEach(b =>
+        b.addEventListener('click', () => {
+            const on = b.dataset.intro !== '0';
+            if (on === introOn()) return;
+            try { localStorage.setItem('rfwiki.intro', on ? '1' : '0'); } catch (e) { }
+            rerender();
         }));
 
     const reset = document.getElementById('reset');

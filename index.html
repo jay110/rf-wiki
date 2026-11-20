@@ -100,10 +100,121 @@
             color: #5c6b73; text-align: center;
         }
         .boot-fail a { color: #198d44; text-decoration: none; border-bottom: 1px solid rgba(25, 141, 68, .35); }
+
+        /* ── 入场（标题屏）──────────────────────────────────────────────
+           内核包还没下来那几百毫秒里，页面原本是一块白。这里先摆一张「标题卡」顶着：
+           符文环由虚转实、芜菁弹出来、站名逐行落下；第一页画出来就开始退场，
+           首页封面接着自上而下依次落位——看到的是「进入」，不是「白屏转圈」。
+           全部内联：这层判的就是「css/main.css 还没到」，等它就没意义了。 */
+        #splash {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            padding: env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+            background:
+                radial-gradient(62% 46% at 50% 38%, rgba(25, 141, 68, .10), rgba(25, 141, 68, 0) 70%),
+                linear-gradient(180deg, #ffffff, #f6faf7);
+            touch-action: none; overscroll-behavior: contain;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            transition: opacity .42s ease-in;
+        }
+        #splash.sp-out { opacity: 0; visibility: hidden; transition: opacity .42s ease-in, visibility 0s .42s; }
+        .sp-in { display: flex; flex-direction: column; align-items: center; text-align: center;
+            transition: transform .52s cubic-bezier(.3, .7, 0, 1); }
+        #splash.sp-out .sp-in { transform: scale(1.05); }
+
+        .sp-ring { position: relative; width: 172px; height: 172px; }
+        .sp-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .sp-ring circle { fill: none; transform-box: fill-box; transform-origin: center; }
+        /* 外圈：极细虚线，慢慢顺转 */
+        .sp-ring-a { stroke: rgba(25, 141, 68, .20); stroke-width: .9; stroke-dasharray: 2 7;
+            animation: sp-spin 26s linear infinite; }
+        /* 中圈：四段等分弧，逆转。周长 458.7，76+38.7 正好四份 */
+        .sp-ring-b { stroke: rgba(25, 141, 68, .32); stroke-width: 1.2; stroke-dasharray: 76 38.7;
+            animation: sp-spin-r 40s linear infinite, sp-fade .9s ease-out both; }
+        /* 内圈：实线一笔画出来（周长 390），画完就留在那儿 */
+        .sp-ring-c { stroke: #198d44; stroke-width: 1.8; stroke-linecap: round;
+            stroke-dasharray: 390; stroke-dashoffset: 390; transform: rotate(-90deg);
+            animation: sp-draw 1.1s cubic-bezier(.35, .05, .2, 1) .08s forwards; }
+        .sp-mark { position: absolute; left: 50%; top: 50%; width: 66px; height: 66px;
+            margin: -33px 0 0 -33px; opacity: 0;
+            animation: sp-pop .8s cubic-bezier(.2, .9, .25, 1.06) .16s both; }
+
+        .sp-jp, .sp-name, .sp-en, .sp-bar, .sp-tip { opacity: 0;
+            animation: sp-up .72s cubic-bezier(.22, .68, 0, 1) both; }
+        .sp-jp { margin-top: 1.6rem; font-size: .68rem; letter-spacing: .34em; color: #9aa6ac; animation-delay: .36s; }
+        .sp-name { margin-top: .5rem; font-size: 1.4rem; font-weight: 700; letter-spacing: .07em; color: #3a4750; animation-delay: .46s; }
+        .sp-en { margin-top: .34rem; font-size: .58rem; letter-spacing: .3em; color: #b3bec4; animation-delay: .56s; }
+        .sp-bar { margin-top: 1.6rem; width: 108px; height: 2px; border-radius: 2px; overflow: hidden;
+            background: rgba(25, 141, 68, .13); animation-delay: .66s; }
+        .sp-bar i { display: block; width: 34%; height: 100%; border-radius: 2px; background: #198d44;
+            animation: sp-run 1.3s ease-in-out infinite; }
+        .sp-tip { margin-top: .95rem; font-size: .7rem; letter-spacing: .12em; color: #c2cbd0;
+            animation-delay: .58s; animation-duration: .5s; }
+
+        @keyframes sp-spin { to { transform: rotate(360deg) } }
+        @keyframes sp-spin-r { to { transform: rotate(-360deg) } }
+        @keyframes sp-draw { to { stroke-dashoffset: 0 } }
+        @keyframes sp-fade { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes sp-pop { from { opacity: 0; transform: scale(.55) } to { opacity: 1; transform: scale(1) } }
+        @keyframes sp-up { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: none } }
+        @keyframes sp-run { 0% { transform: translateX(-40px) } 100% { transform: translateX(112px) } }
+
+        /* 标题屏退场的同时，首页封面一行一行落下来。挂 html.intro 才生效，
+           进站后这个类会被摘掉，之后从别的页回首页不会重放。 */
+        html.intro .wcover > * { animation: sp-up .62s cubic-bezier(.22, .68, 0, 1) both; }
+        html.intro .wcover > :nth-child(2) { animation-delay: .05s }
+        html.intro .wcover > :nth-child(3) { animation-delay: .10s }
+        html.intro .wcover > :nth-child(4) { animation-delay: .15s }
+        html.intro .wcover > :nth-child(5) { animation-delay: .20s }
+        html.intro .wcover > :nth-child(6) { animation-delay: .25s }
+        html.intro .wcover > :nth-child(7) { animation-delay: .30s }
+
+        /* 宽屏上别缩在正中间一小团：环、徽标、站名一起放大一档 */
+        @media (min-width: 720px) {
+            .sp-ring { width: 224px; height: 224px; }
+            .sp-mark { width: 84px; height: 84px; margin: -42px 0 0 -42px; }
+            .sp-jp { margin-top: 2rem; font-size: .78rem; letter-spacing: .4em; }
+            .sp-name { margin-top: .62rem; font-size: 1.86rem; letter-spacing: .09em; }
+            .sp-en { margin-top: .42rem; font-size: .64rem; letter-spacing: .34em; }
+            .sp-bar { margin-top: 2rem; width: 140px; }
+            .sp-bar i { width: 46px; }
+            @keyframes sp-run { 0% { transform: translateX(-52px) } 100% { transform: translateX(146px) } }
+            .sp-tip { margin-top: 1.15rem; font-size: .74rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .sp-ring circle, .sp-mark, .sp-jp, .sp-name, .sp-en, .sp-bar, .sp-bar i, .sp-tip,
+            html.intro .wcover > * {
+                animation: none !important; opacity: 1 !important;
+            }
+            .sp-ring-c { stroke-dashoffset: 0 }
+            #splash, #splash.sp-out { transition-duration: .2s }
+            .sp-in { transition: none }
+        }
     </style>
 </head>
 
 <body>
+    <!-- 入场标题屏。静态标签 + 内联样式，HTML 一解析就能画，不等任何外部文件。
+         时序在页面末尾那段脚本里：第一页画出来 / 轻触 / 2.8 秒，谁先到算谁。 -->
+    <div id="splash" aria-hidden="true">
+        <div class="sp-in">
+            <div class="sp-ring">
+                <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="sp-ring-a" cx="100" cy="100" r="88" />
+                    <circle class="sp-ring-b" cx="100" cy="100" r="73" />
+                    <circle class="sp-ring-c" cx="100" cy="100" r="62" />
+                </svg>
+                <img class="sp-mark" id="spMark" src="assets/icon/icon-192.png" alt="" width="66" height="66">
+            </div>
+            <div class="sp-jp">ルーンファクトリー</div>
+            <div class="sp-name">符文工房攻略百科</div>
+            <div class="sp-en">RUNE FACTORY WIKI</div>
+            <div class="sp-bar"><i></i></div>
+            <div class="sp-tip">轻触任意处跳过</div>
+        </div>
+    </div>
+
     <div id="app">
         <header class="titlebar">
             <button class="back" id="backBtn" aria-label="返回">
@@ -208,6 +319,74 @@
             }
         });
     </script>
+    <!-- 标题屏退场：三个出口，谁先到算谁。
+         ① #main 里的 #boot 消失＝第一页已经画出来（正常情况，900ms 起跳）；
+         ② 轻触／点击任意处——不想等的人不必等；
+         ③ 2.8 秒硬闸——网络卡住时这层也必须让开，否则下面那条 8 秒兜底提示
+            被盖住，用户只看得见一个不动的徽标。
+         必须放在 DOM 末尾：要拿到 #main 才能盯着它。#boot 的替换由渲染函数整块
+         innerHTML 完成，所以只看子节点，不用 app.js 回传任何东西。 -->
+    <script>
+        (function () {
+            var sp = document.getElementById('splash');
+            if (!sp) return;
+            var root = document.documentElement;
+
+            /* 开关读独立键：本段必须早于 app.js，读不到 S 那份设置快照 */
+            var off = false;
+            try { off = localStorage.getItem('rfwiki.intro') === '0'; } catch (e) { }
+            if (off) { if (sp.parentNode) sp.parentNode.removeChild(sp); return; }
+
+            /* 镜像线路下 assets/ 走的是图片节点（fastly 对 png 一律 301），
+               头像、作品图都这么取，徽标跟着一起指过去 */
+            var mk = document.getElementById('spMark');
+            if (mk && window.__SRC === 'cdn' && window.__IMG_BASE) {
+                mk.src = window.__IMG_BASE + 'assets/icon/icon-192.png';
+            }
+
+            var reduce = false;
+            try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { }
+            var MIN = reduce ? 380 : 900;
+            var t0 = Date.now();
+            var done = false;
+
+            root.className += ' intro';
+
+            function out() {
+                if (done) return;
+                var wait = MIN - (Date.now() - t0);
+                if (wait > 0) { setTimeout(out, wait); return; }
+                done = true;
+                sp.className = 'sp-out';
+                setTimeout(function () {
+                    if (sp.parentNode) sp.parentNode.removeChild(sp);
+                }, 480);
+                /* 进站动画只播一次：散场后摘掉标记，之后从别的页回首页不再重放 */
+                setTimeout(function () {
+                    root.className = root.className.replace(/\s*\bintro\b/, '');
+                }, 1900);
+            }
+
+            var m = document.getElementById('main');
+            if (m && !document.getElementById('boot')) {
+                /* 内联单文件版或极快的情况：骨架可能已经换掉了 */
+                out();
+            } else if (m && window.MutationObserver) {
+                var ob = new MutationObserver(function () {
+                    if (document.getElementById('boot')) return;
+                    ob.disconnect();
+                    out();
+                });
+                ob.observe(m, { childList: true });
+            }
+
+            sp.addEventListener('click', function () {
+                if (Date.now() - t0 > 240) out();
+            });
+            setTimeout(out, reduce ? 1100 : 2800);
+        })();
+    </script>
+
     <!-- 兜底：脚本没跑起来（网络卡住／Service Worker 换版时旧缓存被删）也要能自救。
          8 秒后 #main 里还是骨架或「正在载入资料」，就补一条重试提示。
          正常渲染的页面上这两样都不存在，所以这段平时不会做任何事。 -->

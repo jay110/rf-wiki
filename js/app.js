@@ -1195,6 +1195,12 @@ function lineSrc() {
     return (typeof window !== 'undefined' && window.__SRC === 'cdn') ? 'cdn' : 'gh';
 }
 
+/* 入场标题屏开关。index.html 末尾那段脚本要早于本文件执行，读不到 S 这份快照，
+   所以单独存一个键；默认开，只有明确存过 '0' 才算关。 */
+function introOn() {
+    try { return localStorage.getItem('rfwiki.intro') !== '0'; } catch (e) { return true; }
+}
+
 function viewSetting() {
     const g = cur();
     return `
@@ -1278,6 +1284,16 @@ function viewSetting() {
                 <div class="chip-row">
                     <button class="chip ${lineSrc() === 'gh' ? 'on' : ''}" data-src="gh">直连</button>
                     <button class="chip ${lineSrc() === 'cdn' ? 'on' : ''}" data-src="cdn">加速</button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">入场动画</div>
+                    <div class="setting-hint">打开时先过一张标题屏，轻触可跳过（下次载入生效）</div>
+                </div>
+                <div class="chip-row">
+                    <button class="chip ${introOn() ? 'on' : ''}" data-intro="1">开</button>
+                    <button class="chip ${introOn() ? '' : 'on'}" data-intro="0">关</button>
                 </div>
             </div>
             <div class="setting-row">
@@ -2146,6 +2162,16 @@ function bindSetting() {
             const to = b.dataset.src;
             if (to === lineSrc()) return;
             if (typeof window !== 'undefined' && window.__switchSrc) window.__switchSrc(to);
+        }));
+
+    /* 入场动画开关同样要重载才有效果——这层是 index.html 里最先画出来的，
+       路由切来切去它根本不在。存完就地重画一次，把选中态标上。 */
+    document.querySelectorAll('[data-intro]').forEach(b =>
+        b.addEventListener('click', () => {
+            const on = b.dataset.intro !== '0';
+            if (on === introOn()) return;
+            try { localStorage.setItem('rfwiki.intro', on ? '1' : '0'); } catch (e) { }
+            rerender();
         }));
 
     const reset = document.getElementById('reset');
