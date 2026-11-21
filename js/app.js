@@ -1747,12 +1747,17 @@ function paintBar(v) {
     if (el) el.style.width = v.toFixed(1) + '%';
 }
 
+/* 数字只跟着条子走，不直接显示 done/total：网速快的时候两个包 400 毫秒内
+   就下完了，真实进度会直接跳到 67%，可条子还在 7%——「67%」配一根几乎空的
+   条子，比不显示数字还难看。两者同一数据源就不会打架。 */
 function onLoadProgress(done, total) {
     if (!total) return;
-    const pct = done / total * 100;
-    _barTarget = Math.min(92, pct);
+    _barTarget = Math.min(92, done / total * 100);
+}
+
+function paintTip() {
     const tip = document.getElementById('loadTip');
-    if (tip) tip.textContent = '正在载入资料…… ' + Math.round(pct) + '%';
+    if (tip) tip.textContent = '正在载入资料…… ' + Math.round(_barShown) + '%';
 }
 
 function startLoadBar() {
@@ -1769,6 +1774,7 @@ function startLoadBar() {
         else if (_barShown < ceiling) _barShown += 0.45;
         if (_barShown > 92) _barShown = 92;
         paintBar(_barShown);
+        paintTip();
     }, 200);
 }
 
@@ -1776,9 +1782,11 @@ function startLoadBar() {
    不留这一段，经常是「条子停在 68%，整页忽然换了」——断头感比没有进度条更明显。 */
 function finishLoadBar(next) {
     if (!_barTimer) { next(); return; }
-    const el = document.getElementById('loadFill');
-    if (el) el.style.width = '100%';
-    setTimeout(() => { stopLoadBar(); next(); }, 300);
+    stopLoadBar();                 /* 先停表，否则 200ms 后会把 100% 覆盖回 92% */
+    _barShown = 100;
+    paintBar(100);
+    paintTip();
+    setTimeout(next, 300);
 }
 
 function stopLoadBar() {
