@@ -155,7 +155,7 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "240e5a94714c5d76",
+    "core": "53dcc71a3202e9f6",
     "shared": "7935ee21aa5429a4",
     "cross": "428fe42e76b17f63",
     "body": "757786826949f5f5",
@@ -168,6 +168,6 @@
     "game:rf4": "f0c058ebf17f1f5d",
     "game:rf5": "2d7dfa77a74848b4",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "d45fae774497c829"
+    "page:changelog": "5772864004edef6b"
   }
 }

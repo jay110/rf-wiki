@@ -12,6 +12,16 @@
 var K = (function () {
     var loaded = {}, pending = {};
 
+    /* 载入进度：只在「这一次真的要下几个包」时回调，界面拿它画进度条。
+       粒度只能到包——SCRIPT 标签没有下载进度事件，一条 608KB 的正文包中间那几秒
+       要由界面自己往前补，否则条子会停住，看着跟死了一样。 */
+    var progressCbs = [];
+    function emit(done, total) {
+        for (var i = 0; i < progressCbs.length; i++) {
+            try { progressCbs[i](done, total); } catch (e) { }
+        }
+    }
+
     function plan() {
         return (typeof K_PLAN !== 'undefined' && K_PLAN) ? K_PLAN : null;
     }
@@ -53,13 +63,6 @@ var K = (function () {
             (document.head || document.documentElement).appendChild(el);
         });
         return pending[src];
-    }
-
-    /* 必须按顺序执行：包内是顶层 const，后一个包可能引用前一个包的全局 */
-    function seq(list) {
-        return list.reduce(function (p, s) {
-            return p.then(function () { return one(s); });
-        }, Promise.resolve());
     }
 
     return {
@@ -112,7 +115,26 @@ var K = (function () {
             /* 去重，且保证共用包在最前 */
             var seen = {}, out = [];
             list.forEach(function (s) { if (s && !seen[s]) { seen[s] = 1; out.push(s); } });
-            return seq(out);
+
+            /* 已经在本地的包不用等，也别占进度：总分母只算这次真的要下的 */
+            var todo = out.filter(function (s) { return !loaded[s]; });
+            if (!todo.length) return Promise.resolve();
+            emit(0, todo.length);
+            var done = 0;
+            /* 必须按顺序执行：包内是顶层 const，后一个包可能引用前一个包的全局 */
+            return todo.reduce(function (p, s) {
+                return p.then(function () {
+                    return one(s).then(function () { emit(++done, todo.length); });
+                });
+            }, Promise.resolve());
+        },
+        /* 界面订阅载入进度（done, total）；ready 开始时先报一次 0/total */
+        onProgress: function (f) {
+            if (typeof f === 'function' && progressCbs.indexOf(f) < 0) progressCbs.push(f);
+        },
+        offProgress: function (f) {
+            var i = progressCbs.indexOf(f);
+            if (i >= 0) progressCbs.splice(i, 1);
         },
         /* 立刻取正文包：鼠标悬停到条目上时用。用户已经表现出「要点」的意图，
            这时候不该再等 idle——等到点击才发起，608KB 就是干等。 */

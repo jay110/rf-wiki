@@ -1735,13 +1735,68 @@ function chunkNeed(r) {
     return need;
 }
 
+/* ── 切页进度条 ───────────────────────────────────────────────
+   真实进度只到「包」这一级：这次要下 3 个包，下来一个跳一段。SCRIPT 标签给不出
+   字节数，608KB 的正文包中间那几秒没有新事件，所以条子还得自己往前爬一点
+   （封顶 92%），否则停在原地跟卡死没区别。渲染一完成 #main 整块被替换，
+   条子跟着消失，不用专门收尾。 */
+let _barTimer = null, _barShown = 0, _barTarget = 0;
+
+function paintBar(v) {
+    const el = document.getElementById('loadFill');
+    if (el) el.style.width = v.toFixed(1) + '%';
+}
+
+function onLoadProgress(done, total) {
+    if (!total) return;
+    const pct = done / total * 100;
+    _barTarget = Math.min(92, pct);
+    const tip = document.getElementById('loadTip');
+    if (tip) tip.textContent = '正在载入资料…… ' + Math.round(pct) + '%';
+}
+
+function startLoadBar() {
+    stopLoadBar();
+    _barShown = 0; _barTarget = 0;
+    paintBar(0);
+    if (typeof K !== 'undefined' && K.onProgress) K.onProgress(onLoadProgress);
+    _barTimer = setInterval(() => {
+        /* 爬行天花板跟着真实进度走：最多超它 18 个百分点。
+           否则一个 508KB 的包卡十几秒，条子能从 33% 一路爬到 88%，
+           然后真实进度一跳，反而往回缩——看起来像在倒着走。 */
+        const ceiling = Math.min(88, _barTarget + 18);
+        if (_barShown < _barTarget) _barShown += Math.max(0.9, (_barTarget - _barShown) * 0.22);
+        else if (_barShown < ceiling) _barShown += 0.45;
+        if (_barShown > 92) _barShown = 92;
+        paintBar(_barShown);
+    }, 200);
+}
+
+/* 包全下完到真正开始画之间，留 220ms 让条子把最后一段走完。
+   不留这一段，经常是「条子停在 68%，整页忽然换了」——断头感比没有进度条更明显。 */
+function finishLoadBar(next) {
+    if (!_barTimer) { next(); return; }
+    const el = document.getElementById('loadFill');
+    if (el) el.style.width = '100%';
+    setTimeout(() => { stopLoadBar(); next(); }, 300);
+}
+
+function stopLoadBar() {
+    if (_barTimer) { clearInterval(_barTimer); _barTimer = null; }
+    if (typeof K !== 'undefined' && K.offProgress) K.offProgress(onLoadProgress);
+}
+
 function showLoading() {
     const m = document.getElementById('main');
     if (!m) return;
     /* 首屏骨架（index.html 里 #boot）本身就在说这件事，替换掉只会让人多读一行字 */
     if (document.getElementById('boot')) return;
-    m.innerHTML = '<div class="content"><p class="p gray">正在载入资料……</p>'
-        + '<p class="p"><a class="link" href="javascript:location.reload()">一直停在这里？点这里刷新</a></p></div>';
+    m.innerHTML = '<div class="content loadpage" role="status" aria-live="polite">'
+        + '<div class="loadbar"><i id="loadFill"></i></div>'
+        + '<p class="loadtip" id="loadTip">正在载入资料……</p>'
+        + '<p class="loadmore"><a class="link" href="javascript:location.reload()">一直停在这里？点这里刷新</a></p>'
+        + '</div>';
+    startLoadBar();
 }
 
 let _waitingFor = '';
@@ -1759,7 +1814,7 @@ function render() {
             if (_waitingFor !== sig) { _waitingFor = sig; showLoading(); }
             K.ready(need).then(() => {
                 _waitingFor = '';
-                if (location.hash === sig) render();
+                if (location.hash === sig) finishLoadBar(render);
             }).catch(() => {
                 /* 包没下来就照常画：缺数据的页自带「数据未加载」提示，总比一直转圈强。
                    但连「画」这一步都抛错（比如正文包整个没到、PAGES 不存在）就会静默
@@ -1791,6 +1846,7 @@ function maybeWarm(r) {
 }
 
 function showFail(err) {
+    stopLoadBar();
     const m = document.getElementById('main');
     if (!m) return;
     m.innerHTML = '<div class="content"><p class="p gray">资料没能载入</p>'
@@ -1801,6 +1857,7 @@ function showFail(err) {
 }
 
 function renderNow() {
+    stopLoadBar();
     const r = parseRoute();
     const g = cur();
 

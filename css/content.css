@@ -1101,3 +1101,63 @@
 
 .content .table.pev tbody td[colspan],
 .content .table.pev td { white-space: nowrap; word-break: normal; }
+
+/* 切页时的载入条（showLoading）。
+   真实进度只到「包」这一级，条子靠 CSS 过渡走平滑；长时间没有新包时
+   JS 会让它继续往前爬（封顶 92%），所以这里不写死动画，宽度全由 JS 给。 */
+.content.loadpage {
+    /* 居中而不是贴着顶部：切页往往一两秒，视线应该落在一条会动的线上 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 58vh;
+    padding: 0 1rem;
+    text-align: center;
+}
+
+.loadpage .loadbar {
+    position: relative;
+    width: min(220px, 58vw);
+    height: 3px;
+    margin: 0 auto;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(25, 141, 68, .13);
+}
+
+.loadpage .loadbar i {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #5cbd80, #198d44);
+    transition: width .34s cubic-bezier(.25, .8, .35, 1);
+}
+
+.loadpage .loadtip {
+    margin-top: .9rem;
+    font-size: .78rem;
+    color: var(--ink-3);
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+}
+
+.loadpage .loadmore {
+    margin-top: 2.8rem;
+    font-size: .76rem;
+}
+
+/* 兜底用的刷新链接：正常情况一两秒就过去了，不该比进度条还抢眼。
+   .content .link 带 !important，这里也得带，靠特异性赢（0,3,0 > 0,2,0）。 */
+.loadpage .loadmore .link {
+    color: var(--ink-4) !important;
+    text-decoration-color: transparent;
+}
+
+.loadpage .loadmore .link:hover {
+    color: var(--ink-3) !important;
+    text-decoration-color: rgba(0, 0, 0, .16);
+}

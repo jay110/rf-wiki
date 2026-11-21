@@ -5,6 +5,16 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，条目数由 _test_changelog.js 统计，不在此写死） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-21　第两百六十二：切页也有进度条——真实进度只到「包」这一级，中间那段由界面自己补</h2>
+<div class="txt-list">
+<p><b>原来的切页提示不够用。</b>镜像线路上从首页点「居民」，要下三个包：人物 115KB、共用 508KB、本作 287KB。国内实测这十几秒里页面只有一行「正在载入资料……」，<b>看不出是在走还是已经死了</b>——上一版那个「卡在正在载入资料」的反馈，就是这么来的。</p>
+<p><b>为什么不做「真进度」。</b>分包是用 <code>&lt;script&gt;</code> 标签插进来的，浏览器对脚本只有 load／error，没有下载进度事件。要拿字节数就得改成 XHR 或 fetch 取回文本再 <code>eval</code>，那会毁掉「按顺序执行」这条命根子（包内是顶层 <code>const</code>，后一个包引用前一个包的全局），也不利于排错。<b>所以进度只能做到「包」这一级</b>：这次要下 3 个，下来一个跳一段。</p>
+<p><b>界面负责补中间那段。</b><code>k-loader</code> 的 <code>ready()</code> 先把「已经在本地的包」剔掉，分母只算这次真的要下的，然后逐个包完成回调 <code>(done, total)</code>；<code>app.js</code> 订阅它，条子按 <code>done/total</code> 追过去。追不上怎么办？自己往前爬——但<b>爬行天花板钉在「真实进度 + 18 个百分点」、最多 88%</b>。这一条是试出来的：第一版让它无脑往 88% 爬，结果一个 508KB 的包卡六秒，条子从 33% 爬到 39%，真实进度一跳又落到 33% 附近，看着像<b>在倒着走</b>。</p>
+<p><b>收尾也要管。</b>包全下完到真正开始画之间，留 <b>300 毫秒</b>把条子送到 100% 再换页。不留这一段就是「条子停在 68%，整页忽然变了」——断头感比没有进度条更明显。渲染一完成 <code>#main</code> 整块被替换，条子跟着消失，不用专门擦。</p>
+<p><b>顺手统一了首屏那条。</b>骨架里本来就有一条 2px／92px 的循环条，太细，几乎看不见；这版加粗到 <b>3px／116px</b>、换成同一支绿色渐变，两处看起来是同一个东西。标题屏那条不变。</p>
+<p><b>两个 CSS 坑。</b>①<code>showLoading()</code> 原来输出 <code>&lt;div class="content"&gt;</code>，我改写时只留了 <code>loadpage</code>，结果 <code>.content .loadbar</code> 一条都不匹配——截图上只有两行字贴在左边缘，条子根本没画出来；补回双类名 <code>class="content loadpage"</code>。②兜底那句「一直停在这里？点这里刷新」原本是<span style="color:#198d44">绿色加粗</span>，比进度条还抢眼，改成灰色小字；但 <code>.content .link</code> 的 <code>color</code> 带 <code>!important</code>，覆盖它也得带 <code>!important</code>，靠特异性（0,3,0 &gt; 0,2,0）赢。</p>
+<div class="key">限速 80KB/s 实测（430×896，点「居民」）：条子 <b>0 → 33%</b>（人物包，5.4 秒）→ <b>67%</b>（共用包，11.8 秒）→ <b>100%</b>（本作包，15.5 秒），三次跳变之后都是平滑追赶，全程没有回缩；渲染完 0.3 秒内条子消失、页面接上。包已在本地时切页依旧瞬时直出，不弹条子。</div>
+</div>
 <h2 class="h2">2026-11-21　第两百六十一：镜像线路上点一下就跳去 jsDelivr 的文件列表——base 换了域，hash 锚点就不再算同一份文档</h2>
 <div class="txt-list">
 <p><b>一个看着莫名其妙的现象。</b>切到加速线路，点右下角的「设置」，整页忽然变成一列文件夹和文件——<code>jay110/rf-wiki@9465092</code> 的目录，标题写着「jay110/rf-wiki CDN files」，可地址栏里还挂着 <code>#/setting</code>。页面没坏，是被<b>导航走了</b>：那串地址是 <code>fastly.jsdelivr.net/gh/jay110/rf-wiki@9465092/#/setting</code>，也就是 jsDelivr 的一个目录，而 jsDelivr 对目录返回的就是文件列表页。</p>
