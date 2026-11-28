@@ -1,6 +1,16 @@
 /* 更新日志正文 —— 由 _split_changelog.py 从 js/pages.js 拆出，按需加载
    改动请直接改这个文件（格式：一整段 HTML 模板字符串，条目数由 _test_changelog.js 统计，不在此写死） */
 const CHANGELOG_HTML = `
+<h2 class="h2">2026-11-28　第两百六十四：每作封面右上角加了个「OP」——视频不落地，点开是站内的 B 站外链播放器</h2>
+<div class="txt-list">
+<p><b>缺的是什么。</b>八作的页面里，开篇是渐变封面 + 日文名 + 中文名 + 平台和日期，往下全是条目菜单。攻略、数据、角色都齐，唯独<b>没有「看一眼片头」的入口</b>——对没玩过某作的人来说，两分钟的 OP 比一万字的系统介绍更快建立印象。</p>
+<p><b>三条路，选了最轻的一条。</b>①把 OP 转码塞进仓库：每作 10–20MB，八个就是 150MB 起，GitHub Pages 的仓库和 jsDelivr 的流量都吃不消，而且公开站放官方片头属于搬运；②自己做一段 CSS 仿 OP：零成本零风险，但那就不是 OP 了；③<b>嵌 B 站官方外链播放器</b>：不落一个字节进仓库，国内速度正常，版权上属于「引用公开投稿」而不是「转载」。选了③。</p>
+<p><b>素材是逐条核出来的，不凭印象写号。</b>每条都用 <code>api.bilibili.com/x/web-interface/view</code> 查了一遍：<code>bvid</code> 存在、<b>分 P 标题里的曲名</b>与本作主题曲一致、时长对得上。七作用的是两个合集——<code>BV1po4y137dA</code>（「二次部分细节修复」系列日版 OP，17 个分 P，贴心琉依）覆盖 RF1／RF2／RF3／边境／RF4／RF5，海洋单独用 <code>BV1GW421d7ST</code>（三次修复版）。<b>顺带做了个交叉印证</b>：那个 17 分 P 合集的排列顺序与八作的发售时间完全吻合（Rune → Rune2 → Ever lasting world → The Sweetest Time → HAPPINESS → 风のように → 届きますように → waratte → 風のトラベラー → この思いを乗せて → 空の彼方 → dream wanderer），所以「第 4P 是边境」这类对应不是猜的。</p>
+<p><b>龙之天地是个例外，如实标出来。</b>本作 2025 年 6 月发售，B 站没有单独的游戏内 OP 投稿，官方账号（Marvelous_游戏）只有预告片。于是这一条退一步用<b>官方发售预告片</b>，但按钮文字从「OP」改成<b>「预告片」</b>、浮层脚注写明「本条是官方发售预告片，不是游戏内片头」——<b>宁可标清楚，也不把它混成 OP</b>。哪天有人传了游戏内片头，改 <code>js/op.js</code> 里的一行就行。</p>
+<p><b>实现上有三个坑。</b>①<b>关浮层必须摘节点</b>，不能只 <code>display:none</code>——iframe 只是被藏起来的话，声音还在后面继续放；②<b>切路由要自动关</b>，把 <code>closeOp()</code> 放进 <code>renderNow()</code> 第一行，否则从作品页点进条目，OP 会跟着翻页；③<b>打开后有 3–6 秒白屏</b>：B 站播放器要先把 core.js、playurl、视频分片全拉回来才出第一帧。垫了一张<b>作品主视觉</b>加转圈和「正在载入播放器…」，靠 iframe 的 <code>load</code> 事件淡出——留 0.42 秒余量，因为 <code>load</code> 只代表播放器文档加载完，视频还得再解码一会儿。垫图排在下三分之一，因为主视觉的 logo 正好在正中，字压上去会糊成一团。</p>
+<p><b>镜像线路不用特别处理。</b>iframe 的 <code>src</code> 与「在 B 站打开」的 <code>href</code> 都是绝对地址，<code>&lt;base&gt;</code> 管不到它们；垫底图走 <code>titleSrc()</code>，<code>?src=cdn</code> 时已经被改写成 testingcf 的绝对地址。</p>
+<div class="key">实测（headless Edge，414／320／1280 三档）：按钮 53×22 落在封面右上角，不压标题也不碰底部平台条；点开后 0.7 秒可见垫底图 + 转圈，8 秒时 <code>&lt;video&gt;</code> 的 <code>readyState=4</code>、片长 97 秒、画面确实在走；关闭后 <code>document.querySelectorAll('iframe').length</code> 归 0、<code>body</code> 的 <code>overflow</code> 恢复；ESC 与点遮罩同样能关；320 宽无横向溢出；<code>OP_DATA</code> 里删掉一条再渲染，按钮直接消失、不留死链。全站校验：365 页输出一致、364 个页面实例 0 异常、214 张头像无缺。</div>
+</div>
 <h2 class="h2">2026-11-24　第两百六十三：龙之天地点「料理」只有两段话——317 天的数据一直躺在包里，只是没人接</h2>
 <div class="txt-list">
 <p><b>怎么发现的。</b>做了一次全站体量体检：把八作 × 44 到 48 个条目逐个真渲染，数每页的表格行数与正文字数。结果里有一行特别刺眼——<b>龙之天地的「料理」页，4 行表、320 字</b>；同一页在别的七作是 241 到 695 行、一万三到两万五千字。</p>

@@ -4,6 +4,7 @@
     "js/changelog-head.js",
     "js/data.js",
     "js/pages-meta.js",
+    "js/op.js",
     "js/app.js"
   ],
   "npc": [
@@ -155,7 +156,7 @@
     "js/pages.js"
   ],
   "sha": {
-    "core": "22465981e26358a4",
+    "core": "abef1ae9864e3a0a",
     "shared": "7935ee21aa5429a4",
     "cross": "428fe42e76b17f63",
     "body": "b45c7bb5fd843144",
@@ -168,6 +169,6 @@
     "game:rf4": "f0c058ebf17f1f5d",
     "game:rf5": "2d7dfa77a74848b4",
     "game:azuma": "0c753ddbe99f7f39",
-    "page:changelog": "167c14298201272f"
+    "page:changelog": "5fc15646c372fa5a"
   }
 }

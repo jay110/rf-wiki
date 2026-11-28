@@ -1,9 +1,10 @@
 /* k-core.js —— 自动生成，勿手改（node _build_chunks.js）
-   含 5 个源文件，按 js/_manifest.json 的顺序拼接：
+   含 6 个源文件，按 js/_manifest.json 的顺序拼接：
      js/icons.js
      js/changelog-head.js
      js/data.js
      js/pages-meta.js
+     js/op.js
      js/app.js
 */
 /* 自绘线性图标集 —— 统一 24x24 / stroke=currentColor，避免引用任何版权素材 */
@@ -68,8 +69,8 @@ function icon(name, cls) {
    siteUpdated() 与 latestUpdates() 在正文未加载时用这份；
    正文加载后仍按原文计算，两者由 _test_changelog.js 断言一致。 */
 const CHANGELOG_HEAD = {
-    updated: "2026-11-24",
-    latest: ["第两百六十三：龙之天地点「料理」只有两段话——317 天的数据一直躺在包里，只是…", "第两百六十二：切页也有进度条——真实进度只到「包」这一级，中间那段由界面自己补", "第两百六十一：镜像线路上点一下就跳去 jsDelivr 的文件列表——base …", "第两百六十：进站先过一张标题屏——符文环一笔画出、芜菁弹出、站名逐行落下，首页封…", "第两百五十九：给国内网络加了条镜像线路——首页 167KB 的内核包从 3.6 …", "第两百五十八：首页轻了——首屏 gzip 82KB 压到 52KB，作品卡 86…"],
+    updated: "2026-11-28",
+    latest: ["第两百六十四：每作封面右上角加了个「OP」——视频不落地，点开是站内的 B 站外…", "第两百六十三：龙之天地点「料理」只有两段话——317 天的数据一直躺在包里，只是…", "第两百六十二：切页也有进度条——真实进度只到「包」这一级，中间那段由界面自己补", "第两百六十一：镜像线路上点一下就跳去 jsDelivr 的文件列表——base …", "第两百六十：进站先过一张标题屏——符文环一笔画出、芜菁弹出、站名逐行落下，首页封…", "第两百五十九：给国内网络加了条镜像线路——首页 167KB 的内核包从 3.6 …"],
 };
 
 ;
@@ -1031,6 +1032,30 @@ var NPC_STAT = {
 
 ;
 /* ============================================================
+   各作片头动画（OP）索引
+   不搬运视频文件，只用 B 站官方外链播放器嵌入；所有条目在 2026-11-28
+   逐条用 api.bilibili.com/x/web-interface/view 核对过：bvid 存在、
+   分 P 标题与曲名一致、时长对得上。UP 主删稿会让条目失效，届时把该作
+   整条删掉即可 —— 首页按钮会自动消失，不留死链。
+   ============================================================ */
+var OP_DATA = {
+    rf1: { bv: 'BV1po4y137dA', p: 1, song: 'Rune', sec: 192, up: '贴心琉依' },
+    rf2: { bv: 'BV1po4y137dA', p: 2, song: 'Rune2', sec: 130, up: '贴心琉依' },
+    rf3: { bv: 'BV1po4y137dA', p: 6, song: 'HAPPINESS', sec: 95, up: '贴心琉依' },
+    rff: { bv: 'BV1po4y137dA', p: 4, song: 'The Sweetest Time', sec: 105, up: '贴心琉依' },
+    rfo: { bv: 'BV1GW421d7ST', p: 1, song: '届きますように', sec: 101, up: '贴心琉依' },
+    rf4: { bv: 'BV1po4y137dA', p: 10, song: '風のトラベラー', sec: 97, up: '贴心琉依' },
+    rf5: { bv: 'BV1po4y137dA', p: 14, song: '空の彼方', sec: 94, up: '贴心琉依' },
+    /* 龙之天地没有单独的游戏内 OP 投稿，退一步用官方发售预告片，条目里标明 kind: 'pv' */
+    azuma: { bv: 'BV1R2Tjz6Esa', p: 1, song: '发售预告片', sec: 91, up: 'Marvelous_游戏', kind: 'pv' }
+};
+
+/* 系列合集：rf1/rf2/rf3/rff/rf4/rf5 六作共用一个 17 分 P 的视频，
+   播放器里会露出分 P 列表，所以片尾要交代一句。 */
+var OP_COLL = { bv: 'BV1po4y137dA', pages: 17, up: '贴心琉依' };
+
+;
+/* ============================================================
    路由与视图
    ============================================================ */
 
@@ -1295,6 +1320,7 @@ function viewHome(g) {
             <span>${platAll(g.plat)}</span>
             <span>${g.date}</span>
         </div>
+        ${opBtn(g)}
     </div>
     <div class="quick">
         <div><div class="qk">发售</div><div class="qv">${g.date.replace(/-/g, '.')}</div></div>
@@ -1338,6 +1364,100 @@ function viewHome(g) {
     <div class="wback"><a class="link" href="#/">‹ 站点主页</a></div>
     ${footer(g)}
     `;
+}
+
+/* ---------------- 片头动画（OP） ----------------
+   视频不落地：点开后在站内浮层里嵌 B 站外链播放器，关掉浮层就把 iframe 摘掉，
+   免得 display:none 之后声音还在后面放。索引表在 js/op.js，缺哪一作就少一个按钮。 */
+function opOf(id) {
+    return (typeof OP_DATA !== 'undefined' && OP_DATA[id]) ? OP_DATA[id] : null;
+}
+
+function opBtn(g) {
+    const d = opOf(g.id);
+    if (!d) return '';
+    return `
+        <button class="cover-op" type="button" data-op="${g.id}" aria-label="播放片头动画">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 5.2v13.6L19.4 12z" /></svg>
+            <span>${d.kind === 'pv' ? '预告片' : 'OP'}</span>
+        </button>`;
+}
+
+function fmtDur(s) {
+    if (!s) return '';
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + ':' + (r < 10 ? '0' + r : r);
+}
+
+function openOp(id) {
+    const d = opOf(id);
+    if (!d) return;
+    const g = GAMES.find(x => x.id === id) || cur();
+    closeOp();
+
+    let note = '';
+    if (d.kind === 'pv') note += '本条是官方发售预告片，不是游戏内片头。';
+    if (typeof OP_COLL !== 'undefined' && d.bv === OP_COLL.bv)
+        note += '本片是系列 OP 合集（共 ' + OP_COLL.pages + ' 个分 P），播放器里会露出其他作品的段落。';
+
+    const src = 'https://player.bilibili.com/player.html?bvid=' + d.bv
+        + '&p=' + (d.p || 1) + '&autoplay=1&danmaku=0&high_quality=1&as_wide=1';
+    const href = 'https://www.bilibili.com/video/' + d.bv + (d.p ? '?p=' + d.p : '');
+
+    /* B 站播放器要 3～6 秒才出第一帧，中间是一片白。垫一张作品主视觉 +
+       转圈，iframe 报 load 之后再淡出 —— 不然用户以为点坏了。 */
+    const art = (typeof TITLE_ART !== 'undefined') ? TITLE_ART[id] : null;
+    const bg = art ? titleSrc(art) : '';
+
+    const el = document.createElement('div');
+    el.className = 'opmask';
+    el.id = 'opmask';
+    el.innerHTML = ''
+        + '<div class="opbox">'
+        + '<div class="opbar">'
+        + '<div class="opttl">' + escHtml(d.song)
+        + '<span>' + escHtml(g.name) + '　·　' + fmtDur(d.sec) + '　·　UP ' + escHtml(d.up || '') + '</span></div>'
+        + '<button class="opclose" type="button" aria-label="关闭">✕</button>'
+        + '</div>'
+        + '<div class="opframe">'
+        + '<div class="opwait"' + (bg ? ' style="background-image:url(&quot;' + bg + '&quot;)"' : '') + '>'
+        + '<div class="opspin"></div><div class="opwtx">正在载入播放器…</div></div>'
+        + '<iframe src="' + src + '" frameborder="0" scrolling="no" allowfullscreen'
+        + ' allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe></div>'
+        + '<div class="opfoot"><span>' + escHtml(note)
+        + '版权归原权利人所有，本站只做站内引用，未转载视频文件。</span>'
+        + '<a class="opgoto" href="' + href + '" target="_blank" rel="noopener">在 B 站打开 ›</a></div>'
+        + '</div>';
+
+    document.body.appendChild(el);
+    document.documentElement.classList.add('op-on');
+
+    /* iframe 的 load 只代表播放器页面文档加载完，视频还得再解码一两秒，
+       所以先淡出占位、留 0.42 秒余量再摘掉节点。 */
+    const ifr = el.querySelector('iframe');
+    const wtt = el.querySelector('.opwait');
+    if (ifr && wtt) {
+        ifr.addEventListener('load', () => {
+            wtt.classList.add('out');
+            setTimeout(() => { if (wtt.parentNode) wtt.parentNode.removeChild(wtt); }, 420);
+        });
+    }
+
+    el.addEventListener('click', e => {
+        if (e.target === el || (e.target.closest && e.target.closest('.opclose'))) closeOp();
+    });
+    document.addEventListener('keydown', opEsc, false);
+}
+
+function opEsc(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) closeOp();
+}
+
+function closeOp() {
+    const el = document.getElementById('opmask');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    document.documentElement.classList.remove('op-on');
+    document.removeEventListener('keydown', opEsc, false);
 }
 
 function footer(g) {
@@ -2898,6 +3018,8 @@ function showFail(err) {
 
 function renderNow() {
     stopLoadBar();
+    /* 切页时若有 OP 浮层开着，连 iframe 一起摘掉，不然声音会跟着新页面继续放 */
+    closeOp();
     const r = parseRoute();
     const g = cur();
 
@@ -3284,6 +3406,16 @@ function bindSetting() {
 
 loadState();
 window.addEventListener('hashchange', render);
+
+/* 封面上的「OP」按钮走一层委托——首页每次 render 都重建 DOM，
+   单独绑事件会跟着丢。 */
+document.addEventListener('click', e => {
+    const t = e.target;
+    const b = t && t.closest && t.closest('.cover-op');
+    if (!b) return;
+    e.preventDefault();
+    openOp(b.dataset.op);
+}, false);
 
 /* 指针落到条目链接上就把正文包发起下载——比 idle 预热更快，也不用等点击。
    移动端没有悬停，那条路仍靠 maybeWarm 的 idle 预热。 */

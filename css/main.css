@@ -262,6 +262,222 @@ img {
     justify-content: space-between;
 }
 
+/* ============ 片头动画（OP） ============ */
+/* 封面右上角的入口。视频不落地，点开是外链播放器浮层。 */
+.cover .cover-op {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.24rem;
+    padding: 0.28rem 0.62rem 0.28rem 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #21312a;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s;
+}
+
+.cover .cover-op svg {
+    width: 0.82rem;
+    height: 0.82rem;
+    flex: none;
+    fill: #198d44;
+    stroke: none;
+}
+
+.cover .cover-op:active {
+    transform: scale(0.95);
+}
+
+html.op-on,
+html.op-on body {
+    overflow: hidden;
+}
+
+.opmask {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem;
+    background: rgba(11, 15, 12, 0.88);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    animation: opfade 0.18s ease-out;
+}
+
+@keyframes opfade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.opbox {
+    width: 100%;
+    max-width: 46rem;
+    border-radius: 0.7rem;
+    overflow: hidden;
+    background: #10130f;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
+.opbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.5rem 0.55rem 0.85rem;
+    background: #171c17;
+    color: #f2f5f2;
+}
+
+.opttl {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.opttl span {
+    display: block;
+    margin-top: 0.16rem;
+    font-size: 0.65rem;
+    font-weight: 400;
+    color: #98a69c;
+    letter-spacing: 0.02em;
+}
+
+.opclose {
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8efe9;
+    font-size: 0.78rem;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.opclose:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.opframe {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.opframe iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.opfoot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 0.55rem 0.85rem 0.7rem;
+    background: #171c17;
+    color: #8d9a90;
+    font-size: 0.63rem;
+    line-height: 1.65;
+}
+
+.opfoot .opgoto {
+    flex: none;
+    color: #7fd39b;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+/* 播放器起来之前的垫底图：B 站要 3～6 秒才出第一帧，白屏会被当成点坏了 */
+.opwait {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* 靠下排：主视觉的 logo 正好在正中，字压上去就糊成一团 */
+    justify-content: flex-end;
+    gap: 0.42rem;
+    padding-bottom: 1.15rem;
+    background: #0d100e center / cover no-repeat;
+    color: #e2ebe4;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+    transition: opacity 0.4s ease-out;
+}
+
+.opwait::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(9, 13, 10, 0.34), rgba(9, 13, 10, 0.62));
+}
+
+.opwait.out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.opwait .opspin,
+.opwait .opwtx {
+    position: relative;
+    z-index: 1;
+}
+
+.opspin {
+    width: 1.35rem;
+    height: 1.35rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #5cbd80;
+    border-radius: 50%;
+    animation: opspin 0.85s linear infinite;
+}
+
+@keyframes opspin {
+    to { transform: rotate(360deg); }
+}
+
+/* 窄屏别留太宽的边：16:9 在竖屏上本来就显小 */
+@media (max-width: 30rem) {
+    .opmask {
+        padding: 0.45rem;
+    }
+
+    .opbox {
+        border-radius: 0.55rem;
+    }
+
+    .opfoot {
+        font-size: 0.61rem;
+    }
+}
+
 /* ============ 分区标题 ============ */
 .section-title {
     margin: 1.1rem 1rem 0.1rem;

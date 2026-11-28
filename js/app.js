@@ -263,6 +263,7 @@ function viewHome(g) {
             <span>${platAll(g.plat)}</span>
             <span>${g.date}</span>
         </div>
+        ${opBtn(g)}
     </div>
     <div class="quick">
         <div><div class="qk">发售</div><div class="qv">${g.date.replace(/-/g, '.')}</div></div>
@@ -306,6 +307,100 @@ function viewHome(g) {
     <div class="wback"><a class="link" href="#/">‹ 站点主页</a></div>
     ${footer(g)}
     `;
+}
+
+/* ---------------- 片头动画（OP） ----------------
+   视频不落地：点开后在站内浮层里嵌 B 站外链播放器，关掉浮层就把 iframe 摘掉，
+   免得 display:none 之后声音还在后面放。索引表在 js/op.js，缺哪一作就少一个按钮。 */
+function opOf(id) {
+    return (typeof OP_DATA !== 'undefined' && OP_DATA[id]) ? OP_DATA[id] : null;
+}
+
+function opBtn(g) {
+    const d = opOf(g.id);
+    if (!d) return '';
+    return `
+        <button class="cover-op" type="button" data-op="${g.id}" aria-label="播放片头动画">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 5.2v13.6L19.4 12z" /></svg>
+            <span>${d.kind === 'pv' ? '预告片' : 'OP'}</span>
+        </button>`;
+}
+
+function fmtDur(s) {
+    if (!s) return '';
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + ':' + (r < 10 ? '0' + r : r);
+}
+
+function openOp(id) {
+    const d = opOf(id);
+    if (!d) return;
+    const g = GAMES.find(x => x.id === id) || cur();
+    closeOp();
+
+    let note = '';
+    if (d.kind === 'pv') note += '本条是官方发售预告片，不是游戏内片头。';
+    if (typeof OP_COLL !== 'undefined' && d.bv === OP_COLL.bv)
+        note += '本片是系列 OP 合集（共 ' + OP_COLL.pages + ' 个分 P），播放器里会露出其他作品的段落。';
+
+    const src = 'https://player.bilibili.com/player.html?bvid=' + d.bv
+        + '&p=' + (d.p || 1) + '&autoplay=1&danmaku=0&high_quality=1&as_wide=1';
+    const href = 'https://www.bilibili.com/video/' + d.bv + (d.p ? '?p=' + d.p : '');
+
+    /* B 站播放器要 3～6 秒才出第一帧，中间是一片白。垫一张作品主视觉 +
+       转圈，iframe 报 load 之后再淡出 —— 不然用户以为点坏了。 */
+    const art = (typeof TITLE_ART !== 'undefined') ? TITLE_ART[id] : null;
+    const bg = art ? titleSrc(art) : '';
+
+    const el = document.createElement('div');
+    el.className = 'opmask';
+    el.id = 'opmask';
+    el.innerHTML = ''
+        + '<div class="opbox">'
+        + '<div class="opbar">'
+        + '<div class="opttl">' + escHtml(d.song)
+        + '<span>' + escHtml(g.name) + '　·　' + fmtDur(d.sec) + '　·　UP ' + escHtml(d.up || '') + '</span></div>'
+        + '<button class="opclose" type="button" aria-label="关闭">✕</button>'
+        + '</div>'
+        + '<div class="opframe">'
+        + '<div class="opwait"' + (bg ? ' style="background-image:url(&quot;' + bg + '&quot;)"' : '') + '>'
+        + '<div class="opspin"></div><div class="opwtx">正在载入播放器…</div></div>'
+        + '<iframe src="' + src + '" frameborder="0" scrolling="no" allowfullscreen'
+        + ' allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe></div>'
+        + '<div class="opfoot"><span>' + escHtml(note)
+        + '版权归原权利人所有，本站只做站内引用，未转载视频文件。</span>'
+        + '<a class="opgoto" href="' + href + '" target="_blank" rel="noopener">在 B 站打开 ›</a></div>'
+        + '</div>';
+
+    document.body.appendChild(el);
+    document.documentElement.classList.add('op-on');
+
+    /* iframe 的 load 只代表播放器页面文档加载完，视频还得再解码一两秒，
+       所以先淡出占位、留 0.42 秒余量再摘掉节点。 */
+    const ifr = el.querySelector('iframe');
+    const wtt = el.querySelector('.opwait');
+    if (ifr && wtt) {
+        ifr.addEventListener('load', () => {
+            wtt.classList.add('out');
+            setTimeout(() => { if (wtt.parentNode) wtt.parentNode.removeChild(wtt); }, 420);
+        });
+    }
+
+    el.addEventListener('click', e => {
+        if (e.target === el || (e.target.closest && e.target.closest('.opclose'))) closeOp();
+    });
+    document.addEventListener('keydown', opEsc, false);
+}
+
+function opEsc(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) closeOp();
+}
+
+function closeOp() {
+    const el = document.getElementById('opmask');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    document.documentElement.classList.remove('op-on');
+    document.removeEventListener('keydown', opEsc, false);
 }
 
 function footer(g) {
@@ -1866,6 +1961,8 @@ function showFail(err) {
 
 function renderNow() {
     stopLoadBar();
+    /* 切页时若有 OP 浮层开着，连 iframe 一起摘掉，不然声音会跟着新页面继续放 */
+    closeOp();
     const r = parseRoute();
     const g = cur();
 
@@ -2252,6 +2349,16 @@ function bindSetting() {
 
 loadState();
 window.addEventListener('hashchange', render);
+
+/* 封面上的「OP」按钮走一层委托——首页每次 render 都重建 DOM，
+   单独绑事件会跟着丢。 */
+document.addEventListener('click', e => {
+    const t = e.target;
+    const b = t && t.closest && t.closest('.cover-op');
+    if (!b) return;
+    e.preventDefault();
+    openOp(b.dataset.op);
+}, false);
 
 /* 指针落到条目链接上就把正文包发起下载——比 idle 预热更快，也不用等点击。
    移动端没有悬停，那条路仍靠 maybeWarm 的 idle 预热。 */

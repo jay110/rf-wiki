@@ -21,7 +21,7 @@ require('./gen_pages_meta.js');
  * pages.js（渲染正文，几 MB）整体挪到 body 包，点条目才下——首屏不再为它买单。
  * 核心只留 pages-meta.js（10KB 的 key/标题/图标），菜单与「N 个条目」计数够用。 */
 const CORE = ['js/changelog-head.js', 'js/data.js', 'js/icons.js',
-    'js/pages-meta.js', 'js/app.js']
+    'js/pages-meta.js', 'js/op.js', 'js/app.js']
     .sort((a, b) => files.indexOf(a) - files.indexOf(b));
 
 /* 人物档案包：npcfull（7 作 196 人）+ npc_azuma（龙之天地 16 人），gzip 33KB。
